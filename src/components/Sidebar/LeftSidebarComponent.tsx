@@ -30,7 +30,7 @@ function getItem(
 const items: MenuProps["items"] = [
   getItem("Dashboard", "/", <PieChartOutlined />),
   getItem("Players", "setupSubMenu", <RadarChartOutlined />, [
-    getItem("Player Registration", "/player-registration"),
+    getItem("Player Registration", "/player"),
     getItem("Player List", "/players"),
   ]),
   getItem("Project Information", "relProjectSubMenu", <ProjectOutlined />, [

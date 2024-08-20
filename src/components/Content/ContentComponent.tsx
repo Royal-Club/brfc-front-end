@@ -92,7 +92,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({ onToggleCollapse, c
             <Routes>
               <Route path="/" element={<Dashboard />} />
 
-              <Route path="player-registration" element={<Player />} />
+              <Route path="player" element={<Player />} />
               <Route path="players/:id" element={<Player />} />
               <Route path="players" element={<Players />} />
 

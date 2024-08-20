@@ -1,5 +1,5 @@
-import { CheckCircleTwoTone, DeleteTwoTone, EditTwoTone } from '@ant-design/icons';
-import { Button, Col, Popconfirm, Row, Space, message } from 'antd';
+import { CheckCircleTwoTone, EditTwoTone } from '@ant-design/icons';
+import { Button, Col, Row, Space } from 'antd';
 import Table, { ColumnsType } from 'antd/es/table';
 import Title from 'antd/es/typography/Title';
 import axios from 'axios';
@@ -40,19 +40,6 @@ function Players() {
             });
     }
 
-    const deletePopConfirm = (gallerieId: any) => {
-        axios.delete(`${API_URL}/players/${gallerieId}`)
-            .then((response) => {
-                getPlayers();
-                message.success('Deleted Successfully.');
-            }).catch(err => {
-                console.log("server error", err);
-            });
-    };
-
-    const viewAction = (id: number) => {
-
-    }
     // table rendering settings
     const playersColumn: ColumnsType<IPlayer> = [
 
@@ -75,6 +62,11 @@ function Players() {
             title: 'Mobile',
             dataIndex: 'mobileNo',
             key: 'mobileNo',
+        },
+        {
+            title: 'Employee Id',
+            dataIndex: 'employeeId',
+            key: 'employeeId',
         },
         {
             title: 'Status',
@@ -125,20 +117,10 @@ function Players() {
             render: (_: any, record: IPlayer) => (
                 <Space size="middle">
                     <Link to={`/players/${record.id}`} ><EditTwoTone /></Link>
-                    <Popconfirm
-                        disabled={true}
-                        title="Are you sure to delete this record?"
-                        onConfirm={() => deletePopConfirm(record.id)}
-                        okText="Yes"
-                        cancelText="No"
-                    >
-                        <a><DeleteTwoTone /></a>
-                    </Popconfirm>
                 </Space>
             ),
         },
     ];
-
 
     return (
         <>
