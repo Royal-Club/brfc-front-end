@@ -1,6 +1,8 @@
 import {
   ApartmentOutlined,
+  DollarOutlined,
   PieChartOutlined,
+  PlayCircleOutlined,
   ProjectOutlined,
   RadarChartOutlined,
   SettingOutlined,
@@ -29,18 +31,40 @@ function getItem(
 
 const items: MenuProps["items"] = [
   getItem("Dashboard", "/", <PieChartOutlined />),
-  getItem("Players", "setupSubMenu", <RadarChartOutlined />, [
+  getItem("Player", "setupSubMenu", <RadarChartOutlined />, [
     getItem("Player Registration", "/player"),
     getItem("Player List", "/players"),
   ]),
-  getItem("Project Information", "relProjectSubMenu", <ProjectOutlined />, [
-    getItem("Project Setup", "/project"),
-    getItem("Project List", "/projects"),
+  getItem("Finance", "financeSubMenu", <DollarOutlined />, [
+    getItem("Finance Setup", "/finance"),
+    getItem("Finance List", "/finances"),
+    getItem("Cost Type", "CostTypeSubMenu", null, [
+      getItem("Cost Type", "/company"),
+      getItem("Cost Type List", "/companies"),
+    ]),
+    getItem("Income", "IncomeSubMenu", null, [
+      getItem("Income", "/company"),
+      getItem("Income List", "/companies"),
+    ]),
+    getItem("Expense", "ExpenseSubMenu", null, [
+      getItem("Expense", "/company"),
+      getItem("Expense List", "/companies"),
+    ]),
+    getItem("Finance Summary", "/finances"),
   ]),
-  getItem("Item Information", "relItemSubMenu", <ApartmentOutlined />, [
-    getItem("Item Setup", "/item"),
-    getItem("Item List", "/items"),
-  ])
+  getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
+    getItem("Venue Registration", "/venue"),
+    getItem("Venue List", "/venues"),
+  ]),
+  getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [
+    getItem("Mach Schedule", "/venue"),
+    getItem("Mach Schedule List", "/venues"),
+  ]),
+  getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
+    getItem("Match Participant", "/match-participant"),
+    getItem("Match List", "/matches"),
+  ]),
+
 
 ];
 interface LeftSidebarComponentProps {

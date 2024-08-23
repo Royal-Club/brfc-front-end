@@ -40,7 +40,6 @@ function Player() {
   };
 
 
-
   let { id } = useParams();
 
   const onFinishPlayerForm = (values: any) => {
@@ -52,8 +51,10 @@ function Player() {
           employeeId: playerForm.getFieldValue("employeeId"),
           skypeId: playerForm.getFieldValue("skypeId"),
           mobileNo: playerForm.getFieldValue("mobileNo"),
-          active: playerForm.getFieldValue("active"),
-          playingPosition: getEnumKeyByValue(FootballPosition, playerForm.getFieldValue("playingPosition")),
+          playingPosition: footballPositions.find(
+            (position) => position.name === playerForm.getFieldValue("playingPosition")
+          )?.description || playerForm.getFieldValue("playingPosition")
+
         })
         .then((response) => {
           navigate("/players");
@@ -69,8 +70,7 @@ function Player() {
           employeeId: playerForm.getFieldValue("employeeId"),
           skypeId: playerForm.getFieldValue("skypeId"),
           mobileNo: playerForm.getFieldValue("mobileNo"),
-          active: playerForm.getFieldValue("active"),
-          playingPosition: getEnumKeyByValue(FootballPosition, playerForm.getFieldValue("playingPosition")),
+          playingPosition: playerForm.getFieldValue("playingPosition")
         })
         .then((response) => {
           navigate("/players");
@@ -88,12 +88,12 @@ function Player() {
     axios
       .get(`${API_URL}/players/${id}`)
       .then((response) => {
-
         playerForm.setFieldsValue({
           name: response.data.content.name,
           email: response.data.content.email,
           skypeId: response.data.content.skypeId,
           mobileNo: response.data.content.mobileNo,
+          employeeId: response.data.content.employeeId,
           active: response.data.content.active,
           playingPosition: response.data.content.playingPosition,
         });
@@ -134,8 +134,7 @@ function Player() {
       setFormState("UPDATE");
     }
     return () => { };
-  }, []);
-
+  }, [id]);
 
 
   const requiredFieldRule = (label: String) => ({
@@ -225,9 +224,14 @@ function Player() {
                       initialValue={'UNASSIGNED'}
                     >
                       <Select placeholder="Select a position">
-                        {Object.keys(FootballPosition).map((key) => (
+                        {/* {Object.keys(FootballPosition).map((key) => (
                           <Select.Option key={key} value={FootballPosition[key as keyof typeof FootballPosition]}>
                             {FootballPosition[key as keyof typeof FootballPosition]}
+                          </Select.Option>
+                        ))} */}
+                        {footballPositions.map((position) => (
+                          <Select.Option key={position.name} value={position.name}>
+                            {position.description}
                           </Select.Option>
                         ))}
                       </Select>
@@ -242,7 +246,7 @@ function Player() {
                       ]}
                       initialValue={false}
                     >
-                      <Select
+                      <Select disabled={true}
                         options={[
                           { value: true, label: "Active" },
                           { value: false, label: "InActive" },
