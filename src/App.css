@@ -1,13 +1,41 @@
 .demo-logo-vertical {
-  /* height: 32px; */
-  margin: 10px;
-  /* background: rgba(255,255,255,.2); */
-  border-radius: 6px;
-  justify-content: center;
-  align-content: center;
-  display: flex;
+    /* height: 32px; */
+    margin: 10px;
+    /* background: rgba(255,255,255,.2); */
+    border-radius: 6px;
+    justify-content: center;
+    align-content: center;
+    display: flex;
 }
 
-.demo-logo-vertical img{
-  height: 37px;
+.demo-logo-vertical img {
+    height: 37px;
+}
+
+.teams {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.team {
+    background-color: #f0f0f0;
+    padding: 20px;
+    width: 200px;
+    border-radius: 5px;
+}
+
+.player-card {
+    background-color: #6200ea;
+    color: white;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.players {
+    display: flex;
+    justify-content: space-around;
 }
