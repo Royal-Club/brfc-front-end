@@ -6,6 +6,7 @@ import {
   ProjectOutlined,
   RadarChartOutlined,
   SettingOutlined,
+  TrophyOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu } from "antd";
@@ -63,6 +64,9 @@ const items: MenuProps["items"] = [
   getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
     getItem("Match Participant", "/match-participant"),
     getItem("Match List", "/matches"),
+  ]),
+  getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
+    getItem("Tourtnaments", "/tournaments"),
   ]),
 
 

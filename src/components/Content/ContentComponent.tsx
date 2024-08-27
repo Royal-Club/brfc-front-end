@@ -15,9 +15,12 @@ import {
   theme,
 } from "antd";
 import { Route, Routes } from "react-router-dom";
-import Dashboard from "../Dashboard/DashboardComponent";
 import Players from "../Player/Players";
 import Player from "../Player/Player";
+import TournamentsPage from "../Tournaments/TournamentsPage";
+import SingleTournament from "../Tournaments/SingleTournament";
+import Dashboard from "../Dashboard/DashboardComponent";
+import NextTournament from "../Tournaments/NextTournament";
 
 
 const { Header, Sider, Content } = Layout;
@@ -91,11 +94,12 @@ const ContentComponent: React.FC<ContentComponentProps> = ({ onToggleCollapse, c
           <div>
             <Routes>
               <Route path="/" element={<Dashboard />} />
-
               <Route path="player" element={<Player />} />
               <Route path="players/:id" element={<Player />} />
               <Route path="players" element={<Players />} />
-
+              <Route path="tournaments" element={<TournamentsPage />} />
+              <Route path="tournaments/:id" element={<SingleTournament />} />
+              <Route path="tournaments/next-tournament" element={<NextTournament />} />
             </Routes>
           </div>
         </Content>
