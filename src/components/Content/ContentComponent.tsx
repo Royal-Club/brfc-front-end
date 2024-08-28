@@ -115,7 +115,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                                 element={<TournamentsPage />}
                             />
                             <Route
-                                path="tournaments/:id"
+                                path="tournaments/team-building/:id"
                                 element={<SingleTournament />}
                             />
                             <Route

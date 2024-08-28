@@ -1,12 +1,12 @@
 import {
-  ApartmentOutlined,
-  DollarOutlined,
-  PieChartOutlined,
-  PlayCircleOutlined,
-  ProjectOutlined,
-  RadarChartOutlined,
-  SettingOutlined,
-  TrophyOutlined
+    ApartmentOutlined,
+    DollarOutlined,
+    PieChartOutlined,
+    PlayCircleOutlined,
+    ProjectOutlined,
+    RadarChartOutlined,
+    SettingOutlined,
+    TrophyOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu } from "antd";
@@ -15,106 +15,104 @@ import { useNavigate } from "react-router-dom";
 const { Header, Content, Sider } = Layout;
 type MenuItem = Required<MenuProps>["items"][number];
 function getItem(
-  label: React.ReactNode,
-  key: React.Key,
-  icon?: React.ReactNode,
-  children?: MenuItem[],
-  type?: "group"
+    label: React.ReactNode,
+    key: React.Key,
+    icon?: React.ReactNode,
+    children?: MenuItem[],
+    type?: "group"
 ): MenuItem {
-  return {
-    key,
-    icon,
-    children,
-    label,
-    type,
-  } as MenuItem;
+    return {
+        key,
+        icon,
+        children,
+        label,
+        type,
+    } as MenuItem;
 }
 
 const items: MenuProps["items"] = [
-  getItem("Dashboard", "/", <PieChartOutlined />),
-  getItem("Player", "setupSubMenu", <RadarChartOutlined />, [
-    getItem("Player Registration", "/player"),
-    getItem("Player List", "/players"),
-  ]),
-  getItem("Finance", "financeSubMenu", <DollarOutlined />, [
-    getItem("Finance Setup", "/finance"),
-    getItem("Finance List", "/finances"),
-    getItem("Cost Type", "CostTypeSubMenu", null, [
-      getItem("Cost Type", "/company"),
-      getItem("Cost Type List", "/companies"),
+    getItem("Dashboard", "/", <PieChartOutlined />),
+    getItem("Player", "setupSubMenu", <RadarChartOutlined />, [
+        getItem("Player Registration", "/player"),
+        getItem("Player List", "/players"),
     ]),
-    getItem("Income", "IncomeSubMenu", null, [
-      getItem("Income", "/company"),
-      getItem("Income List", "/companies"),
+    getItem("Finance", "financeSubMenu", <DollarOutlined />, [
+        getItem("Finance Setup", "/finance/setup"),
+        getItem("Finance List", "/finances/list"),
+        getItem("Cost Type", "CostTypeSubMenu", null, [
+            getItem("Cost Type", "/company/cost-type"),
+            getItem("Cost Type List", "/companies/cost-type-list"),
+        ]),
+        getItem("Income", "IncomeSubMenu", null, [
+            getItem("Income", "/company/income"),
+            getItem("Income List", "/companies/income-list"),
+        ]),
+        getItem("Expense", "ExpenseSubMenu", null, [
+            getItem("Expense", "/company/expense"),
+            getItem("Expense List", "/companies/expense-list"),
+        ]),
+        getItem("Finance Summary", "/finances"),
     ]),
-    getItem("Expense", "ExpenseSubMenu", null, [
-      getItem("Expense", "/company"),
-      getItem("Expense List", "/companies"),
+    getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
+        getItem("Venue Registration", "/venue/registration"),
+        getItem("Venue List", "/venues/list"),
     ]),
-    getItem("Finance Summary", "/finances"),
-  ]),
-  getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
-    getItem("Venue Registration", "/venue"),
-    getItem("Venue List", "/venues"),
-  ]),
-  getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [
-    getItem("Mach Schedule", "/venue"),
-    getItem("Mach Schedule List", "/venues"),
-  ]),
-  getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
-    getItem("Match Participant", "/match-participant"),
-    getItem("Match List", "/matches"),
-  ]),
-  getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
-    getItem("Tourtnaments", "/tournaments"),
-  ]),
-
-
+    getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [
+        getItem("Mach Schedule", "/venue/mach-schedule"),
+        getItem("Mach Schedule List", "/venues/mach-schedule-list"),
+    ]),
+    getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
+        getItem("Match Participant", "/match-participant"),
+        getItem("Match List", "/matches"),
+    ]),
+    getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
+        getItem("Tourtnaments", "/tournaments"),
+    ]),
 ];
 interface LeftSidebarComponentProps {
-  collapsed: boolean;
-  onToggleCollapse: (value: boolean) => void;
+    collapsed: boolean;
+    onToggleCollapse: (value: boolean) => void;
 }
 const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
-  collapsed,
-  onToggleCollapse,
+    collapsed,
+    onToggleCollapse,
 }) => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const onClick: MenuProps["onClick"] = (e) => {
-    navigate(e.key);
-  };
+    const onClick: MenuProps["onClick"] = (e) => {
+        navigate(e.key);
+    };
 
-  return (
-    <>
-      <Sider
-        width={260}
-        theme="light"
-        breakpoint="lg"
-        onBreakpoint={(broken: any) => {
-          // console.log("broken", broken);
-        }}
-        onCollapse={(collapsed: any, type: any) => {
-          onToggleCollapse(collapsed);
-        }}
-        trigger={null}
-        collapsible
-        collapsed={collapsed}
-      >
-        <div className="demo-logo-vertical">
-          {/* <img src={companyLogo} alt="" /> */}
-        </div>
-        <Menu
-          onClick={onClick}
-          defaultSelectedKeys={["/"]}
-          defaultOpenKeys={["invsum"]}
-          mode="inline"
-          items={items}
-          style={{ height: "100%", borderRight: 0 }}
-        />
-      </Sider>
-    </>
-  );
+    return (
+        <>
+            <Sider
+                width={260}
+                theme="light"
+                breakpoint="lg"
+                onBreakpoint={(broken: any) => {
+                    // console.log("broken", broken);
+                }}
+                onCollapse={(collapsed: any, type: any) => {
+                    onToggleCollapse(collapsed);
+                }}
+                trigger={null}
+                collapsible
+                collapsed={collapsed}
+            >
+                <div className="demo-logo-vertical">
+                    {/* <img src={companyLogo} alt="" /> */}
+                </div>
+                <Menu
+                    onClick={onClick}
+                    defaultSelectedKeys={["/"]}
+                    defaultOpenKeys={["invsum"]}
+                    mode="inline"
+                    items={items}
+                    style={{ height: "100%", borderRight: 0 }}
+                />
+            </Sider>
+        </>
+    );
 };
 
 export default LeftSidebarComponent;

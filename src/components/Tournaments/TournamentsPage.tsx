@@ -12,6 +12,7 @@ import { useGetTournamentsQuery } from "../../state/features/tournaments/tournam
 import { IoTournamentSingleSummaryType } from "../../state/features/tournaments/tournamentTypes";
 import TournamentsActionDropdown from "./Atoms/TournamentsActionDropdown";
 import { useNavigate } from "react-router-dom";
+import CreateTournament from "./Atoms/CreateTournamentModal";
 
 const { Header } = Layout;
 const { Title } = Typography;
@@ -102,9 +103,7 @@ const TournamentsPage: React.FC = () => {
                     <Title level={2} style={{ margin: 0 }}>
                         All Tournaments
                     </Title>
-                    <Space direction="horizontal">
-                        <Button type="primary">Add New</Button>
-                    </Space>
+                    <CreateTournament />
                 </Space>
             </Header>
             <Table<IoTournamentSingleSummaryType>

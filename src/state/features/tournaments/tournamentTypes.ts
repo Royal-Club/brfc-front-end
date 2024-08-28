@@ -14,6 +14,7 @@ export interface TournamentPlayerInfoType {
   employeeId: string;
   participationStatus: boolean;
   comments: string;
+  tournamentParticipantId: number;
 }
 
 export interface IoTournamentSummaryResType extends BasicResType {
@@ -21,14 +22,14 @@ export interface IoTournamentSummaryResType extends BasicResType {
 }
 
 export interface NextTournamentResType {
-  message: string;
-  statusCode: number;
   timeStamp: string;
+  statusCode: number;
   status: boolean;
+  message: string;
   content: {
-    tournamentId: Number;
-    tournamentName: String;
-    tournamentDate: String;
+    tournamentId: number;
+    tournamentName: string;
+    tournamentDate: string;
     players: TournamentPlayerInfoType[];
   };
 }
