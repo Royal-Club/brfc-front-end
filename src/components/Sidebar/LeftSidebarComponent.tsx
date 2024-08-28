@@ -53,7 +53,6 @@ const items: MenuProps["items"] = [
     getItem("Finance Summary", "/finances"),
   ]),
   getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
-    getItem("Venue Registration", "/venue"),
     getItem("Venue List", "/venues"),
   ]),
   getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [

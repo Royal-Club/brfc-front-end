@@ -18,6 +18,7 @@ import { Route, Routes } from "react-router-dom";
 import Dashboard from "../Dashboard/DashboardComponent";
 import Players from "../Player/Players";
 import Player from "../Player/Player";
+import Venue from "../Venue/Venue";
 
 
 const { Header, Sider, Content } = Layout;
@@ -95,6 +96,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({ onToggleCollapse, c
               <Route path="player" element={<Player />} />
               <Route path="players/:id" element={<Player />} />
               <Route path="players" element={<Players />} />
+              <Route path="venues" element={<Venue />} />
 
             </Routes>
           </div>
