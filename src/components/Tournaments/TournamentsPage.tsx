@@ -44,6 +44,9 @@ const TournamentsPage: React.FC = () => {
             title: "Date",
             dataIndex: "tournamentDate",
             key: "tournamentDate",
+            render: (date: string) => {
+                return new Date(date).toLocaleDateString("en-GB");
+            },
         },
         {
             title: "Venue",

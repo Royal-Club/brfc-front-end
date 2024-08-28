@@ -4,6 +4,7 @@ import { Table, Select, Typography, Space, Skeleton } from "antd";
 import useJoinTournament from "../../hooks/useJoinTournament";
 import { TournamentPlayerInfoType } from "../../state/features/tournaments/tournamentTypes";
 import DebouncedInput from "./Atoms/DebouncedInput";
+import "./tournament.css";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -85,9 +86,12 @@ export default function JoinTournament() {
     ];
 
     return (
-        <Space direction="vertical" style={{ width: "100%", padding: "20px" }}>
+        <Space
+            direction="vertical"
+            style={{ width: "100%", padding: "0 20px" }}
+        >
             {isLoading ? (
-                <Skeleton active paragraph={{ rows: 4 }} />
+                <Skeleton active paragraph={{ rows: 8 }} />
             ) : (
                 <>
                     <Space
@@ -98,7 +102,7 @@ export default function JoinTournament() {
                             justifyContent: "space-between",
                         }}
                     >
-                        <Title level={2}>
+                        <Title level={4}>
                             {nextTournament?.tournamentName}
                         </Title>
                         <Title level={5}>
@@ -113,7 +117,11 @@ export default function JoinTournament() {
                         dataSource={players}
                         pagination={{ pageSize: 8 }}
                         bordered
-                        style={{ backgroundColor: "#fff", borderRadius: "8px" }}
+                        className="small-table"
+                        style={{
+                            backgroundColor: "#fff",
+                            borderRadius: "8px",
+                        }}
                     />
                 </>
             )}

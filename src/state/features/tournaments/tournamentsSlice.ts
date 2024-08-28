@@ -4,6 +4,7 @@ import {
     IoTournamentSummaryResType,
     NextTournamentResType,
     TournamentPlayerInfoType,
+    TournamentSummeryResType,
 } from "./tournamentTypes";
 
 const apiWithTags = apiSlice.enhanceEndpoints({
@@ -70,17 +71,15 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
             }),
             invalidatesTags: ["tournaments"],
         }),
-
-        createTournamentTeam: builder.mutation<
-            TournamentPlayerInfoType,
-            { tournamentId: number; teamName: string }
+        getTournamentSummary: builder.query<
+            TournamentSummeryResType,
+            { tournamentId: number }
         >({
-            query: ({ tournamentId, teamName }) => ({
-                url: `tournaments/${tournamentId}/teams`,
-                method: "POST",
-                body: { teamName },
+            query: ({ tournamentId }) => ({
+                url: `tournaments/details?tournamentId=${tournamentId}`,
+                method: "GET",
             }),
-            invalidatesTags: ["tournaments"],
+            providesTags: ["tournaments"],
         }),
     }),
 });
@@ -90,5 +89,5 @@ export const {
     useGetTournamentsQuery,
     useGetTournamentParticipantsListQuery,
     useAddParticipationToTournamentMutation,
-    useCreateTournamentTeamMutation,
+    useGetTournamentSummaryQuery,
 } = tournamentsApi;

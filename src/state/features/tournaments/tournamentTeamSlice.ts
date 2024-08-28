@@ -1,0 +1,55 @@
+import apiSlice from "../../api/apiSlice";
+import { BasicResType } from "../../responesTypes";
+import {
+    PlayerListToAddToTeamType,
+    TournamentPlayerInfoType,
+} from "./tournamentTypes";
+
+const apiWithTags = apiSlice.enhanceEndpoints({
+    addTagTypes: ["tournamentTeam"],
+});
+
+export const tournamentTeamApi = apiWithTags.injectEndpoints({
+    endpoints: (builder) => ({
+        createTournamentTeam: builder.mutation<
+            TournamentPlayerInfoType,
+            { tournamentId: number; teamName: string }
+        >({
+            query: ({ tournamentId, teamName }) => ({
+                url: `teams`,
+                method: "POST",
+                body: { tournamentId, teamName },
+            }),
+            invalidatesTags: ["tournamentTeam"],
+        }),
+
+        playerListToAddToTeam: builder.query<
+            PlayerListToAddToTeamType,
+            { tournamentId: number }
+        >({
+            query: ({ tournamentId }) => ({
+                url: `tournament-participants/${tournamentId}/to-be-selected`,
+                method: "GET",
+            }),
+            providesTags: ["tournamentTeam"],
+        }),
+
+        addPlayerToTeam: builder.mutation<
+            BasicResType,
+            { playingPosition: string; teamId: number; playerId: number }
+        >({
+            query: ({ playingPosition, teamId, playerId }) => ({
+                url: `teams/players`,
+                method: "POST",
+                body: { playingPosition, teamId, playerId },
+            }),
+            invalidatesTags: ["tournamentTeam"],
+        }),
+    }),
+});
+
+export const {
+    useCreateTournamentTeamMutation,
+    usePlayerListToAddToTeamQuery,
+    useAddPlayerToTeamMutation,
+} = tournamentTeamApi;

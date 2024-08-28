@@ -1,0 +1,27 @@
+.team-container {
+}
+.team-card-container {
+    display: flex;
+    width: 100%;
+    overflow: auto;
+    padding: 16px 0;
+}
+
+/* Webkit-based browsers (Chrome, Safari) */
+.team-card-container::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.team-card-container::-webkit-scrollbar-track {
+    background: #e7e7e7;
+}
+
+.team-card-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 20px;
+}
+
+.team-card-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
