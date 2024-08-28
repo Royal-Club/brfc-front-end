@@ -36,12 +36,17 @@ const items: MenuProps["items"] = [
     getItem("Player List", "/players"),
   ]),
   getItem("Finance", "financeSubMenu", <DollarOutlined />, [
+    getItem("Configuration", "ConfigurationSubMenu", null, [
+      getItem("AC Natures", "/ac/natures"),
+      getItem("Cost Type List", "/companies"),
+    ]),
     getItem("Finance Setup", "/finance"),
     getItem("Finance List", "/finances"),
     getItem("Cost Type", "CostTypeSubMenu", null, [
       getItem("Cost Type", "/company"),
       getItem("Cost Type List", "/companies"),
     ]),
+
     getItem("Income", "IncomeSubMenu", null, [
       getItem("Income", "/company"),
       getItem("Income List", "/companies"),
