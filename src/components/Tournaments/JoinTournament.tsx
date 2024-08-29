@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Table, Select, Typography, Space, Skeleton } from "antd";
+import { Table, Select, Typography, Space, Skeleton, Input } from "antd";
 import useJoinTournament from "../../hooks/useJoinTournament";
 import { TournamentPlayerInfoType } from "../../state/features/tournaments/tournamentTypes";
 import DebouncedInput from "./Atoms/DebouncedInput";
@@ -8,6 +8,7 @@ import "./tournament.css";
 
 const { Title } = Typography;
 const { Option } = Select;
+const { Search } = Input;
 
 export default function JoinTournament() {
     const { id = "" } = useParams();
@@ -17,6 +18,15 @@ export default function JoinTournament() {
     const [editedComments, setEditedComments] = useState<{
         [key: number]: string;
     }>({});
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const filteredPlayers = players.filter(
+        (player) =>
+            player.playerName
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+            player.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const columns = [
         {
@@ -35,7 +45,13 @@ export default function JoinTournament() {
             key: "participationStatus",
             render: (_: any, record: TournamentPlayerInfoType) => (
                 <Select
-                    value={record.participationStatus ? "true" : "false"}
+                    value={
+                        record.participationStatus === true
+                            ? "true"
+                            : record.participationStatus === false
+                            ? "false"
+                            : "Select"
+                    }
                     onChange={(value) => {
                         handleUpdate(
                             record.playerId,
@@ -62,7 +78,6 @@ export default function JoinTournament() {
                         placeholder="Enter comments..."
                         debounceDuration={500}
                         onChange={(value) => {
-                            console.log("debounced value", value);
                             setEditedComments({
                                 ...editedComments,
                                 [record.playerId]: value,
@@ -86,10 +101,7 @@ export default function JoinTournament() {
     ];
 
     return (
-        <Space
-            direction="vertical"
-            style={{ width: "100%", padding: "0 20px" }}
-        >
+        <Space direction="vertical">
             {isLoading ? (
                 <Skeleton active paragraph={{ rows: 8 }} />
             ) : (
@@ -97,31 +109,68 @@ export default function JoinTournament() {
                     <Space
                         direction="horizontal"
                         style={{
-                            width: "100%",
                             display: "flex",
+                            marginBottom: "10px",
+                            padding: "0 10px",
                             justifyContent: "space-between",
+                            alignItems: "end",
                         }}
                     >
-                        <Title level={4}>
-                            {nextTournament?.tournamentName}
-                        </Title>
-                        <Title level={5}>
-                            {`Date: ${new Date(
-                                nextTournament?.tournamentDate || ""
-                            ).toLocaleString()}`}
-                        </Title>
+                        <Space
+                            direction="vertical"
+                            style={{ lineHeight: "1.2" }}
+                        >
+                            <Title level={5} style={{ margin: 0 }}>
+                                {nextTournament?.tournamentName}
+                            </Title>
+                            <Title
+                                level={5}
+                                style={{ margin: 0, cursor: "pointer" }}
+                            >
+                                {new Date(
+                                    nextTournament?.tournamentDate || ""
+                                ).toLocaleString()}
+                            </Title>
+                        </Space>
+                        <Search
+                            placeholder="Search players"
+                            onSearch={(value) => setSearchTerm(value)}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ width: 200 }}
+                        />
                     </Space>
+
                     <Table
                         rowKey="playerId"
                         columns={columns}
-                        dataSource={players}
-                        pagination={{ pageSize: 8 }}
+                        dataSource={filteredPlayers}
+                        pagination={false}
                         bordered
-                        className="small-table"
-                        style={{
-                            backgroundColor: "#fff",
-                            borderRadius: "8px",
-                        }}
+                        size="small"
+                        scroll={{ y: 600 }}
+                        footer={() => (
+                            <div
+                                style={{
+                                    padding: "10px 10px 0 10px",
+                                    textAlign: "right",
+                                    fontWeight: "bold",
+                                }}
+                            >
+                                <span style={{ marginRight: "20px" }}>
+                                    Total Players: {filteredPlayers.length}
+                                </span>
+                                <span>
+                                    Total Participating:{" "}
+                                    {
+                                        filteredPlayers.filter(
+                                            (player) =>
+                                                player.participationStatus ===
+                                                true
+                                        ).length
+                                    }
+                                </span>
+                            </div>
+                        )}
                     />
                 </>
             )}

@@ -90,18 +90,26 @@ const useTournamentTeams = (tournamentId: number) => {
     };
 
     const handleRemovePlayer = (teamId: number, playerId: number) => {
-        // Add logic to remove player from a team
         message.info(
             `Remove player with ID ${playerId} from team with ID ${teamId}`
         );
-        // This can involve calling a remove API endpoint and then refetching the data
+    };
+
+    const handleRenameTeam = (teamId: number, newName: string) => {
+        message.info(`Rename team with ID ${teamId} to ${newName}`);
+    };
+    const handleRemoveTeam = (teamId: number) => {
+        message.info(`Remove team with ID ${teamId}`);
     };
 
     return {
         teams,
         players,
+        refetchTournament,
         handleAddPlayerToTeam,
         handleRemovePlayer,
+        handleRenameTeam,
+        handleRemoveTeam,
     };
 };
 

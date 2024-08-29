@@ -1,22 +1,31 @@
 import React from "react";
 import {
     DragDropContext,
-    Droppable,
     Draggable,
+    Droppable,
     DropResult,
 } from "react-beautiful-dnd";
 import { useParams } from "react-router-dom";
-import CreateTeamModal from "./Atoms/CreateTeamModal";
-import { Card } from "antd";
+import { Card, Space } from "antd";
 import useTournamentTeams from "../../hooks/useTournamentTeams";
-import "./tournament.css"; // Import the CSS file
+import "./tournament.css";
+import CreateTeamComponent from "./Atoms/CreateTeamComponent";
+import PlayerCard from "./Atoms/PlayerCard";
+import TeamCard from "./Atoms/TeamCard";
 
 function SingleTournament() {
     const { id = "" } = useParams();
     const tournamentId = Number(id);
 
-    const { teams, players, handleAddPlayerToTeam, handleRemovePlayer } =
-        useTournamentTeams(tournamentId);
+    const {
+        teams,
+        players,
+        handleAddPlayerToTeam,
+        handleRemovePlayer,
+        handleRenameTeam,
+        handleRemoveTeam,
+        refetchTournament,
+    } = useTournamentTeams(tournamentId);
 
     const onDragEnd = (result: DropResult) => {
         const { source, destination, draggableId } = result;
@@ -28,7 +37,7 @@ function SingleTournament() {
         const destinationTeamId = destination.droppableId;
 
         if (destinationTeamId === source.droppableId) {
-            return; // No change in position, do nothing.
+            return;
         }
 
         if (destinationTeamId === "players") {
@@ -43,76 +52,26 @@ function SingleTournament() {
     };
 
     return (
-        <>
-            <CreateTeamModal
+        <Space
+            direction="vertical"
+            style={{ width: "100%", minHeight: "80vh" }}
+        >
+            <CreateTeamComponent
                 tournamentId={tournamentId}
-                tournamentName={teams.length > 0 ? teams[0].teamName : ""}
-                refetchSummary={() => {}}
+                existingTeams={teams.map((team) => team.teamName)}
+                refetchSummary={refetchTournament}
             />
             <div className="team-container">
                 <DragDropContext onDragEnd={onDragEnd}>
                     <div className="team-card-container">
                         {teams.map((team) => (
-                            <div key={team.teamId}>
-                                <Droppable droppableId={team.teamId.toString()}>
-                                    {(provided) => (
-                                        <Card
-                                            style={{
-                                                minWidth: "250px",
-                                                maxWidth: "400px",
-                                                minHeight: "200px",
-                                            }}
-                                            title={team.teamName}
-                                            bordered={true}
-                                            ref={provided.innerRef}
-                                            {...provided.droppableProps}
-                                        >
-                                            {team.players.map(
-                                                (player, index) => (
-                                                    <Draggable
-                                                        key={player.playerId.toString()}
-                                                        draggableId={player.playerId.toString()}
-                                                        index={index}
-                                                    >
-                                                        {(provided) => (
-                                                            <div
-                                                                ref={
-                                                                    provided.innerRef
-                                                                }
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                                style={{
-                                                                    padding:
-                                                                        "8px",
-                                                                    margin: "4px 0",
-                                                                    backgroundColor:
-                                                                        "#f0f0f0",
-                                                                    borderRadius:
-                                                                        "4px",
-                                                                    ...provided
-                                                                        .draggableProps
-                                                                        .style,
-                                                                }}
-                                                                onClick={() =>
-                                                                    handleRemovePlayer(
-                                                                        team.teamId,
-                                                                        player.playerId
-                                                                    )
-                                                                }
-                                                            >
-                                                                {
-                                                                    player.playerName
-                                                                }
-                                                            </div>
-                                                        )}
-                                                    </Draggable>
-                                                )
-                                            )}
-                                            {provided.placeholder}
-                                        </Card>
-                                    )}
-                                </Droppable>
-                            </div>
+                            <TeamCard
+                                key={team.teamId}
+                                team={team}
+                                handleRemovePlayer={handleRemovePlayer}
+                                handleRenameTeam={handleRenameTeam}
+                                handleRemoveTeam={handleRemoveTeam}
+                            />
                         ))}
                     </div>
                     <Droppable droppableId="players">
@@ -146,7 +105,20 @@ function SingleTournament() {
                                                     maxWidth: "300px",
                                                 }}
                                             >
-                                                {player.playerName}
+                                                <PlayerCard
+                                                    player={player}
+                                                    handleRemovePlayer={() =>
+                                                        handleRemovePlayer(
+                                                            0,
+                                                            player.playerId
+                                                        )
+                                                    }
+                                                    handleAddPosition={() =>
+                                                        console.log(
+                                                            "Add Position clicked"
+                                                        )
+                                                    }
+                                                />
                                             </div>
                                         )}
                                     </Draggable>
@@ -157,7 +129,7 @@ function SingleTournament() {
                     </Droppable>
                 </DragDropContext>
             </div>
-        </>
+        </Space>
     );
 }
 

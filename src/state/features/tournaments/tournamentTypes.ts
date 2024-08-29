@@ -30,6 +30,7 @@ export interface NextTournamentResType {
         tournamentId: number;
         tournamentName: string;
         tournamentDate: string;
+        totalParticipants: number;
         players: TournamentPlayerInfoType[];
     };
 }

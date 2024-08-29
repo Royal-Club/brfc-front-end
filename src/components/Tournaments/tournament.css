@@ -25,3 +25,8 @@
 .team-card-container::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+/* table  */
+.ant-table-wrapper {
+    min-height: 600px;
+}
