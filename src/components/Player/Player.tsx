@@ -11,17 +11,14 @@ import {
   Spin,
   notification
 } from "antd";
-import { RcFile } from "antd/es/upload";
 import axios from "axios";
 
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { MailOutlined } from "@ant-design/icons";
-import { API_URL } from "../../settings";
 import IFootballPosition from "../../interfaces/IFootballPosition";
-import { FootballPosition } from "../Enum/FootballPosition";
-import getEnumKeyByValue from "../Util/EnumValue";
+import { API_URL } from "../../settings";
 
 function Player() {
   const navigate = useNavigate();

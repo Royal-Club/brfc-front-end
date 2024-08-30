@@ -37,29 +37,44 @@ const items: MenuProps["items"] = [
         getItem("Player List", "/players"),
     ]),
     getItem("Finance", "financeSubMenu", <DollarOutlined />, [
-        getItem("Finance Setup", "/finance/setup"),
-        getItem("Finance List", "/finances/list"),
+        getItem("Configuration", "ConfigurationSubMenu", null, [
+            getItem("AC Natures", "/ac/natures"),
+            getItem("Cost Type List", "/companies"),
+        ]),
+        getItem("Finance Setup", "/finance"),
+        getItem("Finance List", "/finances"),
         getItem("Cost Type", "CostTypeSubMenu", null, [
-            getItem("Cost Type", "/company/cost-type"),
-            getItem("Cost Type List", "/companies/cost-type-list"),
+            getItem("Cost Type", "/company"),
+            getItem("Cost Type List", "/companies"),
         ]),
+
         getItem("Income", "IncomeSubMenu", null, [
-            getItem("Income", "/company/income"),
-            getItem("Income List", "/companies/income-list"),
+            getItem("Income", "/company"),
+            getItem("Income List", "/companies"),
         ]),
-        getItem("Expense", "ExpenseSubMenu", null, [
-            getItem("Expense", "/company/expense"),
-            getItem("Expense List", "/companies/expense-list"),
+        getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
+            getItem("Venue Registration", "/venue/registration"),
+            getItem("Venue List", "/venues/list"),
+        ]),
+        getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [
+            getItem("Mach Schedule", "/venue/mach-schedule"),
+            getItem("Mach Schedule List", "/venues/mach-schedule-list"),
+        ]),
+        getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
+            getItem("Match Participant", "/match-participant"),
+            getItem("Match List", "/matches"),
+        ]),
+        getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
+            getItem("Tourtnaments", "/tournaments"),
         ]),
         getItem("Finance Summary", "/finances"),
     ]),
     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
-        getItem("Venue Registration", "/venue/registration"),
-        getItem("Venue List", "/venues/list"),
+        getItem("Venue List", "/venues"),
     ]),
     getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [
-        getItem("Mach Schedule", "/venue/mach-schedule"),
-        getItem("Mach Schedule List", "/venues/mach-schedule-list"),
+        getItem("Mach Schedule", "/venue"),
+        getItem("Mach Schedule List", "/venues"),
     ]),
     getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
         getItem("Match Participant", "/match-participant"),

@@ -2,7 +2,7 @@ interface IVenue {
     id: number;
     name: string;
     address: string;
-    isActive: Boolean;
+    active: Boolean;
     createdDate: Date;
     updatedDate: Date;
 }
