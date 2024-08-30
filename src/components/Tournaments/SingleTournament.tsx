@@ -12,6 +12,7 @@ import "./tournament.css";
 import CreateTeamComponent from "./Atoms/CreateTeamComponent";
 import PlayerCard from "./Atoms/PlayerCard";
 import TeamCard from "./Atoms/TeamCard";
+import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
 
 function SingleTournament() {
     const { id = "" } = useParams();
@@ -66,11 +67,14 @@ function SingleTournament() {
             direction="vertical"
             style={{ width: "100%", minHeight: "80vh" }}
         >
-            <CreateTeamComponent
-                tournamentId={tournamentId}
-                existingTeams={teams.map((team) => team.teamName)}
-                refetchSummary={refetchTournament}
-            />
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <CreateTeamComponent
+                    tournamentId={tournamentId}
+                    existingTeams={teams.map((team) => team.teamName)}
+                    refetchSummary={refetchTournament}
+                />
+                <GoalKeeperDrawer />
+            </div>
             <div className="team-container">
                 <DragDropContext onDragEnd={onDragEnd}>
                     <div className="team-card-container">
@@ -81,6 +85,7 @@ function SingleTournament() {
                                 handleRemovePlayer={handleRemovePlayer}
                                 handleRenameTeam={handleRenameTeam}
                                 handleRemoveTeam={handleRemoveTeam}
+                                handleAddPlayerToTeam={handleAddPlayerToTeam}
                             />
                         ))}
                     </div>

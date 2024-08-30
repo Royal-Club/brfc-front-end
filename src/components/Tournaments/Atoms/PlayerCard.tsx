@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Dropdown, Menu, Space } from "antd";
+import { Button, Dropdown, Menu, Space, Tooltip } from "antd";
 import { Player } from "../tournamentTypes";
 import { MoreOutlined } from "@ant-design/icons";
 
@@ -19,7 +19,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     const playerMenu = (
         <Menu>
             <Menu.Item onClick={handleRemovePlayer}>Remove Player</Menu.Item>
-            <Menu.Item onClick={handleAddPosition}>Add Position</Menu.Item>
+            <Menu.Item onClick={handleAddPosition}>Make Goalkeeper</Menu.Item>
         </Menu>
     );
 
@@ -36,6 +36,15 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                         }}
                     >
                         {player.playerName}
+                        {player.playingPosition === "GOALKEEPER" && (
+                            <Tooltip title="Goalkeeper">
+                                <img
+                                    src={require("./../../../assets/red-gloves.png")}
+                                    alt="goalkeeper"
+                                    style={{ width: "20px" }}
+                                />
+                            </Tooltip>
+                        )}
                         {showOptions && (
                             <Button
                                 onClick={(e) => e.preventDefault()}

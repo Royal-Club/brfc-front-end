@@ -23,6 +23,18 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
             invalidatesTags: ["tournamentTeam"],
         }),
 
+        renameTeam: builder.mutation<
+            BasicResType,
+            { teamId: number; teamName: string; tournamentId: number }
+        >({
+            query: ({ teamId, teamName, tournamentId }) => ({
+                url: `teams`,
+                method: "POST",
+                body: { id: teamId, teamName, tournamentId },
+            }),
+            invalidatesTags: ["tournamentTeam"],
+        }),
+
         deleteTournamentTeam: builder.mutation<
             BasicResType,
             { teamId: number }
@@ -77,6 +89,7 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
 
 export const {
     useCreateTournamentTeamMutation,
+    useRenameTeamMutation,
     usePlayerListToAddToTeamQuery,
     useDeleteTournamentTeamMutation,
     useAddPlayerToTeamMutation,

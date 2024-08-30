@@ -6,6 +6,7 @@ import {
     useDeleteTournamentTeamMutation,
     usePlayerListToAddToTeamQuery,
     useRemovePlayerFromTeamMutation,
+    useRenameTeamMutation,
 } from "../state/features/tournaments/tournamentTeamSlice";
 
 interface Player {
@@ -22,7 +23,7 @@ interface TeamPlayer {
     teamId: number;
     playerId: number;
     playerName: string;
-    playingPosition: string;
+    playingPosition?: string;
 }
 
 interface Teams {
@@ -43,6 +44,7 @@ const useTournamentTeams = (tournamentId: number) => {
     const [addPlayerToTeam] = useAddPlayerToTeamMutation();
     const [deleteTournamentTeam] = useDeleteTournamentTeamMutation();
     const [removePlayerFromTeam] = useRemovePlayerFromTeamMutation();
+    const [renameTeam] = useRenameTeamMutation();
 
     const [teams, setTeams] = useState<Teams[]>([]);
     const [players, setPlayers] = useState<Player[]>([]);
@@ -57,7 +59,9 @@ const useTournamentTeams = (tournamentId: number) => {
                     teamId: team.teamId,
                     playerId: player.playerId,
                     playerName: player.playerName,
-                    playingPosition: "",
+                    playingPosition: player.playingPosition
+                        ? player.playingPosition
+                        : "",
                     id: player.id,
                 })),
             }));
@@ -112,7 +116,10 @@ const useTournamentTeams = (tournamentId: number) => {
     };
 
     const handleRenameTeam = (teamId: number, newName: string) => {
-        message.info(`Rename team with ID ${teamId} to ${newName}`);
+        renameTeam({ teamId, teamName: newName, tournamentId });
+        message.info(
+            `Rename team with ID ${teamId} to ${newName} in tournament ${tournamentId}`
+        );
     };
     const handleRemoveTeam = (teamId: number, teamName: string) => {
         deleteTournamentTeam({ teamId })

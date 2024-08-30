@@ -16,6 +16,7 @@ export interface TournamentPlayerInfoType {
     participationStatus: boolean;
     comments: string;
     tournamentParticipantId: number;
+    playingPosition?: string;
 }
 
 export interface IoTournamentSummaryResType extends BasicResType {

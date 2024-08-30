@@ -12,12 +12,19 @@ import { Droppable, Draggable } from "react-beautiful-dnd";
 import PlayerCard from "./PlayerCard";
 import { Team } from "../tournamentTypes";
 import { MoreOutlined } from "@ant-design/icons";
+import DoubleClickTextInputField from "../../CommonAtoms/DoubleClickTextInputField";
 
 interface TeamCardProps {
     team: Team;
     handleRemovePlayer: (teamId: number, playerId: number) => void;
     handleRenameTeam: (teamId: number, newName: string) => void;
     handleRemoveTeam: (teamId: number, teamName: string) => void;
+    handleAddPlayerToTeam: (
+        playingPosition: string,
+        teamId: number,
+        playerId: number,
+        id?: number
+    ) => void;
 }
 
 const TeamCard: React.FC<TeamCardProps> = ({
@@ -25,18 +32,18 @@ const TeamCard: React.FC<TeamCardProps> = ({
     handleRemovePlayer,
     handleRenameTeam,
     handleRemoveTeam,
+    handleAddPlayerToTeam,
 }) => {
+    const handleRenameTeamClick = (newName: string) => {
+        handleRenameTeam(team.teamId, newName);
+    };
+
     const teamMenu = (
         <Menu>
-            <Menu.Item
-                onClick={() => handleRenameTeam(team.teamId, "New Name")}
-            >
-                Rename Team
-            </Menu.Item>
             <Menu.Item>
                 <Popconfirm
-                    title="Delete the task"
-                    description="Are you sure to delete this task?"
+                    title="Delete the team"
+                    description="Are you sure you want to delete this team?"
                     okText="Yes"
                     cancelText="No"
                     onConfirm={() =>
@@ -66,10 +73,10 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                     alignItems: "center",
                                 }}
                             >
-                                {team.teamName +
-                                    "- (" +
-                                    team.players.length +
-                                    "*)"}
+                                <DoubleClickTextInputField
+                                    initialName={team.teamName}
+                                    onNameChange={handleRenameTeamClick}
+                                />
                                 <Button
                                     onClick={(e) => e.preventDefault()}
                                     icon={<MoreOutlined />}
@@ -123,7 +130,14 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                                     player.playerId
                                                 )
                                             }
-                                            handleAddPosition={() => {}}
+                                            handleAddPosition={() => {
+                                                handleAddPlayerToTeam(
+                                                    "GOALKEEPER",
+                                                    team.teamId,
+                                                    player.playerId,
+                                                    player.id
+                                                );
+                                            }}
                                         />
                                     </div>
                                 )}
