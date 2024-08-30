@@ -3,10 +3,13 @@ import { message } from "antd";
 import { useGetTournamentSummaryQuery } from "../state/features/tournaments/tournamentsSlice";
 import {
     useAddPlayerToTeamMutation,
+    useDeleteTournamentTeamMutation,
     usePlayerListToAddToTeamQuery,
+    useRemovePlayerFromTeamMutation,
 } from "../state/features/tournaments/tournamentTeamSlice";
 
 interface Player {
+    id?: number;
     playerId: number;
     playerName: string;
     employeeId: string;
@@ -33,9 +36,13 @@ const useTournamentTeams = (tournamentId: number) => {
 
     const { data: tournamentSummary, refetch: refetchTournament } =
         useGetTournamentSummaryQuery(tournamentQueryParams);
+
     const { data: playerListToAddToTeam, refetch: refetchPlayer } =
         usePlayerListToAddToTeamQuery(tournamentQueryParams);
+
     const [addPlayerToTeam] = useAddPlayerToTeamMutation();
+    const [deleteTournamentTeam] = useDeleteTournamentTeamMutation();
+    const [removePlayerFromTeam] = useRemovePlayerFromTeamMutation();
 
     const [teams, setTeams] = useState<Teams[]>([]);
     const [players, setPlayers] = useState<Player[]>([]);
@@ -51,6 +58,7 @@ const useTournamentTeams = (tournamentId: number) => {
                     playerId: player.playerId,
                     playerName: player.playerName,
                     playingPosition: "",
+                    id: player.id,
                 })),
             }));
             setTeams(teams);
@@ -73,9 +81,10 @@ const useTournamentTeams = (tournamentId: number) => {
     const handleAddPlayerToTeam = (
         playingPosition: string,
         teamId: number,
-        playerId: number
+        playerId: number,
+        id?: number
     ) => {
-        addPlayerToTeam({ playingPosition, teamId, playerId })
+        addPlayerToTeam({ playingPosition, teamId, playerId, id })
             .unwrap()
             .then(
                 () => {
@@ -90,16 +99,32 @@ const useTournamentTeams = (tournamentId: number) => {
     };
 
     const handleRemovePlayer = (teamId: number, playerId: number) => {
-        message.info(
-            `Remove player with ID ${playerId} from team with ID ${teamId}`
-        );
+        removePlayerFromTeam({ teamId, playerId })
+            .unwrap()
+            .then(() => {
+                message.info(`Remove player from team `);
+                refetchTournament();
+                refetchPlayer();
+            })
+            .catch(() => {
+                message.error("Failed to remove player from team");
+            });
     };
 
     const handleRenameTeam = (teamId: number, newName: string) => {
         message.info(`Rename team with ID ${teamId} to ${newName}`);
     };
-    const handleRemoveTeam = (teamId: number) => {
-        message.info(`Remove team with ID ${teamId}`);
+    const handleRemoveTeam = (teamId: number, teamName: string) => {
+        deleteTournamentTeam({ teamId })
+            .unwrap()
+            .then(() => {
+                message.success("Team removed successfully");
+                refetchTournament();
+                refetchPlayer();
+            })
+            .catch(() => {
+                message.error("Failed to remove team");
+            });
     };
 
     return {

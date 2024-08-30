@@ -9,6 +9,7 @@ export interface IoTournamentSingleSummaryType {
 }
 
 export interface TournamentPlayerInfoType {
+    id?: number;
     playerId: number;
     playerName: string;
     employeeId: string;

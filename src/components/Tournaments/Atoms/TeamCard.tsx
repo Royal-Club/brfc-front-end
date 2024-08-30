@@ -1,5 +1,13 @@
 import React from "react";
-import { Button, Card, Dropdown, Menu, Space } from "antd";
+import {
+    Button,
+    Card,
+    Dropdown,
+    Menu,
+    Popconfirm,
+    Space,
+    Typography,
+} from "antd";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import PlayerCard from "./PlayerCard";
 import { Team } from "../tournamentTypes";
@@ -9,7 +17,7 @@ interface TeamCardProps {
     team: Team;
     handleRemovePlayer: (teamId: number, playerId: number) => void;
     handleRenameTeam: (teamId: number, newName: string) => void;
-    handleRemoveTeam: (teamId: number) => void;
+    handleRemoveTeam: (teamId: number, teamName: string) => void;
 }
 
 const TeamCard: React.FC<TeamCardProps> = ({
@@ -25,8 +33,20 @@ const TeamCard: React.FC<TeamCardProps> = ({
             >
                 Rename Team
             </Menu.Item>
-            <Menu.Item onClick={() => handleRemoveTeam(team.teamId)}>
-                Remove Team
+            <Menu.Item>
+                <Popconfirm
+                    title="Delete the task"
+                    description="Are you sure to delete this task?"
+                    okText="Yes"
+                    cancelText="No"
+                    onConfirm={() =>
+                        handleRemoveTeam(team.teamId, team.teamName)
+                    }
+                >
+                    <Typography style={{ width: "100%" }}>
+                        Remove Team
+                    </Typography>
+                </Popconfirm>
             </Menu.Item>
         </Menu>
     );
@@ -35,6 +55,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
         <Droppable droppableId={team.teamId.toString()}>
             {(provided) => (
                 <Card
+                    hoverable
                     title={
                         <Dropdown overlay={teamMenu} trigger={["click"]}>
                             <Space
@@ -45,7 +66,10 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                     alignItems: "center",
                                 }}
                             >
-                                {team.teamName}
+                                {team.teamName +
+                                    "- (" +
+                                    team.players.length +
+                                    "*)"}
                                 <Button
                                     onClick={(e) => e.preventDefault()}
                                     icon={<MoreOutlined />}
@@ -57,47 +81,57 @@ const TeamCard: React.FC<TeamCardProps> = ({
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     style={{
-                        minWidth: "250px",
+                        minWidth: "300px",
                         maxWidth: "400px",
-                        minHeight: "200px",
-                        margin: "0 10px ",
                     }}
                 >
-                    {team.players.map((player, index) => (
-                        <Draggable
-                            key={player.playerId.toString()}
-                            draggableId={player.playerId.toString()}
-                            index={index}
-                        >
-                            {(provided) => (
-                                <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                    style={{
-                                        padding: "8px",
-                                        margin: "4px 0",
-                                        backgroundColor: "#f0f0f0",
-                                        borderRadius: "4px",
-                                        ...provided.draggableProps.style,
-                                    }}
-                                >
-                                    <PlayerCard
-                                        showOptions
-                                        player={player}
-                                        handleRemovePlayer={() =>
-                                            handleRemovePlayer(
-                                                team.teamId,
-                                                player.playerId
-                                            )
-                                        }
-                                        handleAddPosition={() => {}}
-                                    />
-                                </div>
-                            )}
-                        </Draggable>
-                    ))}
-                    {provided.placeholder}
+                    <div
+                        style={{ height: 300, overflow: "auto" }}
+                        className="noscrollbar"
+                    >
+                        {team.players.map((player, index) => (
+                            <Draggable
+                                key={player.playerId.toString()}
+                                draggableId={
+                                    player.id
+                                        ? player.playerId.toString() +
+                                          "-" +
+                                          player.id.toString()
+                                        : player.playerId.toString()
+                                }
+                                index={index}
+                            >
+                                {(provided) => (
+                                    <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        style={{
+                                            padding: "4px",
+                                            margin: "4px 0",
+                                            backgroundColor: "#f0f0f0",
+                                            borderRadius: "4px",
+                                            ...provided.draggableProps.style,
+                                        }}
+                                    >
+                                        <PlayerCard
+                                            showOptions
+                                            player={player}
+                                            handleRemovePlayer={() =>
+                                                handleRemovePlayer(
+                                                    team.teamId,
+                                                    player.playerId
+                                                )
+                                            }
+                                            handleAddPosition={() => {}}
+                                        />
+                                    </div>
+                                )}
+                            </Draggable>
+                        ))}
+
+                        {provided.placeholder}
+                    </div>
                 </Card>
             )}
         </Droppable>

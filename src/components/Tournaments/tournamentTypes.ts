@@ -2,6 +2,7 @@
 
 // Player Type
 export interface Player {
+    id?: number;
     playerId: number;
     playerName: string;
     // Add any other properties related to a player if needed

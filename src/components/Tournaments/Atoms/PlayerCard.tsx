@@ -24,24 +24,30 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     );
 
     return (
-        <Dropdown overlay={playerMenu} trigger={["click"]}>
-            <Space
-                style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                }}
-            >
-                {player.playerName}
-                {showOptions && (
-                    <Button
-                        onClick={(e) => e.preventDefault()}
-                        icon={<MoreOutlined />}
-                    />
-                )}
-            </Space>
-        </Dropdown>
+        <>
+            {showOptions ? (
+                <Dropdown overlay={playerMenu} trigger={["click"]}>
+                    <Space
+                        style={{
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                        }}
+                    >
+                        {player.playerName}
+                        {showOptions && (
+                            <Button
+                                onClick={(e) => e.preventDefault()}
+                                icon={<MoreOutlined />}
+                            />
+                        )}
+                    </Space>
+                </Dropdown>
+            ) : (
+                <Space>{player.playerName}</Space>
+            )}
+        </>
     );
 };
 

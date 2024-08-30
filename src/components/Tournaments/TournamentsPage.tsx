@@ -1,13 +1,5 @@
 import React from "react";
-import {
-    Layout,
-    Button,
-    Table,
-    Skeleton,
-    Alert,
-    Typography,
-    Space,
-} from "antd";
+import { Layout, Table, Skeleton, Alert, Typography, Space } from "antd";
 import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { IoTournamentSingleSummaryType } from "../../state/features/tournaments/tournamentTypes";
 import TournamentsActionDropdown from "./Atoms/TournamentsActionDropdown";

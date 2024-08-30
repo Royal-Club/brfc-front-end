@@ -3,8 +3,10 @@
 .team-card-container {
     display: flex;
     width: 100%;
-    overflow: auto;
-    padding: 16px 0;
+    overflow-x: scroll;
+    padding: 16px 10px;
+    display: flex;
+    gap: 10px;
 }
 
 /* Webkit-based browsers (Chrome, Safari) */
@@ -29,4 +31,15 @@
 /* table  */
 .ant-table-wrapper {
     min-height: 600px;
+}
+
+.SingleTournament-container .bottom-card {
+    display: flex;
+}
+.SingleTournament-container .players-container {
+    flex: 1;
+}
+
+.SingleTournament-container .goalkeepers-container {
+    width: 300px;
 }
