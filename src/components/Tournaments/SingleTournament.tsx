@@ -19,6 +19,7 @@ function SingleTournament() {
     const tournamentId = Number(id);
 
     const {
+        isLoading,
         teams,
         players,
         handleAddPlayerToTeam,
@@ -80,6 +81,7 @@ function SingleTournament() {
                     <div className="team-card-container">
                         {teams.map((team) => (
                             <TeamCard
+                                isLoading={isLoading}
                                 key={team.teamId}
                                 team={team}
                                 handleRemovePlayer={handleRemovePlayer}

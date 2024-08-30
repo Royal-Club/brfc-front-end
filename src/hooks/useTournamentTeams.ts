@@ -48,6 +48,7 @@ const useTournamentTeams = (tournamentId: number) => {
 
     const [teams, setTeams] = useState<Teams[]>([]);
     const [players, setPlayers] = useState<Player[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     useEffect(() => {
         if (tournamentSummary) {
@@ -82,61 +83,81 @@ const useTournamentTeams = (tournamentId: number) => {
         }
     }, [tournamentSummary, playerListToAddToTeam]);
 
-    const handleAddPlayerToTeam = (
+    const handleAddPlayerToTeam = async (
         playingPosition: string,
         teamId: number,
         playerId: number,
         id?: number
     ) => {
-        addPlayerToTeam({ playingPosition, teamId, playerId, id })
-            .unwrap()
-            .then(
-                () => {
-                    message.success("Player added to team successfully");
-                    refetchPlayer();
-                    refetchTournament();
-                },
-                () => {
-                    message.error("Failed to add player to team");
-                }
+        try {
+            setIsLoading(true);
+            await addPlayerToTeam({
+                playingPosition,
+                teamId,
+                playerId,
+                id,
+            }).unwrap();
+            message.success("Player added to team successfully");
+            await refetchPlayer();
+            await refetchTournament();
+        } catch {
+            message.error("Failed to add player to team");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleRemovePlayer = async (teamId: number, playerId: number) => {
+        try {
+            setIsLoading(true);
+            await removePlayerFromTeam({ teamId, playerId }).unwrap();
+            message.info("Player removed from team successfully");
+            await refetchTournament();
+            await refetchPlayer();
+        } catch {
+            message.error("Failed to remove player from team");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleRenameTeam = async (teamId: number, newName: string) => {
+        try {
+            setIsLoading(true);
+            await renameTeam({
+                teamId,
+                teamName: newName,
+                tournamentId,
+            }).unwrap();
+            message.info(
+                `Renamed team with ID ${teamId} to ${newName} in tournament ${tournamentId}`
             );
+            await refetchTournament();
+        } catch {
+            message.error("Failed to rename team");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleRemovePlayer = (teamId: number, playerId: number) => {
-        removePlayerFromTeam({ teamId, playerId })
-            .unwrap()
-            .then(() => {
-                message.info(`Remove player from team `);
-                refetchTournament();
-                refetchPlayer();
-            })
-            .catch(() => {
-                message.error("Failed to remove player from team");
-            });
-    };
-
-    const handleRenameTeam = (teamId: number, newName: string) => {
-        renameTeam({ teamId, teamName: newName, tournamentId });
-        message.info(
-            `Rename team with ID ${teamId} to ${newName} in tournament ${tournamentId}`
-        );
-    };
-    const handleRemoveTeam = (teamId: number, teamName: string) => {
-        deleteTournamentTeam({ teamId })
-            .unwrap()
-            .then(() => {
-                message.success("Team removed successfully");
-                refetchTournament();
-                refetchPlayer();
-            })
-            .catch(() => {
-                message.error("Failed to remove team");
-            });
+    const handleRemoveTeam = async (teamId: number, teamName: string) => {
+        try {
+            setIsLoading(true);
+            await deleteTournamentTeam({ teamId }).unwrap();
+            message.success("Team removed successfully");
+            await refetchTournament();
+            await refetchPlayer();
+        } catch {
+            message.error("Failed to remove team");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return {
         teams,
         players,
+        isLoading,
         refetchTournament,
         handleAddPlayerToTeam,
         handleRemovePlayer,
