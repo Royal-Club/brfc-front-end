@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Layout, Table, Skeleton, Alert, Typography, Space } from "antd";
 import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { IoTournamentSingleSummaryType } from "../../state/features/tournaments/tournamentTypes";
@@ -10,11 +10,27 @@ const { Header } = Layout;
 const { Title } = Typography;
 
 const TournamentsPage: React.FC = () => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [sorter, setSorter] = useState<{
+        sortedBy: string;
+        sortDirection: "ASC" | "DESC";
+    }>({
+        sortedBy: "tournamentDate",
+        sortDirection: "DESC",
+    });
+
     const {
         data: tournamentSummaries,
         isLoading,
         isError,
-    } = useGetTournamentsQuery();
+        refetch: refetchTournaments,
+    } = useGetTournamentsQuery({
+        offSet: currentPage - 1,
+        pageSize,
+        sortedBy: sorter.sortedBy,
+        sortDirection: sorter.sortDirection,
+    });
 
     const navigate = useNavigate();
 
@@ -26,6 +42,19 @@ const TournamentsPage: React.FC = () => {
         }
     };
 
+    const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+        setCurrentPage(pagination.current);
+        setPageSize(pagination.pageSize);
+        setSorter({
+            sortedBy: sorter.field || "tournamentDate",
+            sortDirection: sorter.order === "ascend" ? "ASC" : "DESC",
+        });
+    };
+
+    useEffect(() => {
+        refetchTournaments();
+    }, [currentPage, pageSize, sorter, refetchTournaments]);
+
     const columns = [
         {
             title: "Tournament Name",
@@ -36,14 +65,15 @@ const TournamentsPage: React.FC = () => {
             title: "Date",
             dataIndex: "tournamentDate",
             key: "tournamentDate",
-            render: (date: string) => {
-                return new Date(date).toLocaleDateString("en-GB");
-            },
+            sorter: true,
+            render: (date: string) =>
+                new Date(date).toLocaleDateString("en-GB"),
         },
         {
             title: "Venue",
             dataIndex: "venueName",
             key: "venueName",
+            sorter: true,
         },
         {
             title: "Status",
@@ -105,7 +135,16 @@ const TournamentsPage: React.FC = () => {
                 columns={columns}
                 dataSource={tournamentSummaries.content}
                 rowKey={(record) => record.id.toString()}
-                pagination={{ pageSize: 10 }}
+                showSorterTooltip={false}
+                pagination={{
+                    current: currentPage,
+                    pageSize,
+                    total: 20,
+                    showSizeChanger: true,
+                    pageSizeOptions: ["10", "20", "50"],
+                }}
+                scroll={{ y: "60vh" }}
+                onChange={handleTableChange}
             />
         </>
     );

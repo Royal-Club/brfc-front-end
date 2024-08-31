@@ -3,6 +3,7 @@ import { BasicResType } from "../../responesTypes";
 import {
     IoTournamentSummaryResType,
     NextTournamentResType,
+    TournamentGoalKeeperInfoType,
     TournamentPlayerInfoType,
     TournamentSummeryResType,
 } from "./tournamentTypes";
@@ -28,8 +29,17 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
             }),
             invalidatesTags: ["tournaments"],
         }),
-        getTournaments: builder.query<IoTournamentSummaryResType, void>({
-            query: () => "tournaments",
+        getTournaments: builder.query<
+            IoTournamentSummaryResType,
+            {
+                offSet: number;
+                pageSize: number;
+                sortedBy: string;
+                sortDirection: "ASC" | "DESC";
+            }
+        >({
+            query: ({ offSet, pageSize, sortedBy, sortDirection }) =>
+                `tournaments?offSet=${offSet}&pageSize=${pageSize}&sortedBy=${sortedBy}&sortDirection=${sortDirection}`,
             providesTags: ["tournaments"],
         }),
 
@@ -81,6 +91,14 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
             }),
             providesTags: ["tournaments"],
         }),
+        getTournamentGoalKeeperList: builder.query<
+            TournamentGoalKeeperInfoType,
+            { tournamentId: number }
+        >({
+            query: ({ tournamentId }) =>
+                `tournament-participants/${tournamentId}/goal-keepers`,
+            providesTags: ["tournaments"],
+        }),
     }),
 });
 
@@ -90,4 +108,5 @@ export const {
     useGetTournamentParticipantsListQuery,
     useAddParticipationToTournamentMutation,
     useGetTournamentSummaryQuery,
+    useGetTournamentGoalKeeperListQuery,
 } = tournamentsApi;

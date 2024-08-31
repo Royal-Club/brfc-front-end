@@ -63,3 +63,13 @@ export interface TournamentSummeryResType {
 export interface PlayerListToAddToTeamType extends BasicResType {
     content: TournamentPlayerInfoType[];
 }
+
+export interface TournamentGoalKeeperInfoType extends BasicResType {
+    content: [
+        {
+            playerId: number;
+            playerName: string;
+            goalkeeperCount: number;
+        }
+    ];
+}

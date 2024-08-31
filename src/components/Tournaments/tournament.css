@@ -2,10 +2,11 @@
 }
 .team-card-container {
     display: flex;
+    align-items: center;
     width: 100%;
+    min-height: 450px;
     overflow-x: scroll;
     padding: 16px 10px;
-    display: flex;
     gap: 10px;
 }
 

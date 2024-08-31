@@ -6,13 +6,15 @@ import {
     DropResult,
 } from "react-beautiful-dnd";
 import { useParams } from "react-router-dom";
-import { Card, Space } from "antd";
+import { Card, Skeleton, Space, Typography } from "antd";
 import useTournamentTeams from "../../hooks/useTournamentTeams";
 import "./tournament.css";
 import CreateTeamComponent from "./Atoms/CreateTeamComponent";
 import PlayerCard from "./Atoms/PlayerCard";
 import TeamCard from "./Atoms/TeamCard";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
+
+const { Text } = Typography;
 
 function SingleTournament() {
     const { id = "" } = useParams();
@@ -74,22 +76,33 @@ function SingleTournament() {
                     existingTeams={teams.map((team) => team.teamName)}
                     refetchSummary={refetchTournament}
                 />
-                <GoalKeeperDrawer />
+                <GoalKeeperDrawer tournamentId={tournamentId} />
             </div>
             <div className="team-container">
                 <DragDropContext onDragEnd={onDragEnd}>
                     <div className="team-card-container">
-                        {teams.map((team) => (
-                            <TeamCard
-                                isLoading={isLoading}
-                                key={team.teamId}
-                                team={team}
-                                handleRemovePlayer={handleRemovePlayer}
-                                handleRenameTeam={handleRenameTeam}
-                                handleRemoveTeam={handleRemoveTeam}
-                                handleAddPlayerToTeam={handleAddPlayerToTeam}
-                            />
-                        ))}
+                        {teams.length > 0 ? (
+                            teams.map((team) => (
+                                <TeamCard
+                                    isLoading={isLoading}
+                                    key={team.teamId}
+                                    team={team}
+                                    handleRemovePlayer={handleRemovePlayer}
+                                    handleRenameTeam={handleRenameTeam}
+                                    handleRemoveTeam={handleRemoveTeam}
+                                    handleAddPlayerToTeam={
+                                        handleAddPlayerToTeam
+                                    }
+                                />
+                            ))
+                        ) : (
+                            <Text
+                                type="secondary"
+                                style={{ textAlign: "center", width: "100%" }}
+                            >
+                                Create team to add player
+                            </Text>
+                        )}
                     </div>
 
                     <Droppable droppableId="players">
@@ -112,35 +125,49 @@ function SingleTournament() {
                                         gap: "8px",
                                     }}
                                 >
-                                    {players.map((player, index) => (
-                                        <Draggable
-                                            key={player.playerId.toString()}
-                                            draggableId={player.playerId.toString()}
-                                            index={index}
-                                        >
-                                            {(provided) => (
-                                                <div
-                                                    ref={provided.innerRef}
-                                                    {...provided.draggableProps}
-                                                    {...provided.dragHandleProps}
-                                                    style={{
-                                                        padding: "8px",
-                                                        backgroundColor:
-                                                            "#f0f0f0",
-                                                        borderRadius: "4px",
-                                                        cursor: "grab",
-                                                        ...provided
-                                                            .draggableProps
-                                                            .style,
-                                                    }}
-                                                >
-                                                    <PlayerCard
-                                                        player={player}
-                                                    />
-                                                </div>
-                                            )}
-                                        </Draggable>
-                                    ))}
+                                    {isLoading ? (
+                                        players.map((_, index) => (
+                                            <Skeleton.Button
+                                                key={index}
+                                                block
+                                                active={true}
+                                            />
+                                        ))
+                                    ) : players.length > 0 ? (
+                                        players.map((player, index) => (
+                                            <Draggable
+                                                key={player.playerId.toString()}
+                                                draggableId={player.playerId.toString()}
+                                                index={index}
+                                            >
+                                                {(provided) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
+                                                        style={{
+                                                            padding: "8px",
+                                                            backgroundColor:
+                                                                "#f0f0f0",
+                                                            borderRadius: "4px",
+                                                            cursor: "grab",
+                                                            ...provided
+                                                                .draggableProps
+                                                                .style,
+                                                        }}
+                                                    >
+                                                        <PlayerCard
+                                                            player={player}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </Draggable>
+                                        ))
+                                    ) : (
+                                        <Text type="secondary">
+                                            No Player Found
+                                        </Text>
+                                    )}
                                     {provided.placeholder}
                                 </div>
                             </Card>

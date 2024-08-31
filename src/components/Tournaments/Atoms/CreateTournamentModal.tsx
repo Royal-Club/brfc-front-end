@@ -67,7 +67,7 @@ export default function CreateTournament() {
                             },
                         ]}
                     >
-                        <DatePicker style={{ width: "100%" }} />
+                        <DatePicker showTime style={{ width: "100%" }} />
                     </Form.Item>
                     <Form.Item
                         name="venueId"

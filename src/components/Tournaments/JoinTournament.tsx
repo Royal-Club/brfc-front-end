@@ -15,6 +15,7 @@ export default function JoinTournament() {
     const tournamentId = Number(id);
     const { players, isLoading, isUpdating, handleUpdate, nextTournament } =
         useJoinTournament(tournamentId);
+
     const [editedComments, setEditedComments] = useState<{
         [key: number]: string;
     }>({});
@@ -151,9 +152,8 @@ export default function JoinTournament() {
                         footer={() => (
                             <div
                                 style={{
-                                    padding: "10px 10px 0 10px",
+                                    padding: "0 10px 0 10px",
                                     textAlign: "right",
-                                    fontWeight: "bold",
                                 }}
                             >
                                 <span style={{ marginRight: "20px" }}>

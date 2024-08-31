@@ -45,16 +45,19 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                             alignItems: "center",
                         }}
                     >
-                        {player.playerName}
-                        {player.playingPosition === "GOALKEEPER" && (
-                            <Tooltip title="Goalkeeper">
-                                <img
-                                    src={require("./../../../assets/red-gloves.png")}
-                                    alt="goalkeeper"
-                                    style={{ width: "20px" }}
-                                />
-                            </Tooltip>
-                        )}
+                        <Space>
+                            {player.playingPosition === "GOALKEEPER" && (
+                                <Tooltip title="Goalkeeper">
+                                    <img
+                                        src={require("./../../../assets/red-gloves.png")}
+                                        alt="goalkeeper"
+                                        style={{ width: "20px" }}
+                                    />
+                                </Tooltip>
+                            )}
+                            {player.playerName}
+                        </Space>
+
                         <Button
                             onClick={(e) => e.preventDefault()}
                             icon={<MoreOutlined />}
