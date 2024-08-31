@@ -96,7 +96,7 @@ const TournamentsPage: React.FC = () => {
                     style={{ width: "100%", justifyContent: "space-between" }}
                 >
                     <Title level={2} style={{ margin: 0 }}>
-                        All Tournaments
+                        Tournaments
                     </Title>
                     <CreateTournament />
                 </Space>

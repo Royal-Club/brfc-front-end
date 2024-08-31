@@ -33,7 +33,7 @@ export default function CreateTournament() {
 
     return (
         <div>
-            <Button onClick={() => setOpen(true)}>Create Tournament</Button>
+            <Button onClick={() => setOpen(true)}> + New Tournament</Button>
             <Modal
                 title={<Title level={3}>Create Tournament</Title>}
                 open={open}

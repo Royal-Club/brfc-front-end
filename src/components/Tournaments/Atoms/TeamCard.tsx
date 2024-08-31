@@ -153,6 +153,14 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                                         player.id
                                                     );
                                                 }}
+                                                handleRemovePosition={() => {
+                                                    handleAddPlayerToTeam(
+                                                        "UNASSIGNED",
+                                                        team.teamId,
+                                                        player.playerId,
+                                                        player.id
+                                                    );
+                                                }}
                                             />
                                         </div>
                                     )}

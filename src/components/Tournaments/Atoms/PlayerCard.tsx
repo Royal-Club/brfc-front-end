@@ -7,6 +7,7 @@ interface PlayerCardProps {
     player: Player;
     handleRemovePlayer?: () => void;
     handleAddPosition?: () => void;
+    handleRemovePosition?: () => void;
     showOptions?: boolean;
 }
 
@@ -14,12 +15,21 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
     player,
     handleRemovePlayer,
     handleAddPosition,
+    handleRemovePosition,
     showOptions = false,
 }) => {
     const playerMenu = (
         <Menu>
             <Menu.Item onClick={handleRemovePlayer}>Remove Player</Menu.Item>
-            <Menu.Item onClick={handleAddPosition}>Make Goalkeeper</Menu.Item>
+            {player.playingPosition === "GOALKEEPER" ? (
+                <Menu.Item onClick={handleRemovePosition}>
+                    Remove from Goalkeeper
+                </Menu.Item>
+            ) : (
+                <Menu.Item onClick={handleAddPosition}>
+                    Make Goalkeeper
+                </Menu.Item>
+            )}
         </Menu>
     );
 
@@ -45,12 +55,10 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                                 />
                             </Tooltip>
                         )}
-                        {showOptions && (
-                            <Button
-                                onClick={(e) => e.preventDefault()}
-                                icon={<MoreOutlined />}
-                            />
-                        )}
+                        <Button
+                            onClick={(e) => e.preventDefault()}
+                            icon={<MoreOutlined />}
+                        />
                     </Space>
                 </Dropdown>
             ) : (
