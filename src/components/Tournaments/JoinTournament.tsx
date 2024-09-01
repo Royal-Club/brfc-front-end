@@ -5,8 +5,9 @@ import useJoinTournament from "../../hooks/useJoinTournament";
 import { TournamentPlayerInfoType } from "../../state/features/tournaments/tournamentTypes";
 import DebouncedInput from "./Atoms/DebouncedInput";
 import "./tournament.css";
+import { RightSquareOutlined } from "@ant-design/icons";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Option } = Select;
 const { Search } = Input;
 
@@ -117,21 +118,57 @@ export default function JoinTournament() {
                             alignItems: "end",
                         }}
                     >
-                        <Space
-                            direction="vertical"
-                            style={{ lineHeight: "1.2" }}
-                        >
-                            <Title level={5} style={{ margin: 0 }}>
+                        <Space direction="vertical">
+                            <Title
+                                level={2}
+                                style={{ margin: 0, fontWeight: 600 }}
+                            >
                                 {nextTournament?.tournamentName}
                             </Title>
-                            <Title
-                                level={5}
-                                style={{ margin: 0, cursor: "pointer" }}
+                            <Space
+                                direction="horizontal"
+                                size={0}
+                                style={{
+                                    lineHeight: 1.2,
+                                    display: "flex",
+                                    gap: "30px",
+                                }}
                             >
-                                {new Date(
-                                    nextTournament?.tournamentDate || ""
-                                ).toLocaleString()}
-                            </Title>
+                                <Title
+                                    level={5}
+                                    type="secondary"
+                                    style={{ margin: 0 }}
+                                >
+                                    <RightSquareOutlined />{" "}
+                                    {new Date(
+                                        nextTournament?.tournamentDate || ""
+                                    ).toLocaleString("en-US")}
+                                </Title>
+
+                                <Title
+                                    level={5}
+                                    type="secondary"
+                                    style={{ margin: 0 }}
+                                >
+                                    <RightSquareOutlined /> Total Players:{" "}
+                                    {filteredPlayers.length}
+                                </Title>
+                                <Title
+                                    level={5}
+                                    type="secondary"
+                                    style={{ margin: 0 }}
+                                >
+                                    <RightSquareOutlined />
+                                    Total Participating:{" "}
+                                    {
+                                        filteredPlayers.filter(
+                                            (player) =>
+                                                player.participationStatus ===
+                                                true
+                                        ).length
+                                    }
+                                </Title>
+                            </Space>
                         </Space>
                         <Search
                             placeholder="Search players"
@@ -149,28 +186,6 @@ export default function JoinTournament() {
                         bordered
                         size="small"
                         scroll={{ y: 600 }}
-                        footer={() => (
-                            <div
-                                style={{
-                                    padding: "0 10px 0 10px",
-                                    textAlign: "right",
-                                }}
-                            >
-                                <span style={{ marginRight: "20px" }}>
-                                    Total Players: {filteredPlayers.length}
-                                </span>
-                                <span>
-                                    Total Participating:{" "}
-                                    {
-                                        filteredPlayers.filter(
-                                            (player) =>
-                                                player.participationStatus ===
-                                                true
-                                        ).length
-                                    }
-                                </span>
-                            </div>
-                        )}
                     />
                 </>
             )}

@@ -67,8 +67,13 @@ export default function CreateTournament() {
                             },
                         ]}
                     >
-                        <DatePicker showTime style={{ width: "100%" }} />
+                        <DatePicker
+                            showTime={{ format: "HH:mm" }}
+                            format="YYYY-MM-DD HH:mm"
+                            style={{ width: "100%" }}
+                        />
                     </Form.Item>
+                    ``
                     <Form.Item
                         name="venueId"
                         label="Venue"

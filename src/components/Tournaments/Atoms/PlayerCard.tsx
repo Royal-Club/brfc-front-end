@@ -45,6 +45,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                             alignItems: "center",
                         }}
                     >
+                        {player.playerName}
                         <Space>
                             {player.playingPosition === "GOALKEEPER" && (
                                 <Tooltip title="Goalkeeper">
@@ -55,13 +56,11 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                                     />
                                 </Tooltip>
                             )}
-                            {player.playerName}
+                            <Button
+                                onClick={(e) => e.preventDefault()}
+                                icon={<MoreOutlined />}
+                            />
                         </Space>
-
-                        <Button
-                            onClick={(e) => e.preventDefault()}
-                            icon={<MoreOutlined />}
-                        />
                     </Space>
                 </Dropdown>
             ) : (

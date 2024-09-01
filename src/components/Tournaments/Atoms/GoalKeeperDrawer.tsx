@@ -84,10 +84,10 @@ export default function GoalKeeperDrawer({
                     justifyContent: "center",
                 }}
             >
-                Goalkeeper List
+                Goalkeeper Records
             </Button>
 
-            <Drawer title="Goal Keeper List" onClose={onClose} open={open}>
+            <Drawer title="Goalkeeper Records" onClose={onClose} open={open}>
                 <Input
                     placeholder="Search Player"
                     value={searchText}

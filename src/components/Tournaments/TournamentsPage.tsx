@@ -140,8 +140,8 @@ const TournamentsPage: React.FC = () => {
                     current: currentPage,
                     pageSize,
                     total: 20,
-                    showSizeChanger: true,
-                    pageSizeOptions: ["10", "20", "50"],
+                    // showSizeChanger: true,
+                    // pageSizeOptions: ["10", "20", "50"],
                 }}
                 scroll={{ y: "60vh" }}
                 onChange={handleTableChange}
