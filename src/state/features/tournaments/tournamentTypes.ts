@@ -20,7 +20,10 @@ export interface TournamentPlayerInfoType {
 }
 
 export interface IoTournamentSummaryResType extends BasicResType {
-    content: IoTournamentSingleSummaryType[];
+    content: {
+        tournaments: IoTournamentSingleSummaryType[];
+        totalCount: number;
+    };
 }
 
 export interface NextTournamentResType {

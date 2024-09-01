@@ -67,7 +67,7 @@ const TournamentsPage: React.FC = () => {
             key: "tournamentDate",
             sorter: true,
             render: (date: string) =>
-                new Date(date).toLocaleDateString("en-GB"),
+                date && new Date(date).toLocaleDateString("en-GB"),
         },
         {
             title: "Venue",
@@ -80,19 +80,35 @@ const TournamentsPage: React.FC = () => {
             dataIndex: "activeStatus",
             key: "activeStatus",
             render: (activeStatus: boolean) =>
-                activeStatus ? "Active" : "Inactive",
+                activeStatus ? "Active" : activeStatus ? "InActive" : "",
         },
         {
             title: "Action",
             key: "action",
-            render: (text: any, record: IoTournamentSingleSummaryType) => (
-                <TournamentsActionDropdown
-                    record={record}
-                    onMenuClick={handleMenuClick}
-                />
-            ),
+            render: (text: any, record: IoTournamentSingleSummaryType) =>
+                record?.tournamentDate ? (
+                    <TournamentsActionDropdown
+                        record={record}
+                        onMenuClick={handleMenuClick}
+                    />
+                ) : (
+                    <div style={{ height: "32px" }} />
+                ),
         },
     ];
+
+    const emptyRowPlaceholder = () => {
+        const remainingRows =
+            pageSize - (tournamentSummaries?.content?.tournaments?.length || 0);
+        return Array.from({ length: remainingRows }).map((_, index) => ({
+            id: `empty-${index}`,
+            tournamentName: "",
+            tournamentDate: "",
+            venueName: "",
+            activeStatus: "",
+            action: "",
+        }));
+    };
 
     if (isLoading) {
         return (
@@ -118,6 +134,11 @@ const TournamentsPage: React.FC = () => {
         );
     }
 
+    const dataSource = [
+        ...tournamentSummaries.content.tournaments,
+        ...emptyRowPlaceholder(),
+    ] as IoTournamentSingleSummaryType[];
+
     return (
         <>
             <Header style={{ backgroundColor: "#fff", padding: "0 24px" }}>
@@ -133,15 +154,13 @@ const TournamentsPage: React.FC = () => {
             </Header>
             <Table<IoTournamentSingleSummaryType>
                 columns={columns}
-                dataSource={tournamentSummaries.content}
-                rowKey={(record) => record.id.toString()}
+                dataSource={dataSource}
+                rowKey={(record) => record.id?.toString() || record.id}
                 showSorterTooltip={false}
                 pagination={{
                     current: currentPage,
                     pageSize,
-                    total: 20,
-                    // showSizeChanger: true,
-                    // pageSizeOptions: ["10", "20", "50"],
+                    total: tournamentSummaries?.content?.totalCount,
                 }}
                 scroll={{ y: "60vh" }}
                 onChange={handleTableChange}
