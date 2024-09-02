@@ -58,7 +58,7 @@ const TournamentsPage: React.FC = () => {
     const columns = [
         {
             title: "Tournament Name",
-            dataIndex: "tournamentName",
+            dataIndex: "name",
             key: "tournamentName",
         },
         {
