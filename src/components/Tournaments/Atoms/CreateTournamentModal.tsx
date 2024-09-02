@@ -73,7 +73,6 @@ export default function CreateTournament() {
                             style={{ width: "100%" }}
                         />
                     </Form.Item>
-                    ``
                     <Form.Item
                         name="venueId"
                         label="Venue"
