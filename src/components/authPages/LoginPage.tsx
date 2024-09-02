@@ -2,24 +2,34 @@ import React, { useState } from "react";
 import { Button, Form, Input } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setAccessToken } from "../../state/slices/loginInfoSlice";
+import { setAllData } from "../../state/slices/loginInfoSlice";
+import { useLoginMutation } from "../../state/features/auth/authSlice";
 
 const LoginPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
+    const [login] = useLoginMutation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const onFinish = (values: any) => {
+    const onFinish = async (values: any) => {
         setLoading(true);
-        // Simulate login API call
-        setTimeout(() => {
-            // Normally, you would get the token from the API response
-            const accessToken = "fake-access-token";
-            localStorage.setItem("accessToken", accessToken);
-            dispatch(setAccessToken(accessToken));
+
+        try {
+            const response = await login({
+                email: values.email,
+                password: values.password,
+            }).unwrap();
+            const content = response.content;
+            dispatch(setAllData(content));
+
+            localStorage.setItem("tokenContent", JSON.stringify(content));
+
             setLoading(false);
             navigate("/");
-        }, 1000);
+        } catch (error) {
+            console.log(error);
+            setLoading(false);
+        }
     };
 
     return (
@@ -36,15 +46,24 @@ const LoginPage: React.FC = () => {
                 style={{ maxWidth: 300, width: "100%", height: "100%" }}
             >
                 <Form.Item
-                    name="username"
+                    name="email"
                     rules={[
                         {
                             required: true,
-                            message: "Please input your username!",
+                            message: "Please input your email!",
                         },
                     ]}
                 >
-                    <Input placeholder="Username" />
+                    <Input
+                        placeholder="Enter Email"
+                        prefix={
+                            <i
+                                className="fa fa-envelope"
+                                aria-hidden="true"
+                            ></i>
+                        }
+                        type="email"
+                    />
                 </Form.Item>
                 <Form.Item
                     name="password"

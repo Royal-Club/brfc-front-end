@@ -61,7 +61,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     return (
         <>
             <Layout>
-                {loginInfo?.accessToken && (
+                {loginInfo?.token && (
                     <Header
                         style={{ padding: 0, background: colorBgContainer }}
                     >
@@ -114,14 +114,11 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 >
                     <div>
                         <Routes>
-                            {!loginInfo?.accessToken ? (
+                            {!loginInfo?.token ? (
                                 <>
+                                    <Route path="/" element={<LoginPage />} />
                                     <Route
-                                        path="/login"
-                                        element={<LoginPage />}
-                                    />
-                                    <Route
-                                        path="/signup"
+                                        path="/change-password"
                                         element={<LoginPage />}
                                     />
                                 </>

@@ -4,7 +4,11 @@ import "./App.css";
 import ContentComponent from "./components/Content/ContentComponent";
 import LeftSidebarComponent from "./components/Sidebar/LeftSidebarComponent";
 import { useSelector } from "react-redux";
-import { selectLoginInfo, setAccessToken } from "./state/slices/loginInfoSlice";
+import {
+    selectLoginInfo,
+    setAllData,
+    setToken,
+} from "./state/slices/loginInfoSlice";
 import { useDispatch } from "react-redux";
 
 function App() {
@@ -17,14 +21,10 @@ function App() {
     };
 
     useLayoutEffect(() => {
-        const accessToken = localStorage.getItem("accessToken");
-        if (accessToken) {
-            // const isTokenExpired = checkTokenExpiry(accessToken);
-            // if (!isTokenExpired) {
-            dispatch(setAccessToken(accessToken));
-            // } else {
-            //     localStorage.removeItem("accessToken");
-            // }
+        const tokenContent = localStorage.getItem("tokenContent");
+        if (tokenContent) {
+            const contentData = JSON.parse(tokenContent);
+            dispatch(setAllData(contentData));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dispatch]);
@@ -32,7 +32,7 @@ function App() {
     return (
         <div className="App">
             <Layout>
-                {loginInfo?.accessToken && (
+                {loginInfo?.token && (
                     <LeftSidebarComponent
                         collapsed={collapsed}
                         onToggleCollapse={handleToggleCollapse}

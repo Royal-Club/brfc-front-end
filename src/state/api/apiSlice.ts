@@ -3,15 +3,14 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { RootState } from "../store";
 
-
 // Correcting type definition for `prepareHeaders`
 const baseQuery = fetchBaseQuery({
     baseUrl: "http://localhost:9191",
     // baseUrl: "http://192.168.0.106:8000/api",
     prepareHeaders: (headers, { getState }) => {
         const state = getState() as RootState;
-        const token = state.loginInfo.accessToken;
-        console.log("token ", state);
+        const token = state.loginInfo.token;
+        console.log("baseQuery ", state);
         if (token) {
             headers.set("Authorization", `Bearer ${token}`);
         }
