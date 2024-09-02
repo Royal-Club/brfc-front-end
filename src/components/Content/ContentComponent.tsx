@@ -18,7 +18,7 @@ import {
     Space,
     theme,
 } from "antd";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Players from "../Player/Players";
 import Player from "../Player/Player";
 import TournamentsPage from "../Tournaments/TournamentsPage";
@@ -26,8 +26,12 @@ import TournamentsPage from "../Tournaments/TournamentsPage";
 import Dashboard from "../Dashboard/DashboardComponent";
 import SingleTournament from "../Tournaments/SingleTournament";
 import JoinTournament from "../Tournaments/JoinTournament";
+import LoginPage from "../authPages/LoginPage";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import ContentOutlet from "./ContentOutlet";
 
-const { Header, Sider, Content } = Layout;
+const { Header, Content } = Layout;
 interface ContentComponentProps {
     onToggleCollapse: (value: boolean) => void;
     collapsed: boolean;
@@ -40,7 +44,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     const {
         token: { colorBgContainer },
     } = theme.useToken();
-
+    const loginInfo = useSelector(selectLoginInfo);
     // const { user, logout } = AuthUser();
 
     const items: MenuProps["items"] = [
@@ -57,29 +61,32 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     return (
         <>
             <Layout>
-                <Header style={{ padding: 0, background: colorBgContainer }}>
-                    <Row>
-                        <Col span={22}>
-                            <Flex justify="space-between">
-                                <Button
-                                    type="text"
-                                    icon={
-                                        collapsed ? (
-                                            <MenuUnfoldOutlined />
-                                        ) : (
-                                            <MenuFoldOutlined />
-                                        )
-                                    }
-                                    onClick={() => {
-                                        onToggleCollapse(!collapsed);
-                                    }}
-                                    style={{
-                                        fontSize: "16px",
-                                        width: 64,
-                                        height: 64,
-                                    }}
-                                />
-                                {/* <div>
+                {loginInfo?.accessToken && (
+                    <Header
+                        style={{ padding: 0, background: colorBgContainer }}
+                    >
+                        <Row>
+                            <Col span={22}>
+                                <Flex justify="space-between">
+                                    <Button
+                                        type="text"
+                                        icon={
+                                            collapsed ? (
+                                                <MenuUnfoldOutlined />
+                                            ) : (
+                                                <MenuFoldOutlined />
+                                            )
+                                        }
+                                        onClick={() => {
+                                            onToggleCollapse(!collapsed);
+                                        }}
+                                        style={{
+                                            fontSize: "16px",
+                                            width: 64,
+                                            height: 64,
+                                        }}
+                                    />
+                                    {/* <div>
                   <Dropdown
                     menu={{ items, onClick: handleMenuClick }}
                     trigger={["click"]}
@@ -92,10 +99,11 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                     </a>
                   </Dropdown>
                 </div> */}
-                            </Flex>
-                        </Col>
-                    </Row>
-                </Header>
+                                </Flex>
+                            </Col>
+                        </Row>
+                    </Header>
+                )}
                 <Content
                     style={{
                         margin: "24px 16px",
@@ -106,22 +114,46 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 >
                     <div>
                         <Routes>
-                            <Route path="/" element={<Dashboard />} />
-                            <Route path="player" element={<Player />} />
-                            <Route path="players/:id" element={<Player />} />
-                            <Route path="players" element={<Players />} />
-                            <Route
-                                path="tournaments"
-                                element={<TournamentsPage />}
-                            />
-                            <Route
-                                path="tournaments/team-building/:id"
-                                element={<SingleTournament />}
-                            />
-                            <Route
-                                path="tournaments/join-tournament/:id"
-                                element={<JoinTournament />}
-                            />
+                            {!loginInfo?.accessToken ? (
+                                <>
+                                    <Route
+                                        path="/login"
+                                        element={<LoginPage />}
+                                    />
+                                    <Route
+                                        path="/signup"
+                                        element={<LoginPage />}
+                                    />
+                                </>
+                            ) : (
+                                <Route path="/" element={<ContentOutlet />}>
+                                    <Route index element={<Dashboard />} />
+                                    <Route
+                                        path="/player"
+                                        element={<Player />}
+                                    />
+                                    <Route
+                                        path="/players/:id"
+                                        element={<Player />}
+                                    />
+                                    <Route
+                                        path="/players"
+                                        element={<Players />}
+                                    />
+                                    <Route
+                                        path="/tournaments"
+                                        element={<TournamentsPage />}
+                                    />
+                                    <Route
+                                        path="/tournaments/team-building/:id"
+                                        element={<SingleTournament />}
+                                    />
+                                    <Route
+                                        path="/tournaments/join-tournament/:id"
+                                        element={<JoinTournament />}
+                                    />
+                                </Route>
+                            )}
                         </Routes>
                     </div>
                 </Content>

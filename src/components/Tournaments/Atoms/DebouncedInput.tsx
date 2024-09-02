@@ -11,7 +11,7 @@ interface DebouncedInputProps {
 
 const DebouncedInput: React.FC<DebouncedInputProps> = ({
     placeholder = "Enter text...",
-    debounceDuration = 300,
+    debounceDuration = 500,
     onChange,
     value: controlledValue, // Use controlledValue to differentiate from internal state
 }) => {
