@@ -1,0 +1,46 @@
+.team-container {
+}
+.team-card-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 450px;
+    overflow-x: scroll;
+    padding: 16px 10px;
+    gap: 10px;
+}
+
+/* Webkit-based browsers (Chrome, Safari) */
+.team-card-container::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.team-card-container::-webkit-scrollbar-track {
+    background: #e7e7e7;
+}
+
+.team-card-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 20px;
+}
+
+.team-card-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* table  */
+.ant-table-wrapper {
+    min-height: 600px;
+}
+
+.SingleTournament-container .bottom-card {
+    display: flex;
+}
+.SingleTournament-container .players-container {
+    flex: 1;
+}
+
+.SingleTournament-container .goalkeepers-container {
+    width: 300px;
+}
