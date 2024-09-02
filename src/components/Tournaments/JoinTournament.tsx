@@ -6,6 +6,7 @@ import { TournamentPlayerInfoType } from "../../state/features/tournaments/tourn
 import DebouncedInput from "./Atoms/DebouncedInput";
 import "./tournament.css";
 import { RightSquareOutlined } from "@ant-design/icons";
+import { showBdLocalTime } from "./../../utils/utils"
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -140,9 +141,7 @@ export default function JoinTournament() {
                                     style={{ margin: 0 }}
                                 >
                                     <RightSquareOutlined />{" "}
-                                    {new Date(
-                                        nextTournament?.tournamentDate || ""
-                                    ).toLocaleString("en-US")}
+                                    {nextTournament?.tournamentDate && showBdLocalTime(nextTournament?.tournamentDate)}
                                 </Title>
 
                                 <Title

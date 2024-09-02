@@ -80,7 +80,7 @@ const TournamentsPage: React.FC = () => {
             dataIndex: "activeStatus",
             key: "activeStatus",
             render: (activeStatus: boolean) =>
-                activeStatus ? "Active" : activeStatus ? "InActive" : "",
+                activeStatus === true ? "Active" :  activeStatus === false ?"InActive" : ""
         },
         {
             title: "Action",
