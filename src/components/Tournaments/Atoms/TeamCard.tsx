@@ -114,10 +114,12 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                 <Draggable
                                     key={player.playerId.toString()}
                                     draggableId={
-                                        player.id
-                                            ? player.playerId.toString() +
+                                        player.id && player?.teamId
+                                            ? player?.playerId.toString() +
                                               "-" +
-                                              player.id.toString()
+                                              player?.id.toString() +
+                                              "-" +
+                                              player?.teamId.toString()
                                             : player.playerId.toString()
                                     }
                                     index={index}

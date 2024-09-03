@@ -2,7 +2,7 @@ import { BasicResType } from "../../responesTypes";
 
 export interface IoTournamentSingleSummaryType {
     id: number;
-    name : string;
+    name: string;
     tournamentDate: string;
     venueName: string;
     activeStatus: boolean;

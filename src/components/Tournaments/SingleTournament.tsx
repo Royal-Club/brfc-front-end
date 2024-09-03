@@ -21,7 +21,6 @@ function SingleTournament() {
     const tournamentId = Number(id);
 
     const {
-        isLoading,
         teams,
         players,
         handleAddPlayerToTeam,
@@ -54,7 +53,8 @@ function SingleTournament() {
                       "",
                       Number(destinationTeamId),
                       draggedPlayerId,
-                      Number(dragId[1])
+                      Number(dragId[1]),
+                      Number(dragId[2])
                   )
                 : handleAddPlayerToTeam(
                       "",
@@ -84,7 +84,7 @@ function SingleTournament() {
                         {teams.length > 0 ? (
                             teams.map((team) => (
                                 <TeamCard
-                                    isLoading={isLoading}
+                                    isLoading={false}
                                     key={team.teamId}
                                     team={team}
                                     handleRemovePlayer={handleRemovePlayer}
@@ -125,15 +125,7 @@ function SingleTournament() {
                                         gap: "8px",
                                     }}
                                 >
-                                    {isLoading ? (
-                                        players.map((_, index) => (
-                                            <Skeleton.Button
-                                                key={index}
-                                                block
-                                                active={true}
-                                            />
-                                        ))
-                                    ) : players.length > 0 ? (
+                                    {players.length > 0 ? (
                                         players.map((player, index) => (
                                             <Draggable
                                                 key={player.playerId.toString()}
