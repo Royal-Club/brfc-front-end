@@ -80,7 +80,11 @@ const TournamentsPage: React.FC = () => {
             dataIndex: "activeStatus",
             key: "activeStatus",
             render: (activeStatus: boolean) =>
-                activeStatus === true ? "Active" :  activeStatus === false ?"InActive" : ""
+                activeStatus === true
+                    ? "Active"
+                    : activeStatus === false
+                    ? "InActive"
+                    : "",
         },
         {
             title: "Action",
@@ -157,12 +161,13 @@ const TournamentsPage: React.FC = () => {
                 dataSource={dataSource}
                 rowKey={(record) => record.id?.toString() || record.id}
                 showSorterTooltip={false}
+                bordered
                 pagination={{
                     current: currentPage,
                     pageSize,
                     total: tournamentSummaries?.content?.totalCount,
                 }}
-                scroll={{ y: "60vh" }}
+                scroll={{ y: "63vh" }}
                 onChange={handleTableChange}
             />
         </>

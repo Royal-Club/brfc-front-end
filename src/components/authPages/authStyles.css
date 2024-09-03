@@ -1,0 +1,23 @@
+.userProfileContainer {
+    min-height: 84vh;
+}
+
+.userProfileContainer .ant-card {
+    text-align: center;
+    height: 100%;
+}
+
+.userProfileContainer .hrStyle {
+    margin: 10px 0 10px 0;
+    height: 1px;
+    background-color: #e8e8e8;
+    border: none;
+}
+
+.userProfileContainer .radarDataStyle {
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}

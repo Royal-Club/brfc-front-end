@@ -9,10 +9,13 @@ import {
     TrophyOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import { Layout, Menu } from "antd";
+import { Layout, Menu, Typography } from "antd";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import companyLogo from "./../../assets/logo.png";
+
 const { Header, Content, Sider } = Layout;
+const { Title } = Typography;
 type MenuItem = Required<MenuProps>["items"][number];
 function getItem(
     label: React.ReactNode,
@@ -115,7 +118,17 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
                 collapsed={collapsed}
             >
                 <div className="demo-logo-vertical">
-                    {/* <img src={companyLogo} alt="" /> */}
+                    <img src={companyLogo} alt="" />
+                    <Title
+                        level={2}
+                        style={{
+                            margin: collapsed ? "0px" : "0 10px",
+                            fontSize: collapsed ? "0px" : "32px",
+                            transition: "all 0.3s ease",
+                        }}
+                    >
+                        BRFC
+                    </Title>
                 </div>
                 <Menu
                     onClick={onClick}

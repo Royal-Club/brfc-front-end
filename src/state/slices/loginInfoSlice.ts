@@ -6,6 +6,7 @@ interface LoginInfoState {
     username: string;
     email: string;
     userId: string;
+    image?: string;
     roles: string[];
 }
 
@@ -14,6 +15,7 @@ const initialState: LoginInfoState = {
     username: "",
     email: "",
     userId: "",
+    image: "",
     roles: [""],
 };
 
@@ -27,6 +29,7 @@ export const loginInfoSlice = createSlice({
             state.email = action.payload.email;
             state.userId = action.payload.userId;
             state.roles = action.payload.roles;
+            state.image = action.payload.image;
         },
         setToken: (state, action: PayloadAction<string>) => {
             state.token = action.payload;
@@ -43,6 +46,9 @@ export const loginInfoSlice = createSlice({
         setRoles: (state, action: PayloadAction<string[]>) => {
             state.roles = action.payload;
         },
+        setImage: (state, action: PayloadAction<string>) => {
+            state.image = action.payload;
+        },
         removeUser: (state) => {
             return {
                 ...state,
@@ -51,6 +57,7 @@ export const loginInfoSlice = createSlice({
                 email: "",
                 userId: "",
                 roles: [""],
+                image: "",
             };
         },
     },
@@ -63,6 +70,7 @@ export const {
     setEmail,
     setUserId,
     setRoles,
+    setImage,
     removeUser,
 } = loginInfoSlice.actions;
 export default loginInfoSlice.reducer;
@@ -73,3 +81,4 @@ export const selectUserName = (state: RootState) => state.loginInfo.username;
 export const selectUserEmail = (state: RootState) => state.loginInfo.email;
 export const selectUserId = (state: RootState) => state.loginInfo.userId;
 export const selectUserRoles = (state: RootState) => state.loginInfo.roles;
+export const selectUserImage = (state: RootState) => state.loginInfo.image;

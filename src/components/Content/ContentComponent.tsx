@@ -1,37 +1,34 @@
-//create-team to create a new team
-//tournament-summery to see all the tournaments teams, players a - localhost:9191/tournaments/details?tournamentId=1
-// players-add-to-team- to drag and drop players to teams
-
 import {
     DownOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
 } from "@ant-design/icons";
 import {
+    Avatar,
     Button,
     Col,
     Dropdown,
-    Flex,
     Layout,
-    MenuProps,
+    Menu,
     Row,
     Space,
     theme,
 } from "antd";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes, useNavigate } from "react-router-dom";
 import Players from "../Player/Players";
 import Player from "../Player/Player";
 import TournamentsPage from "../Tournaments/TournamentsPage";
-
 import Dashboard from "../Dashboard/DashboardComponent";
 import SingleTournament from "../Tournaments/SingleTournament";
 import JoinTournament from "../Tournaments/JoinTournament";
 import LoginPage from "../authPages/LoginPage";
-import { useSelector } from "react-redux";
-import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import ContentOutlet from "./ContentOutlet";
+import { useAuthHook } from "../../hooks/useAuthHook";
+import { ProtectedRoute } from "./ProtectedRoute";
+import UserProfile from "../authPages/UserProfile";
 
 const { Header, Content } = Layout;
+
 interface ContentComponentProps {
     onToggleCollapse: (value: boolean) => void;
     collapsed: boolean;
@@ -44,115 +41,155 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     const {
         token: { colorBgContainer },
     } = theme.useToken();
-    const loginInfo = useSelector(selectLoginInfo);
-    // const { user, logout } = AuthUser();
 
-    const items: MenuProps["items"] = [
+    const { user, logout } = useAuthHook();
+    const navigate = useNavigate();
+
+    const items = [
+        {
+            label: "profile",
+            key: "1",
+            onClick: () => {
+                navigate("/profile");
+            },
+        },
         {
             label: "Logout",
             key: "3",
+            onClick: () => logout(),
         },
     ];
-
-    // const handleMenuClick: MenuProps["onClick"] = (e) => {
-    //   logout();
-    // };
 
     return (
         <>
             <Layout>
-                {loginInfo?.token && (
+                {user?.token && (
                     <Header
                         style={{ padding: 0, background: colorBgContainer }}
                     >
-                        <Row>
-                            <Col span={22}>
-                                <Flex justify="space-between">
-                                    <Button
-                                        type="text"
-                                        icon={
-                                            collapsed ? (
-                                                <MenuUnfoldOutlined />
-                                            ) : (
-                                                <MenuFoldOutlined />
-                                            )
-                                        }
-                                        onClick={() => {
-                                            onToggleCollapse(!collapsed);
-                                        }}
-                                        style={{
-                                            fontSize: "16px",
-                                            width: 64,
-                                            height: 64,
-                                        }}
-                                    />
-                                    {/* <div>
-                  <Dropdown
-                    menu={{ items, onClick: handleMenuClick }}
-                    trigger={["click"]}
-                  >
-                    <a onClick={(e) => e.preventDefault()}>
-                      <Space>
-                        {user?.name}
-                        <DownOutlined />
-                      </Space>
-                    </a>
-                  </Dropdown>
-                </div> */}
-                                </Flex>
+                        <Row justify="space-between" align="middle">
+                            <Col>
+                                <Button
+                                    type="text"
+                                    icon={
+                                        collapsed ? (
+                                            <MenuUnfoldOutlined />
+                                        ) : (
+                                            <MenuFoldOutlined />
+                                        )
+                                    }
+                                    onClick={() => {
+                                        onToggleCollapse(!collapsed);
+                                    }}
+                                    style={{
+                                        fontSize: "16px",
+                                        width: 64,
+                                        height: 64,
+                                    }}
+                                />
+                            </Col>
+                            <Col
+                                style={{
+                                    textAlign: "right",
+                                    paddingRight: 32,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                {user.token && (
+                                    <Dropdown
+                                        overlay={<Menu items={items} />}
+                                        trigger={["click"]}
+                                    >
+                                        <Space>
+                                            <Avatar
+                                                src={user?.image}
+                                                alt={user.username}
+                                            />
+                                            {user.username}
+                                        </Space>
+                                    </Dropdown>
+                                )}
                             </Col>
                         </Row>
                     </Header>
                 )}
                 <Content
                     style={{
-                        margin: "24px 16px",
-                        padding: 24,
                         minHeight: 360,
                         background: colorBgContainer,
                     }}
                 >
-                    <div>
-                        <Routes>
-                            {!loginInfo?.token ? (
-                                <>
-                                    <Route path="/" element={<LoginPage />} />
-                                    <Route
-                                        path="/change-password"
-                                        element={<LoginPage />}
-                                    />
-                                </>
-                            ) : (
-                                <Route path="/" element={<ContentOutlet />}>
-                                    <Route index element={<Dashboard />} />
-                                    <Route
-                                        path="/player"
-                                        element={<Player />}
-                                    />
-                                    <Route
-                                        path="/players/:id"
-                                        element={<Player />}
-                                    />
-                                    <Route
-                                        path="/players"
-                                        element={<Players />}
-                                    />
-                                    <Route
-                                        path="/tournaments"
-                                        element={<TournamentsPage />}
-                                    />
-                                    <Route
-                                        path="/tournaments/team-building/:id"
-                                        element={<SingleTournament />}
-                                    />
-                                    <Route
-                                        path="/tournaments/join-tournament/:id"
-                                        element={<JoinTournament />}
-                                    />
-                                </Route>
-                            )}
-                        </Routes>
-                    </div>
+                    <Routes>
+                        {!user?.token ? (
+                            <>
+                                <Route path="/" element={<LoginPage />} />
+                                <Route
+                                    path="/change-password"
+                                    element={<LoginPage />}
+                                />
+                            </>
+                        ) : (
+                            <Route path="/" element={<ContentOutlet />}>
+                                <Route index element={<Dashboard />} />
+                                <Route
+                                    path="/profile"
+                                    element={
+                                        <ProtectedRoute>
+                                            <UserProfile />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/player"
+                                    element={
+                                        <ProtectedRoute>
+                                            <Player />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/players/:id"
+                                    element={
+                                        <ProtectedRoute>
+                                            <Player />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/players"
+                                    element={
+                                        <ProtectedRoute>
+                                            <Players />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/tournaments"
+                                    element={
+                                        <ProtectedRoute>
+                                            <TournamentsPage />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/tournaments/team-building/:id"
+                                    element={
+                                        <ProtectedRoute>
+                                            <SingleTournament />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                <Route
+                                    path="/tournaments/join-tournament/:id"
+                                    element={
+                                        <ProtectedRoute>
+                                            <JoinTournament />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                            </Route>
+                        )}
+                    </Routes>
                 </Content>
             </Layout>
         </>

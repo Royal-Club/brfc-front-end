@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Button, Form, Input } from "antd";
+import { Button, Form, Input, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setAllData } from "../../state/slices/loginInfoSlice";
+import { setAllData, setImage } from "../../state/slices/loginInfoSlice";
 import { useLoginMutation } from "../../state/features/auth/authSlice";
+import colors from "../../utils/colors";
 
 const LoginPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
@@ -21,13 +22,18 @@ const LoginPage: React.FC = () => {
             }).unwrap();
             const content = response.content;
             dispatch(setAllData(content));
+            dispatch(
+                setImage(
+                    "https://giftolexia.com/wp-content/uploads/2015/11/dummy-profile.png"
+                )
+            );
 
             localStorage.setItem("tokenContent", JSON.stringify(content));
 
             setLoading(false);
             navigate("/");
-        } catch (error) {
-            console.log(error);
+        } catch (error: any) {
+            message.error(error.data.message);
             setLoading(false);
         }
     };
@@ -38,13 +44,29 @@ const LoginPage: React.FC = () => {
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                minHeight: "89vh",
+                minHeight: "100vh",
             }}
+            className="svg_background"
         >
             <Form
                 onFinish={onFinish}
-                style={{ maxWidth: 300, width: "100%", height: "100%" }}
+                style={{
+                    maxWidth: 400,
+                    width: "100%",
+                    padding: "32px 24px",
+                    borderRadius: "8px",
+                    backgroundColor: colors.white,
+                    boxShadow: "0px 0px 15px rgba(0, 0, 0, 0.1)",
+                }}
             >
+                <div style={{ textAlign: "center", marginBottom: 32 }}>
+                    <img
+                        style={{ maxWidth: "250px" }}
+                        src={require("../../assets/logo.png")}
+                        alt="royal club football logo"
+                    />
+                </div>
+
                 <Form.Item
                     name="email"
                     rules={[
@@ -60,9 +82,16 @@ const LoginPage: React.FC = () => {
                             <i
                                 className="fa fa-envelope"
                                 aria-hidden="true"
+                                style={{ color: colors.grayMedium }}
                             ></i>
                         }
                         type="email"
+                        style={{
+                            color: colors.textPrimary,
+                            borderColor: colors.grayLight,
+                            borderRadius: "4px",
+                            padding: "10px 12px",
+                        }}
                     />
                 </Form.Item>
                 <Form.Item
@@ -74,7 +103,15 @@ const LoginPage: React.FC = () => {
                         },
                     ]}
                 >
-                    <Input.Password placeholder="Password" />
+                    <Input.Password
+                        placeholder="Password"
+                        style={{
+                            color: colors.textPrimary,
+                            borderColor: colors.grayLight,
+                            borderRadius: "4px",
+                            padding: "10px 12px",
+                        }}
+                    />
                 </Form.Item>
                 <Form.Item>
                     <Button
@@ -82,6 +119,10 @@ const LoginPage: React.FC = () => {
                         htmlType="submit"
                         loading={loading}
                         block
+                        style={{
+                            backgroundColor: colors.primary,
+                            borderColor: colors.primary,
+                        }}
                     >
                         Log in
                     </Button>

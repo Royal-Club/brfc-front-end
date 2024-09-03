@@ -6,7 +6,7 @@ import { TournamentPlayerInfoType } from "../../state/features/tournaments/tourn
 import DebouncedInput from "./Atoms/DebouncedInput";
 import "./tournament.css";
 import { RightSquareOutlined } from "@ant-design/icons";
-import { showBdLocalTime } from "./../../utils/utils"
+import { showBdLocalTime } from "./../../utils/utils";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -104,9 +104,9 @@ export default function JoinTournament() {
     ];
 
     return (
-        <Space direction="vertical">
+        <Space direction="vertical" style={{ padding: "0 0 10px 0" }}>
             {isLoading ? (
-                <Skeleton active paragraph={{ rows: 8 }} />
+                <Skeleton active paragraph={{ rows: 13 }} />
             ) : (
                 <>
                     <Space
@@ -141,7 +141,10 @@ export default function JoinTournament() {
                                     style={{ margin: 0 }}
                                 >
                                     <RightSquareOutlined />{" "}
-                                    {nextTournament?.tournamentDate && showBdLocalTime(nextTournament?.tournamentDate)}
+                                    {nextTournament?.tournamentDate &&
+                                        showBdLocalTime(
+                                            nextTournament?.tournamentDate
+                                        )}
                                 </Title>
 
                                 <Title
@@ -173,7 +176,7 @@ export default function JoinTournament() {
                             placeholder="Search players"
                             onSearch={(value) => setSearchTerm(value)}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ width: 200 }}
+                            style={{ width: 300 }}
                         />
                     </Space>
 
@@ -184,7 +187,7 @@ export default function JoinTournament() {
                         pagination={false}
                         bordered
                         size="small"
-                        scroll={{ y: 600 }}
+                        scroll={{ y: 630 }}
                     />
                 </>
             )}

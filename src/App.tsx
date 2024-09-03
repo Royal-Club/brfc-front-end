@@ -3,18 +3,12 @@ import { useLayoutEffect, useState } from "react";
 import "./App.css";
 import ContentComponent from "./components/Content/ContentComponent";
 import LeftSidebarComponent from "./components/Sidebar/LeftSidebarComponent";
-import { useSelector } from "react-redux";
-import {
-    selectLoginInfo,
-    setAllData,
-    setToken,
-} from "./state/slices/loginInfoSlice";
-import { useDispatch } from "react-redux";
+import { useAuthHook } from "./hooks/useAuthHook";
+import { checkTockenValidity } from "./utils/utils";
 
 function App() {
     const [collapsed, setCollapsed] = useState(false);
-    const dispatch = useDispatch();
-    const loginInfo = useSelector(selectLoginInfo);
+    const { login, user } = useAuthHook();
 
     const handleToggleCollapse = (value: boolean) => {
         setCollapsed(value);
@@ -22,28 +16,24 @@ function App() {
 
     useLayoutEffect(() => {
         const tokenContent = localStorage.getItem("tokenContent");
-        if (tokenContent) {
-            const contentData = JSON.parse(tokenContent);
-            dispatch(setAllData(contentData));
+        if (tokenContent && checkTockenValidity(tokenContent)) {
+            login(tokenContent);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatch]);
+    }, []);
 
     return (
-        <div className="App">
-            <Layout>
-                {loginInfo?.token && (
-                    <LeftSidebarComponent
-                        collapsed={collapsed}
-                        onToggleCollapse={handleToggleCollapse}
-                    />
-                )}
-                <ContentComponent
+        <Layout>
+            {user?.token && (
+                <LeftSidebarComponent
                     collapsed={collapsed}
                     onToggleCollapse={handleToggleCollapse}
                 />
-            </Layout>
-        </div>
+            )}
+            <ContentComponent
+                collapsed={collapsed}
+                onToggleCollapse={handleToggleCollapse}
+            />
+        </Layout>
     );
 }
 
