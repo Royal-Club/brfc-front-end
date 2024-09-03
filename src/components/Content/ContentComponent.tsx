@@ -26,6 +26,9 @@ import TournamentsPage from "../Tournaments/TournamentsPage";
 import Dashboard from "../Dashboard/DashboardComponent";
 import SingleTournament from "../Tournaments/SingleTournament";
 import JoinTournament from "../Tournaments/JoinTournament";
+import Venue from "../Venue/Venue";
+import AcVoucherType from "../Account/Configuration/AcVoucherType";
+import AcNature from "../Account/Configuration/AcNature";
 
 const { Header, Sider, Content } = Layout;
 interface ContentComponentProps {
@@ -110,6 +113,9 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             <Route path="player" element={<Player />} />
                             <Route path="players/:id" element={<Player />} />
                             <Route path="players" element={<Players />} />
+                            <Route path="venues" element={<Venue />} />
+                            <Route path="ac/voucher-types" element={<AcVoucherType />} />
+                            <Route path="/ac/natures" element={<AcNature />} />
                             <Route
                                 path="tournaments"
                                 element={<TournamentsPage />}
