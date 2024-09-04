@@ -1,4 +1,4 @@
-import { Button, Drawer, Input, Table } from "antd";
+import { Button, Drawer, Input, Table, Row, Col } from "antd";
 import React, { useState, useMemo, Key } from "react";
 import { useGetTournamentGoalKeeperListQuery } from "../../../state/features/tournaments/tournamentsSlice";
 
@@ -87,21 +87,32 @@ export default function GoalKeeperDrawer({
                 Goalkeeper Records
             </Button>
 
-            <Drawer title="Goalkeeper Records" onClose={onClose} open={open}>
+            <Drawer
+                title="Goalkeeper Records"
+                onClose={onClose}
+                open={open}
+                placement="bottom"
+                height="90vh"
+                style={{ top: "auto" }}
+            >
                 <Input
                     placeholder="Search Player"
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
-                    style={{ marginBottom: 16 }}
                 />
-                <Table
-                    columns={columns}
-                    dataSource={dataSource}
-                    pagination={false}
-                    rowKey="key"
-                    scroll={{ y: "75vh" }}
-                    showSorterTooltip={false}
-                />
+                <Row gutter={[16, 16]}>
+                    <Col span={4}>
+                        <h2>Round 1</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "80vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </Col>
+                </Row>
             </Drawer>
         </>
     );
