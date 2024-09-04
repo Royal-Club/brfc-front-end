@@ -1,5 +1,5 @@
 import { Button, Drawer, Input, Table, Row, Col } from "antd";
-import React, { useState, useMemo, Key } from "react";
+import React, { useState, useMemo, useRef, useEffect, Key } from "react";
 import { useGetTournamentGoalKeeperListQuery } from "../../../state/features/tournaments/tournamentsSlice";
 
 export default function GoalKeeperDrawer({
@@ -15,6 +15,7 @@ export default function GoalKeeperDrawer({
     });
     const [open, setOpen] = useState(false);
     const [searchText, setSearchText] = useState("");
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     const showDrawer = () => {
         refetchTournamentGoalKeeperList();
@@ -24,6 +25,12 @@ export default function GoalKeeperDrawer({
     const onClose = () => {
         setOpen(false);
     };
+
+    useEffect(() => {
+        if (open && scrollRef.current) {
+            scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+        }
+    }, [open]);
 
     interface ColumnProps {
         title: string;
@@ -92,7 +99,7 @@ export default function GoalKeeperDrawer({
                 onClose={onClose}
                 open={open}
                 placement="bottom"
-                height="90vh"
+                height="95vh"
                 style={{ top: "auto" }}
             >
                 <Input
@@ -100,19 +107,167 @@ export default function GoalKeeperDrawer({
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                 />
-                <Row gutter={[16, 16]}>
-                    <Col span={4}>
+                <div
+                    style={{
+                        overflowX: "auto",
+                        whiteSpace: "nowrap",
+                        paddingBottom: 16,
+                        display: "flex",
+                        gap: 16,
+                    }}
+                    ref={scrollRef}
+                >
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
                         <h2>Round 1</h2>
                         <Table
                             columns={columns}
                             dataSource={dataSource}
                             pagination={false}
                             rowKey="key"
-                            scroll={{ y: "80vh" }}
+                            scroll={{ y: "62vh" }}
                             showSorterTooltip={false}
                         />
-                    </Col>
-                </Row>
+                    </div>
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
+                        <h2>Round 2</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "62vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
+                        <h2>Round 3</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "62vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>{" "}
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
+                        <h2>Round 3</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "60vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>{" "}
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
+                        <h2>Round 3</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "60vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>{" "}
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
+                        <h2>Round 3</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "60vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>{" "}
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
+                        <h2>Round 3</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "60vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>{" "}
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
+                        <h2>Round 3</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "60vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>{" "}
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
+                        <h2>Round 3</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "60vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>{" "}
+                    <div
+                        style={{
+                            minWidth: "350px",
+                        }}
+                    >
+                        <h2>Round 3</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "60vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>
+                </div>
             </Drawer>
         </>
     );
