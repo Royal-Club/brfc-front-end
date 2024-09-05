@@ -2,10 +2,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { RootState } from "../store";
+import { API_URL } from "../../settings";
 
 // Correcting type definition for `prepareHeaders`
 const baseQuery = fetchBaseQuery({
-    baseUrl: "http://localhost:9191",
+    baseUrl: API_URL,
     // baseUrl: "http://192.168.0.106:8000/api",
     prepareHeaders: (headers, { getState }) => {
         const state = getState() as RootState;

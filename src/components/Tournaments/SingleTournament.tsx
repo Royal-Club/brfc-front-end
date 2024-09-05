@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
     DragDropContext,
     Draggable,
@@ -13,12 +13,15 @@ import CreateTeamComponent from "./Atoms/CreateTeamComponent";
 import PlayerCard from "./Atoms/PlayerCard";
 import TeamCard from "./Atoms/TeamCard";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 
 const { Text } = Typography;
 
 function SingleTournament() {
     const { id = "" } = useParams();
     const tournamentId = Number(id);
+    const loginInfo = useSelector(selectLoginInfo);
 
     const {
         teams,
@@ -28,7 +31,13 @@ function SingleTournament() {
         handleRenameTeam,
         handleRemoveTeam,
         refetchTournament,
+        refetchPlayer,
     } = useTournamentTeams(tournamentId);
+
+    useEffect(() => {
+        refetchTournament();
+        refetchPlayer();
+    }, []);
 
     const onDragEnd = (result: DropResult) => {
         const { source, destination, draggableId } = result;
@@ -71,11 +80,13 @@ function SingleTournament() {
             style={{ width: "100%", minHeight: "80vh" }}
         >
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <CreateTeamComponent
-                    tournamentId={tournamentId}
-                    existingTeams={teams.map((team) => team.teamName)}
-                    refetchSummary={refetchTournament}
-                />
+                {loginInfo.roles.includes("ADMIN") && (
+                    <CreateTeamComponent
+                        tournamentId={tournamentId}
+                        existingTeams={teams.map((team) => team.teamName)}
+                        refetchSummary={refetchTournament}
+                    />
+                )}
                 <GoalKeeperDrawer tournamentId={tournamentId} />
             </div>
             <div className="team-container">

@@ -122,7 +122,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
                     <Title
                         level={2}
                         style={{
-                            margin: collapsed ? "0px" : "0 10px",
+                            margin: collapsed ? "0px" : "0 80px 0 10px",
                             fontSize: collapsed ? "0px" : "32px",
                             transition: "all 0.3s ease",
                         }}

@@ -5,11 +5,14 @@ import { IoTournamentSingleSummaryType } from "../../state/features/tournaments/
 import TournamentsActionDropdown from "./Atoms/TournamentsActionDropdown";
 import { useNavigate } from "react-router-dom";
 import CreateTournament from "./Atoms/CreateTournamentModal";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 
 const { Header } = Layout;
 const { Title } = Typography;
 
 const TournamentsPage: React.FC = () => {
+    const loginInfo = useSelector(selectLoginInfo);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [sorter, setSorter] = useState<{
@@ -153,7 +156,7 @@ const TournamentsPage: React.FC = () => {
                     <Title level={2} style={{ margin: 0 }}>
                         Tournaments
                     </Title>
-                    <CreateTournament />
+                    {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
                 </Space>
             </Header>
             <Table<IoTournamentSingleSummaryType>

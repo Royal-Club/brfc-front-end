@@ -14,6 +14,8 @@ import PlayerCard from "./PlayerCard";
 import { Team } from "../tournamentTypes";
 import { MoreOutlined } from "@ant-design/icons";
 import DoubleClickTextInputField from "../../CommonAtoms/DoubleClickTextInputField";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 
 interface TeamCardProps {
     team: Team;
@@ -37,6 +39,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
     handleRemoveTeam,
     handleAddPlayerToTeam,
 }) => {
+    const loginInfo = useSelector(selectLoginInfo);
     const handleRenameTeamClick = (newName: string) => {
         handleRenameTeam(team.teamId, newName);
     };
@@ -62,7 +65,10 @@ const TeamCard: React.FC<TeamCardProps> = ({
     );
 
     return (
-        <Droppable droppableId={team.teamId.toString()}>
+        <Droppable
+            droppableId={team.teamId.toString()}
+            isDropDisabled={!loginInfo.roles.includes("ADMIN")}
+        >
             {(provided) => (
                 <Card
                     hoverable
