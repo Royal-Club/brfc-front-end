@@ -32,8 +32,9 @@ export default function CreateTeamComponent({
 
     return (
         <Button
+            type="primary"
             onClick={handleCreateTeam}
-            loading={isCreating}
+            disabled={isCreating}
             style={{
                 display: "flex",
                 alignItems: "center",

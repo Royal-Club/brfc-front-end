@@ -75,14 +75,6 @@ const items: MenuProps["items"] = [
     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
         getItem("Venue List", "/venues"),
     ]),
-    getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [
-        getItem("Mach Schedule", "/venue"),
-        getItem("Mach Schedule List", "/venues"),
-    ]),
-    getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
-        getItem("Match Participant", "/match-participant"),
-        getItem("Match List", "/matches"),
-    ]),
     getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
         getItem("Tourtnaments", "/tournaments"),
     ]),

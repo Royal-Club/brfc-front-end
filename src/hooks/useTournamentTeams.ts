@@ -276,6 +276,7 @@ const useTournamentTeams = (tournamentId: number) => {
         teams,
         players,
         isLoading,
+        tournamentSummary,
         refetchTournament,
         refetchPlayer,
         handleAddPlayerToTeam,

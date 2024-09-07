@@ -5,6 +5,7 @@ import "./pickerWheelModal.css";
 import { CheckOutlined, DeleteOutlined } from "@ant-design/icons";
 
 import LogoImage from "../../../../assets/logo.png";
+import colors from "../../../../utils/colors";
 
 const PickerWheelModal = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -87,11 +88,11 @@ const PickerWheelModal = () => {
                     justifyContent: "center",
                 }}
             >
-                Picker Wheel
+                lottery
             </Button>
 
             <Modal
-                title="Picker Wheel"
+                title="lottery"
                 visible={isModalVisible}
                 onCancel={handleCancel}
                 footer={null}
@@ -177,6 +178,11 @@ const PickerWheelModal = () => {
                                 style={{
                                     maxHeight: "450px",
                                     overflowY: "auto",
+                                    height: "100%",
+                                    backgroundColor:
+                                        segments.length > 0
+                                            ? ""
+                                            : colors.background,
                                 }}
                             />
                         </Space>

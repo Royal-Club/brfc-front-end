@@ -49,6 +49,7 @@ export interface TournamentSummeryResType {
         {
             id: number;
             tournamentName: string;
+            name?: string;
             tournamentDate: string;
             venueName: string;
             activeStatus: boolean;
