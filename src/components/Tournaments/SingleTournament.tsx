@@ -15,6 +15,7 @@ import TeamCard from "./Atoms/TeamCard";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import PickerWheelModal from "./Atoms/pickerWheel/PickerWheelModal";
 
 const { Text } = Typography;
 
@@ -87,7 +88,15 @@ function SingleTournament() {
                         refetchSummary={refetchTournament}
                     />
                 )}
-                <GoalKeeperDrawer tournamentId={tournamentId} />
+                <Space
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                    }}
+                >
+                    <PickerWheelModal />
+                    <GoalKeeperDrawer tournamentId={tournamentId} />
+                </Space>
             </div>
             <div className="team-container">
                 <DragDropContext onDragEnd={onDragEnd}>

@@ -1,0 +1,17 @@
+.square-radio .ant-radio-inner {
+    width: 16px;
+    height: 16px;
+    border-radius: 0;
+}
+
+.square-radio .ant-radio-checked .ant-radio-inner {
+    background-color: #1890ff;
+    border-color: #1890ff;
+}
+
+.square-radio .ant-radio-checked .ant-radio-inner::after {
+    top: 25%;
+    left: 25%;
+    width: 50%;
+    height: 50%;
+}
