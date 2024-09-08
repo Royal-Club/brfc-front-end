@@ -21,6 +21,11 @@ import TournamentsPage from "../Tournaments/TournamentsPage";
 import Dashboard from "../Dashboard/DashboardComponent";
 import SingleTournament from "../Tournaments/SingleTournament";
 import JoinTournament from "../Tournaments/JoinTournament";
+import Venue from "../Venue/Venue";
+import AcVoucherType from "../Account/Configuration/AcVoucherType";
+import AcNature from "../Account/Configuration/AcNature";
+import AcCollection from "../Account/Collection/AcCollection";
+import AcChart from "../Account/Configuration/AcChart";
 import LoginPage from "../authPages/LoginPage";
 import ContentOutlet from "./ContentOutlet";
 import { useAuthHook } from "../../hooks/useAuthHook";
@@ -187,6 +192,20 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                                         </ProtectedRoute>
                                     }
                                 />
+                                <Route path="venues" element={<Venue />} />
+                                <Route
+                                    path="ac/voucher-types"
+                                    element={<AcVoucherType />}
+                                />
+                                <Route
+                                    path="/ac/natures"
+                                    element={<AcNature />}
+                                />{" "}
+                                <Route
+                                    path="ac/collections"
+                                    element={<AcCollection />}
+                                />
+                                <Route path="ac/charts" element={<AcChart />} />
                             </Route>
                         )}
                     </Routes>
