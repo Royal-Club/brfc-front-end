@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
     DragDropContext,
     Draggable,
@@ -13,23 +13,36 @@ import CreateTeamComponent from "./Atoms/CreateTeamComponent";
 import PlayerCard from "./Atoms/PlayerCard";
 import TeamCard from "./Atoms/TeamCard";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import PickerWheelModal from "./Atoms/pickerWheel/PickerWheelModal";
+import { RightSquareOutlined, TrophyOutlined } from "@ant-design/icons";
+import { showBdLocalTime } from "../../utils/utils";
+import colors from "../../utils/colors";
 
 const { Text } = Typography;
 
 function SingleTournament() {
     const { id = "" } = useParams();
     const tournamentId = Number(id);
+    const loginInfo = useSelector(selectLoginInfo);
 
     const {
-        isLoading,
         teams,
         players,
+        tournamentSummary,
         handleAddPlayerToTeam,
         handleRemovePlayer,
         handleRenameTeam,
         handleRemoveTeam,
         refetchTournament,
+        refetchPlayer,
     } = useTournamentTeams(tournamentId);
+
+    useEffect(() => {
+        refetchTournament();
+        refetchPlayer();
+    }, []);
 
     const onDragEnd = (result: DropResult) => {
         const { source, destination, draggableId } = result;
@@ -54,7 +67,8 @@ function SingleTournament() {
                       "",
                       Number(destinationTeamId),
                       draggedPlayerId,
-                      Number(dragId[1])
+                      Number(dragId[1]),
+                      Number(dragId[2])
                   )
                 : handleAddPlayerToTeam(
                       "",
@@ -70,13 +84,55 @@ function SingleTournament() {
             direction="vertical"
             style={{ width: "100%", minHeight: "80vh" }}
         >
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <CreateTeamComponent
-                    tournamentId={tournamentId}
-                    existingTeams={teams.map((team) => team.teamName)}
-                    refetchSummary={refetchTournament}
-                />
-                <GoalKeeperDrawer tournamentId={tournamentId} />
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    backgroundColor: colors.white,
+                    padding: "10px ",
+                    borderRadius: "10px",
+                }}
+            >
+                <Space
+                    direction="horizontal"
+                    size={0}
+                    style={{
+                        lineHeight: 1.2,
+                        display: "flex",
+                        gap: "30px",
+                    }}
+                >
+                    <Typography.Title level={5} style={{ margin: 0 }}>
+                        <TrophyOutlined /> {tournamentSummary?.content[0].name}
+                    </Typography.Title>
+                    <Typography.Title
+                        level={5}
+                        type="secondary"
+                        style={{ margin: 0 }}
+                    >
+                        <RightSquareOutlined />{" "}
+                        {tournamentSummary?.content[0]?.tournamentDate &&
+                            showBdLocalTime(
+                                tournamentSummary?.content[0]?.tournamentDate
+                            )}
+                    </Typography.Title>
+                </Space>
+                <Space
+                    style={{
+                        display: "flex",
+                        alignItems: "center",
+                    }}
+                >
+                    {loginInfo.roles.includes("ADMIN") && (
+                        <CreateTeamComponent
+                            tournamentId={tournamentId}
+                            existingTeams={teams.map((team) => team.teamName)}
+                            refetchSummary={refetchTournament}
+                        />
+                    )}
+                    {loginInfo.roles.includes("ADMIN") && <PickerWheelModal />}
+                    <GoalKeeperDrawer tournamentId={tournamentId} />
+                </Space>
             </div>
             <div className="team-container">
                 <DragDropContext onDragEnd={onDragEnd}>
@@ -84,7 +140,7 @@ function SingleTournament() {
                         {teams.length > 0 ? (
                             teams.map((team) => (
                                 <TeamCard
-                                    isLoading={isLoading}
+                                    isLoading={false}
                                     key={team.teamId}
                                     team={team}
                                     handleRemovePlayer={handleRemovePlayer}
@@ -114,7 +170,7 @@ function SingleTournament() {
                                 {...provided.droppableProps}
                                 style={{
                                     marginTop: "16px",
-                                    paddingBottom: "32px",
+                                    marginBottom: "10px",
                                 }}
                             >
                                 <div
@@ -123,17 +179,13 @@ function SingleTournament() {
                                         gridTemplateColumns:
                                             "repeat(auto-fill, minmax(250px, 1fr))",
                                         gap: "8px",
+                                        maxHeight: "130px",
+                                        overflowY: "auto",
+                                        padding: "0 8px 0 0",
                                     }}
+                                    className="team-player-container"
                                 >
-                                    {isLoading ? (
-                                        players.map((_, index) => (
-                                            <Skeleton.Button
-                                                key={index}
-                                                block
-                                                active={true}
-                                            />
-                                        ))
-                                    ) : players.length > 0 ? (
+                                    {players.length > 0 ? (
                                         players.map((player, index) => (
                                             <Draggable
                                                 key={player.playerId.toString()}

@@ -6,7 +6,7 @@ export interface Player {
     playerId: number;
     playerName: string;
     playingPosition?: string;
-    // Add any other properties related to a player if needed
+    teamId?: number;
 }
 
 // Team Type

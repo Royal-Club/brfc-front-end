@@ -14,6 +14,8 @@ import PlayerCard from "./PlayerCard";
 import { Team } from "../tournamentTypes";
 import { MoreOutlined } from "@ant-design/icons";
 import DoubleClickTextInputField from "../../CommonAtoms/DoubleClickTextInputField";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 
 interface TeamCardProps {
     team: Team;
@@ -37,6 +39,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
     handleRemoveTeam,
     handleAddPlayerToTeam,
 }) => {
+    const loginInfo = useSelector(selectLoginInfo);
     const handleRenameTeamClick = (newName: string) => {
         handleRenameTeam(team.teamId, newName);
     };
@@ -62,12 +65,22 @@ const TeamCard: React.FC<TeamCardProps> = ({
     );
 
     return (
-        <Droppable droppableId={team.teamId.toString()}>
+        <Droppable
+            droppableId={team.teamId.toString()}
+            isDropDisabled={!loginInfo.roles.includes("ADMIN")}
+        >
             {(provided) => (
                 <Card
                     hoverable
                     title={
-                        <Dropdown overlay={teamMenu} trigger={["click"]}>
+                        <Dropdown
+                            overlay={teamMenu}
+                            trigger={
+                                loginInfo.roles.includes("ADMIN")
+                                    ? ["click"]
+                                    : []
+                            }
+                        >
                             <Space
                                 style={{
                                     width: "100%",
@@ -79,11 +92,16 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                 <DoubleClickTextInputField
                                     initialName={team.teamName}
                                     onNameChange={handleRenameTeamClick}
+                                    isDiabled={
+                                        !loginInfo.roles.includes("ADMIN")
+                                    }
                                 />
-                                <Button
-                                    onClick={(e) => e.preventDefault()}
-                                    icon={<MoreOutlined />}
-                                />
+                                {loginInfo.roles.includes("ADMIN") && (
+                                    <Button
+                                        onClick={(e) => e.preventDefault()}
+                                        icon={<MoreOutlined />}
+                                    />
+                                )}
                             </Space>
                         </Dropdown>
                     }
@@ -114,10 +132,12 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                 <Draggable
                                     key={player.playerId.toString()}
                                     draggableId={
-                                        player.id
-                                            ? player.playerId.toString() +
+                                        player.id && player?.teamId
+                                            ? player?.playerId.toString() +
                                               "-" +
-                                              player.id.toString()
+                                              player?.id.toString() +
+                                              "-" +
+                                              player?.teamId.toString()
                                             : player.playerId.toString()
                                     }
                                     index={index}

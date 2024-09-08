@@ -6,11 +6,13 @@ import type { InputRef } from "antd";
 interface DoubleClickTextInputFieldProps {
     initialName: string;
     onNameChange: (newName: string) => void;
+    isDiabled?: boolean;
 }
 
 const DoubleClickTextInputField: React.FC<DoubleClickTextInputFieldProps> = ({
     initialName,
     onNameChange,
+    isDiabled = false,
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(initialName);
@@ -46,7 +48,7 @@ const DoubleClickTextInputField: React.FC<DoubleClickTextInputFieldProps> = ({
 
     const displayName = name.length > 20 ? name.slice(0, 20) + "..." : name;
 
-    return isEditing ? (
+    return isEditing && !isDiabled ? (
         <Input
             ref={inputRef}
             value={name}

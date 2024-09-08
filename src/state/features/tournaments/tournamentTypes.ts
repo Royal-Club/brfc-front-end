@@ -2,10 +2,11 @@ import { BasicResType } from "../../responesTypes";
 
 export interface IoTournamentSingleSummaryType {
     id: number;
-    name : string;
+    name: string;
     tournamentDate: string;
     venueName: string;
     activeStatus: boolean;
+    tournamentStatus?: string;
 }
 
 export interface TournamentPlayerInfoType {
@@ -17,6 +18,7 @@ export interface TournamentPlayerInfoType {
     comments: string;
     tournamentParticipantId: number;
     playingPosition?: string;
+    tournamentStatus?: string;
 }
 
 export interface IoTournamentSummaryResType extends BasicResType {
@@ -49,6 +51,7 @@ export interface TournamentSummeryResType {
         {
             id: number;
             tournamentName: string;
+            name?: string;
             tournamentDate: string;
             venueName: string;
             activeStatus: boolean;

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Dropdown, Menu, Space, Tooltip } from "antd";
+import { Button, Dropdown, Menu, Skeleton, Space, Tooltip } from "antd";
 import { Player } from "../tournamentTypes";
 import { MoreOutlined } from "@ant-design/icons";
 
@@ -45,7 +45,9 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                             alignItems: "center",
                         }}
                     >
-                        {player.playerName}
+                        {player?.playerName
+                            ? player?.playerName
+                            : "processing..."}
                         <Space>
                             {player.playingPosition === "GOALKEEPER" && (
                                 <Tooltip title="Goalkeeper">

@@ -5,11 +5,14 @@ import { IoTournamentSingleSummaryType } from "../../state/features/tournaments/
 import TournamentsActionDropdown from "./Atoms/TournamentsActionDropdown";
 import { useNavigate } from "react-router-dom";
 import CreateTournament from "./Atoms/CreateTournamentModal";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 
 const { Header } = Layout;
 const { Title } = Typography;
 
 const TournamentsPage: React.FC = () => {
+    const loginInfo = useSelector(selectLoginInfo);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [sorter, setSorter] = useState<{
@@ -77,10 +80,24 @@ const TournamentsPage: React.FC = () => {
         },
         {
             title: "Status",
-            dataIndex: "activeStatus",
-            key: "activeStatus",
-            render: (activeStatus: boolean) =>
-                activeStatus === true ? "Active" :  activeStatus === false ?"InActive" : ""
+            dataIndex: "tournamentStatus",
+            key: "tournamentStatus",
+            render: (tournamentStatus: string) => {
+                return (
+                    <div
+                        style={{
+                            color:
+                                tournamentStatus === "UPCOMING"
+                                    ? "green"
+                                    : tournamentStatus === "COMPLETED"
+                                    ? "gray"
+                                    : "blue",
+                        }}
+                    >
+                        {tournamentStatus}{" "}
+                    </div>
+                );
+            },
         },
         {
             title: "Action",
@@ -105,7 +122,7 @@ const TournamentsPage: React.FC = () => {
             tournamentName: "",
             tournamentDate: "",
             venueName: "",
-            activeStatus: "",
+            tournamentStatus: "",
             action: "",
         }));
     };
@@ -149,20 +166,22 @@ const TournamentsPage: React.FC = () => {
                     <Title level={2} style={{ margin: 0 }}>
                         Tournaments
                     </Title>
-                    <CreateTournament />
+                    {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
                 </Space>
             </Header>
+
             <Table<IoTournamentSingleSummaryType>
                 columns={columns}
                 dataSource={dataSource}
                 rowKey={(record) => record.id?.toString() || record.id}
                 showSorterTooltip={false}
+                bordered
                 pagination={{
                     current: currentPage,
                     pageSize,
                     total: tournamentSummaries?.content?.totalCount,
                 }}
-                scroll={{ y: "60vh" }}
+                scroll={{ y: "63vh" }}
                 onChange={handleTableChange}
             />
         </>

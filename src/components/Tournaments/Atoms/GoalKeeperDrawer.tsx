@@ -1,5 +1,5 @@
-import { Button, Drawer, Input, Table } from "antd";
-import React, { useState, useMemo, Key } from "react";
+import { Button, Drawer, Input, Table, Row, Col } from "antd";
+import React, { useState, useMemo, useRef, useEffect, Key } from "react";
 import { useGetTournamentGoalKeeperListQuery } from "../../../state/features/tournaments/tournamentsSlice";
 
 export default function GoalKeeperDrawer({
@@ -15,6 +15,7 @@ export default function GoalKeeperDrawer({
     });
     const [open, setOpen] = useState(false);
     const [searchText, setSearchText] = useState("");
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     const showDrawer = () => {
         refetchTournamentGoalKeeperList();
@@ -24,6 +25,12 @@ export default function GoalKeeperDrawer({
     const onClose = () => {
         setOpen(false);
     };
+
+    useEffect(() => {
+        if (open && scrollRef.current) {
+            scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+        }
+    }, [open]);
 
     interface ColumnProps {
         title: string;
@@ -77,6 +84,7 @@ export default function GoalKeeperDrawer({
     return (
         <>
             <Button
+                type="primary"
                 onClick={showDrawer}
                 style={{
                     display: "flex",
@@ -87,21 +95,46 @@ export default function GoalKeeperDrawer({
                 Goalkeeper Records
             </Button>
 
-            <Drawer title="Goalkeeper Records" onClose={onClose} open={open}>
+            <Drawer
+                title="Goalkeeper Records"
+                onClose={onClose}
+                open={open}
+                placement="bottom"
+                height="95vh"
+                style={{ top: "auto" }}
+            >
                 <Input
                     placeholder="Search Player"
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
-                    style={{ marginBottom: 16 }}
                 />
-                <Table
-                    columns={columns}
-                    dataSource={dataSource}
-                    pagination={false}
-                    rowKey="key"
-                    scroll={{ y: "75vh" }}
-                    showSorterTooltip={false}
-                />
+                <div
+                    style={{
+                        overflowX: "auto",
+                        whiteSpace: "nowrap",
+                        paddingBottom: 16,
+                        display: "flex",
+                        gap: 16,
+                    }}
+                    ref={scrollRef}
+                >
+                    <div
+                        style={{
+                            minWidth: "350px",
+                            maxWidth: "400px",
+                        }}
+                    >
+                        <h2>Round 1</h2>
+                        <Table
+                            columns={columns}
+                            dataSource={dataSource}
+                            pagination={false}
+                            rowKey="key"
+                            scroll={{ y: "62vh" }}
+                            showSorterTooltip={false}
+                        />
+                    </div>
+                </div>
             </Drawer>
         </>
     );

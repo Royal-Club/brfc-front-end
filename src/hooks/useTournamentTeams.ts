@@ -11,6 +11,7 @@ import {
 
 interface Player {
     id?: number;
+    teamId?: number;
     playerId: number;
     playerName: string;
     employeeId: string;
@@ -87,16 +88,80 @@ const useTournamentTeams = (tournamentId: number) => {
         playingPosition: string,
         teamId: number,
         playerId: number,
-        id?: number
+        id?: number,
+        previousTeamId?: number
     ) => {
+        console.log(
+            "handleAddPlayerToTeam",
+            playingPosition,
+            teamId,
+            playerId,
+            id,
+            previousTeamId
+        );
+
         try {
             setIsLoading(true);
+
+            // Update local state immediately
+
+            playingPosition !== "GOALKEEPER" &&
+                setTeams((prevTeams) => {
+                    let updatedTeams = [...prevTeams];
+
+                    // Remove player from previous team if exists
+                    if (previousTeamId) {
+                        updatedTeams = updatedTeams.map((team) =>
+                            team.teamId === previousTeamId
+                                ? {
+                                      ...team,
+                                      players: team.players.filter(
+                                          (player) =>
+                                              player.playerId !== playerId
+                                      ),
+                                  }
+                                : team
+                        );
+                    } else {
+                        // Remove player from player list
+                        setPlayers((prevPlayers) =>
+                            prevPlayers.filter(
+                                (player) => player.playerId !== playerId
+                            )
+                        );
+                    }
+
+                    // Add player to the new team
+                    updatedTeams = updatedTeams.map((team) =>
+                        team.teamId === teamId
+                            ? {
+                                  ...team,
+                                  players: [
+                                      ...team.players,
+                                      {
+                                          teamId,
+                                          playerId,
+                                          playerName:
+                                              players.find(
+                                                  (p) => p.playerId === playerId
+                                              )?.playerName || "",
+                                          playingPosition,
+                                      },
+                                  ],
+                              }
+                            : team
+                    );
+
+                    return updatedTeams;
+                });
+
             await addPlayerToTeam({
                 playingPosition,
                 teamId,
                 playerId,
                 id,
             }).unwrap();
+
             message.success("Player added to team successfully");
             await refetchPlayer();
             await refetchTournament();
@@ -110,7 +175,43 @@ const useTournamentTeams = (tournamentId: number) => {
     const handleRemovePlayer = async (teamId: number, playerId: number) => {
         try {
             setIsLoading(true);
+
+            // Find the player being removed
+            const removedPlayer = teams
+                .find((team) => team.teamId === teamId)
+                ?.players.find((player) => player.playerId === playerId);
+
+            // Update teams: remove the player from the team
+            setTeams((prevTeams) =>
+                prevTeams.map((team) =>
+                    team.teamId === teamId
+                        ? {
+                              ...team,
+                              players: team.players.filter(
+                                  (player) => player.playerId !== playerId
+                              ),
+                          }
+                        : team
+                )
+            );
+
+            if (removedPlayer) {
+                setPlayers((prevPlayers) => [
+                    ...prevPlayers,
+                    {
+                        playerId: removedPlayer.playerId,
+                        playerName: removedPlayer.playerName,
+                        employeeId: "",
+                        participationStatus: false,
+                        comments: "",
+                        tournamentParticipantId: 0,
+                    },
+                ]);
+            }
+
+            // API call to remove the player from the team
             await removePlayerFromTeam({ teamId, playerId }).unwrap();
+
             message.info("Player removed from team successfully");
             await refetchTournament();
             await refetchPlayer();
@@ -124,11 +225,22 @@ const useTournamentTeams = (tournamentId: number) => {
     const handleRenameTeam = async (teamId: number, newName: string) => {
         try {
             setIsLoading(true);
+
+            // Update local state immediately
+            setTeams((prevTeams) =>
+                prevTeams.map((team) =>
+                    team.teamId === teamId
+                        ? { ...team, teamName: newName }
+                        : team
+                )
+            );
+
             await renameTeam({
                 teamId,
                 teamName: newName,
                 tournamentId,
             }).unwrap();
+
             message.info(
                 `Renamed team with ID ${teamId} to ${newName} in tournament ${tournamentId}`
             );
@@ -143,6 +255,12 @@ const useTournamentTeams = (tournamentId: number) => {
     const handleRemoveTeam = async (teamId: number, teamName: string) => {
         try {
             setIsLoading(true);
+
+            // Update local state immediately
+            setTeams((prevTeams) =>
+                prevTeams.filter((team) => team.teamId !== teamId)
+            );
+
             await deleteTournamentTeam({ teamId }).unwrap();
             message.success("Team removed successfully");
             await refetchTournament();
@@ -158,7 +276,9 @@ const useTournamentTeams = (tournamentId: number) => {
         teams,
         players,
         isLoading,
+        tournamentSummary,
         refetchTournament,
+        refetchPlayer,
         handleAddPlayerToTeam,
         handleRemovePlayer,
         handleRenameTeam,

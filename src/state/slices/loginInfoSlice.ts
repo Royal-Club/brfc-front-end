@@ -1,76 +1,84 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
+
 interface LoginInfoState {
-    accessToken: string;
-    name: string;
+    token: string;
+    username: string;
     email: string;
-    googleId: string;
-    image: string;
-    id: string;
-    role: string;
+    userId: string;
+    image?: string;
+    roles: string[];
 }
+
+const initialState: LoginInfoState = {
+    token: "",
+    username: "",
+    email: "",
+    userId: "",
+    image: "",
+    roles: [""],
+};
+
 export const loginInfoSlice = createSlice({
     name: "loginInfo",
-    initialState: {
-        accessToken: "",
-        name: "",
-        email: "",
-        googleId: "",
-        image: "",
-        id: "",
-        role: "",
-    },
+    initialState,
     reducers: {
-        setAccessToken: (state, action: PayloadAction<string>) => {
-            state.accessToken = action.payload;
+        setAllData(state, action: PayloadAction<LoginInfoState>) {
+            state.token = action.payload.token;
+            state.username = action.payload.username;
+            state.email = action.payload.email;
+            state.userId = action.payload.userId;
+            state.roles = action.payload.roles;
+            state.image = action.payload.image;
+        },
+        setToken: (state, action: PayloadAction<string>) => {
+            state.token = action.payload;
         },
         setUsername: (state, action: PayloadAction<string>) => {
-            state.name = action.payload;
+            state.username = action.payload;
         },
         setEmail: (state, action: PayloadAction<string>) => {
             state.email = action.payload;
         },
-        setGoogleId: (state, action: PayloadAction<string>) => {
-            state.googleId = action.payload;
+        setUserId: (state, action: PayloadAction<string>) => {
+            state.userId = action.payload;
+        },
+        setRoles: (state, action: PayloadAction<string[]>) => {
+            state.roles = action.payload;
         },
         setImage: (state, action: PayloadAction<string>) => {
             state.image = action.payload;
         },
-        setId: (state, action: PayloadAction<string>) => {
-            state.id = action.payload;
-        },
-        setUser: (state, action: PayloadAction<LoginInfoState>) => {
-            return { ...state, ...action.payload };
-        },
-        setRole: (state, action: PayloadAction<string>) => {
-            state.role = action.payload;
-            return state;
-        },
         removeUser: (state) => {
             return {
                 ...state,
-                accessToken: "",
+                token: "",
                 username: "",
                 email: "",
-                googleId: "",
+                userId: "",
+                roles: [""],
                 image: "",
-                id: "",
-                role: "",
             };
         },
     },
 });
 
-export const { setAccessToken, setUsername, setUser, removeUser, setRole } =
-    loginInfoSlice.actions;
+export const {
+    setAllData,
+    setToken,
+    setUsername,
+    setEmail,
+    setUserId,
+    setRoles,
+    setImage,
+    removeUser,
+} = loginInfoSlice.actions;
 export default loginInfoSlice.reducer;
 
-export const selectLoginInfo = (state: RootState) => state?.loginInfo;
-export const selectAccessToken = (state: RootState) =>
-    state?.loginInfo?.accessToken;
-export const selectUserName = (state: RootState) => state?.loginInfo?.name;
-export const selectUserEmail = (state: RootState) => state?.loginInfo?.email;
-export const selectUserGoogleId = (state: RootState) =>
-    state?.loginInfo?.googleId;
-export const selectUserImage = (state: RootState) => state?.loginInfo?.image;
-export const selectUserId = (state: RootState) => state?.loginInfo?.id;
+export const selectLoginInfo = (state: RootState) => state.loginInfo;
+export const selectToken = (state: RootState) => state.loginInfo.token;
+export const selectUserName = (state: RootState) => state.loginInfo.username;
+export const selectUserEmail = (state: RootState) => state.loginInfo.email;
+export const selectUserId = (state: RootState) => state.loginInfo.userId;
+export const selectUserRoles = (state: RootState) => state.loginInfo.roles;
+export const selectUserImage = (state: RootState) => state.loginInfo.image;
