@@ -221,11 +221,6 @@ function Player() {
                       initialValue={'UNASSIGNED'}
                     >
                       <Select placeholder="Select a position">
-                        {/* {Object.keys(FootballPosition).map((key) => (
-                          <Select.Option key={key} value={FootballPosition[key as keyof typeof FootballPosition]}>
-                            {FootballPosition[key as keyof typeof FootballPosition]}
-                          </Select.Option>
-                        ))} */}
                         {footballPositions.map((position) => (
                           <Select.Option key={position.name} value={position.name}>
                             {position.description}

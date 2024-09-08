@@ -29,6 +29,8 @@ import JoinTournament from "../Tournaments/JoinTournament";
 import Venue from "../Venue/Venue";
 import AcVoucherType from "../Account/Configuration/AcVoucherType";
 import AcNature from "../Account/Configuration/AcNature";
+import AcCollection from "../Account/Collection/AcCollection";
+import AcChart from "../Account/Configuration/AcChart";
 
 const { Header, Sider, Content } = Layout;
 interface ContentComponentProps {
@@ -127,6 +129,14 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             <Route
                                 path="tournaments/join-tournament/:id"
                                 element={<JoinTournament />}
+                            />
+                            <Route
+                                path="ac/collections"
+                                element={<AcCollection />}
+                            />
+                            <Route
+                                path="ac/charts"
+                                element={<AcChart />}
                             />
                         </Routes>
                     </div>

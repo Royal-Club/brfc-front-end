@@ -3,6 +3,7 @@ interface IPlayer {
     name: string;
     email: string;
     employeeId: string;
+    fullName: string;
     skypeId: string;
     mobileNo: string;
     active: Boolean;
