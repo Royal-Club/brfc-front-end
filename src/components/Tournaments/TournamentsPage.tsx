@@ -169,9 +169,7 @@ const TournamentsPage: React.FC = () => {
                     {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
                 </Space>
             </Header>
-            {JSON.stringify(
-                tournamentSummaries.content.tournaments[0].tournamentStatus
-            )}
+
             <Table<IoTournamentSingleSummaryType>
                 columns={columns}
                 dataSource={dataSource}
