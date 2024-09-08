@@ -166,7 +166,6 @@ function Player() {
                 setFormSubmitButtonText("Change");
             })
             .catch((err) => {
-                // Handle error
                 console.log("server error");
                 setPlayerLoading(false);
             });
@@ -178,12 +177,9 @@ function Player() {
             .get(`${API_URL}/football-positions`)
             .then((response) => {
                 setFootballPositions(response.data.content);
-                // setPlayerLoading(false);
             })
             .catch((err) => {
-                // Handle error
                 console.log("server error");
-                // setPlayerLoading(false);
             });
     };
 

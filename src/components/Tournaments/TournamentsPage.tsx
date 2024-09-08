@@ -80,14 +80,24 @@ const TournamentsPage: React.FC = () => {
         },
         {
             title: "Status",
-            dataIndex: "activeStatus",
-            key: "activeStatus",
-            render: (activeStatus: boolean) =>
-                activeStatus === true
-                    ? "Active"
-                    : activeStatus === false
-                    ? "InActive"
-                    : "",
+            dataIndex: "tournamentStatus",
+            key: "tournamentStatus",
+            render: (tournamentStatus: string) => {
+                return (
+                    <div
+                        style={{
+                            color:
+                                tournamentStatus === "UPCOMING"
+                                    ? "green"
+                                    : tournamentStatus === "COMPLETED"
+                                    ? "gray"
+                                    : "blue",
+                        }}
+                    >
+                        {tournamentStatus}{" "}
+                    </div>
+                );
+            },
         },
         {
             title: "Action",
@@ -112,7 +122,7 @@ const TournamentsPage: React.FC = () => {
             tournamentName: "",
             tournamentDate: "",
             venueName: "",
-            activeStatus: "",
+            tournamentStatus: "",
             action: "",
         }));
     };
@@ -159,6 +169,9 @@ const TournamentsPage: React.FC = () => {
                     {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
                 </Space>
             </Header>
+            {JSON.stringify(
+                tournamentSummaries.content.tournaments[0].tournamentStatus
+            )}
             <Table<IoTournamentSingleSummaryType>
                 columns={columns}
                 dataSource={dataSource}

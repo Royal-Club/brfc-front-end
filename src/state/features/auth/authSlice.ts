@@ -33,7 +33,7 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         changePassword: build.mutation<BasicResType, any>({
             query: (data) => ({
                 url: "auth/change-password",
-                method: "POST",
+                method: "PUT",
                 body: data,
             }),
         }),

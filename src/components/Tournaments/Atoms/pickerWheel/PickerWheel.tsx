@@ -162,12 +162,17 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
         ctx.closePath();
         ctx.fillStyle = segColors[key];
         ctx.fill();
-        ctx.stroke();
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.rotate((lastAngle + angle) / 2);
+
+        ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+        ctx.shadowBlur = 5;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+
         ctx.fillStyle = contrastColor;
-        ctx.font = `bold 1em ${fontFamily}`;
+        ctx.font = `bold 1.5em ${fontFamily}`;
         ctx.fillText(value.substr(0, 21), size / 2 + 10, 0);
         ctx.restore();
     };
@@ -260,6 +265,7 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
                 style={{
                     pointerEvents: isFinished && isOnlyOnce ? "none" : "auto",
                     opacity: isFinished && isOnlyOnce ? 0.5 : 1,
+                    cursor: isFinished && isOnlyOnce ? "default" : "pointer",
                 }}
             />
         </div>

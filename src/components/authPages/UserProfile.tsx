@@ -117,14 +117,37 @@ export default function UserProfile() {
                 </Col>
                 <Col span={16}>
                     <Card title="Football Statistics">
-                        <Text>
+                        <div
+                            style={{
+                                backgroundImage: `url("https://images.pexels.com/photos/399187/pexels-photo-399187.jpeg?cs=srgb&dl=pexels-grizzlybear-399187.jpg&fm=jpg")`,
+                                backgroundSize: "contain",
+                                backgroundPosition: "center",
+                                height: "650px",
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: "white",
+                                    fontSize: "30px",
+                                    fontWeight: "bold",
+                                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                                    padding: "20px",
+                                }}
+                            >
+                                Football Stats Upcoming
+                            </Text>
+                        </div>
+                        {/* <Text>
                             Matches Played:{" "}
                             {userData.footballStats.matchesPlayed}
                         </Text>
                         <br />
                         <Text>Goals: {userData.footballStats.goals}</Text>
                         <br />
-                        <Text>Assists: {userData.footballStats.assists}</Text>
+                        <Text>Assists: {userData.footballStats.assists}</Text> */}
                     </Card>
                 </Col>
             </Row>

@@ -73,7 +73,14 @@ const TeamCard: React.FC<TeamCardProps> = ({
                 <Card
                     hoverable
                     title={
-                        <Dropdown overlay={teamMenu} trigger={["click"]}>
+                        <Dropdown
+                            overlay={teamMenu}
+                            trigger={
+                                loginInfo.roles.includes("ADMIN")
+                                    ? ["click"]
+                                    : []
+                            }
+                        >
                             <Space
                                 style={{
                                     width: "100%",
@@ -85,11 +92,16 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                 <DoubleClickTextInputField
                                     initialName={team.teamName}
                                     onNameChange={handleRenameTeamClick}
+                                    isDiabled={
+                                        !loginInfo.roles.includes("ADMIN")
+                                    }
                                 />
-                                <Button
-                                    onClick={(e) => e.preventDefault()}
-                                    icon={<MoreOutlined />}
-                                />
+                                {loginInfo.roles.includes("ADMIN") && (
+                                    <Button
+                                        onClick={(e) => e.preventDefault()}
+                                        icon={<MoreOutlined />}
+                                    />
+                                )}
                             </Space>
                         </Dropdown>
                     }

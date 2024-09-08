@@ -6,6 +6,7 @@ export interface IoTournamentSingleSummaryType {
     tournamentDate: string;
     venueName: string;
     activeStatus: boolean;
+    tournamentStatus?: string;
 }
 
 export interface TournamentPlayerInfoType {
@@ -17,6 +18,7 @@ export interface TournamentPlayerInfoType {
     comments: string;
     tournamentParticipantId: number;
     playingPosition?: string;
+    tournamentStatus?: string;
 }
 
 export interface IoTournamentSummaryResType extends BasicResType {

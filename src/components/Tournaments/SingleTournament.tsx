@@ -130,7 +130,7 @@ function SingleTournament() {
                             refetchSummary={refetchTournament}
                         />
                     )}
-                    <PickerWheelModal />
+                    {loginInfo.roles.includes("ADMIN") && <PickerWheelModal />}
                     <GoalKeeperDrawer tournamentId={tournamentId} />
                 </Space>
             </div>
