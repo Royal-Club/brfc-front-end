@@ -22,7 +22,9 @@ function App() {
     }, []);
 
     return (
-        <Layout>
+        <Layout
+           
+        >
             {user?.token && (
                 <LeftSidebarComponent
                     collapsed={collapsed}

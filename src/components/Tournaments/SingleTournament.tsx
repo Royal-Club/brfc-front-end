@@ -82,7 +82,7 @@ function SingleTournament() {
         <Space
             className="SingleTournament-container"
             direction="vertical"
-            style={{ width: "100%", minHeight: "80vh" }}
+            style={{ width: "100%", minHeight: "calc(100vh - 80px)" }}
         >
             <div
                 style={{
@@ -179,7 +179,7 @@ function SingleTournament() {
                                         gridTemplateColumns:
                                             "repeat(auto-fill, minmax(250px, 1fr))",
                                         gap: "8px",
-                                        maxHeight: "130px",
+                                        height: "180px",
                                         overflowY: "auto",
                                         padding: "0 8px 0 0",
                                     }}

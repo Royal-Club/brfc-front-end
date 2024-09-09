@@ -181,7 +181,7 @@ const TournamentsPage: React.FC = () => {
                     pageSize,
                     total: tournamentSummaries?.content?.totalCount,
                 }}
-                scroll={{ y: "63vh" }}
+                scroll={{ y: "75vh" }}
                 onChange={handleTableChange}
             />
         </>

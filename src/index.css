@@ -22,3 +22,20 @@ code {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
 }
+
+.slimScroll::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.slimScroll::-webkit-scrollbar-track {
+    background: #e7e7e7;
+}
+
+.slimScroll::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 20px;
+}
+.slimScroll::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

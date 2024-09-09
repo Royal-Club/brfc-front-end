@@ -122,7 +122,7 @@ export default function UserProfile() {
                                 backgroundImage: `url("https://images.pexels.com/photos/399187/pexels-photo-399187.jpeg?cs=srgb&dl=pexels-grizzlybear-399187.jpg&fm=jpg")`,
                                 backgroundSize: "contain",
                                 backgroundPosition: "center",
-                                height: "650px",
+                                height: "700px",
                                 display: "flex",
                                 justifyContent: "center",
                                 alignItems: "center",

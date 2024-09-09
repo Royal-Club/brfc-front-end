@@ -1,11 +1,9 @@
 import {
-    ApartmentOutlined,
     DollarOutlined,
     PieChartOutlined,
     PlayCircleOutlined,
     ProjectOutlined,
     RadarChartOutlined,
-    SettingOutlined,
     TrophyOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
@@ -14,7 +12,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import companyLogo from "./../../assets/logo.png";
 
-const { Header, Content, Sider } = Layout;
+const {  Sider } = Layout;
 const { Title } = Typography;
 type MenuItem = Required<MenuProps>["items"][number];
 function getItem(
@@ -85,6 +83,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
 
     return (
         <>
+
             <Sider
                 width={260}
                 theme="light"
@@ -95,9 +94,11 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
                 onCollapse={(collapsed: any, type: any) => {
                     onToggleCollapse(collapsed);
                 }}
+                style={{  height: "10vh" ,  }}
                 trigger={null}
                 collapsible
                 collapsed={collapsed}
+         
             >
                 <div className="demo-logo-vertical">
                     <img src={companyLogo} alt="" />
@@ -118,7 +119,9 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
                     defaultOpenKeys={["invsum"]}
                     mode="inline"
                     items={items}
-                    style={{ height: "100%", borderRight: 0 }}
+                    style={{ borderRight: 0 ,height: "calc(100vh - 64px)" , overflow: "auto"}}
+                      
+                className="slimScroll"
                 />
             </Sider>
         </>
