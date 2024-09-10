@@ -34,16 +34,16 @@
 }
 
 .team-player-container::-webkit-scrollbar-track {
-    background: #e7e7e7;
+
 }
 
 .team-player-container::-webkit-scrollbar-thumb {
-    background: #888;
+
     border-radius: 20px;
 }
 
 .team-player-container::-webkit-scrollbar-thumb:hover {
-    background: #555;
+
 }
 
 /* table  */

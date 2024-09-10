@@ -84,7 +84,6 @@ export default function GoalKeeperDrawer({
     return (
         <>
             <Button
-                type="primary"
                 onClick={showDrawer}
                 style={{
                     display: "flex",

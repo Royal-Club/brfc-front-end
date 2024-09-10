@@ -45,24 +45,24 @@ const items: MenuProps["items"] = [
         ]),
         getItem("Income (+)", "IncomeSubMenu", null, [
             getItem("Collections", "/ac/collections"),
-            getItem("Collections Register", "/ac/collections-register"),
+            // getItem("Collections Register", "/ac/collections-register"),
         ]),
-        getItem("Expense (-)", "ExpenseSubMenu", null, [
-            getItem("Expense", "/company"),
-            getItem("Expense List", "/companies"),
-        ]),
+        // getItem("Expense (-)", "ExpenseSubMenu", null, [
+        //     getItem("Expense", "/company"),
+        //     getItem("Expense List", "/companies"),
+        // ]),
     ]),
     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
         getItem("Venues", "/venues"),
     ]),
-    getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [
-        getItem("Mach Schedule", "/venue"),
-        getItem("Mach Schedule List", "/venues"),
-    ]),
-    getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
-        getItem("Match Participant", "/match-participant"),
-        getItem("Match List", "/matches"),
-    ]),
+    // getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [
+    //     getItem("Mach Schedule", "/venue"),
+    //     getItem("Mach Schedule List", "/venues"),
+    // ]),
+    // getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
+    //     getItem("Match Participant", "/match-participant"),
+    //     getItem("Match List", "/matches"),
+    // ]),
     getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
         getItem("Tourtnaments", "/tournaments"),
     ]),
@@ -70,10 +70,12 @@ const items: MenuProps["items"] = [
 interface LeftSidebarComponentProps {
     collapsed: boolean;
     onToggleCollapse: (value: boolean) => void;
+    isDarkMode: boolean;
 }
 const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
     collapsed,
     onToggleCollapse,
+    isDarkMode, // New prop for dark mode
 }) => {
     const navigate = useNavigate();
 
@@ -83,31 +85,35 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
 
     return (
         <>
-
             <Sider
                 width={260}
-                theme="light"
+                theme={isDarkMode ? "dark" : "light"} // Change theme based on dark mode
                 breakpoint="lg"
                 onBreakpoint={(broken: any) => {
-                    // console.log("broken", broken);
+                    // handle breakpoint
                 }}
                 onCollapse={(collapsed: any, type: any) => {
                     onToggleCollapse(collapsed);
                 }}
-                style={{  height: "10vh" ,  }}
+                style={{ height: "100vh" }}
                 trigger={null}
                 collapsible
                 collapsed={collapsed}
-         
             >
-                <div className="demo-logo-vertical">
+                <div className="demo-logo-vertical"
+                onClick={() => navigate("/")}
+                style={{
+                    cursor: "pointer",
+                }}
+                
+                >
                     <img src={companyLogo} alt="" />
                     <Title
                         level={2}
                         style={{
                             margin: collapsed ? "0px" : "0 80px 0 10px",
                             fontSize: collapsed ? "0px" : "32px",
-                            transition: "all 0.3s ease",
+                       
                         }}
                     >
                         BRFC
@@ -116,12 +122,10 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
                 <Menu
                     onClick={onClick}
                     defaultSelectedKeys={["/"]}
-                    defaultOpenKeys={["invsum"]}
                     mode="inline"
                     items={items}
-                    style={{ borderRight: 0 ,height: "calc(100vh - 64px)" , overflow: "auto"}}
-                      
-                className="slimScroll"
+                    style={{ borderRight: 0, height: "calc(100vh - 64px)", overflow: "auto" }}
+                    theme={isDarkMode ? "dark" : "light"} // Apply dark theme
                 />
             </Sider>
         </>

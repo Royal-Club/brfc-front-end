@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Table, Skeleton, Alert, Typography, Space } from "antd";
+import { Layout, Table, Skeleton, Alert, Typography, Space, theme } from "antd";
 import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { IoTournamentSingleSummaryType } from "../../state/features/tournaments/tournamentTypes";
 import TournamentsActionDropdown from "./Atoms/TournamentsActionDropdown";
@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import CreateTournament from "./Atoms/CreateTournamentModal";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import { showBdLocalTime } from "../../utils/utils";
 
 const { Header } = Layout;
 const { Title } = Typography;
@@ -22,6 +23,10 @@ const TournamentsPage: React.FC = () => {
         sortedBy: "tournamentDate",
         sortDirection: "DESC",
     });
+
+    const {
+        token: { colorBgContainer },
+      } = theme.useToken();
 
     const {
         data: tournamentSummaries,
@@ -65,12 +70,14 @@ const TournamentsPage: React.FC = () => {
             key: "tournamentName",
         },
         {
-            title: "Date",
+            title: "Date & Time",
             dataIndex: "tournamentDate",
             key: "tournamentDate",
             sorter: true,
             render: (date: string) =>
-                date && new Date(date).toLocaleDateString("en-GB"),
+                date && showBdLocalTime(date)
+            
+   
         },
         {
             title: "Venue",
@@ -87,11 +94,12 @@ const TournamentsPage: React.FC = () => {
                     <div
                         style={{
                             color:
-                                tournamentStatus === "UPCOMING"
-                                    ? "green"
-                                    : tournamentStatus === "COMPLETED"
-                                    ? "gray"
-                                    : "blue",
+                            tournamentStatus === "UPCOMING"
+                                ? "#008080" 
+                                : tournamentStatus === "COMPLETED"
+                                ? "#708090"  
+                                : "#4169E1", 
+                        
                         }}
                     >
                         {tournamentStatus}{" "}
@@ -130,12 +138,12 @@ const TournamentsPage: React.FC = () => {
     if (isLoading) {
         return (
             <>
-                <Header style={{ backgroundColor: "#fff", padding: "0 24px" }}>
+                <Header style={{padding: "0 24px" , background: colorBgContainer }}>
                     <Space direction="vertical" style={{ width: "100%" }}>
                         <Skeleton.Button active style={{ width: 150 }} />
                     </Space>
                 </Header>
-                <Skeleton active paragraph={{ rows: 6 }} />
+                <Skeleton active paragraph={{ rows: 10 }} />
             </>
         );
     }
@@ -158,7 +166,7 @@ const TournamentsPage: React.FC = () => {
 
     return (
         <>
-            <Header style={{ backgroundColor: "#fff", padding: "0 24px" }}>
+            <Header style={{  padding: "0 24px", background: colorBgContainer }}>
                 <Space
                     direction="horizontal"
                     style={{ width: "100%", justifyContent: "space-between" }}
@@ -181,8 +189,9 @@ const TournamentsPage: React.FC = () => {
                     pageSize,
                     total: tournamentSummaries?.content?.totalCount,
                 }}
-                scroll={{ y: "75vh" }}
+                scroll={{ y: "70vh" }}
                 onChange={handleTableChange}
+                
             />
         </>
     );

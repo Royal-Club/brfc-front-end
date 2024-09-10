@@ -80,7 +80,6 @@ const PickerWheelModal = () => {
     return (
         <div>
             <Button
-                type="primary"
                 onClick={showModal}
                 style={{
                     display: "flex",

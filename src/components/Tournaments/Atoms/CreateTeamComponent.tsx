@@ -32,7 +32,6 @@ export default function CreateTeamComponent({
 
     return (
         <Button
-            type="primary"
             onClick={handleCreateTeam}
             disabled={isCreating}
             style={{

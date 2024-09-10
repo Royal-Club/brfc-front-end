@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Form, Input, message } from "antd";
+import { Button, Form, Input, message, theme } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setAllData, setImage } from "../../state/slices/loginInfoSlice";
@@ -11,6 +11,10 @@ const LoginPage: React.FC = () => {
     const [login] = useLoginMutation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const {
+        token: { colorBgContainer },
+      } = theme.useToken();
+    
 
     const onFinish = async (values: any) => {
         setLoading(true);
@@ -33,7 +37,7 @@ const LoginPage: React.FC = () => {
             setLoading(false);
             navigate("/");
         } catch (error: any) {
-            message.error(error.data.message);
+            message.error(error?.data?.message || "Something went wrong");
             setLoading(false);
         }
     };
@@ -55,7 +59,7 @@ const LoginPage: React.FC = () => {
                     width: "100%",
                     padding: "32px 24px",
                     borderRadius: "8px",
-                    backgroundColor: colors.white,
+                    background: colorBgContainer,
                     boxShadow: "0px 0px 15px rgba(0, 0, 0, 0.1)",
                 }}
             >
@@ -87,8 +91,6 @@ const LoginPage: React.FC = () => {
                         }
                         type="email"
                         style={{
-                            color: colors.textPrimary,
-                            borderColor: colors.grayLight,
                             borderRadius: "4px",
                             padding: "10px 12px",
                         }}
@@ -106,8 +108,6 @@ const LoginPage: React.FC = () => {
                     <Input.Password
                         placeholder="Password"
                         style={{
-                            color: colors.textPrimary,
-                            borderColor: colors.grayLight,
                             borderRadius: "4px",
                             padding: "10px 12px",
                         }}
@@ -119,10 +119,7 @@ const LoginPage: React.FC = () => {
                         htmlType="submit"
                         loading={loading}
                         block
-                        style={{
-                            backgroundColor: colors.primary,
-                            borderColor: colors.primary,
-                        }}
+                  
                     >
                         Log in
                     </Button>

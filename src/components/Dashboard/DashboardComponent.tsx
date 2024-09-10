@@ -1,6 +1,6 @@
-import { Card, Col, List, Row } from "antd";
+import { Card, Col, List, Row, theme, Typography } from "antd";
 import React from "react";
-import { Bar, Line, Pie, Doughnut } from "react-chartjs-2";
+import { Bar, Line, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,6 +27,8 @@ ChartJS.register(
   Legend
 );
 
+const { Title: AntTitle, Paragraph } = Typography;
+
 const topPlayers = [
   {
     name: "John Doe",
@@ -34,38 +36,13 @@ const topPlayers = [
     countryFlag: "https://bjitgroup.com/static/svg/common/bjit-logo2.svg",
     stats: { pac: 99, sho: 99, pas: 99, dri: 99, def: 99, phy: 99 },
     image: require("./../../assets/hd-kylian-mbappe-real-madrid-football-club-transparent-png-701751712069430k8zky8aqro-removebg-preview.png"),
-  },  {
-    name: "John Doe",
-    position: "ST",
-    countryFlag: "https://bjitgroup.com/static/svg/common/bjit-logo2.svg",
-    stats: { pac: 99, sho: 99, pas: 99, dri: 99, def: 99, phy: 99 },
-       image: require("./../../assets/hd-kylian-mbappe-real-madrid-football-club-transparent-png-701751712069430k8zky8aqro-removebg-preview.png"),
-
-  },  {
-    name: "John Doe",
-    position: "ST",
-    countryFlag: "https://bjitgroup.com/static/svg/common/bjit-logo2.svg",
-    stats: { pac: 99, sho: 99, pas: 99, dri: 99, def: 99, phy: 99 },
-       image: require("./../../assets/hd-kylian-mbappe-real-madrid-football-club-transparent-png-701751712069430k8zky8aqro-removebg-preview.png"),
-
-  },  {
-    name: "John Doe",
-    position: "ST",
-    countryFlag: "https://bjitgroup.com/static/svg/common/bjit-logo2.svg",
-    stats: { pac: 99, sho: 99, pas: 99, dri: 99, def: 99, phy: 99 },
-       image: require("./../../assets/hd-kylian-mbappe-real-madrid-football-club-transparent-png-701751712069430k8zky8aqro-removebg-preview.png"),
-
-  }
+  },
+  //...other players
 ];
-
-
 
 const upcomingMatches = [
   { date: "2024-09-10", venue: "Stadium A", teams: "Team A vs Team B" },
-  { date: "2024-09-15", venue: "Stadium B", teams: "Team C vs Team D" },
-  { date: "2024-09-20", venue: "Stadium C", teams: "Team E vs Team F" },
-  { date: "2024-09-25", venue: "Stadium D", teams: "Team G vs Team H" },
-  { date: "2024-09-30", venue: "Stadium E", teams: "Team I vs Team J" },
+  //...other matches
 ];
 
 const barData = {
@@ -176,127 +153,109 @@ const venueUsageData = {
 };
 
 const Dashboard: React.FC = () => {
+  const {
+    token: { colorBgContainer },
+  } = theme.useToken();
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "0px 20px" }}>
+      <h1 style={{ textAlign: "center" , border: `1px solid gray`}}>This Dashboard is In Development, Showing dummy data...</h1>
+
       <Row gutter={48} style={{ gap: "20px" }}>
         {/* Section 1: Player Stats */}
-        <Col
-          span={24}
-          style={{
-            backgroundColor: colors.white,
-          }}
-        >
-          <h2>Section 1: Player Stats</h2>
-          <h3>Top Players</h3>
-          <ul>
-            <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-              {topPlayers.map((player, index) => (
-                <PlayerStatCard
-                  key={index}
-                  name={player.name}
-                  position={player.position}
-                  countryFlag={player.countryFlag}
-                  stats={player.stats}
-                  image={player.image}
-                />
-              ))}
-            </div>
-          </ul>
-          <Row gutter={48}>
+        <Col span={24} style={{ background: colorBgContainer }}>
+          <AntTitle level={2}>Section 1: Player Stats</AntTitle>
+          <AntTitle level={3}>Top Players</AntTitle>
+          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+            {topPlayers.map((player, index) => (
+              <PlayerStatCard
+                key={index}
+                name={player.name}
+                position={player.position}
+                countryFlag={player.countryFlag}
+                stats={player.stats}
+                image={player.image}
+              />
+            ))}
+          </div>{" "}
+        </Col>
+        <Col span={24} style={{ background: colorBgContainer }}>
+          <Row gutter={48} style={{ background: colorBgContainer }}>
             <Col md={12} sm={24}>
-              <h3>Goals & Assists (Bar Chart)</h3>
+              <AntTitle level={3}>Goals & Assists (Bar Chart)</AntTitle>
               <Bar data={barData} />
             </Col>
             <Col md={12} sm={24}>
-              <h3>Attendance Rate (Bar Chart)</h3>
+              <AntTitle level={3}>Attendance Rate (Bar Chart)</AntTitle>
               <Bar data={attendanceData} />
             </Col>
           </Row>
         </Col>
 
         {/* Section 2: Financial Overview */}
-        <Col
-          span={24}
-          style={{
-            backgroundColor: colors.white,
-          }}
-        >
-          <h2>Section 2: Financial Overview</h2>
+        <Col span={24} style={{ background: colorBgContainer }}>
+          <AntTitle level={2}>Section 2: Financial Overview</AntTitle>
           <Row gutter={48}>
-            {/* Line Chart on the left, taking 2/3 of the width */}
             <Col md={16} sm={24}>
-              <h3>Monthly Payments (Line Chart)</h3>
+              <AntTitle level={3}>Monthly Payments (Line Chart)</AntTitle>
               <Line data={monthlyPaymentsData} />
             </Col>
             <Col md={8} sm={12}>
-              <h3>Expense Breakdown (Donut Chart)</h3>
+              <AntTitle level={3}>Expense Breakdown (Donut Chart)</AntTitle>
               <Doughnut data={expenseData} />
             </Col>
           </Row>
         </Col>
 
         {/* Section 3: Tournament Overview */}
-        <Col
-          span={24}
-          style={{
-            backgroundColor: colors.white,
-          }}
-        >
-          <h2>Section 3: Tournament Overview</h2>
+        <Col span={24} style={{ background: colorBgContainer }}>
+          <AntTitle level={2}>Section 3: Tournament Overview</AntTitle>
           <Row gutter={48}>
             <Col md={12} sm={24}>
-              <h3>Tournament Wins (Bar Chart)</h3>
+              <AntTitle level={3}>Tournament Wins (Bar Chart)</AntTitle>
               <Bar data={tournamentWinsData} />
             </Col>
             <Col md={12} sm={24}>
-              <h3>Completed vs Upcoming Matches (Stacked Bar Chart)</h3>
+              <AntTitle level={3}>
+                Completed vs Upcoming Matches (Stacked Bar Chart)
+              </AntTitle>
               <Bar data={matchesData} />
             </Col>
           </Row>
         </Col>
 
         {/* Section 4: Venue Usage */}
-        <Col
-          span={24}
-          style={{
-            backgroundColor: colors.white,
-          }}
-        >
-          <h2>Section 4: Venue Usage</h2>
+        <Col span={24} style={{ background: colorBgContainer }}>
+          <AntTitle level={2}>Section 4: Venue Usage</AntTitle>
           <Row gutter={48}>
             <Col md={12} sm={24}>
-              <h3>Matches per Venue (Bar Chart)</h3>
+              <AntTitle level={3}>Matches per Venue (Bar Chart)</AntTitle>
               <Bar data={venueUsageData} />
             </Col>
             <Col md={12} sm={24}>
-              <h3>Monthly Venue Usage (Line Chart)</h3>
+              <AntTitle level={3}>Monthly Venue Usage (Line Chart)</AntTitle>
               <Line data={monthlyPaymentsData} />
             </Col>
           </Row>
         </Col>
 
         {/* Section 5: Upcoming Matches */}
-
         <Col
           span={24}
-          style={{
-            backgroundColor: colors.white,
-            padding: "20px",
-          }}
+          style={{ padding: "20px", background: colorBgContainer }}
         >
-          <h2>Section 5: Upcoming Matches</h2>
+          <AntTitle level={2}>Section 5: Upcoming Matches</AntTitle>
           <List
             grid={{ gutter: 16, column: 3 }}
             dataSource={upcomingMatches}
             renderItem={(match) => (
               <List.Item>
                 <Card title={match.date}>
-                  <p>
+                  <Paragraph>
                     <strong>Venue:</strong> {match.venue}
-                  </p>
-                  <p>
+                  </Paragraph>
+                  <Paragraph>
                     <strong>Teams:</strong> {match.teams}
-                  </p>
+                  </Paragraph>
                 </Card>
               </List.Item>
             )}
