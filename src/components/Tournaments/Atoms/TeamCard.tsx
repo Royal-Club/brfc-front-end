@@ -8,6 +8,7 @@ import {
     Space,
     Typography,
     Skeleton,
+    theme,
 } from "antd";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import PlayerCard from "./PlayerCard";
@@ -40,6 +41,11 @@ const TeamCard: React.FC<TeamCardProps> = ({
     handleAddPlayerToTeam,
 }) => {
     const loginInfo = useSelector(selectLoginInfo);
+    const {
+        token: { colorBgLayout },
+      } = theme.useToken();
+
+
     const handleRenameTeamClick = (newName: string) => {
         handleRenameTeam(team.teamId, newName);
     };
@@ -150,7 +156,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                             style={{
                                                 padding: "4px",
                                                 margin: "4px 0",
-                                                backgroundColor: "#f0f0f0",
+                                                background : colorBgLayout,
                                                 borderRadius: "4px",
                                                 ...provided.draggableProps
                                                     .style,

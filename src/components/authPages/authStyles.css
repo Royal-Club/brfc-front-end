@@ -1,5 +1,5 @@
 .userProfileContainer {
-    min-height: 84vh;
+    min-height: calc(100vh - 80px);
 }
 
 .userProfileContainer .ant-card {
@@ -15,7 +15,8 @@
 }
 
 .userProfileContainer .radarDataStyle {
-    max-height: 400px;
+    height: 100%;
+    min-height: 400px;
     display: flex;
     flex-direction: column;
     justify-content: center;

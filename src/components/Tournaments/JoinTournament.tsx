@@ -117,12 +117,13 @@ export default function JoinTournament() {
                             padding: "0 10px",
                             justifyContent: "space-between",
                             alignItems: "end",
+                            flexWrap: "wrap",
                         }}
                     >
                         <Space direction="vertical">
                             <Title
                                 level={2}
-                                style={{ margin: 0, fontWeight: 600 }}
+                                style={{ margin: 0, fontWeight: 600, fontSize: '18px' }}
                             >
                                 {nextTournament?.tournamentName}
                             </Title>
@@ -133,12 +134,13 @@ export default function JoinTournament() {
                                     lineHeight: 1.2,
                                     display: "flex",
                                     gap: "30px",
+                                    flexWrap: "wrap", // Adjust for smaller screens
                                 }}
                             >
                                 <Title
                                     level={5}
                                     type="secondary"
-                                    style={{ margin: 0 }}
+                                    style={{ margin: 0, fontSize: '14px' }}
                                 >
                                     <RightSquareOutlined />{" "}
                                     {nextTournament?.tournamentDate &&
@@ -150,7 +152,7 @@ export default function JoinTournament() {
                                 <Title
                                     level={5}
                                     type="secondary"
-                                    style={{ margin: 0 }}
+                                    style={{ margin: 0, fontSize: '14px' }}
                                 >
                                     <RightSquareOutlined /> Total Players:{" "}
                                     {filteredPlayers.length}
@@ -158,7 +160,7 @@ export default function JoinTournament() {
                                 <Title
                                     level={5}
                                     type="secondary"
-                                    style={{ margin: 0 }}
+                                    style={{ margin: 0, fontSize: '14px' }}
                                 >
                                     <RightSquareOutlined />
                                     Total Participating:{" "}
@@ -176,19 +178,23 @@ export default function JoinTournament() {
                             placeholder="Search players"
                             onSearch={(value) => setSearchTerm(value)}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ width: 300 }}
+                            style={{ width: "100%", maxWidth: 300, marginTop: '10px' }}
                         />
                     </Space>
 
-                    <Table
+             
+                 <Table
                         rowKey="playerId"
                         columns={columns}
                         dataSource={filteredPlayers}
                         pagination={false}
                         bordered
                         size="small"
-                        scroll={{ y: 630 }}
+                        scroll={{ y: 740  }}
+                        className="slimScroll"
+                        
                     />
+                 
                 </>
             )}
         </Space>

@@ -6,7 +6,7 @@ import {
     DropResult,
 } from "react-beautiful-dnd";
 import { useParams } from "react-router-dom";
-import { Card, Skeleton, Space, Typography } from "antd";
+import { Card, Skeleton, Space, theme, Typography } from "antd";
 import useTournamentTeams from "../../hooks/useTournamentTeams";
 import "./tournament.css";
 import CreateTeamComponent from "./Atoms/CreateTeamComponent";
@@ -26,6 +26,9 @@ function SingleTournament() {
     const { id = "" } = useParams();
     const tournamentId = Number(id);
     const loginInfo = useSelector(selectLoginInfo);
+    const {
+        token: { colorBgLayout },
+      } = theme.useToken();
 
     const {
         teams,
@@ -46,6 +49,8 @@ function SingleTournament() {
 
     const onDragEnd = (result: DropResult) => {
         const { source, destination, draggableId } = result;
+
+       
 
         if (!destination) return;
 
@@ -82,13 +87,12 @@ function SingleTournament() {
         <Space
             className="SingleTournament-container"
             direction="vertical"
-            style={{ width: "100%", minHeight: "80vh" }}
+            style={{ width: "100%", minHeight: "calc(100vh - 80px) ", paddingTop: "10px" }}
         >
             <div
                 style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    backgroundColor: colors.white,
                     padding: "10px ",
                     borderRadius: "10px",
                 }}
@@ -179,7 +183,7 @@ function SingleTournament() {
                                         gridTemplateColumns:
                                             "repeat(auto-fill, minmax(250px, 1fr))",
                                         gap: "8px",
-                                        maxHeight: "130px",
+                                        maxHeight: "180px",
                                         overflowY: "auto",
                                         padding: "0 8px 0 0",
                                     }}
@@ -199,8 +203,7 @@ function SingleTournament() {
                                                         {...provided.dragHandleProps}
                                                         style={{
                                                             padding: "8px",
-                                                            backgroundColor:
-                                                                "#f0f0f0",
+                                                            background: colorBgLayout,
                                                             borderRadius: "4px",
                                                             cursor: "grab",
                                                             ...provided

@@ -10,6 +10,12 @@
     padding: 10px;
 }
 
+.settings-select {
+    width: 100%; /* Full width */
+    border-radius: 0px;
+    border: none;
+}
+
 /* Button styling */
 .settings-button {
     width: 100%;

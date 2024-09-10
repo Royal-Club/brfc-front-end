@@ -1,24 +1,53 @@
-import React, { useState } from "react";
-import { Button, Form, Input, message } from "antd";
+import React, { useLayoutEffect, useState } from "react";
+import { Button, message, theme } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setAllData, setImage } from "../../state/slices/loginInfoSlice";
 import { useLoginMutation } from "../../state/features/auth/authSlice";
 import colors from "../../utils/colors";
+import { checkTockenValidity } from "../../utils/utils";
 
 const LoginPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
+    const [loginData, setLoginData] = useState({ email: "", password: "" });
+    const [errors, setErrors] = useState({ email: "", password: "" });
     const [login] = useLoginMutation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const onFinish = async (values: any) => {
+    const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setLoginData((prev) => ({ ...prev, [name]: value }));
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+    };
+
+    const validateForm = () => {
+        let valid = true;
+        const newErrors = { email: "", password: "" };
+
+        if (!loginData.email) {
+            newErrors.email = "Please input your email!";
+            valid = false;
+        }
+
+        if (!loginData.password) {
+            newErrors.password = "Please input your password!";
+            valid = false;
+        }
+
+        setErrors(newErrors);
+        return valid;
+    };
+
+    const onFinish = async () => {
+        if (!validateForm()) return;
+
         setLoading(true);
 
         try {
             const response = await login({
-                email: values.email,
-                password: values.password,
+                email: loginData.email,
+                password: loginData.password,
             }).unwrap();
             const content = response.content;
             dispatch(setAllData(content));
@@ -33,7 +62,7 @@ const LoginPage: React.FC = () => {
             setLoading(false);
             navigate("/");
         } catch (error: any) {
-            message.error(error.data.message);
+            message.error(error?.data?.message || "Something went wrong");
             setLoading(false);
         }
     };
@@ -48,18 +77,20 @@ const LoginPage: React.FC = () => {
             }}
             className="svg_background"
         >
-            <Form
-                onFinish={onFinish}
+            <div
+                className="login-form-container"
                 style={{
-                    maxWidth: 400,
+                    maxWidth: 350,
                     width: "100%",
                     padding: "32px 24px",
                     borderRadius: "8px",
                     backgroundColor: colors.white,
-                    boxShadow: "0px 0px 15px rgba(0, 0, 0, 0.1)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 16,
                 }}
             >
-                <div style={{ textAlign: "center", marginBottom: 32 }}>
+                <div style={{ textAlign: "center" }}>
                     <img
                         style={{ maxWidth: "250px" }}
                         src={require("../../assets/logo.png")}
@@ -67,67 +98,73 @@ const LoginPage: React.FC = () => {
                     />
                 </div>
 
-                <Form.Item
-                    name="email"
-                    rules={[
-                        {
-                            required: true,
-                            message: "Please input your email!",
-                        },
-                    ]}
-                >
-                    <Input
-                        placeholder="Enter Email"
-                        prefix={
-                            <i
-                                className="fa fa-envelope"
-                                aria-hidden="true"
-                                style={{ color: colors.grayMedium }}
-                            ></i>
-                        }
-                        type="email"
+                <div className="form-group">
+                    <label
+                        htmlFor="email"
                         style={{
-                            color: colors.textPrimary,
-                            borderColor: colors.grayLight,
-                            borderRadius: "4px",
-                            padding: "10px 12px",
-                        }}
-                    />
-                </Form.Item>
-                <Form.Item
-                    name="password"
-                    rules={[
-                        {
-                            required: true,
-                            message: "Please input your password!",
-                        },
-                    ]}
-                >
-                    <Input.Password
-                        placeholder="Password"
-                        style={{
-                            color: colors.textPrimary,
-                            borderColor: colors.grayLight,
-                            borderRadius: "4px",
-                            padding: "10px 12px",
-                        }}
-                    />
-                </Form.Item>
-                <Form.Item>
-                    <Button
-                        type="primary"
-                        htmlType="submit"
-                        loading={loading}
-                        block
-                        style={{
-                            backgroundColor: colors.primary,
-                            borderColor: colors.primary,
+                            display: "block",
+                            marginBottom: 8,
+                            color: colors.grayDark,
                         }}
                     >
-                        Log in
-                    </Button>
-                </Form.Item>
-            </Form>
+                        Email
+                    </label>
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        placeholder="Enter Email"
+                        value={loginData.email}
+                        onChange={onInputChange}
+                        style={{
+                            borderRadius: "4px",
+                            padding: "10px 12px",
+                            width: "100%",
+                            border: `1px solid ${colors.grayLight}`,
+                        }}
+                    />
+                    {errors.email && (
+                        <div className="error-message">{errors.email}</div>
+                    )}
+                </div>
+
+                <div
+                    className="form-group"
+                    style={{
+                        display: "block",
+                        marginBottom: 8,
+                        color: colors.grayDark,
+                    }}
+                >
+                    <label htmlFor="password">Password</label>
+                    <input
+                        type="password"
+                        name="password"
+                        id="password"
+                        placeholder="Enter Password"
+                        value={loginData.password}
+                        onChange={onInputChange}
+                        style={{
+                            borderRadius: "4px",
+                            padding: "10px 12px",
+                            width: "100%",
+                            border: `1px solid ${colors.grayLight}`,
+                        }}
+                    />
+                    {errors.password && (
+                        <div className="error-message">{errors.password}</div>
+                    )}
+                </div>
+
+                <Button
+                    type="primary"
+                    onClick={onFinish}
+                    loading={loading}
+                    block
+                >
+                    Log in
+                </Button>
+            </div>
         </div>
     );
 };

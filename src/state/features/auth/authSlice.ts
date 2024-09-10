@@ -1,3 +1,4 @@
+import IPlayer from "../../../interfaces/IPlayer";
 import apiSlice from "../../api/apiSlice";
 import { BasicResType } from "../../responesTypes";
 
@@ -13,6 +14,10 @@ export interface LoginResType extends BasicResType {
         userId: string;
         roles: string[];
     };
+}
+
+export interface PlayerProfileResType extends BasicResType {
+    content: IPlayer;
 }
 
 export const tournamentsApi = apiWithTags.injectEndpoints({
@@ -37,7 +42,43 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
                 body: data,
             }),
         }),
+        getUserProfile: build.query<
+            PlayerProfileResType,
+            {
+                id: string;
+            }
+        >({
+            query: ({ id }) => `/players/${id}`,
+            providesTags: ["auth"],
+        }),
+        updatePlayerData: build.mutation<
+            BasicResType,
+            {
+                id: number;
+                data: {
+                    name: string;
+                    email: string;
+                    mobileNo: string;
+                    skypeId: string;
+                    playerPosition?: string;
+                    employeeId: string;
+                    playingPosition?: string;
+                };
+            }
+        >({
+            query: ({ id, data }) => ({
+                url: `players/${id}`,
+                method: "PUT",
+                body: data,
+            }),
+            invalidatesTags: ["auth"],
+        }),
     }),
 });
 
-export const { useLoginMutation, useChangePasswordMutation } = tournamentsApi;
+export const {
+    useLoginMutation,
+    useChangePasswordMutation,
+    useGetUserProfileQuery,
+    useUpdatePlayerDataMutation,
+} = tournamentsApi;
