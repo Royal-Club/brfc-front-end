@@ -12,7 +12,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import companyLogo from "./../../assets/logo.png";
 
-const {  Sider } = Layout;
+const { Sider } = Layout;
 const { Title } = Typography;
 type MenuItem = Required<MenuProps>["items"][number];
 function getItem(
@@ -100,12 +100,12 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
                 collapsible
                 collapsed={collapsed}
             >
-                <div className="demo-logo-vertical"
-                onClick={() => navigate("/")}
-                style={{
-                    cursor: "pointer",
-                }}
-                
+                <div
+                    className="demo-logo-vertical"
+                    onClick={() => navigate("/")}
+                    style={{
+                        cursor: "pointer",
+                    }}
                 >
                     <img src={companyLogo} alt="" />
                     <Title
@@ -113,7 +113,6 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
                         style={{
                             margin: collapsed ? "0px" : "0 80px 0 10px",
                             fontSize: collapsed ? "0px" : "32px",
-                       
                         }}
                     >
                         BRFC
@@ -122,9 +121,13 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
                 <Menu
                     onClick={onClick}
                     defaultSelectedKeys={["/"]}
-                    mode="inline"
                     items={items}
-                    style={{ borderRight: 0, height: "calc(100vh - 64px)", overflow: "auto" }}
+                    mode="inline"
+                    style={{
+                        borderRight: 0,
+                        height: "calc(100vh - 64px)",
+                        overflow: "auto",
+                    }}
                     theme={isDarkMode ? "dark" : "light"} // Apply dark theme
                 />
             </Sider>

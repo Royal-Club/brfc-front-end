@@ -5,10 +5,12 @@ import ContentComponent from "./components/Content/ContentComponent";
 import LeftSidebarComponent from "./components/Sidebar/LeftSidebarComponent";
 import { useAuthHook } from "./hooks/useAuthHook";
 import { checkTockenValidity } from "./utils/utils";
+import LoginPage from "./components/authPages/LoginPage";
 
 function App() {
     const [collapsed, setCollapsed] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(true);
+
     const { login, user } = useAuthHook();
 
     const handleToggleCollapse = (value: boolean) => {
@@ -21,13 +23,25 @@ function App() {
             login(tokenContent);
         }
 
-        localStorage.getItem("isDarkMode") === "true" ? setIsDarkMode(true) : setIsDarkMode(false);
+        localStorage.getItem("isDarkMode") === "false"
+            ? setIsDarkMode(false)
+            : setIsDarkMode(true);
     }, []);
+
+    if (!user?.token) {
+        return (
+            <Layout>
+                <LoginPage />
+            </Layout>
+        );
+    }
 
     return (
         <ConfigProvider
             theme={{
-                algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+                algorithm: isDarkMode
+                    ? theme.darkAlgorithm
+                    : theme.defaultAlgorithm,
                 token: {
                     // Basic colors
                     colorPrimary: isDarkMode ? "#1890ff" : "#1890ff",
@@ -93,7 +107,7 @@ function App() {
                     collapsed={collapsed}
                     onToggleCollapse={handleToggleCollapse}
                     setIsDarkMode={setIsDarkMode}
-                    isDarkMode={isDarkMode} 
+                    isDarkMode={isDarkMode}
                 />
             </Layout>
         </ConfigProvider>
