@@ -247,7 +247,7 @@ export default function JoinTournament() {
                         pagination={false}
                         bordered
                         size="middle"
-                        scroll={{ x: screens.xs ? 800 : undefined, y: 700 }}
+                        scroll={{ x: "max-content", y: "76vh" }}
                         className="slimScroll"
                     />
                 </>

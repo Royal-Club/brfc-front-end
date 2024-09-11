@@ -53,6 +53,17 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
             }),
             invalidatesTags: ["tournaments"],
         }),
+        updateTournamentActiveStatus: builder.mutation<
+            BasicResType,
+            { id: number; activeStatus: boolean }
+        >({
+            query: ({ id, activeStatus }) => ({
+                url: `tournaments/${id}/status?active=${activeStatus}`,
+                method: "PUT",
+            }),
+            invalidatesTags: ["tournaments"],
+        }),
+
         getTournaments: builder.query<
             IoTournamentSummaryResType,
             {
@@ -131,6 +142,7 @@ export const {
     useGetTournamentByIdQuery,
     useUpdateTournamentMutation,
     useGetTournamentsQuery,
+    useUpdateTournamentActiveStatusMutation,
     useGetTournamentParticipantsListQuery,
     useAddParticipationToTournamentMutation,
     useGetTournamentSummaryQuery,

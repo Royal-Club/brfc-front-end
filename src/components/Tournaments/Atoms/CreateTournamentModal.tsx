@@ -81,15 +81,11 @@ export default function CreateTournament({
         }
     }, [isUpdateModalVisible]);
 
-    // Populate form with tournament data and venue when available
     useEffect(() => {
         if (tournamentData && venuesData) {
             form.setFieldsValue({
                 tournamentName: tournamentData.name,
-                tournamentDate: moment(
-                    tournamentData.tournamentDate,
-                    "YYYY-MM-DDTHH:mm:ss"
-                ),
+                tournamentDate: moment(tournamentData.tournamentDate),
                 venueId: venuesData.content.find(
                     (venue) => venue.name === tournamentData.venueName
                 )?.id,

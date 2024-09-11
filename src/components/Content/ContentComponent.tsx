@@ -1,15 +1,16 @@
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import {
-  Avatar,
-  Button,
-  Col,
-  Dropdown,
-  Layout,
-  Menu,
-  Row,
-  Space,
-  Switch,
-  theme,
+    Avatar,
+    Button,
+    Col,
+    Dropdown,
+    Layout,
+    Menu,
+    Row,
+    Space,
+    Switch,
+    Modal,
+    theme,
 } from "antd";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import Players from "../Player/Players";
@@ -37,178 +38,207 @@ import SettingsModal from "../CommonAtoms/SettingsModal";
 const { Header, Content } = Layout;
 
 interface ContentComponentProps {
-  onToggleCollapse: (value: boolean) => void;
-  collapsed: boolean;
-  isDarkMode: boolean;
-  setIsDarkMode: (value: boolean) => void;
+    onToggleCollapse: (value: boolean) => void;
+    collapsed: boolean;
+    isDarkMode: boolean;
+    setIsDarkMode: (value: boolean) => void;
 }
 
 const ContentComponent: React.FC<ContentComponentProps> = ({
-  onToggleCollapse,
-  collapsed,
-  isDarkMode,
-  setIsDarkMode,
+    onToggleCollapse,
+    collapsed,
+    isDarkMode,
+    setIsDarkMode,
 }) => {
-  const {
-    token: { colorBgContainer },
-  } = theme.useToken();
-  const loginInfo = useSelector(selectLoginInfo);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+    const {
+        token: { colorBgContainer },
+    } = theme.useToken();
+    const loginInfo = useSelector(selectLoginInfo);
+    const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const { user, logout } = useAuthHook();
-  const navigate = useNavigate();
+    const { user, logout } = useAuthHook();
+    const navigate = useNavigate();
 
-  const {
-    data: playerProfileData,
-    refetch,
-} = useGetUserProfileQuery({
-    id: loginInfo?.userId,
-});
+    const { data: playerProfileData, refetch } = useGetUserProfileQuery({
+        id: loginInfo?.userId,
+    });
 
-const handleSettingsClick = () => {
-  setIsModalVisible(true);
-};
+    const handleSettingsClick = () => {
+        setIsModalVisible(true);
+    };
 
-const handleModalClose = () => {
-  refetch();
-  setIsModalVisible(false);
-};
+    const handleModalClose = () => {
+        refetch();
+        setIsModalVisible(false);
+    };
 
-  const handleThemeChange = (checked: boolean) => {
-    setIsDarkMode(checked);
-    localStorage.setItem("isDarkMode", String(checked));
-  };
+    const handleThemeChange = (checked: boolean) => {
+        setIsDarkMode(checked);
+        localStorage.setItem("isDarkMode", String(checked));
+    };
 
-  const items = [
-    {
-      label: "profile",
-      key: "1",
-      onClick: () => {
-        navigate("/profile");
-      },
-    },{
-      label: "Settings",
-      key: "2",
-      onClick: () => {
-        handleSettingsClick();
-      },
-    },
-    {
-      label: "Logout",
-      key: "3",
-      onClick: () => logout(),
-    }
-    
-  ];
+    const confirmLogout = () => {
+        Modal.confirm({
+            title: "Confirm Logout",
+            content: "Are you sure you want to logout?",
+            okText: "Yes",
+            cancelText: "No",
+            onOk: () => {
+                logout();
+            },
+        });
+    };
 
-  return (
-    <>
-      <Layout>
-        {user?.token && (
-          <Header
-            style={{
-              padding: 0,
-              backgroundColor: colorBgContainer,
-            }}
-          >
-            <Row justify="space-between" align="middle">
-              <Col>
-                <Button
-                  type="text"
-                  icon={
-                    collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />
-                  }
-                  onClick={() => {
-                    onToggleCollapse(!collapsed);
-                  }}
-                  style={{
-                    fontSize: "16px",
-                    width: 64,
-                    height: 64,
-                  }}
-                />
-              </Col>
-              <Col
-                style={{
-                  textAlign: "right",
-                  paddingRight: 32,
-                  cursor: "pointer",
-                }}
-              >
-                <Switch
-                  checked={isDarkMode}
-                  onChange={handleThemeChange}
-                  checkedChildren="Dark"
-                  unCheckedChildren="Light"
-                />
+    const items = [
+        {
+            label: "Profile",
+            key: "1",
+            onClick: () => {
+                navigate("/profile");
+            },
+        },
+        {
+            label: "Settings",
+            key: "2",
+            onClick: () => {
+                handleSettingsClick();
+            },
+        },
+        {
+            label: "Logout",
+            key: "3",
+            onClick: () => confirmLogout(),
+        },
+    ];
 
-                {user.token && (
-                  <Dropdown
-                    overlay={<Menu items={items} />}
-                    trigger={["click"]}
-                  >
-                    <Space>
-                      <Avatar src={user?.image} alt={user.username} />
-                      {user.username}
-                    </Space>
-                  </Dropdown>
+    return (
+        <>
+            <Layout>
+                {user?.token && (
+                    <Header
+                        style={{
+                            padding: 0,
+                            backgroundColor: colorBgContainer,
+                        }}
+                    >
+                        <Row justify="space-between" align="middle">
+                            <Col>
+                                <Button
+                                    type="text"
+                                    icon={
+                                        collapsed ? (
+                                            <MenuUnfoldOutlined />
+                                        ) : (
+                                            <MenuFoldOutlined />
+                                        )
+                                    }
+                                    onClick={() => {
+                                        onToggleCollapse(!collapsed);
+                                    }}
+                                    style={{
+                                        fontSize: "16px",
+                                        width: 64,
+                                        height: 64,
+                                    }}
+                                />
+                            </Col>
+                            <Col
+                                style={{
+                                    textAlign: "right",
+                                    paddingRight: 32,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                <Switch
+                                    checked={isDarkMode}
+                                    onChange={handleThemeChange}
+                                    checkedChildren="Dark"
+                                    unCheckedChildren="Light"
+                                />
+
+                                {user.token && (
+                                    <Dropdown
+                                        overlay={<Menu items={items} />}
+                                        trigger={["click"]}
+                                    >
+                                        <Space>
+                                            <Avatar
+                                                src={user?.image}
+                                                alt={user.username}
+                                            />
+                                            {user.username}
+                                        </Space>
+                                    </Dropdown>
+                                )}
+                            </Col>
+                        </Row>
+                    </Header>
                 )}
-              </Col>
-            </Row>
-          </Header>
-        )}
-        <Content
-          style={{
-            minHeight: 360,
-          }}
-        >
-          <Routes>
-            <Route path="/" element={<ContentOutlet />}>
-              <Route index element={<Dashboard />} />
-              <Route path="/profile" element={<UserProfile />} />
-              <Route path="/player" element={<Player />} />
-              {loginInfo.roles.includes("ADMIN") && (
-                <Route path="/players/:id" element={<Player />} />
-              )}
-              <Route path="/players" element={<Players />} />
-              <Route path="/tournaments" element={<TournamentsPage />} />
-              <Route
-                path="/tournaments/team-building/:id"
-                element={<SingleTournament />}
-              />
-              <Route
-                path="/tournaments/join-tournament/:id"
-                element={<JoinTournament />}
-              />
-              <Route path="venues" element={<Venue />} />
-              <Route path="ac/voucher-types" element={<AcVoucherType />} />
-              <Route path="/ac/natures" element={<AcNature />} />{" "}
-              <Route path="ac/collections" element={<AcCollection />} />
-              <Route path="ac/charts" element={<AcChart />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-          {playerProfileData && (
-                <SettingsModal
-                    visible={isModalVisible}
-                    onClose={handleModalClose}
-                    playerData={{
-                        id: playerProfileData?.content?.id,
-                        name: playerProfileData?.content?.name,
-                        email: playerProfileData?.content?.email,
-                        employeeId: playerProfileData?.content?.employeeId,
-                        fullName: playerProfileData?.content?.fullName,
-                        skypeId: playerProfileData?.content?.skypeId,
-                        mobileNo: playerProfileData?.content?.mobileNo,
-                        playingPosition:
-                            playerProfileData?.content?.playingPosition,
+                <Content
+                    style={{
+                        minHeight: 360,
                     }}
-                />
-            )}
-        </Content>
-      </Layout>
-    </>
-  );
+                >
+                    <Routes>
+                        <Route path="/" element={<ContentOutlet />}>
+                            <Route index element={<Dashboard />} />
+                            <Route path="/profile" element={<UserProfile />} />
+                            <Route path="/player" element={<Player />} />
+                            {loginInfo.roles.includes("ADMIN") && (
+                                <Route
+                                    path="/players/:id"
+                                    element={<Player />}
+                                />
+                            )}
+                            <Route path="/players" element={<Players />} />
+                            <Route
+                                path="/tournaments"
+                                element={<TournamentsPage />}
+                            />
+                            <Route
+                                path="/tournaments/team-building/:id"
+                                element={<SingleTournament />}
+                            />
+                            <Route
+                                path="/tournaments/join-tournament/:id"
+                                element={<JoinTournament />}
+                            />
+                            <Route path="venues" element={<Venue />} />
+                            <Route
+                                path="ac/voucher-types"
+                                element={<AcVoucherType />}
+                            />
+                            <Route path="/ac/natures" element={<AcNature />} />
+                            <Route
+                                path="ac/collections"
+                                element={<AcCollection />}
+                            />
+                            <Route path="ac/charts" element={<AcChart />} />
+                        </Route>
+                        <Route path="*" element={<Navigate to="/" />} />
+                    </Routes>
+                    {playerProfileData && (
+                        <SettingsModal
+                            visible={isModalVisible}
+                            onClose={handleModalClose}
+                            playerData={{
+                                id: playerProfileData?.content?.id,
+                                name: playerProfileData?.content?.name,
+                                email: playerProfileData?.content?.email,
+                                employeeId:
+                                    playerProfileData?.content?.employeeId,
+                                fullName: playerProfileData?.content?.fullName,
+                                skypeId: playerProfileData?.content?.skypeId,
+                                mobileNo: playerProfileData?.content?.mobileNo,
+                                playingPosition:
+                                    playerProfileData?.content?.playingPosition,
+                            }}
+                        />
+                    )}
+                </Content>
+            </Layout>
+        </>
+    );
 };
 
 export default ContentComponent;

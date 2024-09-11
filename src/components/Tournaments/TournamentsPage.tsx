@@ -68,28 +68,61 @@ const TournamentsPage: React.FC = () => {
             title: "Tournament Name",
             dataIndex: "name",
             key: "tournamentName",
+            render: (text: string, record: IoTournamentSingleSummaryType) => (
+                <span
+                    style={{
+                        color:
+                            record.activeStatus === false ? "gray" : "inherit",
+                    }}
+                >
+                    {text}
+                </span>
+            ),
         },
         {
             title: "Date & Time",
             dataIndex: "tournamentDate",
             key: "tournamentDate",
             sorter: true,
-            render: (date: string) => date && showBdLocalTime(date),
+            render: (date: string, record: IoTournamentSingleSummaryType) => (
+                <span
+                    style={{
+                        color:
+                            record.activeStatus === false ? "gray" : "inherit",
+                    }}
+                >
+                    {date && showBdLocalTime(date)}
+                </span>
+            ),
         },
         {
             title: "Venue",
             dataIndex: "venueName",
             key: "venueName",
             sorter: true,
+            render: (venue: string, record: IoTournamentSingleSummaryType) => (
+                <span
+                    style={{
+                        color:
+                            record.activeStatus === false ? "gray" : "inherit",
+                    }}
+                >
+                    {venue}
+                </span>
+            ),
         },
         {
             title: "Status",
             dataIndex: "tournamentStatus",
             key: "tournamentStatus",
-            render: (tournamentStatus: string) => {
-                // Define color based on the status
+            render: (
+                tournamentStatus: string,
+                record: IoTournamentSingleSummaryType
+            ) => {
                 const dotColor =
-                    tournamentStatus === "UPCOMING"
+                    record.activeStatus === false
+                        ? "gray"
+                        : tournamentStatus === "UPCOMING"
                         ? "#008080"
                         : tournamentStatus === "COMPLETED"
                         ? "#708090"
@@ -112,7 +145,16 @@ const TournamentsPage: React.FC = () => {
                             ></span>
                         )}
 
-                        <span>{tournamentStatus}</span>
+                        <span
+                            style={{
+                                color:
+                                    record.activeStatus === false
+                                        ? "gray"
+                                        : "inherit",
+                            }}
+                        >
+                            {tournamentStatus}
+                        </span>
                     </div>
                 );
             },
@@ -202,7 +244,7 @@ const TournamentsPage: React.FC = () => {
                     pageSize,
                     total: tournamentSummaries?.content?.totalCount,
                 }}
-                scroll={{ y: "70vh" }}
+                scroll={{ y: "70vh", x: "max-content" }}
                 onChange={handleTableChange}
             />
         </>

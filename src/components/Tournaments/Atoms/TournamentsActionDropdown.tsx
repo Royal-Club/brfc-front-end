@@ -1,8 +1,13 @@
 import React, { useState } from "react";
-import { Button, Dropdown, Menu } from "antd";
+import { Button, Dropdown, Menu, Modal, Select, message } from "antd";
 import { MoreOutlined } from "@ant-design/icons";
 import { IoTournamentSingleSummaryType } from "../../../state/features/tournaments/tournamentTypes";
 import CreateTournament from "./CreateTournamentModal";
+import { useUpdateTournamentActiveStatusMutation } from "../../../state/features/tournaments/tournamentsSlice";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
+
+const { Option } = Select;
 
 interface TournamentsActionDropdownProps {
     record: IoTournamentSingleSummaryType;
@@ -15,25 +20,62 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
     onMenuClick,
     tournamentId,
 }) => {
+    const [updateTournamentActiveStatus] =
+        useUpdateTournamentActiveStatusMutation();
     const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
+    const [isActiveStatusModalVisible, setIsActiveStatusModalVisible] =
+        useState(false);
+    const [activeStatus, setActiveStatus] = useState(record.activeStatus);
+
+    const loginInfo = useSelector(selectLoginInfo);
+
     const handleSetIsUpdateModalVisible = (value: boolean) => {
         setIsUpdateModalVisible(value);
     };
 
     const handleMenuClick = (e: any) => {
         if (e?.key === "update") {
-            console.log("update");
             handleSetIsUpdateModalVisible(true);
+        } else if (e?.key === "active-status") {
+            setIsActiveStatusModalVisible(true); // Open the active status modal
         }
+
         onMenuClick(e, record);
+    };
+
+    const handleActiveStatusChange = (value: boolean) => {
+        setActiveStatus(value);
+    };
+
+    const handleUpdateActiveStatus = () => {
+        updateTournamentActiveStatus({
+            id: record.id,
+            activeStatus: activeStatus,
+        })
+            .unwrap()
+            .then(() => {
+                message.success("Active status updated successfully");
+                setIsActiveStatusModalVisible(false);
+            })
+            .catch(() => {
+                message.error("Failed to update active status");
+            });
     };
 
     const menu = (
         <Menu onClick={handleMenuClick}>
-            <Menu.Item key="join">Join Tournament</Menu.Item>
-            <Menu.Item key="team-building">Team Building</Menu.Item>
-            <Menu.Item key="update">Update Tournament</Menu.Item>
-            <Menu.Item key="change-status">Change Tournament Status</Menu.Item>
+            {record.activeStatus ? (
+                <Menu.Item key="join">Join Tournament</Menu.Item>
+            ) : null}
+            {record.activeStatus ? (
+                <Menu.Item key="team-building">Team Building</Menu.Item>
+            ) : null}
+            {loginInfo.roles.includes("ADMIN") && (
+                <Menu.Item key="update">Update Tournament</Menu.Item>
+            )}
+            {loginInfo.roles.includes("ADMIN") && (
+                <Menu.Item key="active-status">Update Active Status</Menu.Item>
+            )}
         </Menu>
     );
 
@@ -43,12 +85,29 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
                 <Button icon={<MoreOutlined />} />
             </Dropdown>
 
+            {/* Update Tournament Modal */}
             <CreateTournament
                 tournamentId={tournamentId}
                 isUpdateModalVisible={isUpdateModalVisible}
                 handleSetIsUpdateModalVisible={handleSetIsUpdateModalVisible}
                 tournamentData={record}
             />
+
+            <Modal
+                title="Update Active Status"
+                visible={isActiveStatusModalVisible}
+                onCancel={() => setIsActiveStatusModalVisible(false)}
+                onOk={handleUpdateActiveStatus}
+            >
+                <Select
+                    defaultValue={record.activeStatus}
+                    onChange={handleActiveStatusChange}
+                    style={{ width: "100%" }}
+                >
+                    <Option value={true}>Active</Option>
+                    <Option value={false}>Inactive</Option>
+                </Select>
+            </Modal>
         </>
     );
 };
