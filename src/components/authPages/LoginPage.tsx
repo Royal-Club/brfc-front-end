@@ -1,16 +1,17 @@
-import React, { useLayoutEffect, useState } from "react";
-import { Button, message, theme } from "antd";
+import React, { useState } from "react";
+import { Button, message } from "antd";
+import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setAllData, setImage } from "../../state/slices/loginInfoSlice";
 import { useLoginMutation } from "../../state/features/auth/authSlice";
 import colors from "../../utils/colors";
-import { checkTockenValidity } from "../../utils/utils";
 
 const LoginPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [loginData, setLoginData] = useState({ email: "", password: "" });
     const [errors, setErrors] = useState({ email: "", password: "" });
+    const [passwordVisible, setPasswordVisible] = useState(false); // state for password visibility
     const [login] = useLoginMutation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -18,7 +19,14 @@ const LoginPage: React.FC = () => {
     const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setLoginData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
+        setErrors((prev) => ({ ...prev, [name]: "" })); // reset error for the field
+    };
+
+    // Validate email format using regex
+    const validateEmail = (email: string) => {
+        const emailRegex =
+            /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+        return emailRegex.test(email);
     };
 
     const validateForm = () => {
@@ -27,6 +35,9 @@ const LoginPage: React.FC = () => {
 
         if (!loginData.email) {
             newErrors.email = "Please input your email!";
+            valid = false;
+        } else if (!validateEmail(loginData.email)) {
+            newErrors.email = "Please enter a valid email!";
             valid = false;
         }
 
@@ -124,7 +135,12 @@ const LoginPage: React.FC = () => {
                         }}
                     />
                     {errors.email && (
-                        <div className="error-message">{errors.email}</div>
+                        <div
+                            className="error-message"
+                            style={{ color: "red", fontSize: "12px" }}
+                        >
+                            {errors.email}
+                        </div>
                     )}
                 </div>
 
@@ -137,22 +153,45 @@ const LoginPage: React.FC = () => {
                     }}
                 >
                     <label htmlFor="password">Password</label>
-                    <input
-                        type="password"
-                        name="password"
-                        id="password"
-                        placeholder="Enter Password"
-                        value={loginData.password}
-                        onChange={onInputChange}
-                        style={{
-                            borderRadius: "4px",
-                            padding: "10px 12px",
-                            width: "100%",
-                            border: `1px solid ${colors.grayLight}`,
-                        }}
-                    />
+                    <div style={{ position: "relative" }}>
+                        <input
+                            type={passwordVisible ? "text" : "password"} // toggle input type
+                            name="password"
+                            id="password"
+                            placeholder="Enter Password"
+                            value={loginData.password}
+                            onChange={onInputChange}
+                            style={{
+                                borderRadius: "4px",
+                                padding: "10px 12px",
+                                width: "100%",
+                                border: `1px solid ${colors.grayLight}`,
+                            }}
+                        />
+                        <div
+                            onClick={() => setPasswordVisible((prev) => !prev)}
+                            style={{
+                                position: "absolute",
+                                right: 10,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                cursor: "pointer",
+                            }}
+                        >
+                            {passwordVisible ? (
+                                <EyeInvisibleOutlined />
+                            ) : (
+                                <EyeOutlined />
+                            )}
+                        </div>
+                    </div>
                     {errors.password && (
-                        <div className="error-message">{errors.password}</div>
+                        <div
+                            className="error-message"
+                            style={{ color: "red", fontSize: "12px" }}
+                        >
+                            {errors.password}
+                        </div>
                     )}
                 </div>
 

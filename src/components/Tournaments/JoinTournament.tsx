@@ -1,16 +1,27 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
-import { Table, Select, Typography, Space, Skeleton, Input } from "antd";
+import { Link, useParams } from "react-router-dom";
+import {
+    Table,
+    Select,
+    Typography,
+    Space,
+    Skeleton,
+    Input,
+    Grid,
+    Breakpoint,
+    theme,
+} from "antd";
 import useJoinTournament from "../../hooks/useJoinTournament";
 import { TournamentPlayerInfoType } from "../../state/features/tournaments/tournamentTypes";
 import DebouncedInput from "./Atoms/DebouncedInput";
 import "./tournament.css";
-import { RightSquareOutlined } from "@ant-design/icons";
+import { CheckCircleTwoTone, RightSquareOutlined } from "@ant-design/icons";
 import { showBdLocalTime } from "./../../utils/utils";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Option } = Select;
 const { Search } = Input;
+const { useBreakpoint } = Grid;
 
 export default function JoinTournament() {
     const { id = "" } = useParams();
@@ -21,7 +32,13 @@ export default function JoinTournament() {
     const [editedComments, setEditedComments] = useState<{
         [key: number]: string;
     }>({});
+
+    const {
+        token: { colorBgContainer },
+    } = theme.useToken();
+
     const [searchTerm, setSearchTerm] = useState("");
+    const screens = useBreakpoint();
 
     const filteredPlayers = players.filter(
         (player) =>
@@ -36,16 +53,33 @@ export default function JoinTournament() {
             title: "Player Name",
             dataIndex: "playerName",
             key: "playerName",
+            width: screens.xs ? 120 : 300,
+            render: (_: any, record: TournamentPlayerInfoType) => (
+                <Space
+                    style={{
+                        display: "flex",
+                        padding: "0 5px",
+                        justifyContent: "space-between",
+                    }}
+                >
+                    {record.playerName}{" "}
+                    {record.participationStatus === true && (
+                        <CheckCircleTwoTone twoToneColor="#52c41a" />
+                    )}
+                </Space>
+            ),
         },
         {
             title: "Employee ID",
             dataIndex: "employeeId",
             key: "employeeId",
+            width: screens.xs ? 100 : 200,
         },
         {
             title: "Participation Status",
             dataIndex: "participationStatus",
             key: "participationStatus",
+            width: screens.xs ? 100 : 200,
             render: (_: any, record: TournamentPlayerInfoType) => (
                 <Select
                     value={
@@ -65,6 +99,7 @@ export default function JoinTournament() {
                         );
                     }}
                     disabled={isUpdating}
+                    style={{ width: "100%" }}
                 >
                     <Option value="true">Yes</Option>
                     <Option value="false">No</Option>
@@ -75,6 +110,7 @@ export default function JoinTournament() {
             title: "Comments",
             dataIndex: "comments",
             key: "comments",
+            width: screens.xs ? 300 : "auto", // Full width on small screens
             render: (_: any, record: TournamentPlayerInfoType) => (
                 <Space direction="vertical" style={{ width: "100%" }}>
                     <DebouncedInput
@@ -104,26 +140,30 @@ export default function JoinTournament() {
     ];
 
     return (
-        <Space direction="vertical" style={{ padding: "0 0 10px 0" }}>
+        <Space direction="vertical">
             {isLoading ? (
-                <Skeleton active paragraph={{ rows: 13 }} />
+                <Skeleton active paragraph={{ rows: 10 }} />
             ) : (
                 <>
                     <Space
-                        direction="horizontal"
+                        direction={screens.xs ? "vertical" : "horizontal"}
                         style={{
                             display: "flex",
-                            marginBottom: "10px",
-                            padding: "0 10px",
+                            padding: "10px",
                             justifyContent: "space-between",
-                            alignItems: "end",
+                            alignItems: screens.xs ? "start" : "end",
                             flexWrap: "wrap",
+                            background: colorBgContainer,
                         }}
                     >
                         <Space direction="vertical">
                             <Title
                                 level={2}
-                                style={{ margin: 0, fontWeight: 600, fontSize: '18px' }}
+                                style={{
+                                    margin: 0,
+                                    fontWeight: 600,
+                                    fontSize: "18px",
+                                }}
                             >
                                 {nextTournament?.tournamentName}
                             </Title>
@@ -133,14 +173,14 @@ export default function JoinTournament() {
                                 style={{
                                     lineHeight: 1.2,
                                     display: "flex",
-                                    gap: "30px",
-                                    flexWrap: "wrap", // Adjust for smaller screens
+                                    gap: screens.xs ? "10px" : "30px",
+                                    flexWrap: "wrap",
                                 }}
                             >
                                 <Title
                                     level={5}
                                     type="secondary"
-                                    style={{ margin: 0, fontSize: '14px' }}
+                                    style={{ margin: 0, fontSize: "14px" }}
                                 >
                                     <RightSquareOutlined />{" "}
                                     {nextTournament?.tournamentDate &&
@@ -152,7 +192,7 @@ export default function JoinTournament() {
                                 <Title
                                     level={5}
                                     type="secondary"
-                                    style={{ margin: 0, fontSize: '14px' }}
+                                    style={{ margin: 0, fontSize: "14px" }}
                                 >
                                     <RightSquareOutlined /> Total Players:{" "}
                                     {filteredPlayers.length}
@@ -160,15 +200,29 @@ export default function JoinTournament() {
                                 <Title
                                     level={5}
                                     type="secondary"
-                                    style={{ margin: 0, fontSize: '14px' }}
+                                    style={{ margin: 0, fontSize: "14px" }}
                                 >
-                                    <RightSquareOutlined />
-                                    Total Participating:{" "}
+                                    <RightSquareOutlined /> Total Participating:{" "}
                                     {
                                         filteredPlayers.filter(
                                             (player) =>
                                                 player.participationStatus ===
                                                 true
+                                        ).length
+                                    }
+                                </Title>
+                                <Title
+                                    level={5}
+                                    type="secondary"
+                                    style={{ margin: 0, fontSize: "14px" }}
+                                >
+                                    <RightSquareOutlined /> Pending
+                                    Participating:{" "}
+                                    {
+                                        filteredPlayers.filter(
+                                            (player) =>
+                                                player.participationStatus ===
+                                                null
                                         ).length
                                     }
                                 </Title>
@@ -178,23 +232,24 @@ export default function JoinTournament() {
                             placeholder="Search players"
                             onSearch={(value) => setSearchTerm(value)}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ width: "100%", maxWidth: 300, marginTop: '10px' }}
+                            style={{
+                                width: "100%",
+                                maxWidth: 300,
+                                marginTop: "10px",
+                            }}
                         />
                     </Space>
 
-             
-                 <Table
+                    <Table
                         rowKey="playerId"
                         columns={columns}
                         dataSource={filteredPlayers}
                         pagination={false}
                         bordered
-                        size="small"
-                        scroll={{ y: 740  }}
+                        size="middle"
+                        scroll={{ x: "max-content", y: "76vh" }}
                         className="slimScroll"
-                        
                     />
-                 
                 </>
             )}
         </Space>

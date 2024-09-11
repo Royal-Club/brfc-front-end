@@ -39,6 +39,12 @@ const DebouncedInput: React.FC<DebouncedInputProps> = ({
             placeholder={placeholder}
             value={value}
             onChange={handleChange}
+            style={{ 
+                border :"none",
+                outline:"none",
+                borderBottom: "1px solid #ccc",
+                borderRadius: 0,
+             }}
         />
     );
 };

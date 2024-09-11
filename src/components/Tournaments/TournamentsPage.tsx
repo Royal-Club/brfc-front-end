@@ -26,7 +26,7 @@ const TournamentsPage: React.FC = () => {
 
     const {
         token: { colorBgContainer },
-      } = theme.useToken();
+    } = theme.useToken();
 
     const {
         data: tournamentSummaries,
@@ -68,41 +68,93 @@ const TournamentsPage: React.FC = () => {
             title: "Tournament Name",
             dataIndex: "name",
             key: "tournamentName",
+            render: (text: string, record: IoTournamentSingleSummaryType) => (
+                <span
+                    style={{
+                        color:
+                            record.activeStatus === false ? "gray" : "inherit",
+                    }}
+                >
+                    {text}
+                </span>
+            ),
         },
         {
             title: "Date & Time",
             dataIndex: "tournamentDate",
             key: "tournamentDate",
             sorter: true,
-            render: (date: string) =>
-                date && showBdLocalTime(date)
-            
-   
+            render: (date: string, record: IoTournamentSingleSummaryType) => (
+                <span
+                    style={{
+                        color:
+                            record.activeStatus === false ? "gray" : "inherit",
+                    }}
+                >
+                    {date && showBdLocalTime(date)}
+                </span>
+            ),
         },
         {
             title: "Venue",
             dataIndex: "venueName",
             key: "venueName",
             sorter: true,
+            render: (venue: string, record: IoTournamentSingleSummaryType) => (
+                <span
+                    style={{
+                        color:
+                            record.activeStatus === false ? "gray" : "inherit",
+                    }}
+                >
+                    {venue}
+                </span>
+            ),
         },
         {
             title: "Status",
             dataIndex: "tournamentStatus",
             key: "tournamentStatus",
-            render: (tournamentStatus: string) => {
+            render: (
+                tournamentStatus: string,
+                record: IoTournamentSingleSummaryType
+            ) => {
+                const dotColor =
+                    record.activeStatus === false
+                        ? "gray"
+                        : tournamentStatus === "UPCOMING"
+                        ? "#008080"
+                        : tournamentStatus === "COMPLETED"
+                        ? "#708090"
+                        : tournamentStatus === ""
+                        ? null
+                        : "#4169E1";
+
                 return (
-                    <div
-                        style={{
-                            color:
-                            tournamentStatus === "UPCOMING"
-                                ? "#008080" 
-                                : tournamentStatus === "COMPLETED"
-                                ? "#708090"  
-                                : "#4169E1", 
-                        
-                        }}
-                    >
-                        {tournamentStatus}{" "}
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                        {dotColor && (
+                            <span
+                                style={{
+                                    height: "10px",
+                                    width: "10px",
+                                    borderRadius: "50%",
+                                    backgroundColor: dotColor,
+                                    display: "inline-block",
+                                    marginRight: "8px",
+                                }}
+                            ></span>
+                        )}
+
+                        <span
+                            style={{
+                                color:
+                                    record.activeStatus === false
+                                        ? "gray"
+                                        : "inherit",
+                            }}
+                        >
+                            {tournamentStatus}
+                        </span>
                     </div>
                 );
             },
@@ -115,6 +167,7 @@ const TournamentsPage: React.FC = () => {
                     <TournamentsActionDropdown
                         record={record}
                         onMenuClick={handleMenuClick}
+                        tournamentId={record.id}
                     />
                 ) : (
                     <div style={{ height: "32px" }} />
@@ -138,7 +191,9 @@ const TournamentsPage: React.FC = () => {
     if (isLoading) {
         return (
             <>
-                <Header style={{padding: "0 24px" , background: colorBgContainer }}>
+                <Header
+                    style={{ padding: "0 24px", background: colorBgContainer }}
+                >
                     <Space direction="vertical" style={{ width: "100%" }}>
                         <Skeleton.Button active style={{ width: 150 }} />
                     </Space>
@@ -166,7 +221,7 @@ const TournamentsPage: React.FC = () => {
 
     return (
         <>
-            <Header style={{  padding: "0 24px", background: colorBgContainer }}>
+            <Header style={{ padding: "0 24px", background: colorBgContainer }}>
                 <Space
                     direction="horizontal"
                     style={{ width: "100%", justifyContent: "space-between" }}
@@ -189,9 +244,8 @@ const TournamentsPage: React.FC = () => {
                     pageSize,
                     total: tournamentSummaries?.content?.totalCount,
                 }}
-                scroll={{ y: "70vh" }}
+                scroll={{ y: "70vh", x: "max-content" }}
                 onChange={handleTableChange}
-                
             />
         </>
     );

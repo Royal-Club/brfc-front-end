@@ -23,9 +23,13 @@ import IPlayer from "../../../interfaces/IPlayer";
 import { API_URL } from "../../../settings";
 import moment from "moment";
 import FormatCurrencyWithSymbol from "../../Util/FormatCurrencyWithSymbol";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 const { Text, Link } = Typography;
 
 function AcCollection() {
+  const loginInfo = useSelector(selectLoginInfo);
+
   var [tableLoadingSpin, setTableSpinLoading] = useState(false);
   var [playerApiLoading, setPlayerApiLoading] = useState(false);
 
@@ -265,9 +269,9 @@ function AcCollection() {
         <Col md={24}>
           <div>
             <Title level={4}>Monthly Collection</Title>
-            <Button type="primary" onClick={showModal}>
+           {loginInfo.roles.includes("ADMIN") && <Button type="primary" onClick={showModal}>
               Create
-            </Button>
+            </Button>}
             <Table
               loading={tableLoadingSpin}
               size="small"

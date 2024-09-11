@@ -22,7 +22,6 @@ import {
     Legend,
 } from "chart.js";
 import "./authStyles.css";
-import SettingsModal from "../CommonAtoms/SettingsModal";
 import { useGetUserProfileQuery } from "../../state/features/auth/authSlice";
 
 const { Title, Text } = Typography;
@@ -38,7 +37,6 @@ ChartJS.register(
 
 export default function UserProfile() {
     const loginInfo = useSelector(selectLoginInfo);
-    const [isModalVisible, setIsModalVisible] = useState(false);
     const {
         token: { colorTextSecondary },
     } = theme.useToken();
@@ -46,7 +44,6 @@ export default function UserProfile() {
     const {
         data: playerProfileData,
         isLoading,
-        refetch,
     } = useGetUserProfileQuery({
         id: loginInfo?.userId,
     });
@@ -113,27 +110,13 @@ export default function UserProfile() {
         },
     };
 
-    const handleSettingsClick = () => {
-        refetch();
-        setIsModalVisible(true);
-    };
-
-    const handleModalClose = () => {
-        refetch();
-        setIsModalVisible(false);
-    };
 
     return (
         <div className="userProfileContainer">
             <Row gutter={[16, 16]} justify="center">
                 <Col xs={24} sm={24} md={8} lg={8} xl={8}>
                     <Card
-                        actions={[
-                            <SettingOutlined
-                                key="setting"
-                                onClick={handleSettingsClick}
-                            />,
-                        ]}
+                       
                     >
                         {isLoading ? (
                             <Skeleton
@@ -219,23 +202,6 @@ export default function UserProfile() {
                     </Card>
                 </Col>
             </Row>
-            {playerProfileData && (
-                <SettingsModal
-                    visible={isModalVisible}
-                    onClose={handleModalClose}
-                    playerData={{
-                        id: playerProfileData?.content?.id,
-                        name: playerProfileData?.content?.name,
-                        email: playerProfileData?.content?.email,
-                        employeeId: playerProfileData?.content?.employeeId,
-                        fullName: playerProfileData?.content?.fullName,
-                        skypeId: playerProfileData?.content?.skypeId,
-                        mobileNo: playerProfileData?.content?.mobileNo,
-                        playingPosition:
-                            playerProfileData?.content?.playingPosition,
-                    }}
-                />
-            )}
         </div>
     );
 }

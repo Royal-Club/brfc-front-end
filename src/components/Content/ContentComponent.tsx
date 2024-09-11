@@ -9,6 +9,7 @@ import {
     Row,
     Space,
     Switch,
+    Modal,
     theme,
 } from "antd";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
@@ -28,6 +29,11 @@ import ContentOutlet from "./ContentOutlet";
 import { useAuthHook } from "../../hooks/useAuthHook";
 import UserProfile from "../authPages/UserProfile";
 import { checkTockenValidity } from "../../utils/utils";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import { useGetUserProfileQuery } from "../../state/features/auth/authSlice";
+import { useState } from "react";
+import SettingsModal from "../CommonAtoms/SettingsModal";
 
 const { Header, Content } = Layout;
 
@@ -47,27 +53,61 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     const {
         token: { colorBgContainer },
     } = theme.useToken();
+    const loginInfo = useSelector(selectLoginInfo);
+    const [isModalVisible, setIsModalVisible] = useState(false);
 
     const { user, logout } = useAuthHook();
     const navigate = useNavigate();
+
+    const { data: playerProfileData, refetch } = useGetUserProfileQuery({
+        id: loginInfo?.userId,
+    });
+
+    const handleSettingsClick = () => {
+        setIsModalVisible(true);
+    };
+
+    const handleModalClose = () => {
+        refetch();
+        setIsModalVisible(false);
+    };
 
     const handleThemeChange = (checked: boolean) => {
         setIsDarkMode(checked);
         localStorage.setItem("isDarkMode", String(checked));
     };
 
+    const confirmLogout = () => {
+        Modal.confirm({
+            title: "Confirm Logout",
+            content: "Are you sure you want to logout?",
+            okText: "Yes",
+            cancelText: "No",
+            onOk: () => {
+                logout();
+            },
+        });
+    };
+
     const items = [
         {
-            label: "profile",
+            label: "Profile",
             key: "1",
             onClick: () => {
                 navigate("/profile");
             },
         },
         {
+            label: "Settings",
+            key: "2",
+            onClick: () => {
+                handleSettingsClick();
+            },
+        },
+        {
             label: "Logout",
             key: "3",
-            onClick: () => logout(),
+            onClick: () => confirmLogout(),
         },
     ];
 
@@ -144,7 +184,12 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             <Route index element={<Dashboard />} />
                             <Route path="/profile" element={<UserProfile />} />
                             <Route path="/player" element={<Player />} />
-                            <Route path="/players/:id" element={<Player />} />
+                            {loginInfo.roles.includes("ADMIN") && (
+                                <Route
+                                    path="/players/:id"
+                                    element={<Player />}
+                                />
+                            )}
                             <Route path="/players" element={<Players />} />
                             <Route
                                 path="/tournaments"
@@ -163,7 +208,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                                 path="ac/voucher-types"
                                 element={<AcVoucherType />}
                             />
-                            <Route path="/ac/natures" element={<AcNature />} />{" "}
+                            <Route path="/ac/natures" element={<AcNature />} />
                             <Route
                                 path="ac/collections"
                                 element={<AcCollection />}
@@ -172,6 +217,24 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                         </Route>
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
+                    {playerProfileData && (
+                        <SettingsModal
+                            visible={isModalVisible}
+                            onClose={handleModalClose}
+                            playerData={{
+                                id: playerProfileData?.content?.id,
+                                name: playerProfileData?.content?.name,
+                                email: playerProfileData?.content?.email,
+                                employeeId:
+                                    playerProfileData?.content?.employeeId,
+                                fullName: playerProfileData?.content?.fullName,
+                                skypeId: playerProfileData?.content?.skypeId,
+                                mobileNo: playerProfileData?.content?.mobileNo,
+                                playingPosition:
+                                    playerProfileData?.content?.playingPosition,
+                            }}
+                        />
+                    )}
                 </Content>
             </Layout>
         </>

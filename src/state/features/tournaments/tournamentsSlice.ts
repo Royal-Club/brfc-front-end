@@ -1,6 +1,7 @@
 import apiSlice from "../../api/apiSlice";
 import { BasicResType } from "../../responesTypes";
 import {
+    getSingleTournamentInfoType,
     IoTournamentSummaryResType,
     NextTournamentResType,
     TournamentGoalKeeperInfoType,
@@ -29,6 +30,40 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
             }),
             invalidatesTags: ["tournaments"],
         }),
+        getTournamentById: builder.query<
+            getSingleTournamentInfoType,
+            { tournamentId: number }
+        >({
+            query: ({ tournamentId }) => `tournaments/${tournamentId}`,
+            providesTags: ["tournaments"],
+        }),
+        updateTournament: builder.mutation<
+            BasicResType,
+            {
+                id: number;
+                tournamentName: string;
+                tournamentDate: string | Date;
+                venueId: number;
+            }
+        >({
+            query: ({ id, tournamentName, tournamentDate, venueId }) => ({
+                url: `tournaments/${id}`,
+                method: "PUT",
+                body: { tournamentName, tournamentDate, venueId },
+            }),
+            invalidatesTags: ["tournaments"],
+        }),
+        updateTournamentActiveStatus: builder.mutation<
+            BasicResType,
+            { id: number; activeStatus: boolean }
+        >({
+            query: ({ id, activeStatus }) => ({
+                url: `tournaments/${id}/status?active=${activeStatus}`,
+                method: "PUT",
+            }),
+            invalidatesTags: ["tournaments"],
+        }),
+
         getTournaments: builder.query<
             IoTournamentSummaryResType,
             {
@@ -104,7 +139,10 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
 
 export const {
     useCreateTournamentMutation,
+    useGetTournamentByIdQuery,
+    useUpdateTournamentMutation,
     useGetTournamentsQuery,
+    useUpdateTournamentActiveStatusMutation,
     useGetTournamentParticipantsListQuery,
     useAddParticipationToTournamentMutation,
     useGetTournamentSummaryQuery,
