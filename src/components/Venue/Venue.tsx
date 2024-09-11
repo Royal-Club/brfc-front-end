@@ -1,22 +1,17 @@
 import { CheckCircleTwoTone, EditTwoTone } from "@ant-design/icons";
-import {
-  Button,
-  Col,
-  Form,
-  Input,
-  Modal,
-  Row,
-  Space,
-  Spin
-} from "antd";
+import { Button, Col, Form, Input, Modal, Row, Space, Spin } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import IVenue from "../../interfaces/IVenue";
 import { API_URL } from "../../settings";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 
 function Venue() {
+  const loginInfo = useSelector(selectLoginInfo);
+
   var [tableLoadingSpin, setTableSpinLoading] = useState(false);
 
   const [venueForm] = Form.useForm();
@@ -34,7 +29,7 @@ function Venue() {
   useEffect(() => {
     getVenueList();
 
-    return () => { };
+    return () => {};
   }, []);
 
   const getVenueList = () => {
@@ -65,7 +60,7 @@ function Venue() {
       setIsFormDisabled(false);
     }
 
-    return () => { };
+    return () => {};
   }, [modalState]);
 
   const showModal = () => {
@@ -88,7 +83,7 @@ function Venue() {
   };
 
   // table rendering settings
-  const venueColumns: ColumnsType<IVenue> = [
+  const CommonColumns: ColumnsType<IVenue> = [
     {
       title: "Venue Name",
       dataIndex: "name",
@@ -100,39 +95,43 @@ function Venue() {
       key: "address",
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
       render: (_: any, record: IVenue) => {
         if (record.active) {
           return (
             <span>
               <CheckCircleTwoTone twoToneColor="#52c41a" /> Active
             </span>
-          )
+          );
         } else {
           return (
             <span>
               <CheckCircleTwoTone twoToneColor="#eb2f96" /> InActive
             </span>
-          )
+          );
         }
-
       },
     },
-
-    {
-      title: "Action",
-      key: "action",
-      render: (_: any, record: IVenue) => (
-        <Space size="middle">
-          <a onClick={() => updateAction(record.id)}>
-            <EditTwoTone />
-          </a>
-        </Space>
-      ),
-    },
   ];
+
+  const venueColumns: ColumnsType<IVenue> = loginInfo.roles.includes("ADMIN")
+    ? [
+        ...CommonColumns,
+        {
+          title: "Action",
+          key: "action",
+          render: (_: any, record: IVenue) => (
+            <Space size="middle">
+              <a onClick={() => updateAction(record.id)}>
+                <EditTwoTone />
+              </a>
+            </Space>
+          ),
+        },
+      ]
+    : CommonColumns;
 
   const modalFormSubmit = async () => {
     try {
@@ -204,16 +203,17 @@ function Venue() {
       });
   };
 
-
   return (
     <>
       <Row>
         <Col md={24}>
           <div>
             <Title level={4}>Venue</Title>
-            <Button type="primary" onClick={showModal}>
-              Create
-            </Button>
+            {loginInfo.roles.includes("ADMIN") && (
+              <Button type="primary" onClick={showModal}>
+                Create
+              </Button>
+            )}
             <Table
               loading={tableLoadingSpin}
               size="small"

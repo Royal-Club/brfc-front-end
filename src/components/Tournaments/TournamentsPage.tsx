@@ -13,188 +13,198 @@ const { Header } = Layout;
 const { Title } = Typography;
 
 const TournamentsPage: React.FC = () => {
-    const loginInfo = useSelector(selectLoginInfo);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
-    const [sorter, setSorter] = useState<{
-        sortedBy: string;
-        sortDirection: "ASC" | "DESC";
-    }>({
-        sortedBy: "tournamentDate",
-        sortDirection: "DESC",
-    });
+  const loginInfo = useSelector(selectLoginInfo);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sorter, setSorter] = useState<{
+    sortedBy: string;
+    sortDirection: "ASC" | "DESC";
+  }>({
+    sortedBy: "tournamentDate",
+    sortDirection: "DESC",
+  });
 
-    const {
-        token: { colorBgContainer },
-      } = theme.useToken();
+  const {
+    token: { colorBgContainer },
+  } = theme.useToken();
 
-    const {
-        data: tournamentSummaries,
-        isLoading,
-        isError,
-        refetch: refetchTournaments,
-    } = useGetTournamentsQuery({
-        offSet: currentPage - 1,
-        pageSize,
-        sortedBy: sorter.sortedBy,
-        sortDirection: sorter.sortDirection,
-    });
+  const {
+    data: tournamentSummaries,
+    isLoading,
+    isError,
+    refetch: refetchTournaments,
+  } = useGetTournamentsQuery({
+    offSet: currentPage - 1,
+    pageSize,
+    sortedBy: sorter.sortedBy,
+    sortDirection: sorter.sortDirection,
+  });
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const handleMenuClick = (e: any, record: IoTournamentSingleSummaryType) => {
-        if (e.key === "join") {
-            navigate(`/tournaments/join-tournament/${record.id}`);
-        } else if (e.key === "team-building") {
-            navigate(`/tournaments/team-building/${record.id}`);
-        }
-    };
-
-    const handleTableChange = (pagination: any, filters: any, sorter: any) => {
-        setCurrentPage(pagination.current);
-        setPageSize(pagination.pageSize);
-        setSorter({
-            sortedBy: sorter.field || "tournamentDate",
-            sortDirection: sorter.order === "ascend" ? "ASC" : "DESC",
-        });
-    };
-
-    useEffect(() => {
-        refetchTournaments();
-    }, [currentPage, pageSize, sorter, refetchTournaments]);
-
-    const columns = [
-        {
-            title: "Tournament Name",
-            dataIndex: "name",
-            key: "tournamentName",
-        },
-        {
-            title: "Date & Time",
-            dataIndex: "tournamentDate",
-            key: "tournamentDate",
-            sorter: true,
-            render: (date: string) =>
-                date && showBdLocalTime(date)
-            
-   
-        },
-        {
-            title: "Venue",
-            dataIndex: "venueName",
-            key: "venueName",
-            sorter: true,
-        },
-        {
-            title: "Status",
-            dataIndex: "tournamentStatus",
-            key: "tournamentStatus",
-            render: (tournamentStatus: string) => {
-                return (
-                    <div
-                        style={{
-                            color:
-                            tournamentStatus === "UPCOMING"
-                                ? "#008080" 
-                                : tournamentStatus === "COMPLETED"
-                                ? "#708090"  
-                                : "#4169E1", 
-                        
-                        }}
-                    >
-                        {tournamentStatus}{" "}
-                    </div>
-                );
-            },
-        },
-        {
-            title: "Action",
-            key: "action",
-            render: (text: any, record: IoTournamentSingleSummaryType) =>
-                record?.tournamentDate ? (
-                    <TournamentsActionDropdown
-                        record={record}
-                        onMenuClick={handleMenuClick}
-                    />
-                ) : (
-                    <div style={{ height: "32px" }} />
-                ),
-        },
-    ];
-
-    const emptyRowPlaceholder = () => {
-        const remainingRows =
-            pageSize - (tournamentSummaries?.content?.tournaments?.length || 0);
-        return Array.from({ length: remainingRows }).map((_, index) => ({
-            id: `empty-${index}`,
-            tournamentName: "",
-            tournamentDate: "",
-            venueName: "",
-            tournamentStatus: "",
-            action: "",
-        }));
-    };
-
-    if (isLoading) {
-        return (
-            <>
-                <Header style={{padding: "0 24px" , background: colorBgContainer }}>
-                    <Space direction="vertical" style={{ width: "100%" }}>
-                        <Skeleton.Button active style={{ width: 150 }} />
-                    </Space>
-                </Header>
-                <Skeleton active paragraph={{ rows: 10 }} />
-            </>
-        );
+  const handleMenuClick = (e: any, record: IoTournamentSingleSummaryType) => {
+    if (e.key === "join") {
+      navigate(`/tournaments/join-tournament/${record.id}`);
+    } else if (e.key === "team-building") {
+      navigate(`/tournaments/team-building/${record.id}`);
     }
+  };
 
-    if (isError || !tournamentSummaries) {
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    setCurrentPage(pagination.current);
+    setPageSize(pagination.pageSize);
+    setSorter({
+      sortedBy: sorter.field || "tournamentDate",
+      sortDirection: sorter.order === "ascend" ? "ASC" : "DESC",
+    });
+  };
+
+  useEffect(() => {
+    refetchTournaments();
+  }, [currentPage, pageSize, sorter, refetchTournaments]);
+
+  const columns = [
+    {
+      title: "Tournament Name",
+      dataIndex: "name",
+      key: "tournamentName",
+    },
+    {
+      title: "Date & Time",
+      dataIndex: "tournamentDate",
+      key: "tournamentDate",
+      sorter: true,
+      render: (date: string) => date && showBdLocalTime(date),
+    },
+    {
+      title: "Venue",
+      dataIndex: "venueName",
+      key: "venueName",
+      sorter: true,
+    },
+    {
+      title: "Status",
+      dataIndex: "tournamentStatus",
+      key: "tournamentStatus",
+      render: (tournamentStatus: string) => {
+        // Define color based on the status
+        const dotColor =
+          tournamentStatus === "UPCOMING"
+            ? "#008080"
+            : tournamentStatus === "COMPLETED"
+            ? "#708090"
+            : tournamentStatus === ""
+            ? null
+            : "#4169E1";
+
         return (
-            <Alert
-                message="Error"
-                description="Failed to load tournaments."
-                type="error"
-                showIcon
-            />
-        );
-    }
-
-    const dataSource = [
-        ...tournamentSummaries.content.tournaments,
-        ...emptyRowPlaceholder(),
-    ] as IoTournamentSingleSummaryType[];
-
-    return (
-        <>
-            <Header style={{  padding: "0 24px", background: colorBgContainer }}>
-                <Space
-                    direction="horizontal"
-                    style={{ width: "100%", justifyContent: "space-between" }}
-                >
-                    <Title level={2} style={{ margin: 0 }}>
-                        Tournaments
-                    </Title>
-                    {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
-                </Space>
-            </Header>
-
-            <Table<IoTournamentSingleSummaryType>
-                columns={columns}
-                dataSource={dataSource}
-                rowKey={(record) => record.id?.toString() || record.id}
-                showSorterTooltip={false}
-                bordered
-                pagination={{
-                    current: currentPage,
-                    pageSize,
-                    total: tournamentSummaries?.content?.totalCount,
+          <div style={{ display: "flex", alignItems: "center" }}>
+            {dotColor && (
+              <span
+                style={{
+                  height: "10px",
+                  width: "10px",
+                  borderRadius: "50%",
+                  backgroundColor: dotColor,
+                  display: "inline-block",
+                  marginRight: "8px",
                 }}
-                scroll={{ y: "70vh" }}
-                onChange={handleTableChange}
-                
-            />
-        </>
+              ></span>
+            )}
+
+            <span>{tournamentStatus}</span>
+          </div>
+        );
+      },
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (text: any, record: IoTournamentSingleSummaryType) =>
+        record?.tournamentDate ? (
+          <TournamentsActionDropdown
+            record={record}
+            onMenuClick={handleMenuClick}
+          />
+        ) : (
+          <div style={{ height: "32px" }} />
+        ),
+    },
+  ];
+
+  const emptyRowPlaceholder = () => {
+    const remainingRows =
+      pageSize - (tournamentSummaries?.content?.tournaments?.length || 0);
+    return Array.from({ length: remainingRows }).map((_, index) => ({
+      id: `empty-${index}`,
+      tournamentName: "",
+      tournamentDate: "",
+      venueName: "",
+      tournamentStatus: "",
+      action: "",
+    }));
+  };
+
+  
+  if (isLoading) {
+    return (
+      <>
+        <Header style={{ padding: "0 24px", background: colorBgContainer }}>
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <Skeleton.Button active style={{ width: 150 }} />
+          </Space>
+        </Header>
+        <Skeleton active paragraph={{ rows: 10 }} />
+      </>
     );
+  }
+
+  if (isError || !tournamentSummaries) {
+    return (
+      <Alert
+        message="Error"
+        description="Failed to load tournaments."
+        type="error"
+        showIcon
+      />
+    );
+  }
+
+  const dataSource = [
+    ...tournamentSummaries.content.tournaments,
+    ...emptyRowPlaceholder(),
+  ] as IoTournamentSingleSummaryType[];
+
+  return (
+    <>
+      <Header style={{ padding: "0 24px", background: colorBgContainer }}>
+        <Space
+          direction="horizontal"
+          style={{ width: "100%", justifyContent: "space-between" }}
+        >
+          <Title level={2} style={{ margin: 0 }}>
+            Tournaments
+          </Title>
+          {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
+        </Space>
+      </Header>
+
+      <Table<IoTournamentSingleSummaryType>
+        columns={columns}
+        dataSource={dataSource}
+        rowKey={(record) => record.id?.toString() || record.id}
+        showSorterTooltip={false}
+        bordered
+        pagination={{
+          current: currentPage,
+          pageSize,
+          total: tournamentSummaries?.content?.totalCount,
+        }}
+        scroll={{ y: "70vh" }}
+        onChange={handleTableChange}
+      />
+    </>
+  );
 };
 
 export default TournamentsPage;
