@@ -1,6 +1,7 @@
 import apiSlice from "../../api/apiSlice";
 import { BasicResType } from "../../responesTypes";
 import {
+    getSingleTournamentInfoType,
     IoTournamentSummaryResType,
     NextTournamentResType,
     TournamentGoalKeeperInfoType,
@@ -25,6 +26,29 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
             query: ({ tournamentName, tournamentDate, venueId }) => ({
                 url: "tournaments",
                 method: "POST",
+                body: { tournamentName, tournamentDate, venueId },
+            }),
+            invalidatesTags: ["tournaments"],
+        }),
+        getTournamentById: builder.query<
+            getSingleTournamentInfoType,
+            { tournamentId: number }
+        >({
+            query: ({ tournamentId }) => `tournaments/${tournamentId}`,
+            providesTags: ["tournaments"],
+        }),
+        updateTournament: builder.mutation<
+            BasicResType,
+            {
+                id: number;
+                tournamentName: string;
+                tournamentDate: string | Date;
+                venueId: number;
+            }
+        >({
+            query: ({ id, tournamentName, tournamentDate, venueId }) => ({
+                url: `tournaments/${id}`,
+                method: "PUT",
                 body: { tournamentName, tournamentDate, venueId },
             }),
             invalidatesTags: ["tournaments"],
@@ -104,6 +128,8 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
 
 export const {
     useCreateTournamentMutation,
+    useGetTournamentByIdQuery,
+    useUpdateTournamentMutation,
     useGetTournamentsQuery,
     useGetTournamentParticipantsListQuery,
     useAddParticipationToTournamentMutation,

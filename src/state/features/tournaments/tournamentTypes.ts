@@ -9,6 +9,10 @@ export interface IoTournamentSingleSummaryType {
     tournamentStatus?: string;
 }
 
+export interface getSingleTournamentInfoType extends BasicResType {
+    content: IoTournamentSingleSummaryType;
+}
+
 export interface TournamentPlayerInfoType {
     id?: number;
     playerId: number;
