@@ -1,4 +1,4 @@
-// export const API_URL = "http://103.197.206.22:9191";
+export const API_URL = "http://103.197.206.22:9191";
 
 
 // export const API_URL = "http://localhost:9191";
