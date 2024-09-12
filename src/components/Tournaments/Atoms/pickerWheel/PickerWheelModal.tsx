@@ -253,10 +253,10 @@ const PickerWheelModal = () => {
                 className="slimScroll"
                     style={{ marginTop: "16px" , maxHeight: "320px", overflowY: "auto"}}
 
-                    dataSource={winnersList.reverse()}
+                    dataSource={winnersList}
                     renderItem={(winner, index) => (
                         <List.Item>
-                            <strong> {winnersList.length - index}. </strong>
+                            <strong> {index + 1}. </strong>
                             {winner}
                         </List.Item>
                     )}
