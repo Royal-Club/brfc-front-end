@@ -2,14 +2,16 @@ import React, { useState, useCallback } from "react";
 import { Modal, Button, Input, List, Radio, Space } from "antd";
 import PickerWheel from "./PickerWheel";
 import "./pickerWheelModal.css";
-import { CheckOutlined, DeleteOutlined } from "@ant-design/icons";
+import { CheckOutlined, DeleteOutlined, UnorderedListOutlined } from "@ant-design/icons";
 
 import LogoImage from "../../../../assets/logo.png";
 import colors from "../../../../utils/colors";
+import WinnerFrequencyChart from "./WinnerFrequencyChart";
 
 const PickerWheelModal = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isWinnerModalVisible, setIsWinnerModalVisible] = useState(false);
+    const [isWinnersListModalVisible, setIsWinnersListModalVisible] = useState(false); // New modal for winners list
     const [segments, setSegments] = useState([
         { name: "Segment 1", disabled: false },
         { name: "Segment 2", disabled: false },
@@ -22,6 +24,7 @@ const PickerWheelModal = () => {
     ]);
     const [newSegment, setNewSegment] = useState("");
     const [winner, setWinner] = useState("");
+    const [winnersList, setWinnersList] = useState<string[]>([]); // List to track all winners
 
     const showModal = () => {
         setIsModalVisible(true);
@@ -70,11 +73,16 @@ const PickerWheelModal = () => {
 
     const handleSpinFinished = (winnerSegment: string) => {
         setWinner(winnerSegment);
+        setWinnersList((prevWinners) => [...prevWinners, winnerSegment]); // Add the winner to the winners list
         setIsWinnerModalVisible(true);
     };
 
     const handleWinnerModalOk = () => {
         setIsWinnerModalVisible(false);
+    };
+
+    const handleWinnersListModalOk = () => {
+        setIsWinnersListModalVisible(false);
     };
 
     return (
@@ -111,6 +119,7 @@ const PickerWheelModal = () => {
                             maxWidth={520}
                             maxHeight={520}
                             centerImageSrc={LogoImage}
+                            fontFamily="Segoe UI"
                         />
                     </div>
 
@@ -140,6 +149,7 @@ const PickerWheelModal = () => {
                             </div>
 
                             <List
+                                className="slimScroll"
                                 dataSource={segments}
                                 renderItem={(segment, index) => (
                                     <List.Item
@@ -147,6 +157,7 @@ const PickerWheelModal = () => {
                                             padding: "8px 16px",
                                             borderRadius: "4px",
                                             marginBottom: "8px",
+                                            fontWeight: 500,
                                         }}
                                         actions={[
                                             <Radio
@@ -187,8 +198,20 @@ const PickerWheelModal = () => {
                         </Space>
                     </div>
                 </div>
+
+                {/* Button to view winners */}
+                <Button
+                    icon={<UnorderedListOutlined />}
+                    onClick={() => setIsWinnersListModalVisible(true)} // Open the winners list modal
+                    style={{
+                        marginTop: "16px",
+                    }}
+                >
+                    View Winners
+                </Button>
             </Modal>
 
+            {/* Modal to display individual winner */}
             <Modal
                 title="Congratulations!"
                 visible={isWinnerModalVisible}
@@ -207,6 +230,37 @@ const PickerWheelModal = () => {
                 <p>
                     The winner is: <strong>{winner}</strong>
                 </p>
+            </Modal>
+
+        
+            <Modal
+                title="Winners List"
+                visible={isWinnersListModalVisible}
+                onOk={handleWinnersListModalOk}
+                onCancel={handleWinnersListModalOk}
+                footer={[
+                    <Button
+                        key="ok"
+                        type="primary"
+                        onClick={handleWinnersListModalOk}
+                    >
+                        OK
+                    </Button>,
+                ]}
+            >
+                <WinnerFrequencyChart winnersList={winnersList} />
+                <List
+                className="slimScroll"
+                    style={{ marginTop: "16px" , maxHeight: "320px", overflowY: "auto"}}
+
+                    dataSource={winnersList.reverse()}
+                    renderItem={(winner, index) => (
+                        <List.Item>
+                            <strong> {winnersList.length - index}. </strong>
+                            {winner}
+                        </List.Item>
+                    )}
+                />
             </Modal>
         </div>
     );

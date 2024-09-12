@@ -158,11 +158,9 @@ const Dashboard: React.FC = () => {
   } = theme.useToken();
   return (
     <div style={{ padding: "0px 20px" }}>
-      <h1 style={{ textAlign: "center" , border: `1px solid gray`}}>This Dashboard is In Development, Showing dummy data...</h1>
-
       <Row gutter={48} style={{ gap: "20px" }}>
         {/* Section 1: Player Stats */}
-        <Col span={24} style={{ background: colorBgContainer }}>
+        {/* <Col span={24} style={{ background: colorBgContainer }}>
           <AntTitle level={2}>Section 1: Player Stats</AntTitle>
           <AntTitle level={3}>Top Players</AntTitle>
           <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
@@ -177,7 +175,7 @@ const Dashboard: React.FC = () => {
               />
             ))}
           </div>{" "}
-        </Col>
+        </Col> */}
         <Col span={24} style={{ background: colorBgContainer }}>
           <Row gutter={48} style={{ background: colorBgContainer }}>
             <Col md={12} sm={24}>
