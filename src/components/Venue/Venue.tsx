@@ -208,18 +208,21 @@ function Venue() {
       <Row>
         <Col md={24}>
           <div>
-            <Title level={4}>Venue</Title>
-            {loginInfo.roles.includes("ADMIN") && (
-              <Button type="primary" onClick={showModal}>
-                Create
-              </Button>
-            )}
+            <Space style={{ marginBottom: 16, justifyContent: "space-between" , display: "flex" , alignItems: "center"}}>
+              <Title level={4}>Venue</Title>
+              {loginInfo.roles.includes("ADMIN") && (
+                <Button type="primary" onClick={showModal}>
+                  Create
+                </Button>
+              )}
+            </Space>
+
             <Table
               loading={tableLoadingSpin}
               size="small"
               dataSource={venues}
               columns={venueColumns}
-              scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
+              scroll={{ x: "max-content" }} 
             />
 
             <Modal

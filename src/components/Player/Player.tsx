@@ -19,7 +19,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { MailOutlined } from "@ant-design/icons";
 import IFootballPosition from "../../interfaces/IFootballPosition";
-import { API_URL } from "../../settings";
+import { API_URL, COMMON_PLAYER_PASSWORD } from "../../settings";
 import { checkTockenValidity } from "../../utils/utils";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
@@ -66,7 +66,7 @@ function Player() {
       employeeId: playerForm.getFieldValue("employeeId"),
       skypeId: playerForm.getFieldValue("skypeId"),
       mobileNo: playerForm.getFieldValue("mobileNo"),
-      password: playerForm.getFieldValue("name") + "@123",
+      password: COMMON_PLAYER_PASSWORD,
       playingPosition:
         playerForm.getFieldValue("playingPosition") || "UNASSIGNED", // Default to avoid undefined
     };

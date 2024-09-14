@@ -1,19 +1,22 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "antd";
 import debounce from "lodash/debounce";
+import { isDisabled } from "@testing-library/user-event/dist/utils";
 
 interface DebouncedInputProps {
     placeholder?: string;
     debounceDuration?: number;
     onChange: (value: string) => void;
     value?: string; // Add the `value` prop to the interface
+    isDisabled?: boolean;
 }
 
 const DebouncedInput: React.FC<DebouncedInputProps> = ({
     placeholder = "Enter text...",
     debounceDuration = 500,
     onChange,
-    value: controlledValue, // Use controlledValue to differentiate from internal state
+    value: controlledValue, 
+    isDisabled = false,
 }) => {
     const [value, setValue] = useState(controlledValue || "");
 
@@ -39,6 +42,7 @@ const DebouncedInput: React.FC<DebouncedInputProps> = ({
             placeholder={placeholder}
             value={value}
             onChange={handleChange}
+            disabled={isDisabled}
             style={{ 
                 border :"none",
                 outline:"none",
