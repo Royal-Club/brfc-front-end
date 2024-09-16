@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import IAcNature from "../../../interfaces/IAcNature";
 import { API_URL } from "../../../settings";
 import { AcNatureType } from "../../Enum/AcNatureType";
-import { FootballPosition } from "../../Enum/FootballPosition";
 
 function AcNature() {
     var [tableLoadingSpin, setTableSpinLoading] = useState(false);
@@ -75,6 +74,11 @@ function AcNature() {
                 return getEnumValue(record.type);
             },
         },
+        // {
+        //     title: "Description",
+        //     dataIndex: "description",
+        //     key: "description",
+        // },
     ];
 
 

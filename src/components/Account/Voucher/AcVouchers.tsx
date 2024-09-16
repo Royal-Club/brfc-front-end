@@ -1,4 +1,3 @@
-import { CheckCircleTwoTone, EditTwoTone } from "@ant-design/icons";
 import {
   Button,
   Col,
@@ -9,33 +8,31 @@ import {
   Modal,
   Row,
   Select,
-  Space,
   Spin,
-  TableColumnsType,
-  Typography,
+  Typography
 } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import axios from "axios";
+import moment from "moment";
 import { useEffect, useState } from "react";
-import IAcCollection from "../../../interfaces/IAcCollection";
+import { useSelector } from "react-redux";
+import IAcVoucher from "../../../interfaces/IAcVoucher";
 import IPlayer from "../../../interfaces/IPlayer";
 import { API_URL } from "../../../settings";
-import moment from "moment";
-import FormatCurrencyWithSymbol from "../../Util/FormatCurrencyWithSymbol";
-import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
+import FormatCurrencyWithSymbol from "../../Util/FormatCurrencyWithSymbol";
 const { Text, Link } = Typography;
 
-function AcCollection() {
+function AcVouchers() {
   const loginInfo = useSelector(selectLoginInfo);
 
   var [tableLoadingSpin, setTableSpinLoading] = useState(false);
   var [playerApiLoading, setPlayerApiLoading] = useState(false);
 
-  const [acCollectionForm] = Form.useForm();
-  const [acCollections, setAcCollections] = useState<IAcCollection[]>([]);
-  const [acCollectionId, setAcCollectionId] = useState<number>();
+  const [acVoucherForm] = Form.useForm();
+  const [acVouchers, setAcVouchers] = useState<IAcVoucher[]>([]);
+  const [acVoucherId, setAcVoucherId] = useState<number>();
   const [isFormDisabled, setIsFormDisabled] = useState(false);
   const [playerListSize, setPlayerListSize] = useState(0);
   const [paymentAmount, setPaymentAmount] = useState(1000);
@@ -49,21 +46,21 @@ function AcCollection() {
   const [modalConfirmLoading, setModalConfirmLoading] = useState(false);
 
   useEffect(() => {
-    getAcCollectionList();
+    getAcVoucherList();
     getPlayers();
 
     return () => {};
   }, []);
 
-  const getAcCollectionList = () => {
+  const getAcVoucherList = () => {
     setTableSpinLoading(true);
     axios
-      .get(`${API_URL}/ac/collections`)
+      .get(`${API_URL}/ac/vouchers`)
       .then((response) => {
         response.data.content.map((x: { [x: string]: any; id: any }) => {
           x["key"] = x.id;
         });
-        setAcCollections(response.data.content);
+        setAcVouchers(response.data.content);
         setTableSpinLoading(false);
       })
       .catch((err) => {
@@ -77,7 +74,7 @@ function AcCollection() {
     if (modalState === "CREATE") {
       setModalOkButtonText("Create");
       setIsFormDisabled(false);
-      setAcCollectionId(0);
+      setAcVoucherId(0);
     } else {
       setModalOkButtonText("Change");
       setIsFormDisabled(false);
@@ -94,7 +91,7 @@ function AcCollection() {
   };
 
   const clearModalField = () => {
-    acCollectionForm.resetFields();
+    acVoucherForm.resetFields();
   };
 
   const handleCancel = () => {
@@ -104,62 +101,40 @@ function AcCollection() {
   };
 
   // table rendering settings
-  const acCollectionColumns: ColumnsType<IAcCollection> = [
+  const acVoucherColumns: ColumnsType<IAcVoucher> = [
     {
-      title: "TrxID",
-      dataIndex: "transactionId",
-      key: "transactionId",
-    },
-    {
-      title: "Voucher",
-      dataIndex: "voucherCode",
-      key: "voucherCode",
+      title: "Voucher No",
+      dataIndex: "code",
+      key: "code",
     },
     {
       title: "Date",
-      dataIndex: "createdDate",
-      key: "createdDate",
+      dataIndex: "voucherDate",
+      key: "voucherDate",
+      render: (_: any, record: IAcVoucher) =>
+        moment.utc(record.voucherDate).local().format("YYYY-MMM-DD"),
     },
-    {
-      title: "Payeer Name",
-      dataIndex: "allPayersName",
-      key: "allPayersName",
-      render: (_: any, record: IAcCollection) => {
-        if (record.players.length > 1) {
-          return <>Expand to see</>;
-        } else {
-          return <span>{record.allPayersName}</span>;
-        }
-      },
-    },
-    Table.EXPAND_COLUMN,
     {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
-      render: (_: any, record: IAcCollection) => (
+      render: (_: any, record: IAcVoucher) => (
         <FormatCurrencyWithSymbol amount={record.amount} />
       ),
     },
     {
-      title: "Total Amount",
-      dataIndex: "totalAmount",
-      key: "totalAmount",
-      render: (_: any, record: IAcCollection) => (
-        <FormatCurrencyWithSymbol amount={record.totalAmount} />
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+      render: (_: any, record: IAcVoucher) => (
+        <FormatCurrencyWithSymbol amount={record.amount} />
       ),
     },
-    {
-      title: "Month Of Payment",
-      dataIndex: "monthOfPayment",
-      key: "monthOfPayment",
-      render: (_: any, record: IAcCollection) =>
-        moment.utc(record.monthOfPayment).local().format("MMM YYYY"),
-    },
+
     // {
     //   title: "Action",
     //   key: "action",
-    //   render: (_: any, record: IAcCollection) => (
+    //   render: (_: any, record: IAcVoucher) => (
     //     <Space size="middle">
     //       <a onClick={() => updateAction(record.id)}>
     //         <EditTwoTone />
@@ -171,24 +146,24 @@ function AcCollection() {
 
   const modalFormSubmit = async () => {
     try {
-      const values = await acCollectionForm.validateFields();
+      const values = await acVoucherForm.validateFields();
       console.log("Success:", values);
       setModalConfirmLoading(true);
-      console.log(acCollectionForm.getFieldValue("monthOfPayment"));
+      console.log(acVoucherForm.getFieldValue("monthOfPayment"));
 
       if (modalState === "CREATE") {
         axios
-          .post(`${API_URL}/ac/collections`, {
-            playerIds: acCollectionForm.getFieldValue("playerIds"),
-            amount: acCollectionForm.getFieldValue("amount"),
-            description: acCollectionForm.getFieldValue("description"),
-            monthOfPayment: acCollectionForm.getFieldValue("monthOfPayment"),
+          .post(`${API_URL}/ac/vouchers`, {
+            playerIds: acVoucherForm.getFieldValue("playerIds"),
+            amount: acVoucherForm.getFieldValue("amount"),
+            description: acVoucherForm.getFieldValue("description"),
+            monthOfPayment: acVoucherForm.getFieldValue("monthOfPayment"),
           })
           .then((response) => {
             setModalOpen(false);
             clearModalField();
             setModalConfirmLoading(false);
-            getAcCollectionList();
+            getAcVoucherList();
             console.log(response);
           })
           .catch((err) => {
@@ -198,17 +173,17 @@ function AcCollection() {
           });
       } else {
         axios
-          .put(`${API_URL}/ac/collections/${acCollectionId}`, {
-            playerIds: acCollectionForm.getFieldValue("playerIds"),
-            amount: acCollectionForm.getFieldValue("amount"),
-            description: acCollectionForm.getFieldValue("description"),
-            monthOfPayment: acCollectionForm.getFieldValue("monthOfPayment"),
+          .put(`${API_URL}/ac/vouchers/${acVoucherId}`, {
+            playerIds: acVoucherForm.getFieldValue("playerIds"),
+            amount: acVoucherForm.getFieldValue("amount"),
+            description: acVoucherForm.getFieldValue("description"),
+            monthOfPayment: acVoucherForm.getFieldValue("monthOfPayment"),
           })
           .then((response) => {
             clearModalField();
             setModalOpen(false);
             setModalConfirmLoading(false);
-            getAcCollectionList();
+            getAcVoucherList();
             setModalState("CREATE");
           })
           .catch((err) => {
@@ -249,14 +224,14 @@ function AcCollection() {
   };
 
   const updateAction = (id: number) => {
-    setAcCollectionId(id);
+    setAcVoucherId(id);
     setModalState("UPDATE");
     showModal();
     setModalSpinLoading(true);
     axios
-      .get(`${API_URL}/acCollections/${id}`)
+      .get(`${API_URL}/acVouchers/${id}`)
       .then((response) => {
-        acCollectionForm.setFieldsValue({
+        acVoucherForm.setFieldsValue({
           name: response.data.content.name,
           address: response.data.content.address,
         });
@@ -275,26 +250,21 @@ function AcCollection() {
       <Row>
         <Col md={24}>
           <div>
-            <Title level={4}>Monthly Collection</Title>
-           {loginInfo.roles.includes("ADMIN") && <Button type="primary" onClick={showModal}>
+            <Title level={4}>Voucher</Title>
+           {/* {loginInfo.roles.includes("ADMIN") && <Button type="primary" onClick={showModal}>
               Create
-            </Button>}
+            </Button>} */}
             <Table
               loading={tableLoadingSpin}
               size="small"
-              dataSource={acCollections}
-              columns={acCollectionColumns}
-              expandable={{
-                expandedRowRender: (record) => (
-                  <p style={{ margin: 0 }}>{record.allPayersName}</p>
-                ),
-                rowExpandable: (record) => record.players.length > 1,
-              }}
+              dataSource={acVouchers}
+              columns={acVoucherColumns}
+              
               scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
             />
 
             <Modal
-              title="Monthly Collection"
+              title="Monthly Voucher"
               open={modalOpen}
               onOk={modalFormSubmit}
               confirmLoading={modalConfirmLoading}
@@ -306,8 +276,8 @@ function AcCollection() {
               <Spin spinning={modalLoadingSpin}>
                 <div>
                   <Form
-                    name="acCollectionForm"
-                    form={acCollectionForm}
+                    name="acVoucherForm"
+                    form={acVoucherForm}
                     labelCol={{ span: 6 }}
                     wrapperCol={{ span: 18 }}
                     initialValues={{ remember: true }}
@@ -366,7 +336,7 @@ function AcCollection() {
                       />
                     </Form.Item>
                     <Form.Item
-                      label="Month of Collection"
+                      label="Month of Voucher"
                       name="monthOfPayment"
                       rules={[
                         {
@@ -403,4 +373,4 @@ function AcCollection() {
   );
 }
 
-export default AcCollection;
+export default AcVouchers;

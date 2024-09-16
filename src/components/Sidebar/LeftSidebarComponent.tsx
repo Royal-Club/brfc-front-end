@@ -104,6 +104,10 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
       //     getItem("Expense", "/company"),
       //     getItem("Expense List", "/companies"),
       // ]),
+      getItem("Voucher", "VoucherSubMenu", null, [
+          // getItem("Voucher Entry", "/voucher"),
+          getItem("Voucher Register", "/ac/vouchers"),
+      ]),
     ]),
     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
       getItem("Venues", "/venues"),

@@ -10,6 +10,8 @@ interface IAcCollection {
     totalAmount: number;
     monthOfPayment: Date;
     description?: string;
+    voucherCode?: string;
+    voucherId?: number;
     allPayersName?: string;
     paid: Boolean;
     createdDate: Date;
