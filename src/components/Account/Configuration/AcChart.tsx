@@ -6,35 +6,23 @@ import { useEffect, useState } from "react";
 import IAcChart from "../../../interfaces/IAcChart";
 import { API_URL } from "../../../settings";
 import { AcNatureType } from "../../Enum/AcNatureType";
+import { useGetAcChartListQuery } from "../../../state/features/account/accountSlice";
 
 function AcChart() {
-  var [tableLoadingSpin, setTableSpinLoading] = useState(false);
-
+  const { data, isLoading } = useGetAcChartListQuery();
   const [acCharts, setAcCharts] = useState<IAcChart[]>([]);
 
   useEffect(() => {
-    getAcChartList();
+    if (data?.content) {
+      const arr = data.content.map((item: IAcChart) => ({
+        ...item,
+        key: item.id,
+      }));
+      setAcCharts(arr);
+    }
+  }, [data]);
+  
 
-    return () => {};
-  }, []);
-
-  const getAcChartList = () => {
-    setTableSpinLoading(true);
-    axios
-      .get(`${API_URL}/ac/charts`)
-      .then((response) => {
-        response.data.content.map((x: { [x: string]: any; id: any }) => {
-          x["key"] = x.id;
-        });
-        setAcCharts(response.data.content);
-        setTableSpinLoading(false);
-      })
-      .catch((err) => {
-        // Handle error
-        console.log("server error", err);
-        setTableSpinLoading(false);
-      });
-  };
 
   const getEnumValue = (type: string): string => {
     switch (type) {
@@ -88,7 +76,7 @@ function AcChart() {
           <div>
             <Title level={4}>Chart of Account</Title>
             <Table
-              loading={tableLoadingSpin}
+              loading={isLoading}
               size="small"
               dataSource={acCharts}
               columns={acChartColumns}

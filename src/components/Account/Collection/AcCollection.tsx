@@ -1,4 +1,4 @@
-import { CheckCircleTwoTone, EditTwoTone } from "@ant-design/icons";
+
 import {
   Button,
   Col,
@@ -9,9 +9,7 @@ import {
   Modal,
   Row,
   Select,
-  Space,
   Spin,
-  TableColumnsType,
   Typography,
 } from "antd";
 import Table, { ColumnsType } from "antd/es/table";

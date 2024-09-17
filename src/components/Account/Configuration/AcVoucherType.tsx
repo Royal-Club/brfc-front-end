@@ -9,35 +9,24 @@ import { useEffect, useState } from "react";
 import IAcVoucherType from "../../../interfaces/IAcVoucherType";
 import { API_URL } from "../../../settings";
 import { CheckCircleOutlined, CheckCircleTwoTone } from "@ant-design/icons";
+import { useGetAcVoucherTypeListQuery } from "../../../state/features/account/accountSlice";
 
 function AcVoucherType() {
-    var [tableLoadingSpin, setTableSpinLoading] = useState(false);
+    const { data, isLoading } = useGetAcVoucherTypeListQuery();
 
     const [acVoucherTypes, setAcVoucherTypes] = useState<IAcVoucherType[]>([]);
 
     useEffect(() => {
-        getAcVoucherTypeList();
+        if(data?.content) {
+            const arr = data.content.map((item: IAcVoucherType) => ({
+                ...item,
+                key: item.id
+            }));
+            setAcVoucherTypes(arr);
+        }
+      
+    }, [data]);
 
-        return () => { };
-    }, []);
-
-    const getAcVoucherTypeList = () => {
-        setTableSpinLoading(true);
-        axios
-            .get(`${API_URL}/ac/voucher-types`)
-            .then((response) => {
-                response.data.content.map((x: { [x: string]: any; id: any }) => {
-                    x["key"] = x.id;
-                });
-                setAcVoucherTypes(response.data.content);
-                setTableSpinLoading(false);
-            })
-            .catch((err) => {
-                // Handle error
-                console.log("server error", err);
-                setTableSpinLoading(false);
-            });
-    };
 
     // table rendering settings
     const acVoucherTypeColumns: ColumnsType<IAcVoucherType> = [
@@ -87,7 +76,7 @@ function AcVoucherType() {
                     <div>
                         <Title level={4}>Voucher Type</Title>
                         <Table
-                            loading={tableLoadingSpin}
+                            loading={isLoading}
                             size="small"
                             dataSource={acVoucherTypes}
                             columns={acVoucherTypeColumns}

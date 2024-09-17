@@ -9,35 +9,21 @@ import { useEffect, useState } from "react";
 import IAcNature from "../../../interfaces/IAcNature";
 import { API_URL } from "../../../settings";
 import { AcNatureType } from "../../Enum/AcNatureType";
+import { useGetAcNatureListQuery } from "../../../state/features/account/accountSlice";
 
 function AcNature() {
-    var [tableLoadingSpin, setTableSpinLoading] = useState(false);
-
+    const { data,isLoading } = useGetAcNatureListQuery();
     const [acNatures, setAcNatures] = useState<IAcNature[]>([]);
 
     useEffect(() => {
-        getAcNatureList();
-
-        return () => { };
-    }, []);
-
-    const getAcNatureList = () => {
-        setTableSpinLoading(true);
-        axios
-            .get(`${API_URL}/ac/natures`)
-            .then((response) => {
-                response.data.content.map((x: { [x: string]: any; id: any }) => {
-                    x["key"] = x.id;
-                });
-                setAcNatures(response.data.content);
-                setTableSpinLoading(false);
-            })
-            .catch((err) => {
-                // Handle error
-                console.log("server error", err);
-                setTableSpinLoading(false);
-            });
-    };
+        if(data?.content) {
+            const arr = data.content.map((item: IAcNature) => ({
+                ...item,
+                key: item.id
+            }));
+            setAcNatures(arr);
+        }
+    }, [data]);
 
     const getEnumValue = (type: string): string => {
         switch (type) {
@@ -89,7 +75,7 @@ function AcNature() {
                     <div>
                         <Title level={4}>Voucher Type</Title>
                         <Table
-                            loading={tableLoadingSpin}
+                            loading={isLoading}
                             size="small"
                             dataSource={acNatures}
                             columns={acNatureColumns}
