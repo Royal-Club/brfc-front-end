@@ -1,10 +1,8 @@
 import { Col, Row } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import IAcChart from "../../../interfaces/IAcChart";
-import { API_URL } from "../../../settings";
 import { AcNatureType } from "../../Enum/AcNatureType";
 import { useGetAcChartListQuery } from "../../../state/features/account/accountSlice";
 

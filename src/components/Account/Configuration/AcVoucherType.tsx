@@ -4,10 +4,8 @@ import {
 } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import IAcVoucherType from "../../../interfaces/IAcVoucherType";
-import { API_URL } from "../../../settings";
 import { CheckCircleOutlined, CheckCircleTwoTone } from "@ant-design/icons";
 import { useGetAcVoucherTypeListQuery } from "../../../state/features/account/accountSlice";
 
