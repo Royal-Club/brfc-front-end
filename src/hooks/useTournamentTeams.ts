@@ -166,7 +166,7 @@ const useTournamentTeams = (tournamentId: number) => {
             await refetchPlayer();
             await refetchTournament();
         } catch {
-            message.error("Failed to add player to team");
+            console.error("Failed to add player to team");
         } finally {
             setIsLoading(false);
         }
