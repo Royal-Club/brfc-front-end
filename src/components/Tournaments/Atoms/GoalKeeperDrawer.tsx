@@ -1,6 +1,8 @@
 import { Button, Drawer, Input, Table } from "antd";
 import React, { useState, useMemo, useRef, useEffect, Key } from "react";
 import { useGetTournamentGoalkeeperHistoryListQuery } from "../../../state/features/tournaments/tournamentsSlice";
+import moment from "moment"; // Add this for date formatting
+import type { ColumnsType } from "antd/lib/table"; // Import Ant Design's column type
 
 export default function GoalKeeperDrawer({
   tournamentId,
@@ -30,23 +32,8 @@ export default function GoalKeeperDrawer({
     }
   }, [open]);
 
-  interface ColumnProps {
-    title: string;
-    dataIndex: string;
-    key: string;
-    sorter?: (a: any, b: any) => number;
-    filteredValue?: string[] | null;
-    onFilter?: (
-      value: boolean | Key,
-      record: {
-        key: number;
-        playerName: string;
-        goalkeeperCount: number | "" | null;
-      }
-    ) => boolean;
-  }
-
-  const columns: ColumnProps[] = [
+  // Use ColumnsType provided by Ant Design for proper typing
+  const columns: ColumnsType<any> = [
     {
       title: "Player",
       dataIndex: "playerName",
@@ -61,6 +48,18 @@ export default function GoalKeeperDrawer({
         record.playerName
           .toLowerCase()
           .includes((value as string | number).toString().toLowerCase()),
+    },
+    {
+      title: "Played Date",
+      dataIndex: "playedDate",
+      key: "playedDate",
+      // Display only the date in 'YYYY-MM-DD' format using Moment.js
+      render: (text: string | null) =>
+        text ? moment(text).format("YYYY-MM-DD") : "",
+      // Fix sorting by comparing date objects or timestamps
+      sorter: (a: { playedDate: string }, b: { playedDate: string }) =>
+        new Date(a.playedDate).getTime() - new Date(b.playedDate).getTime(),
+      filteredValue: searchText ? [searchText] : null,
     },
   ];
 
@@ -110,7 +109,6 @@ export default function GoalKeeperDrawer({
             paddingBottom: 16,
             display: "flex",
             gap: 16,
-           
           }}
           className="slimScroll"
           ref={scrollRef}
@@ -138,8 +136,7 @@ export default function GoalKeeperDrawer({
                 }
               />
             </div>
-          ))}    
-               
+          ))}
         </div>
       </Drawer>
     </>
