@@ -1,140 +1,147 @@
-import { Button, Drawer, Input, Table, Row, Col } from "antd";
+import { Button, Drawer, Input, Table } from "antd";
 import React, { useState, useMemo, useRef, useEffect, Key } from "react";
-import { useGetTournamentGoalKeeperListQuery } from "../../../state/features/tournaments/tournamentsSlice";
+import { useGetTournamentGoalkeeperHistoryListQuery } from "../../../state/features/tournaments/tournamentsSlice";
 
 export default function GoalKeeperDrawer({
-    tournamentId,
+  tournamentId,
 }: {
-    tournamentId: number;
+  tournamentId: number;
 }) {
-    const {
-        data: tournamentGoalKeeperList,
-        refetch: refetchTournamentGoalKeeperList,
-    } = useGetTournamentGoalKeeperListQuery({
-        tournamentId,
-    });
-    const [open, setOpen] = useState(false);
-    const [searchText, setSearchText] = useState("");
-    const scrollRef = useRef<HTMLDivElement>(null);
+  const {
+    data: tournamentGoalKeeperList,
+    refetch: refetchTournamentGoalKeeperList,
+  } = useGetTournamentGoalkeeperHistoryListQuery();
+  const [open, setOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-    const showDrawer = () => {
-        refetchTournamentGoalKeeperList();
-        setOpen(true);
-    };
+  const showDrawer = () => {
+    refetchTournamentGoalKeeperList();
+    setOpen(true);
+  };
 
-    const onClose = () => {
-        setOpen(false);
-    };
+  const onClose = () => {
+    setOpen(false);
+  };
 
-    useEffect(() => {
-        if (open && scrollRef.current) {
-            scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-        }
-    }, [open]);
-
-    interface ColumnProps {
-        title: string;
-        dataIndex: string;
-        key: string;
-        sorter?: (a: any, b: any) => number;
-        filteredValue?: string[] | null;
-        onFilter?: (
-            value: boolean | Key,
-            record: { key: number; playerName: string; goalkeeperCount: number }
-        ) => boolean;
+  useEffect(() => {
+    if (open && scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
     }
+  }, [open]);
 
-    const columns: ColumnProps[] = [
-        {
-            title: "Player",
-            dataIndex: "playerName",
-            key: "playerName",
-            sorter: (a: { playerName: string }, b: { playerName: string }) =>
-                a.playerName.localeCompare(b.playerName),
-            filteredValue: searchText ? [searchText] : null,
-            onFilter: (
-                value: boolean | Key,
-                record: { playerName: string; goalkeeperCount: number }
-            ) =>
-                record.playerName
-                    .toLowerCase()
-                    .includes(
-                        (value as string | number).toString().toLowerCase()
-                    ),
-        },
-        {
-            title: "Count",
-            dataIndex: "goalkeeperCount",
-            key: "goalkeeperCount",
-            sorter: (
-                a: { goalkeeperCount: number },
-                b: { goalkeeperCount: number }
-            ) => a.goalkeeperCount - b.goalkeeperCount,
-        },
-    ];
+  interface ColumnProps {
+    title: string;
+    dataIndex: string;
+    key: string;
+    sorter?: (a: any, b: any) => number;
+    filteredValue?: string[] | null;
+    onFilter?: (
+      value: boolean | Key,
+      record: {
+        key: number;
+        playerName: string;
+        goalkeeperCount: number | "" | null;
+      }
+    ) => boolean;
+  }
 
-    const dataSource = useMemo(() => {
-        return tournamentGoalKeeperList?.content?.map((player) => ({
-            key: player.playerId,
-            playerName: player.playerName,
-            goalkeeperCount: player.goalkeeperCount,
-        }));
-    }, [tournamentGoalKeeperList]);
+  const columns: ColumnProps[] = [
+    {
+      title: "Player",
+      dataIndex: "playerName",
+      key: "playerName",
+      sorter: (a: { playerName: string }, b: { playerName: string }) =>
+        a.playerName.localeCompare(b.playerName),
+      filteredValue: searchText ? [searchText] : null,
+      onFilter: (
+        value: boolean | Key,
+        record: { playerName: string; goalkeeperCount: number | "" | null }
+      ) =>
+        record.playerName
+          .toLowerCase()
+          .includes((value as string | number).toString().toLowerCase()),
+    },
+  ];
 
-    return (
-        <>
-            <Button
-                onClick={showDrawer}
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                }}
+  const dataSourceByRound = useMemo(() => {
+    if (!tournamentGoalKeeperList?.content) return [];
+
+    return Object.keys(tournamentGoalKeeperList.content).map((round) => ({
+      round,
+      data: tournamentGoalKeeperList.content[round].map((player) => ({
+        key: player.playerId,
+        playerName: player.playerName,
+        playedDate: player?.playedDate,
+        goalkeeperCount: player?.playedDate ? 1 : null, // Assuming goalkeeperCount is determined based on playedDate
+      })),
+    }));
+  }, [tournamentGoalKeeperList]);
+
+  return (
+    <>
+      <Button
+        onClick={showDrawer}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        Goalkeeper Records
+      </Button>
+
+      <Drawer
+        title="Goalkeeper Records"
+        onClose={onClose}
+        open={open}
+        placement="bottom"
+        height="95vh"
+        style={{ top: "auto" }}
+      >
+        <Input
+          placeholder="Search Player"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+        />
+        <div
+          style={{
+            overflowX: "auto",
+            paddingBottom: 16,
+            display: "flex",
+            gap: 16,
+           
+          }}
+          className="slimScroll"
+          ref={scrollRef}
+        >
+          {dataSourceByRound.map((roundData) => (
+            <div
+              key={roundData.round}
+              style={{
+                minWidth: "300px",
+                maxWidth: "300px",
+              }}
             >
-                Goalkeeper Records
-            </Button>
-
-            <Drawer
-                title="Goalkeeper Records"
-                onClose={onClose}
-                open={open}
-                placement="bottom"
-                height="95vh"
-                style={{ top: "auto" }}
-            >
-                <Input
-                    placeholder="Search Player"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                />
-                <div
-                    style={{
-                        overflowX: "auto",
-                        whiteSpace: "nowrap",
-                        paddingBottom: 16,
-                        display: "flex",
-                        gap: 16,
-                    }}
-                    ref={scrollRef}
-                >
-                    <div
-                        style={{
-                            minWidth: "350px",
-                            maxWidth: "400px",
-                        }}
-                    >
-                        <h2>Round 1</h2>
-                        <Table
-                            columns={columns}
-                            dataSource={dataSource}
-                            pagination={false}
-                            rowKey="key"
-                            scroll={{ y: "62vh" }}
-                            showSorterTooltip={false}
-                        />
-                    </div>
-                </div>
-            </Drawer>
-        </>
-    );
+              <h2>Round {roundData.round}</h2>
+              <Table
+                columns={columns}
+                dataSource={roundData.data}
+                pagination={false}
+                rowKey="key"
+                scroll={{ y: "68vh" }}
+                showSorterTooltip={false}
+                size="small"
+                style={{ fontSize: "14px" }}
+                rowClassName={(record) =>
+                  record.playedDate ? "green-row" : ""
+                }
+              />
+            </div>
+          ))}    
+               
+        </div>
+      </Drawer>
+    </>
+  );
 }

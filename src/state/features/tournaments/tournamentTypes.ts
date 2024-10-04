@@ -83,3 +83,16 @@ export interface TournamentGoalKeeperInfoType extends BasicResType {
         }
     ];
 }
+
+export interface TournamentGoalKeeperHistoryInfoType extends BasicResType {
+    content: {
+        [key: string]: [
+            {
+                playerId: number;
+                playerName: string;
+                roundNumber: number | null;
+                playedDate: string | null;
+            }
+        ]; 
+    };
+}
