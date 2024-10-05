@@ -59,7 +59,7 @@ export default function CreateTournament({
                     }
                 })
                 .catch((err) => {
-                    message.error("Failed to update tournament");
+                    console.error(err);
                 });
         } else {
             createTournament(values)
@@ -70,7 +70,8 @@ export default function CreateTournament({
                     form.resetFields();
                 })
                 .catch((err) => {
-                    message.error("Failed to create tournament");
+                    console.error(err);
+                 
                 });
         }
     };

@@ -23,7 +23,7 @@ export default function useJoinTournament(tournamentId: number) {
             setPlayers(nextTournament.content.players);
         }
         if (isError) {
-            message.error("Failed to fetch tournament participants.");
+            console.error("Failed to fetch tournament participants.");
         }
     }, [nextTournament, isError]);
 

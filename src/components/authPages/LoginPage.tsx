@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, message } from "antd";
+import { Button } from "antd";
 import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -73,7 +73,7 @@ const LoginPage: React.FC = () => {
             setLoading(false);
             navigate("/");
         } catch (error: any) {
-            message.error(error?.data?.message || "Something went wrong");
+            console.error(error?.data?.message || "Something went wrong");
             setLoading(false);
         }
     };
