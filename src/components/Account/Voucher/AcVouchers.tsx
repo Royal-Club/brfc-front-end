@@ -115,11 +115,29 @@ function AcVouchers() {
         moment.utc(record.voucherDate).local().format("YYYY-MMM-DD"),
     },
     {
+      title: "Type",
+      dataIndex: "voucherType.name",
+      key: "voucherType.name",
+      render: (_: any, record: IAcVoucher) => (
+        record.voucherType.name
+      ),
+    },
+
+    {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
       render: (_: any, record: IAcVoucher) => (
         <FormatCurrencyWithSymbol amount={record.amount} />
+      ),
+    },
+    {
+      title: "Reference",
+      dataIndex: "collection.code",
+      key: "collection.code",
+      render: (_: any, record: IAcVoucher) => (
+        record.collection ? record.collection.transactionId : 
+        record.billPayment? record.billPayment.code : ''
       ),
     },
     {

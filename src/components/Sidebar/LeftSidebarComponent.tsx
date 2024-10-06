@@ -96,17 +96,17 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         getItem("AC Natures", "/ac/natures"),
         getItem("Chart of Account", "/ac/charts"),
       ]),
-      getItem("Income (+)", "IncomeSubMenu", null, [
-        getItem("Collections", "/ac/collections"),
-        // getItem("Collections Register", "/ac/collections-register"),
-      ]),
-      // getItem("Expense (-)", "ExpenseSubMenu", null, [
-      //     getItem("Expense", "/company"),
-      //     getItem("Expense List", "/companies"),
-      // ]),
+        getItem("Collections (+)", "/ac/collections"),
+        getItem("Bill Payment (-)", "/ac/bill-payments"),
       getItem("Voucher", "VoucherSubMenu", null, [
           // getItem("Voucher Entry", "/voucher"),
           getItem("Voucher Register", "/ac/vouchers"),
+      ]),
+      getItem("Accounts Reports", "acReportsSubMenu", null, [
+          // getItem("Voucher Entry", "/voucher"),
+          getItem("Accounts Report", "/ac/reports/accounts-summary"),
+          getItem("Balances Summary", "/ac/reports/balance-summary"),
+          getItem("Balances Sheet", "/ac/reports/balance-sheet"),
       ]),
     ]),
     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
