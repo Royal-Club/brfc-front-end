@@ -1,4 +1,4 @@
-
+import { CheckCircleTwoTone, EditTwoTone } from "@ant-design/icons";
 import {
   Button,
   Col,
@@ -9,35 +9,37 @@ import {
   Modal,
   Row,
   Select,
+  Space,
   Spin,
+  TableColumnsType,
   Typography,
 } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import IAcCollection from "../../../interfaces/IAcCollection";
-import IPlayer from "../../../interfaces/IPlayer";
 import { API_URL } from "../../../settings";
 import moment from "moment";
 import FormatCurrencyWithSymbol from "../../Util/FormatCurrencyWithSymbol";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
+import IAcBillPayment from "../../../interfaces/IAcBillPayment";
+import ICostType from "../../../interfaces/ICostType";
 const { Text, Link } = Typography;
 
-function AcCollection() {
+function AcBillPayment() {
   const loginInfo = useSelector(selectLoginInfo);
 
   var [tableLoadingSpin, setTableSpinLoading] = useState(false);
-  var [playerApiLoading, setPlayerApiLoading] = useState(false);
+  var [costTypeApiLoading, setCostTypeApiLoading] = useState(false);
 
-  const [acCollectionForm] = Form.useForm();
-  const [acCollections, setAcCollections] = useState<IAcCollection[]>([]);
-  const [acCollectionId, setAcCollectionId] = useState<number>();
+  const [acBillPaymentForm] = Form.useForm();
+  const [acBillPayments, setAcBillPayments] = useState<IAcBillPayment[]>([]);
+  const [acBillPaymentId, setAcBillPaymentId] = useState<number>();
   const [isFormDisabled, setIsFormDisabled] = useState(false);
-  const [playerListSize, setPlayerListSize] = useState(0);
-  const [paymentAmount, setPaymentAmount] = useState(1000);
-  const [players, setPlayers] = useState<IPlayer[]>([]);
+  const [costTypeListSize, setCostTypeListSize] = useState(0);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [costTypes, setCostTypes] = useState<ICostType[]>([]);
 
   // Modal related properties
   var [modalLoadingSpin, setModalSpinLoading] = useState(false);
@@ -47,21 +49,21 @@ function AcCollection() {
   const [modalConfirmLoading, setModalConfirmLoading] = useState(false);
 
   useEffect(() => {
-    getAcCollectionList();
-    getPlayers();
+    getAcBillPaymentList();
+    getCostTypes();
 
     return () => {};
   }, []);
 
-  const getAcCollectionList = () => {
+  const getAcBillPaymentList = () => {
     setTableSpinLoading(true);
     axios
-      .get(`${API_URL}/ac/collections`)
+      .get(`${API_URL}/ac/bill-payments`)
       .then((response) => {
         response.data.content.map((x: { [x: string]: any; id: any }) => {
           x["key"] = x.id;
         });
-        setAcCollections(response.data.content);
+        setAcBillPayments(response.data.content);
         setTableSpinLoading(false);
       })
       .catch((err) => {
@@ -75,7 +77,7 @@ function AcCollection() {
     if (modalState === "CREATE") {
       setModalOkButtonText("Create");
       setIsFormDisabled(false);
-      setAcCollectionId(0);
+      setAcBillPaymentId(0);
     } else {
       setModalOkButtonText("Change");
       setIsFormDisabled(false);
@@ -86,13 +88,13 @@ function AcCollection() {
 
   const showModal = () => {
     // setPaymentAmount(1000);
-    // setPlayerListSize(0);
+    // setCostTypeListSize(0);
     clearModalField();
     setModalOpen(true);
   };
 
   const clearModalField = () => {
-    acCollectionForm.resetFields();
+    acBillPaymentForm.resetFields();
   };
 
   const handleCancel = () => {
@@ -102,11 +104,11 @@ function AcCollection() {
   };
 
   // table rendering settings
-  const acCollectionColumns: ColumnsType<IAcCollection> = [
+  const acBillPaymentColumns: ColumnsType<IAcBillPayment> = [
     {
-      title: "TrxID",
-      dataIndex: "transactionId",
-      key: "transactionId",
+      title: "Bill ID",
+      dataIndex: "code",
+      key: "code",
     },
     {
       title: "Voucher",
@@ -115,49 +117,58 @@ function AcCollection() {
     },
     {
       title: "Date",
-      dataIndex: "createdDate",
-      key: "createdDate",
+      dataIndex: "paymentDate",
+      key: "paymentDate",
+      render: (_: any, record: IAcBillPayment) =>
+        moment.utc(record.paymentDate).local().format("DD-MMM-YYYY"),
     },
     {
-      title: "Payeer Name",
-      dataIndex: "allPayersName",
-      key: "allPayersName",
-      render: (_: any, record: IAcCollection) => {
-        if (record.players.length > 1) {
-          return <>Expand to see</>;
-        } else {
-          return <span>{record.allPayersName}</span>;
-        }
-      },
+      title: "Cost Type",
+      dataIndex: "costType.name",
+      key: "costType.name",
+      render: (_: any, record: IAcBillPayment) => (
+        record.costType?.name
+      ),
     },
+    // {
+    //   title: "Date",
+    //   dataIndex: "createdDate",
+    //   key: "createdDate",
+    // },
+    // {
+    //   title: "Payeer Name",
+    //   dataIndex: "allPayersName",
+    //   key: "allPayersName",
+    //   render: (_: any, record: IAcBillPayment) => {
+    //     if (record.costTypes.length > 1) {
+    //       return <>Expand to see</>;
+    //     } else {
+    //       return <span>{record.allPayersName}</span>;
+    //     }
+    //   },
+    // },
     Table.EXPAND_COLUMN,
     {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
-      render: (_: any, record: IAcCollection) => (
+      render: (_: any, record: IAcBillPayment) => (
         <FormatCurrencyWithSymbol amount={record.amount} />
       ),
     },
-    {
-      title: "Total Amount",
-      dataIndex: "totalAmount",
-      key: "totalAmount",
-      render: (_: any, record: IAcCollection) => (
-        <FormatCurrencyWithSymbol amount={record.totalAmount} />
-      ),
-    },
-    {
-      title: "Month Of Payment",
-      dataIndex: "monthOfPayment",
-      key: "monthOfPayment",
-      render: (_: any, record: IAcCollection) =>
-        moment.utc(record.monthOfPayment).local().format("MMM YYYY"),
-    },
+    // {
+    //   title: "Total Amount",
+    //   dataIndex: "totalAmount",
+    //   key: "totalAmount",
+    //   render: (_: any, record: IAcBillPayment) => (
+    //     <FormatCurrencyWithSymbol amount={record.totalAmount} />
+    //   ),
+    // },
+
     // {
     //   title: "Action",
     //   key: "action",
-    //   render: (_: any, record: IAcCollection) => (
+    //   render: (_: any, record: IAcBillPayment) => (
     //     <Space size="middle">
     //       <a onClick={() => updateAction(record.id)}>
     //         <EditTwoTone />
@@ -169,24 +180,25 @@ function AcCollection() {
 
   const modalFormSubmit = async () => {
     try {
-      const values = await acCollectionForm.validateFields();
+      const values = await acBillPaymentForm.validateFields();
       console.log("Success:", values);
       setModalConfirmLoading(true);
-      console.log(acCollectionForm.getFieldValue("monthOfPayment"));
+      console.log(acBillPaymentForm.getFieldValue("paymentDate"));
 
       if (modalState === "CREATE") {
         axios
-          .post(`${API_URL}/ac/collections`, {
-            playerIds: acCollectionForm.getFieldValue("playerIds"),
-            amount: acCollectionForm.getFieldValue("amount"),
-            description: acCollectionForm.getFieldValue("description"),
-            monthOfPayment: acCollectionForm.getFieldValue("monthOfPayment"),
+          .post(`${API_URL}/ac/bill-payments`, {
+            costTypeId: acBillPaymentForm.getFieldValue("costTypeId"),
+            amount: acBillPaymentForm.getFieldValue("amount"),
+            description: acBillPaymentForm.getFieldValue("description"),
+            paymentDate: acBillPaymentForm.getFieldValue("paymentDate"),
+            isPaid: true,
           })
           .then((response) => {
             setModalOpen(false);
             clearModalField();
             setModalConfirmLoading(false);
-            getAcCollectionList();
+            getAcBillPaymentList();
             console.log(response);
           })
           .catch((err) => {
@@ -196,17 +208,18 @@ function AcCollection() {
           });
       } else {
         axios
-          .put(`${API_URL}/ac/collections/${acCollectionId}`, {
-            playerIds: acCollectionForm.getFieldValue("playerIds"),
-            amount: acCollectionForm.getFieldValue("amount"),
-            description: acCollectionForm.getFieldValue("description"),
-            monthOfPayment: acCollectionForm.getFieldValue("monthOfPayment"),
+          .put(`${API_URL}/ac/bill-payments/${acBillPaymentId}`, {
+            costTypeId: acBillPaymentForm.getFieldValue("costTypeId"),
+            amount: acBillPaymentForm.getFieldValue("amount"),
+            description: acBillPaymentForm.getFieldValue("description"),
+            paymentDate: acBillPaymentForm.getFieldValue("paymentDate"),
+            isPaid: true,
           })
           .then((response) => {
             clearModalField();
             setModalOpen(false);
             setModalConfirmLoading(false);
-            getAcCollectionList();
+            getAcBillPaymentList();
             setModalState("CREATE");
           })
           .catch((err) => {
@@ -220,41 +233,41 @@ function AcCollection() {
     }
   };
 
-  const getPlayers = () => {
-    setPlayerApiLoading(true);
+  const getCostTypes = () => {
+    setCostTypeApiLoading(true);
     axios
-      .get(`${API_URL}/players`)
+      .get(`${API_URL}/cost-types`)
       .then((response) => {
         if (response.data?.content) {
           response.data?.content?.map((x: { [x: string]: any; id: any }) => {
             x["key"] = x.id;
           });
-          setPlayers(response.data.content);
+          setCostTypes(response.data.content);
         }
-        setPlayerApiLoading(false);
+        setCostTypeApiLoading(false);
       })
       .catch((err) => {
         // Handle error
         console.log("server error", err);
-        setPlayerApiLoading(false);
+        setCostTypeApiLoading(false);
       });
   };
 
-  const onChangePlayerList = (selectedValues: any) => {
+  const onChangeCostTypeList = (selectedValues: any) => {
     const selectedItemCount = selectedValues.length;
-    setPlayerListSize(selectedValues.length);
+    setCostTypeListSize(selectedValues.length);
     console.log("Number of selected items:", selectedItemCount);
   };
 
   const updateAction = (id: number) => {
-    setAcCollectionId(id);
+    setAcBillPaymentId(id);
     setModalState("UPDATE");
     showModal();
     setModalSpinLoading(true);
     axios
-      .get(`${API_URL}/acCollections/${id}`)
+      .get(`${API_URL}/acBillPayments/${id}`)
       .then((response) => {
-        acCollectionForm.setFieldsValue({
+        acBillPaymentForm.setFieldsValue({
           name: response.data.content.name,
           address: response.data.content.address,
         });
@@ -273,26 +286,26 @@ function AcCollection() {
       <Row>
         <Col md={24}>
           <div>
-            <Title level={4}>Payment Collections</Title>
+            <Title level={4}>Bill Payment</Title>
            {loginInfo.roles.includes("ADMIN") && <Button type="primary" onClick={showModal}>
               Create
             </Button>}
             <Table
               loading={tableLoadingSpin}
               size="small"
-              dataSource={acCollections}
-              columns={acCollectionColumns}
-              expandable={{
-                expandedRowRender: (record) => (
-                  <p style={{ margin: 0 }}>{record.allPayersName}</p>
-                ),
-                rowExpandable: (record) => record.players.length > 1,
-              }}
+              dataSource={acBillPayments}
+              columns={acBillPaymentColumns}
+              // expandable={{
+              //   expandedRowRender: (record) => (
+              //     <p style={{ margin: 0 }}>{record.allPayersName}</p>
+              //   ),
+              //   rowExpandable: (record) => record.costTypes.length > 1,
+              // }}
               scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
             />
 
             <Modal
-              title="Payment Collection"
+              title="Bill Payment"
               open={modalOpen}
               onOk={modalFormSubmit}
               confirmLoading={modalConfirmLoading}
@@ -304,8 +317,8 @@ function AcCollection() {
               <Spin spinning={modalLoadingSpin}>
                 <div>
                   <Form
-                    name="acCollectionForm"
-                    form={acCollectionForm}
+                    name="acBillPaymentForm"
+                    form={acBillPaymentForm}
                     labelCol={{ span: 6 }}
                     wrapperCol={{ span: 18 }}
                     initialValues={{ remember: true }}
@@ -319,31 +332,30 @@ function AcCollection() {
                     )}
 
                     <Form.Item
-                      label="Player"
-                      name="playerIds"
+                      label="CostType"
+                      name="costTypeId"
                       rules={[
                         {
                           required: true,
-                          message: "Player can not be null!",
+                          message: "CostType can not be null!",
                         },
                       ]}
                     >
                       <Select
                         virtual={true}
-                        mode="multiple"
                         showSearch
-                        placeholder="Select a Player"
+                        placeholder="Select a CostType"
                         filterOption={(input, option) =>
                           (option?.label ?? "")
                             .toLowerCase()
                             .includes(input.toLowerCase())
                         }
-                        options={players.map((player) => ({
-                          value: player.id,
-                          label: `${player.name} [${player.employeeId}]`,
+                        options={costTypes.map((costType) => ({
+                          value: costType.id,
+                          label: `${costType.name}`,
                         }))}
-                        loading={playerApiLoading}
-                        onChange={(value, option) => onChangePlayerList(value)}
+                        loading={costTypeApiLoading}
+                        onChange={(value, option) => onChangeCostTypeList(value)}
                       />
                     </Form.Item>
 
@@ -364,8 +376,8 @@ function AcCollection() {
                       />
                     </Form.Item>
                     <Form.Item
-                      label="Month of Collection"
-                      name="monthOfPayment"
+                      label="Date"
+                      name="paymentDate"
                       rules={[
                         {
                           required: true,
@@ -373,19 +385,19 @@ function AcCollection() {
                         },
                       ]}
                     >
-                      <DatePicker picker="month" />
+                      <DatePicker picker="date" />
                     </Form.Item>
                     <Form.Item name="description" label="Comments">
                       <Input.TextArea />
                     </Form.Item>
                   </Form>
-                  {playerListSize > 0 && (
+                  {costTypeListSize > 0 && (
                     <Typography.Title level={5} style={{ margin: 0 }}>
                       <Text type="success">
                         Total transaction amount is
                         <Text type="success" strong>
                           {" "}
-                          {playerListSize * paymentAmount}
+                          {costTypeListSize * paymentAmount}
                         </Text>{" "}
                         BDT.
                       </Text>
@@ -401,4 +413,4 @@ function AcCollection() {
   );
 }
 
-export default AcCollection;
+export default AcBillPayment;

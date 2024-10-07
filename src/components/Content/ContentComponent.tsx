@@ -1,16 +1,16 @@
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import {
-    Avatar,
-    Button,
-    Col,
-    Dropdown,
-    Layout,
-    Menu,
-    Modal,
-    Row,
-    Space,
-    Switch,
-    theme,
+  Avatar,
+  Button,
+  Col,
+  Dropdown,
+  Layout,
+  Menu,
+  Modal,
+  Row,
+  Space,
+  Switch,
+  theme,
 } from "antd";
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -18,10 +18,14 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useAuthHook } from "../../hooks/useAuthHook";
 import { useGetUserProfileQuery } from "../../state/features/auth/authSlice";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import AcBillPayment from "../Account/BillPayment/AcBillPayment";
 import AcCollection from "../Account/Collection/AcCollection";
 import AcChart from "../Account/Configuration/AcChart";
 import AcNature from "../Account/Configuration/AcNature";
 import AcVoucherType from "../Account/Configuration/AcVoucherType";
+import AccountBalanceSheet from "../Account/Report/AccountBalanceSheet";
+import AccountBalanceSummary from "../Account/Report/AccountBalanceSummary";
+import AccountsReport from "../Account/Report/AccountReport";
 import AcVouchers from "../Account/Voucher/AcVouchers";
 import UserProfile from "../authPages/UserProfile";
 import SettingsModal from "../CommonAtoms/SettingsModal";
@@ -193,7 +197,11 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
               <Route path="ac/voucher-types" element={<AcVoucherType />} />
               <Route path="/ac/natures" element={<AcNature />} />
               <Route path="ac/collections" element={<AcCollection />} />
+              <Route path="ac/bill-payments" element={<AcBillPayment />} />
               <Route path="ac/charts" element={<AcChart />} />
+              <Route path="ac/reports/accounts-summary" element={<AccountsReport />} />
+              <Route path="ac/reports/balance-summary" element={<AccountBalanceSummary />} />
+              <Route path="/ac/reports/balance-sheet" element={<AccountBalanceSheet />} />
               {/* <Route path="ac/voucher" element={<AcVoucher />} /> */}
               <Route path="ac/vouchers" element={<AcVouchers />} />
               {/* <Route path="ac/vouchers/:id" element={<AcVoucher />} /> */}

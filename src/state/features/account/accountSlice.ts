@@ -4,6 +4,9 @@ import IPlayer from "../../../interfaces/IPlayer";
 import IAcChart from "../../../interfaces/IAcChart";
 import IAcNature from "../../../interfaces/IAcNature";
 import IAcVoucherType from "../../../interfaces/IAcVoucherType";
+import IAccountsReport from "../../../interfaces/IAccountsReport";
+import IAccountBalanceSummary from "../../../interfaces/IAccountBalanceSummary";
+import IBalanceSheetReport from "../../../interfaces/IBalanceSheetReport";
 export interface BasicResType<T> {
   message: string;
   statusCode: number;
@@ -68,6 +71,26 @@ const acCollectionApi = apiSlice.injectEndpoints({
         method: "GET",
       }),
     }),
+
+    getAcReportList: builder.query<BasicResType<IAccountsReport[]>, void>({
+      query: () => ({
+        url: `/ac/reports/accounts-summary`,
+        method: "GET",
+      }),
+    }),
+
+    getAcBalanceSummaryList: builder.query<BasicResType<IAccountBalanceSummary[]>, void>({
+      query: () => ({
+        url: `/ac/reports/balance-summary`,
+        method: "GET",
+      }),
+    }),
+    getAcBalanceSheetList: builder.query<BasicResType<IBalanceSheetReport[]>, void>({
+      query: () => ({
+        url: `/ac/reports/balance-sheet`,
+        method: "GET",
+      }),
+    }),
     getAcNatureList: builder.query<BasicResType<IAcNature[]>, void>({
       query: () => ({
         url: `/ac/natures`,
@@ -92,6 +115,9 @@ export const {
   useGetAcChartListQuery,
   useGetAcNatureListQuery,
   useGetAcVoucherTypeListQuery,
+  useGetAcReportListQuery,
+  useGetAcBalanceSummaryListQuery,
+  useGetAcBalanceSheetListQuery,
 } = acCollectionApi;
 
 export default acCollectionApi;

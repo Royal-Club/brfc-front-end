@@ -1,3 +1,4 @@
+import IAcBillPayment from "./IAcBillPayment";
 import IAcCollection from "./IAcCollection";
 import IAcVoucherType from "./IAcVoucherType";
 import IPlayer from "./IPlayer";
@@ -16,6 +17,7 @@ interface IAcVoucher {
     updatedDate: Date;
     voucherType: IAcVoucherType;
     collection?: IAcCollection;
+    billPayment?: IAcBillPayment;
 }
 
 export default IAcVoucher;
