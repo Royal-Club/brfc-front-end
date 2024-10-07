@@ -6,8 +6,14 @@ import IAccountsReport from "../../../interfaces/IAccountsReport";
 import { useGetAcReportListQuery } from "../../../state/features/account/accountSlice";
 
 function AccountsReport() {
-  const { data, isLoading } = useGetAcReportListQuery();
+  const { data, isLoading ,refetch } = useGetAcReportListQuery();
   const [accountsReport, setAccountsReport] = useState<IAccountsReport[]>([]);
+
+
+  useEffect(() => {
+    refetch();
+  }, []);
+
 
   useEffect(() => {
     if (data) {

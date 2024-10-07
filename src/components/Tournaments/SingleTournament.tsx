@@ -138,8 +138,9 @@ function SingleTournament() {
           <Col xs={24} sm={6}>
             <Space
               style={{
-                display: "flex",
+                display:  "flex",
                 justifyContent: screens.xs ? "start" : "flex-end",
+                flexWrap: screens.xs ? "wrap" : "nowrap",
               }}
             >
               {loginInfo.roles.includes("ADMIN") && (

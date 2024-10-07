@@ -45,7 +45,13 @@
 
 
 .green-row {
-    color: #75fc00;
-    background-color: gray;
+    background-color: rgb(80, 80, 80);
+    color:yellow;
+
+
+  }
+
+  .green-row:hover {
+    color:rgb(255, 0, 0);
   }
   

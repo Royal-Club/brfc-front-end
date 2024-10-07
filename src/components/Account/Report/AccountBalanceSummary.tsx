@@ -6,8 +6,14 @@ import { useGetAcBalanceSummaryListQuery } from "../../../state/features/account
 import IAccountBalanceSummary from "../../../interfaces/IAccountBalanceSummary";
 
 function AccountBalanceSummary() {
-  const { data, error, isLoading } = useGetAcBalanceSummaryListQuery();
+  const { data, error, isLoading,refetch } = useGetAcBalanceSummaryListQuery();
   const [accountSummary, setAccountSummary] = useState<IAccountBalanceSummary[]>([]);
+  
+  useEffect(() => {
+    refetch();
+  }, []);
+
+
 
   // useEffect to handle side effects and data transformations
   useEffect(() => {
