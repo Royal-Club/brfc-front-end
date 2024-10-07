@@ -3,10 +3,12 @@ import { Modal, Button, Input, List, Radio, Space } from "antd";
 import PickerWheel from "./PickerWheel";
 import "./pickerWheelModal.css";
 import { CheckOutlined, DeleteOutlined, UnorderedListOutlined } from "@ant-design/icons";
-
 import LogoImage from "../../../../assets/logo.png";
 import colors from "../../../../utils/colors";
 import WinnerFrequencyChart from "./WinnerFrequencyChart";
+import { useMediaQuery } from 'react-responsive'
+
+
 
 const PickerWheelModal = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -17,6 +19,9 @@ const PickerWheelModal = () => {
         { name: "Segment 2", disabled: false },
         { name: "Segment 3", disabled: false },
     ]);
+
+    const isMobile = useMediaQuery({ query: '(max-width: 767px)' })
+
     const [segColors, setSegColors] = useState([
         "#FF5733",
         "#33FF57",
@@ -24,7 +29,7 @@ const PickerWheelModal = () => {
     ]);
     const [newSegment, setNewSegment] = useState("");
     const [winner, setWinner] = useState("");
-    const [winnersList, setWinnersList] = useState<string[]>([]); // List to track all winners
+    const [winnersList, setWinnersList] = useState<string[]>([]); 
 
     const showModal = () => {
         setIsModalVisible(true);
@@ -106,7 +111,7 @@ const PickerWheelModal = () => {
                 width={1000}
             >
                 <div
-                    style={{ display: "flex", justifyContent: "space-between" }}
+                    style={{ display: isMobile ? "block" : "flex", justifyContent: "space-between" }}
                 >
                     <div style={{ flex: 1 }}>
                         <PickerWheel
@@ -115,9 +120,10 @@ const PickerWheelModal = () => {
                                 .map((segment) => segment.name)}
                             segColors={segColors}
                             onFinished={handleSpinFinished}
-                            size={250}
-                            maxWidth={520}
-                            maxHeight={520}
+                            size={isMobile ? 170 : 250}
+                            maxWidth={isMobile ?350 : 500}
+                            maxHeight={isMobile ? 350 : 500}
+                            fontSize={isMobile ? 15 : 20}
                             centerImageSrc={LogoImage}
                             fontFamily="Segoe UI"
                         />

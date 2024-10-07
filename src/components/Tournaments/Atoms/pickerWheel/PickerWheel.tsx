@@ -15,6 +15,7 @@ interface WheelComponentProps {
     maxHeight?: number;
     maxWidth?: number;
     centerImageSrc?: string;
+    fontSize?: number;
 }
 
 const PickerWheel: React.FC<WheelComponentProps> = ({
@@ -32,6 +33,7 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
     maxHeight = 400,
     maxWidth = 400,
     centerImageSrc,
+    fontSize = 20,
 }) => {
     const [isFinished, setFinished] = useState(false);
     const [currentSegment, setCurrentSegment] = useState<string>(segments[0]);
@@ -172,7 +174,7 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
         ctx.shadowOffsetY = 2;
 
         ctx.fillStyle = contrastColor;
-        ctx.font = `bold 1.5em ${fontFamily}`;
+        ctx.font = `bold ${fontSize}px ${fontFamily}`;
         ctx.fillText(value.substr(0, 21), size / 2 + 10, 0);
         ctx.restore();
     };
