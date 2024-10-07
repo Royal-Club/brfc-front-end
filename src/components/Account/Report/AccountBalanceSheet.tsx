@@ -6,9 +6,15 @@ import IBalanceSheetReport from "../../../interfaces/IBalanceSheetReport";
 import { useGetAcBalanceSheetListQuery } from "../../../state/features/account/accountSlice";
 
 function AccountBalanceSheet() {
-  const { data, isLoading } = useGetAcBalanceSheetListQuery();
+  const { data, isLoading, refetch } = useGetAcBalanceSheetListQuery();
   const [balanceSheet, setBalanceSheet] = useState<IBalanceSheetReport[]>([]);
+  
+  useEffect(() => {
+    refetch();
+  }, []);
 
+
+  
   useEffect(() => {
     if (data) {
       const arr = data.content.map((item: IBalanceSheetReport) => ({
