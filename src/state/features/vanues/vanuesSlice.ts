@@ -14,8 +14,28 @@ export const commonApi = apiWithTags.injectEndpoints({
             }),
             providesTags: ["global"],
         }),
+        createVenue: builder.mutation({
+            query: (newVenue) => ({
+                url: "venues",
+                method: "POST",
+                body: newVenue,
+            }),
+            invalidatesTags: ["global"],
+        }),
+        updateVenue: builder.mutation({
+            query: ({ id, ...updatedVenue }) => ({
+                url: `venues/${id}`,
+                method: "PUT",
+                body: updatedVenue,
+            }),
+            invalidatesTags: ["global"],
+        }),
     }),
     overrideExisting: false,
 });
 
-export const { useGetVanuesQuery } = commonApi;
+export const {
+    useGetVanuesQuery,
+    useCreateVenueMutation,
+    useUpdateVenueMutation,
+} = commonApi;
