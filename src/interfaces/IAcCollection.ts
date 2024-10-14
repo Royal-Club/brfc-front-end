@@ -5,6 +5,7 @@ interface IAcCollection {
     transactionId: string;
     playerIds: number[];
     playerName: string;
+    date: Date;
     players: IPlayer[];
     amount: number;
     totalAmount: number;
