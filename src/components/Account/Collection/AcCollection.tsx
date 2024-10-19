@@ -274,19 +274,26 @@ function AcCollection() {
     axiosApi
       .get(`${API_URL}/ac/collections/${id}`)
       .then((response) => {
-        const formattedMonthOfPayment = dayjs(
-          response.data.content.monthOfPayment,
-          "YYYY-MM"
+        const formattedDate = dayjs(response.data.content.date).format(
+          "YYYY-MM-DD"
         );
-        const formattedDate = dayjs(response.data.content.date, "YYYY-MM-DD");
+        const formattedMonthOfPayment = dayjs(
+          response.data.content.monthOfPayment
+        ).format("YYYY-MM");
+
+        setSelectedDate(formattedDate);
+        setSelectedMonth(formattedMonthOfPayment + "-01");
 
         acCollectionForm.setFieldsValue({
           transactionId: response.data.content.transactionId,
           playerIds: response.data.content.playerIds,
           amount: response.data.content.amount,
           description: response.data.content.description,
-          monthOfPayment: formattedMonthOfPayment,
-          date: formattedDate,
+          monthOfPayment: dayjs(
+            response.data.content.monthOfPayment,
+            "YYYY-MM"
+          ),
+          date: dayjs(response.data.content.date, "YYYY-MM-DD"),
         });
 
         // Check if playerIds has more than 1 element

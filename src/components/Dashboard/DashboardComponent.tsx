@@ -1,5 +1,14 @@
-import { Card, Col, List, Row, theme, Typography } from "antd";
-import React from "react";
+import {
+  Card,
+  Col,
+  List,
+  Row,
+  Statistic,
+  StatisticProps,
+  theme,
+  Typography,
+} from "antd";
+import React, { useEffect, useState } from "react";
 import { Bar, Line, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -14,6 +23,14 @@ import {
 } from "chart.js";
 import colors from "../../utils/colors";
 import PlayerStatCard from "../CommonAtoms/PlayerStatCard/PlayerStatCard";
+import CountUp from "react-countup";
+import axiosApi from "../../state/api/axiosBase";
+import { API_URL } from "../../settings";
+import IAccountSummaryResponse from "../../interfaces/AccountSummaryResponse";
+
+const formatter: StatisticProps["formatter"] = (value) => (
+  <CountUp end={value as number} separator="," />
+);
 
 // Register the necessary chart components
 ChartJS.register(
@@ -156,6 +173,38 @@ const Dashboard: React.FC = () => {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
+
+  const [acSummaryResponse, setAcSummaryResponse] =
+    useState<IAccountSummaryResponse>();
+
+  useEffect(() => {
+    getAcVoucherList();
+
+    return () => {};
+  }, []);
+
+  const getAcVoucherList = () => {
+    // setTableSpinLoading(true);
+    axiosApi
+      .get(`${API_URL}/ac/reports/summary`)
+      .then((response) => {
+        // response.data.content.map(
+        //     (x: { [x: string]: any; id: any }) => {
+        //         x["key"] = x.id;
+        //     }
+        // );
+        setAcSummaryResponse(response.data.content);
+        console.log(response.data.content);
+        // setAcVouchers(response.data.content);
+        // setTableSpinLoading(false);
+      })
+      .catch((err) => {
+        // Handle error
+        console.log("server error", err);
+        // setTableSpinLoading(false);
+      });
+  };
+
   return (
     <div style={{ padding: "0px 20px" }}>
       <Row gutter={48} style={{ gap: "20px" }}>
@@ -176,6 +225,44 @@ const Dashboard: React.FC = () => {
             ))}
           </div>{" "}
         </Col> */}
+        <Col span={24} style={{ background: colorBgContainer }}>
+          <Row gutter={48} style={{ background: colorBgContainer }}>
+            <Col md={8} sm={24}>
+              <Statistic
+                title="Total Collections (BDT)"
+                value={acSummaryResponse?.totalCollection}
+                precision={2}
+                valueStyle={{ color: "#3f8600" }}
+                formatter={formatter}
+                suffix="৳"
+              />
+            </Col>
+            <Col md={8} sm={24}>
+              <Statistic
+                title="Total Expenses (BDT)"
+                value={acSummaryResponse?.totalExpense}
+                precision={2}
+                valueStyle={{ color: "#3f8600" }}
+                formatter={formatter}
+                suffix="৳"
+              />
+            </Col>
+            <Col md={8} sm={24}>
+              <Statistic
+                title="Account Balance (BDT)"
+                value={acSummaryResponse?.currentBalance}
+                precision={2}
+                valueStyle={{ color: "#3f8600" }}
+                formatter={formatter}
+                suffix="৳"
+              />
+            </Col>
+            {/* <Col md={12} sm={24}>
+              <AntTitle level={3}>Attendance Rate (Bar Chart)</AntTitle>
+              <Bar data={attendanceData} />
+            </Col> */}
+          </Row>
+        </Col>
         <Col span={24} style={{ background: colorBgContainer }}>
           <Row gutter={48} style={{ background: colorBgContainer }}>
             <Col md={12} sm={24}>

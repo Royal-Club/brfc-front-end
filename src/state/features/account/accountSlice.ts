@@ -7,6 +7,7 @@ import IAcVoucherType from "../../../interfaces/IAcVoucherType";
 import IAccountsReport from "../../../interfaces/IAccountsReport";
 import IAccountBalanceSummary from "../../../interfaces/IAccountBalanceSummary";
 import IBalanceSheetReport from "../../../interfaces/IBalanceSheetReport";
+import IAccountSummaryResponse from "../../../interfaces/AccountSummaryResponse";
 export interface BasicResType<T> {
   message: string;
   statusCode: number;
@@ -57,10 +58,18 @@ const acCollectionApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    // Fetch Account Balance
+    // getAcSummary: builder.query<BasicResType<IAccountSummaryResponse>, void>({
+    //   query: () => ({
+    //     url: `/ac/reports/summary`,
+    //     method: "GET",
+    //   }),
+    // }),
+
     // Fetch specific AC Collection by ID
     getAcCollectionById: builder.query<BasicResType<IAcCollection>, number>({
       query: (id) => ({
-        url: `/acCollections/${id}`,
+        url: `/ac/collections/${id}`,
         method: "GET",
       }),
     }),
@@ -108,6 +117,7 @@ const acCollectionApi = apiSlice.injectEndpoints({
 
 export const {
   useGetAcCollectionsQuery,
+  // useGetAcSummaryQuery,
   useCreateAcCollectionMutation,
   useUpdateAcCollectionMutation,
   useGetPlayersQuery,
