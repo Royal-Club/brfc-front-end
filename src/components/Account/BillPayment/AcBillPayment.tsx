@@ -259,6 +259,9 @@ function AcBillPayment() {
               dataSource={acBillPayments}
               columns={acBillPaymentColumns}
               scroll={{ x: "max-content" }}
+              pagination={{
+                showTotal: (total) => `Total ${total} records`,
+            }}
             />
 
             <Modal

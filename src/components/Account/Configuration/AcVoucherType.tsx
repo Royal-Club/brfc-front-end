@@ -76,6 +76,9 @@ function AcVoucherType() {
                         <Table
                             loading={isLoading}
                             size="small"
+                            pagination={{
+                                showTotal: (total) => `Total ${total} records`,
+                            }}
                             dataSource={acVoucherTypes}
                             columns={acVoucherTypeColumns}
                             scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens

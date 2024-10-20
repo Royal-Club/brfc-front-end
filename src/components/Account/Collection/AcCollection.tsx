@@ -343,6 +343,9 @@ function AcCollection() {
                 ),
                 rowExpandable: (record) => record.players.length > 1,
               }}
+              pagination={{
+                showTotal: (total) => `Total ${total} records`,
+            }}
               scroll={{ x: "max-content" }}
             />
 

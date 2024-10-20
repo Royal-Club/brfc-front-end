@@ -77,6 +77,9 @@ function AcNature() {
                             size="small"
                             dataSource={acNatures}
                             columns={acNatureColumns}
+                            pagination={{
+                                showTotal: (total) => `Total ${total} records`,
+                            }}
                             scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
                         />
                     </div>

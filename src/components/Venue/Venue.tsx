@@ -207,6 +207,9 @@ function Venue() {
                             dataSource={venues?.content}
                             columns={venueColumns}
                             scroll={{ x: "max-content" }}
+                            pagination={{
+                                showTotal: (total) => `Total ${total} records`,
+                            }}
                         />
 
                         <Modal

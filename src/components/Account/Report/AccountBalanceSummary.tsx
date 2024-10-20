@@ -73,6 +73,9 @@ function AccountBalanceSummary() {
               size="small"
               dataSource={accountSummary}
               columns={accountSummaryColumns}
+              pagination={{
+                showTotal: (total) => `Total ${total} records`,
+            }}
               scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
               rowKey={(record) => record.accountType}
             />

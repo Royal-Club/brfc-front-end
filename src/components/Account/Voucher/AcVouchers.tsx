@@ -281,6 +281,9 @@ function AcVouchers() {
                         <Table
                             loading={tableLoadingSpin}
                             size="small"
+                            pagination={{
+                                showTotal: (total) => `Total ${total} records`,
+                            }}
                             dataSource={acVouchers}
                             columns={acVoucherColumns}
                             scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens

@@ -181,6 +181,9 @@ function Players() {
                             size="large"
                             dataSource={playersData?.content}
                             columns={playersColumn}
+                            pagination={{
+                                showTotal: (total) => `Total ${total} records`,
+                            }}
                             scroll={{ x: "max-content" }}
                         />
                     </div>

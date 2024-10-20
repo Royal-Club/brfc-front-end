@@ -78,6 +78,9 @@ function AcChart() {
               size="small"
               dataSource={acCharts}
               columns={acChartColumns}
+              pagination={{
+                showTotal: (total) => `Total ${total} records`,
+            }}
               scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
             />
           </div>
