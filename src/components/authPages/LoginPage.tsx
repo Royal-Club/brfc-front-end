@@ -50,7 +50,8 @@ const LoginPage: React.FC = () => {
         return valid;
     };
 
-    const onFinish = async () => {
+    const onFinish = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault(); // prevent form's default submission behavior
         if (!validateForm()) return;
 
         setLoading(true);
@@ -71,7 +72,7 @@ const LoginPage: React.FC = () => {
             localStorage.setItem("tokenContent", JSON.stringify(content));
 
             setLoading(false);
-            navigate("/");
+            navigate(window.location.pathname, { replace: true });
         } catch (error: any) {
             console.error(error?.data?.message || "Something went wrong");
             setLoading(false);
@@ -109,57 +110,24 @@ const LoginPage: React.FC = () => {
                     />
                 </div>
 
-                <div className="form-group">
-                    <label
-                        htmlFor="email"
-                        style={{
-                            display: "block",
-                            marginBottom: 8,
-                            color: colors.grayDark,
-                        }}
-                    >
-                        Email
-                    </label>
-                    <input
-                        type="email"
-                        name="email"
-                        id="email"
-                        placeholder="Enter Email"
-                        value={loginData.email}
-                        onChange={onInputChange}
-                        style={{
-                            borderRadius: "4px",
-                            padding: "10px 12px",
-                            width: "100%",
-                            border: `1px solid ${colors.grayLight}`,
-                        }}
-                    />
-                    {errors.email && (
-                        <div
-                            className="error-message"
-                            style={{ color: "red", fontSize: "12px" }}
+                <form onSubmit={onFinish}>
+                    <div className="form-group">
+                        <label
+                            htmlFor="email"
+                            style={{
+                                display: "block",
+                                marginBottom: 8,
+                                color: colors.grayDark,
+                            }}
                         >
-                            {errors.email}
-                        </div>
-                    )}
-                </div>
-
-                <div
-                    className="form-group"
-                    style={{
-                        display: "block",
-                        marginBottom: 8,
-                        color: colors.grayDark,
-                    }}
-                >
-                    <label htmlFor="password">Password</label>
-                    <div style={{ position: "relative" }}>
+                            Email
+                        </label>
                         <input
-                            type={passwordVisible ? "text" : "password"} // toggle input type
-                            name="password"
-                            id="password"
-                            placeholder="Enter Password"
-                            value={loginData.password}
+                            type="email"
+                            name="email"
+                            id="email"
+                            placeholder="Enter Email"
+                            value={loginData.email}
                             onChange={onInputChange}
                             style={{
                                 borderRadius: "4px",
@@ -168,41 +136,76 @@ const LoginPage: React.FC = () => {
                                 border: `1px solid ${colors.grayLight}`,
                             }}
                         />
-                        <div
-                            onClick={() => setPasswordVisible((prev) => !prev)}
-                            style={{
-                                position: "absolute",
-                                right: 10,
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                cursor: "pointer",
-                            }}
-                        >
-                            {passwordVisible ? (
-                                <EyeInvisibleOutlined />
-                            ) : (
-                                <EyeOutlined />
-                            )}
-                        </div>
+                        {errors.email && (
+                            <div
+                                className="error-message"
+                                style={{ color: "red", fontSize: "12px" }}
+                            >
+                                {errors.email}
+                            </div>
+                        )}
                     </div>
-                    {errors.password && (
-                        <div
-                            className="error-message"
-                            style={{ color: "red", fontSize: "12px" }}
-                        >
-                            {errors.password}
-                        </div>
-                    )}
-                </div>
 
-                <Button
-                    type="primary"
-                    onClick={onFinish}
-                    loading={loading}
-                    block
-                >
-                    Log in
-                </Button>
+                    <div
+                        className="form-group"
+                        style={{
+                            display: "block",
+                            marginBottom: 8,
+                            color: colors.grayDark,
+                        }}
+                    >
+                        <label htmlFor="password">Password</label>
+                        <div style={{ position: "relative" }}>
+                            <input
+                                type={passwordVisible ? "text" : "password"} // toggle input type
+                                name="password"
+                                id="password"
+                                placeholder="Enter Password"
+                                value={loginData.password}
+                                onChange={onInputChange}
+                                style={{
+                                    borderRadius: "4px",
+                                    padding: "10px 12px",
+                                    width: "100%",
+                                    border: `1px solid ${colors.grayLight}`,
+                                }}
+                            />
+                            <div
+                                onClick={() => setPasswordVisible((prev) => !prev)}
+                                style={{
+                                    position: "absolute",
+                                    right: 10,
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                {passwordVisible ? (
+                                    <EyeInvisibleOutlined />
+                                ) : (
+                                    <EyeOutlined />
+                                )}
+                            </div>
+                        </div>
+                        {errors.password && (
+                            <div
+                                className="error-message"
+                                style={{ color: "red", fontSize: "12px" }}
+                            >
+                                {errors.password}
+                            </div>
+                        )}
+                    </div>
+
+                    <Button
+                        type="primary"
+                        htmlType="submit" // making this button submit the form
+                        loading={loading}
+                        block
+                    >
+                        Log in
+                    </Button>
+                </form>
             </div>
         </div>
     );
