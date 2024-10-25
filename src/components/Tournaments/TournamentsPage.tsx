@@ -8,6 +8,7 @@ import CreateTournament from "./Atoms/CreateTournamentModal";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { showBdLocalTime } from "../../utils/utils";
+import { cursorTo } from "readline";
 
 
 const { Header } = Layout;
@@ -45,10 +46,13 @@ const TournamentsPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleMenuClick = (e: any, record: IoTournamentSingleSummaryType) => {
+    console.log(e);
     if (e.key === "join") {
       navigate(`/tournaments/join-tournament/${record.id}`);
     } else if (e.key === "team-building") {
       navigate(`/tournaments/team-building/${record.id}`);
+    }else if(e.type === "click"){
+      navigate(`/tournaments/join-tournament/${record.id}`);
     }
   };
 
@@ -70,50 +74,99 @@ const TournamentsPage: React.FC = () => {
       title: "Tournament Name",
       dataIndex: "name",
       key: "tournamentName",
-      render: (text: string, record: IoTournamentSingleSummaryType) => (
-        <span
-          style={{
-            color: record.activeStatus === false ? "gray" : "inherit",
-          }}
-        >
-          {text}
-        </span>
-      ),
+      onCell: (record: any, rowIndex: any) => {
+        return {
+          onClick: (e: any) => {
+            handleMenuClick(e, record);
+          }
+        };
+      },
+      render: (text: string, record: IoTournamentSingleSummaryType) => {
+        return {
+          props: {
+            style: { cursor: "pointer" },
+          },
+          children: (
+            <span
+              style={{
+                color: record.activeStatus === false ? "gray" : "inherit",
+              }}
+            >
+              {text}
+            </span>
+          ),
+        };
+      },
     },
     {
       title: "Date & Time",
       dataIndex: "tournamentDate",
       key: "tournamentDate",
       sorter: true,
-      render: (date: string, record: IoTournamentSingleSummaryType) => (
-        <span
-          style={{
-            color: record.activeStatus === false ? "gray" : "inherit",
-          }}
-        >
-          {date && showBdLocalTime(date)}
-        </span>
-      ),
+      onCell: (record: any, rowIndex: any) => {
+        return {
+          onClick: (e: any) => {
+            handleMenuClick(e, record);
+          },
+        };
+      },
+      render: (date: string, record: IoTournamentSingleSummaryType) => {
+        return {
+          props: {
+            style: { cursor: "pointer" },
+          },
+          children: (
+            <span
+              style={{
+                color: record.activeStatus === false ? "gray" : "inherit",
+              }}
+            >
+              {date && showBdLocalTime(date)}
+            </span>
+          ),
+        };
+      },
     },
     {
       title: "Venue",
       dataIndex: "venueName",
       key: "venueName",
       sorter: true,
-      render: (venue: string, record: IoTournamentSingleSummaryType) => (
-        <span
-          style={{
-            color: record.activeStatus === false ? "gray" : "inherit",
-          }}
-        >
-          {venue}
-        </span>
-      ),
+      onCell: (record: any, rowIndex: any) => {
+        return {
+          onClick: (e: any) => {
+            handleMenuClick(e, record);
+          },
+        };
+      },
+      render: (venue: string, record: IoTournamentSingleSummaryType) => {
+        return {
+          props: {
+            style: { cursor: "pointer" },
+          },
+          children: (
+            <span
+              style={{
+                color: record.activeStatus === false ? "gray" : "inherit",
+              }}
+            >
+              {venue}
+            </span>
+          ),
+        };
+      }
     },
     {
       title: "Status",
       dataIndex: "tournamentStatus",
       key: "tournamentStatus",
+      onCell: (record: any, rowIndex: any) => {
+        return {
+          onClick: (e: any) => {
+            handleMenuClick(e, record);
+          },
+        };
+      },
       render: (
         tournamentStatus: string,
         record: IoTournamentSingleSummaryType
@@ -129,45 +182,56 @@ const TournamentsPage: React.FC = () => {
             ? null
             : "#4169E1";
 
-        return (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {dotColor && (
+        return {
+          props: {
+            style: { cursor: "pointer" },
+          },
+          children: (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              {dotColor && (
+                <span
+                  style={{
+                    height: "10px",
+                    width: "10px",
+                    borderRadius: "50%",
+                    backgroundColor: dotColor,
+                    display: "inline-block",
+                    marginRight: "8px",
+                  }}
+                ></span>
+              )}
+
               <span
                 style={{
-                  height: "10px",
-                  width: "10px",
-                  borderRadius: "50%",
-                  backgroundColor: dotColor,
-                  display: "inline-block",
-                  marginRight: "8px",
+                  color: record.activeStatus === false ? "gray" : "inherit",
                 }}
-              ></span>
-            )}
-
-            <span
-              style={{
-                color: record.activeStatus === false ? "gray" : "inherit",
-              }}
-            >
-              {tournamentStatus}
-            </span>
-          </div>
-        );
+              >
+                {tournamentStatus}
+              </span>
+            </div>
+          ),
+        };
       },
     },
     {
       title: "Action",
       key: "action",
-      render: (text: any, record: IoTournamentSingleSummaryType) =>
-        record?.tournamentDate ? (
-          <TournamentsActionDropdown
-            record={record}
-            onMenuClick={handleMenuClick}
-            tournamentId={record.id}
-          />
-        ) : (
-          <div style={{ height: "32px" }} />
-        ),
+      render: (text: any, record: IoTournamentSingleSummaryType) => {
+        return {
+          props: {
+            
+          },
+          children: record?.tournamentDate ? (
+            <TournamentsActionDropdown
+              record={record}
+              onMenuClick={handleMenuClick}
+              tournamentId={record.id}
+            />
+          ) : (
+            <div style={{ height: "32px" }} />
+          ),
+        }
+      }
     },
   ];
 
@@ -237,6 +301,13 @@ const TournamentsPage: React.FC = () => {
         columns={columns}
         dataSource={dataSource}
         rowKey={(record) => record.id?.toString() || record.id}
+        // onRow={(record) => {
+        //   return {
+        //     onClick: (e) => {
+        //       handleMenuClick(e, record);
+        //     }
+        //   }
+        // }
         showSorterTooltip={false}
         bordered
         pagination={{
