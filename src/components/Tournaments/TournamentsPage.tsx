@@ -8,7 +8,6 @@ import CreateTournament from "./Atoms/CreateTournamentModal";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { showBdLocalTime } from "../../utils/utils";
-import { cursorTo } from "readline";
 
 
 const { Header } = Layout;
@@ -46,12 +45,12 @@ const TournamentsPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleMenuClick = (e: any, record: IoTournamentSingleSummaryType) => {
-    console.log(e);
     if (e.key === "join") {
       navigate(`/tournaments/join-tournament/${record.id}`);
     } else if (e.key === "team-building") {
       navigate(`/tournaments/team-building/${record.id}`);
-    }else if(e.type === "click"){
+    } else if (e.type === "click" && record.activeStatus
+    ) {
       navigate(`/tournaments/join-tournament/${record.id}`);
     }
   };
@@ -74,7 +73,7 @@ const TournamentsPage: React.FC = () => {
       title: "Tournament Name",
       dataIndex: "name",
       key: "tournamentName",
-      onCell: (record: any, rowIndex: any) => {
+      onCell: (record: IoTournamentSingleSummaryType, rowIndex: any) => {
         return {
           onClick: (e: any) => {
             handleMenuClick(e, record);
@@ -83,9 +82,6 @@ const TournamentsPage: React.FC = () => {
       },
       render: (text: string, record: IoTournamentSingleSummaryType) => {
         return {
-          props: {
-            style: { cursor: "pointer" },
-          },
           children: (
             <span
               style={{
@@ -103,7 +99,7 @@ const TournamentsPage: React.FC = () => {
       dataIndex: "tournamentDate",
       key: "tournamentDate",
       sorter: true,
-      onCell: (record: any, rowIndex: any) => {
+      onCell: (record: IoTournamentSingleSummaryType, rowIndex: any) => {
         return {
           onClick: (e: any) => {
             handleMenuClick(e, record);
@@ -112,9 +108,6 @@ const TournamentsPage: React.FC = () => {
       },
       render: (date: string, record: IoTournamentSingleSummaryType) => {
         return {
-          props: {
-            style: { cursor: "pointer" },
-          },
           children: (
             <span
               style={{
@@ -132,7 +125,7 @@ const TournamentsPage: React.FC = () => {
       dataIndex: "venueName",
       key: "venueName",
       sorter: true,
-      onCell: (record: any, rowIndex: any) => {
+      onCell: (record: IoTournamentSingleSummaryType, rowIndex: any) => {
         return {
           onClick: (e: any) => {
             handleMenuClick(e, record);
@@ -141,9 +134,6 @@ const TournamentsPage: React.FC = () => {
       },
       render: (venue: string, record: IoTournamentSingleSummaryType) => {
         return {
-          props: {
-            style: { cursor: "pointer" },
-          },
           children: (
             <span
               style={{
@@ -160,7 +150,7 @@ const TournamentsPage: React.FC = () => {
       title: "Status",
       dataIndex: "tournamentStatus",
       key: "tournamentStatus",
-      onCell: (record: any, rowIndex: any) => {
+      onCell: (record: IoTournamentSingleSummaryType, rowIndex: any) => {
         return {
           onClick: (e: any) => {
             handleMenuClick(e, record);
@@ -183,9 +173,6 @@ const TournamentsPage: React.FC = () => {
             : "#4169E1";
 
         return {
-          props: {
-            style: { cursor: "pointer" },
-          },
           children: (
             <div style={{ display: "flex", alignItems: "center" }}>
               {dotColor && (
@@ -218,9 +205,6 @@ const TournamentsPage: React.FC = () => {
       key: "action",
       render: (text: any, record: IoTournamentSingleSummaryType) => {
         return {
-          props: {
-            
-          },
           children: record?.tournamentDate ? (
             <TournamentsActionDropdown
               record={record}
@@ -301,13 +285,6 @@ const TournamentsPage: React.FC = () => {
         columns={columns}
         dataSource={dataSource}
         rowKey={(record) => record.id?.toString() || record.id}
-        // onRow={(record) => {
-        //   return {
-        //     onClick: (e) => {
-        //       handleMenuClick(e, record);
-        //     }
-        //   }
-        // }
         showSorterTooltip={false}
         bordered
         pagination={{
