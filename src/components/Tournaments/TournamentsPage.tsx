@@ -263,38 +263,35 @@ const TournamentsPage: React.FC = () => {
 
   return (
     <>
-      
-        <Space
-         
-          style={{
-            width: "100%",
-            justifyContent:  "space-between",
-            padding: "12px 0",
-            display: "flex",
-            flexWrap: "wrap",
-          }}
-        >
-          <Title  style={{ margin: 0 }}>
-            Tournaments
-          </Title>
-          {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
-        </Space>
-      
-
-      <Table<IoTournamentSingleSummaryType>
-        columns={columns}
-        dataSource={dataSource}
-        rowKey={(record) => record.id?.toString() || record.id}
-        showSorterTooltip={false}
-        bordered
-        pagination={{
-          current: currentPage,
-          pageSize,
-          total: tournamentSummaries?.content?.totalCount,
+      <Space
+        style={{
+          width: "100%",
+          justifyContent: "space-between",
+          padding: "12px 0",
+          display: "flex",
+          flexWrap: "wrap",
         }}
-        scroll={{ y: "70vh", x: "max-content" }}
-        onChange={handleTableChange}
-      />
+      >
+        <Title style={{ margin: 0 }}>Tournaments</Title>
+        {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
+      </Space>
+
+      <div className="tournament-table">
+        <Table<IoTournamentSingleSummaryType>
+          columns={columns}
+          dataSource={dataSource}
+          rowKey={(record) => record.id?.toString() || record.id}
+          showSorterTooltip={false}
+          bordered
+          pagination={{
+            current: currentPage,
+            pageSize,
+            total: tournamentSummaries?.content?.totalCount,
+          }}
+          scroll={{ y: "70vh", x: "max-content" }}
+          onChange={handleTableChange}
+        />
+      </div>
     </>
   );
 };
