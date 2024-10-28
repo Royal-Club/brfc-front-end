@@ -39,6 +39,8 @@ function AcBillPayment() {
   const [costTypeListSize, setCostTypeListSize] = useState(0);
   const [paymentAmount, setPaymentAmount] = useState(0);
   const [costTypes, setCostTypes] = useState<ICostType[]>([]);
+  const [filteredYear, setFilteredYear] = useState(null);
+  const [filteredMonth, setFilteredMonth] = useState(null);
 
   // Modal related properties
   const [modalLoadingSpin, setModalSpinLoading] = useState(false);
@@ -90,6 +92,14 @@ function AcBillPayment() {
     setPaymentAmount(0);
   };
 
+  const getUniqueYears = () => {
+    return [...new Set(acBillPayments.map(item => dayjs(item.paymentDate).year()))];
+  };
+
+  const getUniqueMonths = () => {
+    return [...new Set(acBillPayments.map(item => dayjs(item.paymentDate).format('MMMM')))];
+  };
+
   const handleCancel = () => {
     setModalOpen(false);
     setModalSpinLoading(false);
@@ -113,6 +123,29 @@ function AcBillPayment() {
       dataIndex: "paymentDate",
       key: "paymentDate",
       render: (_, record) => dayjs(record.paymentDate).format("DD-MMM-YYYY"),
+      // showSorterTooltip: { target: 'full-header' },
+      sorter: (a, b) => dayjs(a.paymentDate).unix() - dayjs(b.paymentDate).unix(),
+      filters: [
+        ...getUniqueYears().map(year => ({
+          text: year,
+          value: year,
+        })),
+        ...getUniqueMonths().map(month => ({
+          text: month,
+          value: month,
+        })),
+      ],
+      onFilter: (value, record) => {
+        if (typeof value === 'number') {
+          // Filtering by year
+          return dayjs(record.paymentDate).year() === value;
+        }
+        if (typeof value === 'string') {
+          // Filtering by month name
+          return dayjs(record.paymentDate).format('MMMM') === value;
+        }
+        return true;
+      },
     },
     {
       title: "Cost Type",
@@ -259,6 +292,7 @@ function AcBillPayment() {
               dataSource={acBillPayments}
               columns={acBillPaymentColumns}
               scroll={{ x: "max-content" }}
+              showSorterTooltip={{ target: 'sorter-icon' }}
               pagination={{
                 showTotal: (total) => `Total ${total} records`,
             }}
