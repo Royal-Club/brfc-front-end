@@ -40,6 +40,7 @@ code {
     background: #555;
 }
 
+.tournament-table
 .ant-table-row:hover{
     cursor: pointer;
 }
