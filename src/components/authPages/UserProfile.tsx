@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { Card, Col, Row, Avatar, Typography, Skeleton, theme } from "antd";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
@@ -9,7 +8,6 @@ import {
     PhoneOutlined,
     IdcardOutlined,
     MailOutlined,
-    SettingOutlined,
 } from "@ant-design/icons";
 
 import {

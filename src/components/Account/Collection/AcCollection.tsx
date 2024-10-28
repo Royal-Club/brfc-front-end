@@ -57,6 +57,17 @@ function AcCollection() {
   const [modalConfirmLoading, setModalConfirmLoading] = useState(false);
   const [isMultiPlayers, setIsMultiPlayers] = useState(false);
 
+  // console.log(acCollections.map((item) => dayjs(item.monthOfPayment).format("MMMM")));
+  const getUniqueMonths = () => {
+    return [
+      ...new Set(acCollections.map((item) => dayjs(item.monthOfPayment).format("MMMM"))),
+    ];
+  }
+
+  const getUniqueYears = () => {
+    return [...new Set(acCollections.map((item) => dayjs(item.date).year()))];
+  };
+
   useEffect(() => {
     getAcCollectionList();
     getPlayers();
@@ -129,12 +140,29 @@ function AcCollection() {
       dataIndex: "date",
       key: "date",
       render: (_, record) => dayjs(record.date).format("YYYY-MMM-DD"),
+      sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
+      filters: getUniqueYears().map((year) => ({
+        text: year.toString(),
+        value: year,
+      })),
+      onFilter: (value, record) => {
+        return dayjs(record.date).year() === value;
+      },
     },
     {
       title: "Month Of Payment",
       dataIndex: "monthOfPayment",
       key: "monthOfPayment",
       render: (_, record) => dayjs(record.monthOfPayment).format("MMM YYYY"),
+      sorter: (a, b) =>
+        dayjs(a.monthOfPayment).unix() - dayjs(b.monthOfPayment).unix(),
+      filters: getUniqueMonths().map((month) => ({
+        text: month,
+        value: month,
+      })),
+      onFilter: (value, record) => {
+        return dayjs(record.monthOfPayment).format("MMMM") === value;
+      },
     },
     {
       title: "Payeer Name",
@@ -345,7 +373,7 @@ function AcCollection() {
               }}
               pagination={{
                 showTotal: (total) => `Total ${total} records`,
-            }}
+              }}
               scroll={{ x: "max-content" }}
             />
 

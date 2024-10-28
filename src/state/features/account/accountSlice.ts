@@ -7,7 +7,7 @@ import IAcVoucherType from "../../../interfaces/IAcVoucherType";
 import IAccountsReport from "../../../interfaces/IAccountsReport";
 import IAccountBalanceSummary from "../../../interfaces/IAccountBalanceSummary";
 import IBalanceSheetReport from "../../../interfaces/IBalanceSheetReport";
-import IAccountSummaryResponse from "../../../interfaces/AccountSummaryResponse";
+// import IAccountSummaryResponse from "../../../interfaces/AccountSummaryResponse";
 export interface BasicResType<T> {
   message: string;
   statusCode: number;
