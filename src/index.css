@@ -39,6 +39,7 @@ code {
 .slimScroll::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
-/* .ant-table-row:hover{
-    background: #4a4a4a;
-} */
+
+.ant-table-row:hover{
+    cursor: pointer;
+}
