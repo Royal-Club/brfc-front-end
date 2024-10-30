@@ -1,7 +1,4 @@
-import {
-    Col,
-    Row
-} from "antd";
+import { Col, Row } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import { useEffect, useState } from "react";
@@ -15,16 +12,14 @@ function AcVoucherType() {
     const [acVoucherTypes, setAcVoucherTypes] = useState<IAcVoucherType[]>([]);
 
     useEffect(() => {
-        if(data?.content) {
+        if (data?.content) {
             const arr = data.content.map((item: IAcVoucherType) => ({
                 ...item,
-                key: item.id
+                key: item.id,
             }));
             setAcVoucherTypes(arr);
         }
-      
     }, [data]);
-
 
     // table rendering settings
     const acVoucherTypeColumns: ColumnsType<IAcVoucherType> = [
@@ -32,6 +27,7 @@ function AcVoucherType() {
             title: "Name",
             dataIndex: "name",
             key: "name",
+            sorter: (a, b) => a.name.localeCompare(b.name),
         },
         {
             title: "Alias",
@@ -53,26 +49,24 @@ function AcVoucherType() {
                         <span>
                             <CheckCircleTwoTone twoToneColor="#52c41a" /> Yes
                         </span>
-                    )
+                    );
                 } else {
                     return (
                         <span>
                             <CheckCircleOutlined /> No
                         </span>
-                    )
+                    );
                 }
-
             },
         },
     ];
-
 
     return (
         <>
             <Row>
                 <Col md={24}>
                     <div>
-                        <Title level={4}>Voucher Type</Title>
+                        <Title level={3}>Voucher Type</Title>
                         <Table
                             loading={isLoading}
                             size="small"

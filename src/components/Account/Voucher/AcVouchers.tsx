@@ -5,16 +5,18 @@ import {
     Form,
     Input,
     InputNumber,
+    InputRef,
     Modal,
     Row,
     Select,
+    Space,
     Spin,
     Typography,
 } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import IAcVoucher from "../../../interfaces/IAcVoucher";
 import IPlayer from "../../../interfaces/IPlayer";
@@ -22,6 +24,8 @@ import { API_URL } from "../../../settings";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 import FormatCurrencyWithSymbol from "../../Util/FormatCurrencyWithSymbol";
 import axiosApi from "../../../state/api/axiosBase";
+import { SearchOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 const { Text } = Typography;
 
 function AcVouchers() {
@@ -45,12 +49,92 @@ function AcVouchers() {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalConfirmLoading, setModalConfirmLoading] = useState(false);
 
+    const searchInput = useRef<InputRef>(null);
+
     useEffect(() => {
         getAcVoucherList();
         getPlayers();
 
         return () => {};
     }, []);
+
+    const handleSearch = (selectedKeys: any, confirm: any, dataIndex: any) => {
+        confirm();
+    };
+
+    const handleReset = (clearFilters: any) => {
+        clearFilters();
+    };
+
+    const getColumnSearchProps = (dataIndex: any) => ({
+        filterDropdown: ({
+            setSelectedKeys,
+            selectedKeys,
+            confirm,
+            clearFilters,
+        }: any) => (
+            <div style={{ padding: 8 }}>
+                <Input
+                    placeholder={`Search ${dataIndex}`}
+                    value={selectedKeys[0]}
+                    onChange={(e) =>
+                        setSelectedKeys(e.target.value ? [e.target.value] : [])
+                    }
+                    onPressEnter={() =>
+                        handleSearch(selectedKeys, confirm, dataIndex)
+                    }
+                    style={{ marginBottom: 8, display: "block" }}
+                />
+                <Space>
+                    <Button
+                        type="primary"
+                        onClick={() =>
+                            handleSearch(selectedKeys, confirm, dataIndex)
+                        }
+                        icon={<SearchOutlined />}
+                        size="small"
+                        style={{ width: 90 }}
+                    >
+                        Search
+                    </Button>
+                    <Button
+                        onClick={() =>
+                            clearFilters && handleReset(clearFilters)
+                        }
+                        size="small"
+                        style={{ width: 90 }}
+                    >
+                        Reset
+                    </Button>
+                    <Button
+                        type="link"
+                        size="small"
+                        onClick={() => {
+                            confirm({ closeDropdown: false });
+                        }}
+                    >
+                        Filter
+                    </Button>
+                </Space>
+            </div>
+        ),
+        filterIcon: (filtered: any) => (
+            <SearchOutlined
+                style={{ color: filtered ? "#1890ff" : undefined }}
+            />
+        ),
+        onFilter: (value: any, record: any) =>
+            record[dataIndex]
+                ?.toString()
+                ?.toLowerCase()
+                ?.includes(value.toLowerCase()),
+        onFilterDropdownOpenChange: (visible: any) => {
+            if (visible) {
+                setTimeout(() => searchInput.current?.select(), 100);
+            }
+        },
+        render: (text: any) => text,
+    });
 
     const getAcVoucherList = () => {
         setTableSpinLoading(true);
@@ -102,12 +186,29 @@ function AcVouchers() {
         setModalState("CREATE");
     };
 
+    const getUniqueMonths = () => {
+        return [
+            ...new Set(
+                acVouchers.map((item) => dayjs(item.voucherDate).format("MMMM"))
+            ),
+        ];
+    };
+
+    const getUniqueYears = () => {
+        return [
+            ...new Set(
+                acVouchers.map((item) => dayjs(item.voucherDate).year())
+            ),
+        ];
+    };
+
     // table rendering settings
     const acVoucherColumns: ColumnsType<IAcVoucher> = [
         {
             title: "Voucher No",
             dataIndex: "code",
             key: "code",
+            ...getColumnSearchProps("code"),
         },
         {
             title: "Date",
@@ -115,6 +216,27 @@ function AcVouchers() {
             key: "voucherDate",
             render: (_: any, record: IAcVoucher) =>
                 moment.utc(record.voucherDate).local().format("YYYY-MMM-DD"),
+            sorter: (a, b) =>
+                dayjs(a.voucherDate).unix() - dayjs(b.voucherDate).unix(),
+            filters: [
+                ...getUniqueYears().map((year) => ({
+                    text: year,
+                    value: year,
+                })),
+                ...getUniqueMonths().map((month) => ({
+                    text: month,
+                    value: month,
+                })),
+            ],
+            onFilter: (value, record) => {
+                if (typeof value === "number") {
+                    return dayjs(record.voucherDate).year() === value;
+                }
+                if (typeof value === "string") {
+                    return dayjs(record.voucherDate).format("MMMM") === value;
+                }
+                return true;
+            },
         },
         {
             title: "Type",
@@ -130,25 +252,18 @@ function AcVouchers() {
             render: (_: any, record: IAcVoucher) => (
                 <FormatCurrencyWithSymbol amount={record.amount} />
             ),
+            sorter: (a, b) => a.amount - b.amount,
         },
         {
             title: "Reference",
-            dataIndex: "collection.code",
-            key: "collection.code",
+            dataIndex: "collection",
+            key: "collectionCode",
             render: (_: any, record: IAcVoucher) =>
                 record.collection
                     ? record.collection.transactionId
                     : record.billPayment
                     ? record.billPayment.code
                     : "",
-        },
-        {
-            title: "Amount",
-            dataIndex: "amount",
-            key: "amount",
-            render: (_: any, record: IAcVoucher) => (
-                <FormatCurrencyWithSymbol amount={record.amount} />
-            ),
         },
 
         // {
@@ -274,7 +389,7 @@ function AcVouchers() {
             <Row>
                 <Col md={24}>
                     <div>
-                        <Title level={4}>Voucher</Title>
+                        <Title level={3}>Voucher</Title>
                         {/* {loginInfo.roles.includes("ADMIN") && <Button type="primary" onClick={showModal}>
               Create
             </Button>} */}

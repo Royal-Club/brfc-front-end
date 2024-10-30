@@ -1,7 +1,4 @@
-import {
-    Col,
-    Row
-} from "antd";
+import { Col, Row } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import { useEffect, useState } from "react";
@@ -10,14 +7,14 @@ import { AcNatureType } from "../../Enum/AcNatureType";
 import { useGetAcNatureListQuery } from "../../../state/features/account/accountSlice";
 
 function AcNature() {
-    const { data,isLoading } = useGetAcNatureListQuery();
+    const { data, isLoading } = useGetAcNatureListQuery();
     const [acNatures, setAcNatures] = useState<IAcNature[]>([]);
 
     useEffect(() => {
-        if(data?.content) {
+        if (data?.content) {
             const arr = data.content.map((item: IAcNature) => ({
                 ...item,
-                key: item.id
+                key: item.id,
             }));
             setAcNatures(arr);
         }
@@ -44,11 +41,13 @@ function AcNature() {
             title: "Name",
             dataIndex: "name",
             key: "name",
+            sorter: (a, b) => a.name.localeCompare(b.name),
         },
         {
             title: "Code",
             dataIndex: "code",
             key: "code",
+            sorter: (a, b) => a.code - b.code,
         },
         {
             title: "Type",
@@ -57,6 +56,7 @@ function AcNature() {
             render: (_: any, record: IAcNature) => {
                 return getEnumValue(record.type);
             },
+            sorter: (a, b) => a.type.localeCompare(b.type),
         },
         // {
         //     title: "Description",
@@ -65,13 +65,12 @@ function AcNature() {
         // },
     ];
 
-
     return (
         <>
             <Row>
                 <Col md={24}>
                     <div>
-                        <Title level={4}>Voucher Type</Title>
+                        <Title level={3}>Account Natures</Title>
                         <Table
                             loading={isLoading}
                             size="small"
