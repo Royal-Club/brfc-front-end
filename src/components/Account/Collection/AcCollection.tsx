@@ -468,9 +468,9 @@ function AcCollection() {
                                 )}
                             </Col>
                         </Row>
-                        <PlayerMonthlyAmountChart
+                      {acCollections &&  <PlayerMonthlyAmountChart
                             acCollections={acCollections}
-                        />
+                        />}
                         <Table
                             loading={tableLoadingSpin}
                             size="small"

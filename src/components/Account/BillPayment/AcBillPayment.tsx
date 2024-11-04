@@ -413,6 +413,129 @@ function AcBillPayment() {
                                 showTotal: (total) => `Total ${total} records`,
                             }}
                         />
+
+<Modal
+  title="Bill Payment"
+  open={modalOpen}
+  onOk={modalFormSubmit}
+  confirmLoading={modalConfirmLoading}
+  onCancel={handleCancel}
+  okText={modalOkButtonText}
+  okButtonProps={{ disabled: isFormDisabled }}
+  width={700}
+>
+  <Spin spinning={modalLoadingSpin}>
+    <div style={{ padding: "0 16px" }}>
+      <Form
+        name="acBillPaymentForm"
+        form={acBillPaymentForm}
+        labelCol={{ span: 6 }}
+        wrapperCol={{ span: 18 }}
+        initialValues={{
+          remember: true,
+          paymentDate: dayjs(),
+        }}
+        autoComplete="off"
+        disabled={isFormDisabled}
+      >
+        {modalState !== "CREATE" && (
+          <Form.Item
+            label="Bill ID"
+            name="code"
+            style={{ marginBottom: "16px" }}
+          >
+            <Input readOnly={true} style={{ borderRadius: "4px" }} />
+          </Form.Item>
+        )}
+
+        <Form.Item
+          label="CostType"
+          name="costTypeId"
+          rules={[
+            {
+              required: true,
+              message: "CostType can not be null!",
+            },
+          ]}
+          style={{ marginBottom: "16px" }}
+        >
+          <Select
+            virtual={true}
+            showSearch
+            placeholder="Select a CostType"
+            filterOption={(input, option) =>
+              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+            }
+            options={costTypes.map((costType) => ({
+              value: costType.id,
+              label: `${costType.name}`,
+            }))}
+            loading={costTypeApiLoading}
+            onChange={(value) => onChangeCostTypeList(value)}
+            style={{ borderRadius: "4px" }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Amount"
+          name="amount"
+          initialValue={paymentAmount}
+          rules={[
+            {
+              required: true,
+              message: "amount can not be null!",
+            },
+          ]}
+          style={{ marginBottom: "16px" }}
+        >
+          <InputNumber
+            defaultValue={paymentAmount}
+            onChange={(value) => setPaymentAmount(value ?? 0)}
+            style={{ width: "100%", borderRadius: "4px" }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Date"
+          name="paymentDate"
+          rules={[
+            {
+              required: true,
+              message: "Payment date cannot be null!",
+            },
+          ]}
+          style={{ marginBottom: "16px" }}
+        >
+          <DatePicker
+            format="YYYY-MM-DD"
+            defaultValue={dayjs()}
+            style={{ width: "100%", borderRadius: "4px" }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="description"
+          label="Comments"
+          style={{ marginBottom: "16px" }}
+        >
+          <Input.TextArea style={{ borderRadius: "4px" }} />
+        </Form.Item>
+      </Form>
+      {costTypeListSize > 0 && (
+        <Typography.Title level={5} style={{ margin: 0, marginTop: "16px" }}>
+          <Text type="success">
+            Total transaction amount is
+            <Text type="success" strong>
+              {` ${costTypeListSize * paymentAmount}`}
+            </Text>
+            BDT.
+          </Text>
+        </Typography.Title>
+      )}
+    </div>
+  </Spin>
+</Modal>
+
                     </div>
                 </Col>
             </Row>
