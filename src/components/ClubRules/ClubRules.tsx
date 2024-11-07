@@ -26,9 +26,9 @@ const { Text } = Typography;
 export default function ClubRules() {
     const loginInfo = useSelector(selectLoginInfo);
     const { data: clubRules, refetch } = useGetClubRulesQuery();
-    const [createClubRules, { isSuccess: isCreated }] =
+    const [createClubRules, { isSuccess: isCreated, isError: isCreateError }] =
         useCreateClubRulesMutation();
-    const [updateClubRules, { isSuccess: isUpdated }] =
+    const [updateClubRules, { isSuccess: isUpdated, isError: isUpdateError }] =
         useUpdateClubRulesMutation();
 
     const [modalOpen, setModalOpen] = useState(false);
@@ -56,12 +56,16 @@ export default function ClubRules() {
             const values = await form.validateFields();
             if (isEdit && currentRule) {
                 await updateClubRules({ ...currentRule, ...values });
-                if (isUpdated) {
+                if (isCreateError) {
+                    message.error("Failed to save club rule.");
+                } else {
                     message.success("Club rule updated successfully");
                 }
             } else {
                 await createClubRules(values);
-                if (isCreated) {
+                if (isCreateError) {
+                    message.error("Failed to save club rule.");
+                } else {
                     message.success("Club rule created successfully");
                 }
             }
