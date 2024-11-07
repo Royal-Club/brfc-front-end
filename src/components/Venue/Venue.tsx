@@ -2,10 +2,8 @@ import { CheckCircleTwoTone, EditTwoTone } from "@ant-design/icons";
 import { Button, Col, Form, Input, Modal, Row, Space, Spin } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import IVenue from "../../interfaces/IVenue";
-import { API_URL } from "../../settings";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import {
