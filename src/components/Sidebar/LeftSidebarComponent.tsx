@@ -1,18 +1,17 @@
 import {
   DollarOutlined,
   PieChartOutlined,
-  PlayCircleOutlined,
   ProjectOutlined,
   RadarChartOutlined,
-  TrophyOutlined,
+  TrophyOutlined
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu, Typography } from "antd";
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import companyLogo from "./../../assets/logo.png";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import companyLogo from "./../../assets/logo.png";
 
 const { Sider } = Layout;
 const { Title } = Typography;
@@ -35,31 +34,6 @@ function getItem(
   } as MenuItem;
 }
 
-// const isVoucherTypesDisabled = true; // Example condition for disabling inner child route
-// const isPlayerRegistrationDisabled = false; // Example condition for another child
-
-// const items: MenuProps["items"] = [
-//     getItem("Dashboard", "/", <PieChartOutlined />),
-//     getItem("Player", "setupSubMenu", <RadarChartOutlined />, [
-//         getItem("Player Registration", "/player", undefined, undefined,undefined, isPlayerRegistrationDisabled),
-//         getItem("Player List", "/players"),
-//     ]),
-//     getItem("Finance", "financeSubMenu", <DollarOutlined />, [
-//         getItem("Configuration", "ConfigurationSubMenu", null, [
-//             getItem("Voucher Types", "/ac/voucher-types", undefined, undefined,undefined, isVoucherTypesDisabled), // Disable this child
-//             getItem("AC Natures", "/ac/natures"),
-//             getItem("Chart of Account", "/ac/charts"),
-//         ]),
-//         getItem("Income (+)", "IncomeSubMenu", null, [
-//             getItem("Collections", "/ac/collections"),
-//         ]),
-//     ]),
-//     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
-//         getItem("Venues", "/venues"),
-//     ]),
-//     getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
-//         getItem("Tournaments", "/tournaments"),
-//     ]),
 // ];
 
 interface LeftSidebarComponentProps {
@@ -99,11 +73,9 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         getItem("Collections (+)", "/ac/collections"),
         getItem("Bill Payment (-)", "/ac/bill-payments"),
       getItem("Voucher", "VoucherSubMenu", null, [
-          // getItem("Voucher Entry", "/voucher"),
           getItem("Voucher Register", "/ac/vouchers"),
       ]),
       getItem("Accounts Reports", "acReportsSubMenu", null, [
-          // getItem("Voucher Entry", "/voucher"),
           getItem("Accounts Report", "/ac/reports/accounts-summary"),
           getItem("Balances Summary", "/ac/reports/balance-summary"),
           getItem("Balances Sheet", "/ac/reports/balance-sheet"),
@@ -112,14 +84,6 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
       getItem("Venues", "/venues"),
     ]),
-    // getItem("Mach Schedule", "matchScheduleSubMenu", <ProjectOutlined />, [
-    //     getItem("Mach Schedule", "/venue"),
-    //     getItem("Mach Schedule List", "/venues"),
-    // ]),
-    // getItem("Game Planner", "gameSubMenu", <PlayCircleOutlined />, [
-    //     getItem("Match Participant", "/match-participant"),
-    //     getItem("Match List", "/matches"),
-    // ]),
     getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
       getItem("Tourtnaments", "/tournaments"),
     ]),
