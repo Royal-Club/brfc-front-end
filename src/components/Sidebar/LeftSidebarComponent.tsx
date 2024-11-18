@@ -1,4 +1,5 @@
 import {
+    BookOutlined,
   DollarOutlined,
   PieChartOutlined,
   ProjectOutlined,
@@ -87,6 +88,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
     getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
       getItem("Tourtnaments", "/tournaments"),
     ]),
+    getItem("Club Rules", "/club-rules", <BookOutlined />),
   ];
 
   const onClick: MenuProps["onClick"] = (e) => {
