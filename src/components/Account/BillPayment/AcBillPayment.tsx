@@ -397,7 +397,7 @@ function AcBillPayment() {
                                 </Button>
                             )}
                         </Row>
-                        {acBillPayments && (
+                        {acBillPayments.length > 0 && (
                             <AcBillPaymentGraph
                                 acBillPayments={acBillPayments}
                             />

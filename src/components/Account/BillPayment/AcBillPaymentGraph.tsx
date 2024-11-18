@@ -92,9 +92,9 @@ const AcBillPaymentGraph: React.FC<AcBillPaymentGraphProps> = ({
                 tension: 0.4,
             })),
         };
-
-        setGraphData(data);
         setLoading(false);
+        setGraphData(data);
+       
     };
 
     const getColor = (costType: string): string => {
