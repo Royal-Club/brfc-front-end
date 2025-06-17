@@ -1,0 +1,74 @@
+.player-contribution-card {
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.player-contribution-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.player-contribution-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+}
+
+.player-contribution-header h3 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.player-id {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.player-contribution-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-label {
+  font-size: 12px;
+}
+
+.status-value {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.player-contribution-footer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.footer-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-label {
+  font-size: 12px;
+}
+
+.footer-value {
+  font-size: 14px;
+  font-weight: 600;
+}
