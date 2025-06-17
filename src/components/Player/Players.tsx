@@ -1,20 +1,45 @@
 import {
-  CheckCircleTwoTone,
   EditTwoTone,
   LockTwoTone,
+  UserOutlined,
+  PlusOutlined,
+  TeamOutlined,
+  SearchOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined
 } from "@ant-design/icons";
-import { Button, Col, Modal, Row, Space, Table, Input, message } from "antd";
+import { 
+  Button, 
+  Col, 
+  Modal, 
+  Row, 
+  Space, 
+  Table, 
+  Input, 
+  message,
+  Card,
+  Tabs,
+  Typography,
+  Tag,
+  Badge,
+  Avatar,
+  Form
+} from "antd";
 import moment from "moment";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import IPlayer from "../../interfaces/IPlayer";
 import { useGetPlayersQuery } from "../../state/features/player/playerSlice";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { ColumnsType } from "antd/es/table";
 import { useResetPlayerPasswordMutation } from "../../state/features/auth/authSlice";
 
+const { Title, Text } = Typography;
+const { TabPane } = Tabs;
+
 function Players() {
+  const navigate = useNavigate();
   const { data: playersData, isLoading, refetch } = useGetPlayersQuery();
   const [resetPlayerPassword] = useResetPlayerPasswordMutation();
   const loginInfo = useSelector(selectLoginInfo);
@@ -24,18 +49,50 @@ function Players() {
   const [selectedPlayer, setSelectedPlayer] = useState<IPlayer | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [searchTerm, setSearchTerm] = useState(""); // state for the search term
-  const [filteredPlayers, setFilteredPlayers] = useState<IPlayer[]>([]); // state for filtered players
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredPlayers, setFilteredPlayers] = useState<IPlayer[]>([]);
+  const [activeTabKey, setActiveTabKey] = useState("all");
 
+  // Add these new states for password form validation
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState<"weak" | "medium" | "strong" | "">("");
+  
   useEffect(() => {
     if (playersData?.content) {
-      setFilteredPlayers(playersData.content); // initialize filtered players
+      filterPlayersByTab(activeTabKey, playersData.content);
     }
-  }, [playersData]);
+  }, [playersData, activeTabKey]);
 
   useEffect(() => {
     refetch();
   }, []);
+
+  // Create a style element using useEffect
+  useEffect(() => {
+    // Create a style element
+    const styleElement = document.createElement('style');
+    styleElement.type = 'text/css';
+    styleElement.innerHTML = `
+      .compact-table .ant-table-cell {
+        padding: 8px 12px !important;
+      }
+      .compact-table .ant-table-thead > tr > th {
+        padding: 8px 12px !important;
+        font-weight: 600;
+      }
+      .ant-tabs-tab {
+        padding: 6px 12px !important;
+      }
+    `;
+    
+    // Append it to the document head
+    document.head.appendChild(styleElement);
+    
+    // Clean up on unmount
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []); // Empty dependency array ensures this runs once on component mount
 
   // Handle search input change
   const handleSearch = (value: string) => {
@@ -44,14 +101,52 @@ function Players() {
     if (playersData && playersData.content) {
       const filtered = playersData.content.filter(
         (player: IPlayer) =>
-          player.name?.toLowerCase().includes(value.toLowerCase()) ||
+          (player.name?.toLowerCase().includes(value.toLowerCase()) ||
           player.email?.toLowerCase().includes(value.toLowerCase()) ||
-          player.mobileNo?.includes(value)
+          player.mobileNo?.includes(value)) &&
+          (activeTabKey === "all" || 
+          (activeTabKey === "active" && player.active) || 
+          (activeTabKey === "inactive" && !player.active))
       );
       setFilteredPlayers(filtered);
     } else {
       setFilteredPlayers([]);
     }
+  };
+
+  // Function to filter players based on tab selection
+  const filterPlayersByTab = (tabKey: string, players: IPlayer[] = playersData?.content || []) => {
+    if (!players) return;
+    
+    let filtered;
+    switch (tabKey) {
+      case "active":
+        filtered = players.filter(player => player.active);
+        break;
+      case "inactive":
+        filtered = players.filter(player => !player.active);
+        break;
+      default:
+        filtered = players;
+    }
+
+    // Apply any existing search filter
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (player: IPlayer) =>
+          player.name?.toLowerCase().includes(searchTerm) ||
+          player.email?.toLowerCase().includes(searchTerm) ||
+          player.mobileNo?.includes(searchTerm)
+      );
+    }
+
+    setFilteredPlayers(filtered);
+  };
+
+  // Tab change handler
+  const handleTabChange = (key: string) => {
+    setActiveTabKey(key);
+    filterPlayersByTab(key);
   };
 
   // Function to handle opening the password modal
@@ -60,11 +155,76 @@ function Players() {
     setIsPasswordModalVisible(true);
   };
 
-  // Function to close the password modal
+  // Function to check password strength
+  const checkPasswordStrength = (password: string) => {
+    if (!password) {
+      setPasswordStrength("");
+      return;
+    }
+    
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasDigits = /\d/.test(password);
+    const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    const strength = 
+      (hasLowerCase ? 1 : 0) + 
+      (hasUpperCase ? 1 : 0) + 
+      (hasDigits ? 1 : 0) + 
+      (hasSpecialChars ? 1 : 0);
+    
+    if (password.length < 8 || strength < 2) {
+      setPasswordStrength("weak");
+    } else if (strength < 4) {
+      setPasswordStrength("medium");
+    } else {
+      setPasswordStrength("strong");
+    }
+  };
+  
+  // Enhanced password change handler
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    checkPasswordStrength(newPassword);
+    
+    // Clear error when typing
+    if (confirmPassword && confirmPassword === newPassword) {
+      setPasswordError("");
+    } else if (confirmPassword) {
+      setPasswordError("Passwords do not match");
+    }
+  };
+  
+  // Enhanced confirm password change handler
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newConfirmPassword = e.target.value;
+    setConfirmPassword(newConfirmPassword);
+    
+    if (password && password !== newConfirmPassword) {
+      setPasswordError("Passwords do not match");
+    } else {
+      setPasswordError("");
+    }
+  };
+  
+  // Function to get color for password strength indicator
+  const getPasswordStrengthColor = () => {
+    switch (passwordStrength) {
+      case "weak": return "#ff4d4f";
+      case "medium": return "#faad14";
+      case "strong": return "#52c41a";
+      default: return "#d9d9d9";
+    }
+  };
+
+  // Function to close the password modal (update to clear all states)
   const handleCancel = () => {
     setIsPasswordModalVisible(false);
     setPassword("");
     setConfirmPassword("");
+    setPasswordStrength("");
+    setPasswordError("");
   };
 
   // Function to handle password update
@@ -103,65 +263,85 @@ function Players() {
     return password && confirmPassword && password === confirmPassword;
   };
 
+  // Get initials from player name for avatar
+  const getInitials = (name: string) => {
+    if (!name) return "U";
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
+
   const CommonColumns: ColumnsType<IPlayer> = [
     {
-      title: "Name",
+      title: "Player",
       dataIndex: "name",
       key: "name",
+      render: (_, record: IPlayer) => (
+        <Space>
+          <Avatar 
+            style={{ 
+              backgroundColor: record.active ? '#1890ff' : '#ccc',
+              color: '#fff'
+            }}
+          >
+            {getInitials(record.name || "")}
+          </Avatar>
+          <div>
+            <Text strong>{record.name}</Text>
+            <div>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                {record.email}
+              </Text>
+            </div>
+          </div>
+        </Space>
+      ),
     },
     {
-      title: "Skype",
-      dataIndex: "skypeId",
-      key: "skypeId",
+      title: "Contact Info",
+      key: "contactInfo",
+      render: (_, record: IPlayer) => (
+        <Space direction="vertical" size="small">
+          <div>
+            <Text type="secondary">Skype: </Text>
+            <Text>{record.skypeId}</Text>
+          </div>
+          <div>
+            <Text type="secondary">Mobile: </Text>
+            <Text>{record.mobileNo}</Text>
+          </div>
+        </Space>
+      ),
     },
     {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
-    {
-      title: "Mobile",
-      dataIndex: "mobileNo",
-      key: "mobileNo",
-    },
-    {
-      title: "Employee Id",
+      title: "Employee ID",
       dataIndex: "employeeId",
       key: "employeeId",
+      render: (value) => <Tag color="blue">{value}</Tag>,
     },
     {
       title: "Status",
       dataIndex: "active",
       key: "active",
-      render: (_: any, record: IPlayer) => {
-        if (record.active) {
-          return (
-            <span>
-              <CheckCircleTwoTone twoToneColor="#52c41a" /> Active
-            </span>
-          );
-        } else {
-          return (
-            <span>
-              <CheckCircleTwoTone twoToneColor="#eb2f96" /> InActive
-            </span>
-          );
-        }
-      },
+      render: (active: boolean) => (
+        <Tag color={active ? "success" : "error"} icon={active ? <CheckCircleOutlined /> : <CloseCircleOutlined />}>
+          {active ? "Active" : "Inactive"}
+        </Tag>
+      ),
     },
     {
-      title: "Created Date",
-      dataIndex: "createdDate",
-      key: "createdDate",
-      render: (_: any, record: IPlayer) =>
-        moment.utc(record.createdDate).local().format("DD-MMM-YYYY"),
-    },
-    {
-      title: "Modified Date",
-      dataIndex: "lastModifiedDate",
-      key: "lastModifiedDate",
-      render: (_: any, record: IPlayer) =>
-        moment.utc(record.updatedDate).local().format("DD-MMM-YYYY"),
+      title: "Dates",
+      key: "dates",
+      render: (_: any, record: IPlayer) => (
+        <Space direction="vertical" size="small">
+          <div>
+            <Text type="secondary">Created: </Text>
+            <Text>{moment.utc(record.createdDate).local().format("DD-MMM-YYYY")}</Text>
+          </div>
+          <div>
+            <Text type="secondary">Modified: </Text>
+            <Text>{moment.utc(record.updatedDate).local().format("DD-MMM-YYYY")}</Text>
+          </div>
+        </Space>
+      ),
     },
   ];
 
@@ -173,93 +353,224 @@ function Players() {
           key: "action",
           render: (_: any, record: IPlayer) => (
             <Space size="middle">
-              <Link to={`/players/${record.id}`}>
-                <EditTwoTone />
-              </Link>
-              <LockTwoTone
+              <Button 
+                type="primary" 
+                ghost 
+                size="small"
+                icon={<EditTwoTone />}
+                onClick={() => navigate(`/players/${record.id}`)}
+              >
+                Edit
+              </Button>
+              <Button
+                type="dashed" 
+                size="small"
+                icon={<LockTwoTone />}
                 onClick={() => showPasswordModal(record)}
-                style={{ cursor: "pointer" }}
-              />
+              >
+                Reset Password
+              </Button>
             </Space>
           ),
         },
       ]
     : CommonColumns;
 
+  // Calculate tab counts
+  const allCount = playersData?.content?.length || 0;
+  const activeCount = playersData?.content?.filter(player => player.active).length || 0;
+  const inactiveCount = playersData?.content?.filter(player => !player.active).length || 0;
+
   return (
-    <>
+    <Card 
+      bordered={false}
+      className="player-list-card"
+      style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
+    >
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-   
-      <h1 style={{
-          fontSize: "24px",
-          fontWeight: "normal",
-        }}>Players</h1>
-
-        <Row
-          align="middle"
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
-          {loginInfo.roles.includes("ADMIN") && (
-            <Link to={"/player"}>
-              <Button type="primary">Create</Button>
-            </Link>
-          )}
-          {/* Search Bar */}
-          <Input.Search
-            placeholder="Search players"
-            onSearch={handleSearch}
-            style={{ width: 300 }}
-            enterButton
-          />
-        </Row>
-      </Row>
-
-      <Row>
-        <Col md={24}>
-          <Table
-            loading={isLoading}
-            size="large"
-            dataSource={filteredPlayers} // filtered data
-            columns={playersColumn}
-            pagination={{
-              showTotal: (total) => `Total ${total} records`,
-            }}
-            scroll={{ x: "max-content" }}
-          />
+        <Col>
+          <Space align="center">
+            <TeamOutlined style={{ fontSize: 24 }} />
+            <Title level={3} style={{ margin: 0 }}>Players</Title>
+          </Space>
+        </Col>
+        <Col>
+            <Space size="middle">
+            <Input.Search
+              placeholder="Search players"
+              onSearch={handleSearch}
+              onChange={(e) => handleSearch(e.target.value)}
+              style={{ width: 250 }}
+              prefix={<SearchOutlined />}
+              allowClear
+              size="large"
+            />
+            
+            {loginInfo.roles.includes("ADMIN") && (
+              <Link to={"/player"}>
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />}
+                  size="middle"
+                >
+                  Add Player
+                </Button>
+              </Link>
+            )}
+          </Space>
         </Col>
       </Row>
 
-      {/* Reset Password modal */}
+      <Row align="middle" style={{ marginBottom: 16 }}>
+        <Col flex="auto">
+          <Tabs 
+            defaultActiveKey="all" 
+            onChange={handleTabChange}
+            type="card"
+            size="small"
+            style={{ marginBottom: 0 }}
+          >
+            <TabPane 
+              tab={
+                <span>
+                  <UserOutlined /> 
+                  All Players 
+                  <Badge count={allCount} size="small" style={{ marginLeft: 5, backgroundColor: '#1890ff', fontSize: '10px' }} />
+                </span>
+              } 
+              key="all"
+            />
+            <TabPane 
+              tab={
+                <span>
+                  <CheckCircleOutlined /> 
+                  Active 
+                  <Badge count={activeCount} size="small" style={{ marginLeft: 5, backgroundColor: '#52c41a', fontSize: '10px' }} />
+                </span>
+              } 
+              key="active"
+            />
+            <TabPane 
+              tab={
+                <span>
+                  <CloseCircleOutlined /> 
+                  Inactive 
+                  <Badge count={inactiveCount} size="small" style={{ marginLeft: 5, backgroundColor: '#ff4d4f', fontSize: '10px' }} />
+                </span>
+              } 
+              key="inactive"
+            />
+          </Tabs>
+        </Col>
+      </Row>
+
+      <Table
+        loading={isLoading}
+        dataSource={filteredPlayers}
+        columns={playersColumn}
+        pagination={{
+          showTotal: (total) => `Total ${total} records`,
+          pageSize: 9,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50'],
+        }}
+        rowKey="id"
+        scroll={{ x: "max-content" }}
+        style={{ 
+          borderRadius: 8,
+          overflow: 'hidden'
+        }}
+        size="small"
+        className="compact-table"
+      />
+
+      {/* Updated Reset Password modal */}
       <Modal
-        title="Reset Password"
+        title={
+          <Space align="center">
+            <LockTwoTone twoToneColor="#1890ff" style={{ fontSize: 20 }} />
+            <span style={{ fontSize: 16 }}>Reset Password for <strong>{selectedPlayer?.name}</strong></span>
+          </Space>
+        }
         visible={isPasswordModalVisible}
         onCancel={handleCancel}
-        onOk={handlePasswordUpdate}
-        okText="Reset Password"
-        cancelText="Cancel"
-        okButtonProps={{ disabled: !isPasswordValid() }} // Disable the button if validation fails
+        footer={[
+          <Button key="cancel" onClick={handleCancel}>
+            Cancel
+          </Button>,
+          <Button 
+            key="submit" 
+            type="primary" 
+            onClick={handlePasswordUpdate}
+            disabled={!isPasswordValid() || passwordStrength === "weak"}
+            loading={false}
+          >
+            Reset Password
+          </Button>
+        ]}
+        width={500}
+        maskClosable={false}
+        destroyOnClose={true}
+        className="reset-password-modal"
       >
-        <p>Please enter the new password twice to confirm.</p>
-        <Input.Password
-          placeholder="New Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ marginBottom: "10px" }}
-          required
-        />
-        <Input.Password
-          placeholder="Confirm New Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-        />
+        <div style={{ marginBottom: 24 }}>
+          <p>Please create a new password for this user. It should be:</p>
+          <ul style={{ paddingLeft: 20, color: '#666' }}>
+            <li>At least 8 characters long</li>
+            <li>Include a mix of letters, numbers, and symbols</li>
+          </ul>
+        </div>
+        
+        <Form layout="vertical">
+          <Form.Item 
+            label="New Password" 
+            validateStatus={passwordStrength === "weak" ? "error" : "success"}
+            help={passwordStrength === "weak" ? "Password is too weak" : null}
+          >
+            <Input.Password
+              placeholder="Enter new password"
+              value={password}
+              onChange={handlePasswordChange}
+              autoComplete="new-password"
+              prefix={<LockTwoTone twoToneColor={getPasswordStrengthColor()} />}
+            />
+            {password && (
+              <div style={{ marginTop: 8 }}>
+                <Space>
+                  <div>Strength:</div>
+                  <div 
+                    style={{ 
+                      width: 60, 
+                      height: 6, 
+                      background: getPasswordStrengthColor(), 
+                      borderRadius: 3 
+                    }} 
+                  />
+                  <div style={{ color: getPasswordStrengthColor() }}>
+                    {passwordStrength === "weak" && "Weak"}
+                    {passwordStrength === "medium" && "Medium"}
+                    {passwordStrength === "strong" && "Strong"}
+                  </div>
+                </Space>
+              </div>
+            )}
+          </Form.Item>
+          
+          <Form.Item 
+            label="Confirm Password" 
+            validateStatus={passwordError ? "error" : confirmPassword ? "success" : ""}
+            help={passwordError || null}
+          >
+            <Input.Password
+              placeholder="Confirm new password"
+              value={confirmPassword}
+              onChange={handleConfirmPasswordChange}
+              autoComplete="new-password"
+            />
+          </Form.Item>
+        </Form>
       </Modal>
-    </>
+    </Card>
   );
 }
 
