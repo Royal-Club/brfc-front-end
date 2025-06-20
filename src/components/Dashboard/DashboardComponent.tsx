@@ -27,6 +27,8 @@ import CountUp from "react-countup";
 import axiosApi from "../../state/api/axiosBase";
 import { API_URL } from "../../settings";
 import IAccountSummaryResponse from "../../interfaces/AccountSummaryResponse";
+import PlayerCollectionMetricsTable from "./PlayerCollectionMetricsTable";
+import axios from "axios";
 
 const formatter: StatisticProps["formatter"] = (value) => (
   <CountUp end={value as number} separator="," />
@@ -180,7 +182,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     getAcVoucherList();
 
-    return () => {};
+    return () => { };
   }, []);
 
   const getAcVoucherList = () => {
@@ -204,6 +206,24 @@ const Dashboard: React.FC = () => {
         // setTableSpinLoading(false);
       });
   };
+
+  /* account table */
+  // const monthNames = [
+  //   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  //   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  // ];
+
+  // const [metrics, setMetrics] = useState<PlayerMetric[]>([]);
+  // const year = 2025;
+
+  // useEffect(() => {
+  //   axios.get(`${API_URL}/ac/reports/player-collection-metrics`).then((res) => {
+  //     if (res.data?.content?.metrics) {
+  //       setMetrics(res.data.content.metrics);
+  //     }
+  //   });
+  // }, []);
+
 
   return (
     <div style={{ padding: "0px 20px" }}>
@@ -263,7 +283,7 @@ const Dashboard: React.FC = () => {
             </Col> */}
           </Row>
         </Col>
-        <Col span={24} style={{ background: colorBgContainer }}>
+        {/* <Col span={24} style={{ background: colorBgContainer }}>
           <Row gutter={48} style={{ background: colorBgContainer }}>
             <Col md={12} sm={24}>
               <AntTitle level={3}>Goals & Assists (Bar Chart)</AntTitle>
@@ -274,10 +294,10 @@ const Dashboard: React.FC = () => {
               <Bar data={attendanceData} />
             </Col>
           </Row>
-        </Col>
+        </Col> */}
 
         {/* Section 2: Financial Overview */}
-        <Col span={24} style={{ background: colorBgContainer }}>
+        {/* <Col span={24} style={{ background: colorBgContainer }}>
           <AntTitle level={2}>Section 2: Financial Overview</AntTitle>
           <Row gutter={48}>
             <Col md={16} sm={24}>
@@ -289,10 +309,10 @@ const Dashboard: React.FC = () => {
               <Doughnut data={expenseData} />
             </Col>
           </Row>
-        </Col>
+        </Col> */}
 
         {/* Section 3: Tournament Overview */}
-        <Col span={24} style={{ background: colorBgContainer }}>
+        {/* <Col span={24} style={{ background: colorBgContainer }}>
           <AntTitle level={2}>Section 3: Tournament Overview</AntTitle>
           <Row gutter={48}>
             <Col md={12} sm={24}>
@@ -306,10 +326,10 @@ const Dashboard: React.FC = () => {
               <Bar data={matchesData} />
             </Col>
           </Row>
-        </Col>
+        </Col> */}
 
         {/* Section 4: Venue Usage */}
-        <Col span={24} style={{ background: colorBgContainer }}>
+        {/* <Col span={24} style={{ background: colorBgContainer }}>
           <AntTitle level={2}>Section 4: Venue Usage</AntTitle>
           <Row gutter={48}>
             <Col md={12} sm={24}>
@@ -321,10 +341,10 @@ const Dashboard: React.FC = () => {
               <Line data={monthlyPaymentsData} />
             </Col>
           </Row>
-        </Col>
+        </Col> */}
 
         {/* Section 5: Upcoming Matches */}
-        <Col
+        {/* <Col
           span={24}
           style={{ padding: "20px", background: colorBgContainer }}
         >
@@ -345,7 +365,14 @@ const Dashboard: React.FC = () => {
               </List.Item>
             )}
           />
+        </Col> */}
+        <Col span={24} style={{ background: colorBgContainer }}>
+          <br />
+          <PlayerCollectionMetricsTable />
+          <br />
+          <br />
         </Col>
+
       </Row>
     </div>
   );
