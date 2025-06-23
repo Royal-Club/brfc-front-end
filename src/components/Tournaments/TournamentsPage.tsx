@@ -214,8 +214,8 @@ const TournamentsPage: React.FC = () => {
           ) : (
             <div style={{ height: "32px" }} />
           ),
-        }
-      }
+        };
+      },
     },
   ];
 
@@ -234,14 +234,25 @@ const TournamentsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <>
-        <Header style={{ padding: "0 24px", background: colorBgContainer }}>
-          <Space direction="vertical" style={{ width: "100%" }}>
-            <Skeleton.Button active style={{ width: 150 }} />
-          </Space>
-        </Header>
-        <Skeleton active paragraph={{ rows: 10 }} />
-      </>
+      <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Space
+          style={{
+            width: "100%",
+            justifyContent: "space-between",
+            padding: "12px 0",
+            display: "flex",
+            flexWrap: "wrap",
+          }}
+        >
+          <Skeleton.Input active style={{ width: 150, height: 32 }} />
+          {loginInfo.roles.includes("ADMIN") && (
+            <Skeleton.Button active style={{ width: 120, height: 32 }} />
+          )}
+        </Space>
+        <div style={{ background: colorBgContainer, padding: "24px", borderRadius: "8px" }}>
+          <Skeleton active paragraph={{ rows: 8 }} />
+        </div>
+      </Space>
     );
   }
 
