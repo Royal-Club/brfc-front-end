@@ -101,6 +101,23 @@
   gap: 4px;
 }
 
+/* Player Collection Metrics Table Responsive Styles */
+.player-metrics-table-container {
+  width: 100%;
+}
+
+.player-metrics-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.player-metrics-table {
+  overflow-x: auto;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .dashboard-container {
@@ -150,9 +167,59 @@
   .ant-card-body {
     padding: 12px !important;
   }
+  
+  /* Player metrics table mobile styles */
+  .player-metrics-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .player-metrics-controls .ant-space {
+    justify-content: center;
+  }
+  
+  .player-metrics-controls .ant-select {
+    width: 100% !important;
+  }
+  
+  .player-metrics-controls .ant-radio-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .player-metrics-controls .ant-radio-button-wrapper {
+    flex: 1;
+    text-align: center;
+  }
+  
+  /* Table responsive adjustments */
+  .ant-table-thead > tr > th {
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Make fixed columns more narrow on mobile */
+  .ant-table-fixed-left {
+    max-width: 120px;
+  }
+  
+  /* Ensure table scrolls horizontally on mobile */
+  .ant-table-container {
+    overflow-x: auto;
+  }
+  
+  .ant-table-content {
+    overflow-x: auto;
+  }
 }
 
-/* Make sure modal adapts well to mobile */
 @media (max-width: 576px) {
   /* Ensure modals fit screen */
   .ant-modal {
@@ -172,6 +239,35 @@
     padding: 12px !important;
     max-height: 70vh;
     overflow-y: auto;
+  }
+  
+  /* Extra small screens */
+  .player-metrics-controls .ant-btn {
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+  }
+  
+  .ant-table-thead > tr > th {
+    padding: 4px 2px !important;
+    font-size: 12px !important;
+    min-width: 35px;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: 4px 2px !important;
+    font-size: 12px !important;
+    min-width: 35px;
+  }
+  
+  /* Make name column narrower on very small screens */
+  .ant-table-fixed-left {
+    max-width: 100px;
+  }
+  
+  /* Compress month columns on very small screens */
+  .month-column {
+    min-width: 30px !important;
+    width: 30px !important;
   }
 }
 
