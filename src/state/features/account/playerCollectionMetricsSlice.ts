@@ -12,10 +12,11 @@ export interface PlayerCollectionMetricsResType extends BasicResType {
 
 export const playerCollectionMetricsApi = apiWithTags.injectEndpoints({
   endpoints: (builder) => ({
-    getPlayerCollectionMetrics: builder.query<PlayerCollectionMetricsResType, void>({
-      query: () => ({
+    getPlayerCollectionMetrics: builder.query<PlayerCollectionMetricsResType, { year?: number } | void>({
+      query: (params) => ({
         url: `/ac/reports/player-collection-metrics`,
         method: "GET",
+        params: params?.year ? { year: params.year } : undefined,
       }),
       providesTags: ["playerCollectionMetrics"],
     }),

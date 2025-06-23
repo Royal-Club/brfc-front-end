@@ -8,6 +8,7 @@ interface PlayerMetric {
   playerId: number;
   playerName: string;
   yearMonthAmount: YearMonthAmount;
+  active: boolean;
 }
 
 interface IPlayerCollectionMetrics {

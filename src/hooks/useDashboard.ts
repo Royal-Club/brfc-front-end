@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+// This file is no longer needed and can be deleted
 import { useGetPlayerCollectionMetricsQuery } from '../state/features/account/playerCollectionMetricsSlice';
 import { PlayerMetric } from '../interfaces/IPlayerCollectionMetrics';
+import { useEffect, useMemo, useState } from 'react';
 
 export const useDashboard = () => {
   // States

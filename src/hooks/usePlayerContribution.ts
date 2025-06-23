@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { PlayerMetric } from '../interfaces/IPlayerCollectionMetrics';
 
 interface ContributionRecord {
