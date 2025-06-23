@@ -58,14 +58,6 @@ const acCollectionApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // Fetch Account Balance
-    // getAcSummary: builder.query<BasicResType<IAccountSummaryResponse>, void>({
-    //   query: () => ({
-    //     url: `/ac/reports/summary`,
-    //     method: "GET",
-    //   }),
-    // }),
-
     // Fetch specific AC Collection by ID
     getAcCollectionById: builder.query<BasicResType<IAcCollection>, number>({
       query: (id) => ({
@@ -117,7 +109,7 @@ const acCollectionApi = apiSlice.injectEndpoints({
 
 export const {
   useGetAcCollectionsQuery,
-  // useGetAcSummaryQuery,
+  // removed useGetAcSummaryQuery as it's now in accountSummarySlice
   useCreateAcCollectionMutation,
   useUpdateAcCollectionMutation,
   useGetPlayersQuery,
@@ -130,4 +122,3 @@ export const {
   useGetAcBalanceSheetListQuery,
 } = acCollectionApi;
 
-export default acCollectionApi;

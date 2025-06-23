@@ -6,6 +6,7 @@ import {
     removeUser,
     setImage,
 } from "../state/slices/loginInfoSlice";
+import { clearStoredCredentials } from "../utils/utils";
 
 export const useAuthHook = () => {
     const dispatch = useDispatch();
@@ -24,7 +25,9 @@ export const useAuthHook = () => {
     };
 
     const logout = () => {
+        // Clear both localStorage token and remembered credentials
         localStorage.removeItem("tokenContent");
+        clearStoredCredentials(); // Clear cookies with remembered credentials
         dispatch(removeUser());
         navigate("/");
     };
