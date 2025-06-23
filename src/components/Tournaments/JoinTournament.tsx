@@ -79,7 +79,7 @@ export default function JoinTournament() {
 
   // Filter and sort players
   const { participatingPlayers, notParticipatingPlayers, pendingPlayers, filteredTableData } = useMemo(() => {
-    let filtered = players.filter((player) => player.playerId !== Number(loginInfo.userId));
+    let filtered = players; // Include all players including logged-in user
 
     // Apply search filter
     if (searchTerm) {
@@ -105,8 +105,12 @@ export default function JoinTournament() {
       }
     }
 
-    // Sort players
+    // Sort players with logged-in user at the top
     const sortedPlayers = [...filtered].sort((a, b) => {
+      // Always put logged-in user first
+      if (a.playerId === Number(loginInfo.userId)) return -1;
+      if (b.playerId === Number(loginInfo.userId)) return 1;
+      
       switch (sortBy) {
         case "name":
           return a.playerName.localeCompare(b.playerName);
@@ -141,7 +145,7 @@ export default function JoinTournament() {
       pendingPlayers: pending,
       filteredTableData: tableData,
     };
-  }, [players, searchTerm, participationFilter, sortBy]);
+  }, [players, searchTerm, participationFilter, sortBy, loginInfo.userId]);
 
 
   const getStatusBadge = (status: boolean | null) => {
@@ -152,16 +156,23 @@ export default function JoinTournament() {
 
   const columns: ColumnsType<TableRow> = [
     {
-      title: "#",
-      key: "index",
-      width: screens.xs ? 40 : 50,
-      render: (_: any, __: any, index: number) => index + 1,
+      title: "ID",
+      key: "employeeId",
+      width: screens.xs ? 60 : 80,
+      render: (_, record) => (
+        <Text strong style={{ 
+          fontSize: screens.xs ? "11px" : "13px",
+          color: record.playerId === Number(loginInfo.userId) ? token.colorPrimary : token.colorText
+        }}>
+          {record.employeeId}
+        </Text>
+      ),
       align: "center",
     },
     {
       title: "Player",
       key: "player",
-      width: screens.xs ? 150 : 200,
+      width: screens.xs ? 200 : 280,
       render: (_, record) => (
         <Space align="center">
           <Avatar 
@@ -172,70 +183,67 @@ export default function JoinTournament() {
             }}
           />
           <div>
-            <div>
-              <Space>
-                <Text strong style={{ 
-                  fontSize: screens.xs ? "12px" : "14px",
-                  color: token.colorText
-                }}>
-                  {screens.xs && record.playerName.length > 10 
-                    ? record.playerName.substring(0, 10) + "..." 
-                    : record.playerName}
-                </Text>
-                {record.playerId === Number(loginInfo.userId) && <StarFilled style={{ color: '#faad14' }} />}
-              </Space>
-            </div>
-            <Text type="secondary" style={{ fontSize: screens.xs ? "10px" : "12px" }}>
-              ID: {record.employeeId}
-            </Text>
+            <Space>
+              <Text strong style={{ 
+                fontSize: screens.xs ? "13px" : "15px",
+                color: token.colorText
+              }}>
+                {record.playerName}
+              </Text>
+              {record.playerId === Number(loginInfo.userId) && <StarFilled style={{ color: '#faad14' }} />}
+            </Space>
           </div>
         </Space>
       ),
     },
     {
       title: "Status",
-      key: "status",
+      key: "participationStatus",
+      width: screens.xs ? 120 : 140,
+      render: (_, record) => getStatusBadge(record.participationStatus),
+      align: "left",
+    },
+    {
+      title: "Action",
+      key: "action",
       width: screens.xs ? 120 : 150,
       render: (_, record) => (
-        <Space direction="vertical" size={4}>
-          {getStatusBadge(record.participationStatus)}
-          <Select
-            value={
-              record.participationStatus === true
-                ? "true"
-                : record.participationStatus === false
-                ? "false"
-                : "Select"
-            }
-            onChange={(value) => {
-              handleUpdate(
-                record.playerId,
-                editedComments[record.playerId] || record.comments || "",
-                value === "true"
-              );
-            }}
-            disabled={
-              isUpdating ||
-              (!loginInfo.roles.includes("ADMIN") &&
-                record.playerId !== Number(loginInfo.userId))
-            }
-            style={{ width: "100%" }}
-            size={screens.xs ? "small" : "middle"}
-          >
-            <Option value="true">
-              <Space>
-                <CheckCircleTwoTone twoToneColor="#52c41a" />
-                Yes
-              </Space>
-            </Option>
-            <Option value="false">
-              <Space>
-                <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
-                No
-              </Space>
-            </Option>
-          </Select>
-        </Space>
+        <Select
+          value={
+            record.participationStatus === true
+              ? "true"
+              : record.participationStatus === false
+              ? "false"
+              : "Select"
+          }
+          onChange={(value) => {
+            handleUpdate(
+              record.playerId,
+              editedComments[record.playerId] || record.comments || "",
+              value === "true"
+            );
+          }}
+          disabled={
+            isUpdating ||
+            (!loginInfo.roles.includes("ADMIN") &&
+              record.playerId !== Number(loginInfo.userId))
+          }
+          style={{ width: "100%" }}
+          size={screens.xs ? "small" : "middle"}
+        >
+          <Option value="true">
+            <Space>
+              <CheckCircleTwoTone twoToneColor="#52c41a" />
+              Yes
+            </Space>
+          </Option>
+          <Option value="false">
+            <Space>
+              <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+              No
+            </Space>
+          </Option>
+        </Select>
       ),
     },
     {
@@ -265,7 +273,15 @@ export default function JoinTournament() {
   return (
     <div className="join-tournament-container">
       {isLoading ? (
-        <Skeleton active paragraph={{ rows: 10 }} />
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <Card style={{ borderRadius: 12 }}>
+            <Skeleton active paragraph={{ rows: 4 }} />
+          </Card>
+          <Card style={{ borderRadius: 12 }}>
+            <Skeleton.Input style={{ width: 200, marginBottom: 16 }} active />
+            <Skeleton active paragraph={{ rows: 8 }} />
+          </Card>
+        </Space>
       ) : (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
           {/* Combined Tournament Header with Stats and Player Status */}
