@@ -143,11 +143,6 @@ export default function JoinTournament() {
     };
   }, [players, searchTerm, participationFilter, sortBy]);
 
-  const getStatusIcon = (status: boolean | null) => {
-    if (status === true) return <CheckCircleTwoTone twoToneColor="#52c41a" />;
-    if (status === false) return <CloseCircleOutlined style={{ color: "#ff4d4f" }} />;
-    return <ClockCircleOutlined style={{ color: "#faad14" }} />;
-  };
 
   const getStatusBadge = (status: boolean | null) => {
     if (status === true) return <Badge status="success" text="Participating" />;
@@ -273,7 +268,7 @@ export default function JoinTournament() {
         <Skeleton active paragraph={{ rows: 10 }} />
       ) : (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
-          {/* Tournament Header with Stats */}
+          {/* Combined Tournament Header with Stats and Player Status */}
           <Card 
             style={{ 
               borderRadius: 12, 
@@ -281,9 +276,10 @@ export default function JoinTournament() {
               borderColor: token.colorBorder
             }}
           >
-            <Row gutter={[16, 16]} align="middle">
-              <Col xs={24} lg={12}>
-                <Space direction="vertical" size={4}>
+            {/* Tournament Header Section */}
+            <Row gutter={[16, 12]} align="middle" style={{ marginBottom: 12 }}>
+              <Col xs={24} lg={16}>
+                <Space direction="vertical" size={2}>
                   <Title level={2} style={{ 
                     margin: 0, 
                     fontSize: screens.xs ? "18px" : "24px",
@@ -298,187 +294,187 @@ export default function JoinTournament() {
                   </Text>
                 </Space>
               </Col>
-              <Col xs={24} lg={12}>
-                <Row gutter={[8, 8]}>
+              <Col xs={24} lg={8}>
+                <Row gutter={[4, 4]}>
                   <Col xs={12} sm={6}>
                     <Card size="small" style={{ 
                       textAlign: 'center',
-                      borderColor: token.colorBorder
+                      borderColor: token.colorBorder,
+                      padding: '4px'
                     }}>
-                      <Space direction="vertical" size={2}>
-                        <TeamOutlined style={{ fontSize: 16, color: '#1890ff' }} />
+                      <Space direction="vertical" size={1}>
+                        <TeamOutlined style={{ fontSize: 12, color: '#1890ff' }} />
                         <Text strong style={{ 
-                          fontSize: 16,
+                          fontSize: 14,
                           color: token.colorText
                         }}>{players.length}</Text>
-                        <Text type="secondary" style={{ fontSize: 10 }}>Total</Text>
+                        <Text type="secondary" style={{ fontSize: 9 }}>Total</Text>
                       </Space>
                     </Card>
                   </Col>
                   <Col xs={12} sm={6}>
                     <Card size="small" style={{ 
                       textAlign: 'center',
-                      borderColor: token.colorBorder
+                      borderColor: token.colorBorder,
+                      padding: '4px'
                     }}>
-                      <Space direction="vertical" size={2}>
-                        <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: 16 }} />
-                        <Text strong style={{ fontSize: 16, color: '#52c41a' }}>
+                      <Space direction="vertical" size={1}>
+                        <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: 12 }} />
+                        <Text strong style={{ fontSize: 14, color: '#52c41a' }}>
                           {participatingPlayers.length}
                         </Text>
-                        <Text type="secondary" style={{ fontSize: 10 }}>Participating</Text>
+                        <Text type="secondary" style={{ fontSize: 9 }}>Participating</Text>
                       </Space>
                     </Card>
                   </Col>
                   <Col xs={12} sm={6}>
                     <Card size="small" style={{ 
                       textAlign: 'center',
-                      borderColor: token.colorBorder
+                      borderColor: token.colorBorder,
+                      padding: '4px'
                     }}>
-                      <Space direction="vertical" size={2}>
-                        <CloseCircleOutlined style={{ fontSize: 16, color: '#ff4d4f' }} />
-                        <Text strong style={{ fontSize: 16, color: '#ff4d4f' }}>
+                      <Space direction="vertical" size={1}>
+                        <CloseCircleOutlined style={{ fontSize: 12, color: '#ff4d4f' }} />
+                        <Text strong style={{ fontSize: 14, color: '#ff4d4f' }}>
                           {notParticipatingPlayers.length}
                         </Text>
-                        <Text type="secondary" style={{ fontSize: 10 }}>Not Participating</Text>
+                        <Text type="secondary" style={{ fontSize: 9 }}>Not Participating</Text>
                       </Space>
                     </Card>
                   </Col>
                   <Col xs={12} sm={6}>
                     <Card size="small" style={{ 
                       textAlign: 'center',
-                      borderColor: token.colorBorder
+                      borderColor: token.colorBorder,
+                      padding: '4px'
                     }}>
-                      <Space direction="vertical" size={2}>
-                        <ClockCircleOutlined style={{ fontSize: 16, color: '#faad14' }} />
-                        <Text strong style={{ fontSize: 16, color: '#faad14' }}>
+                      <Space direction="vertical" size={1}>
+                        <ClockCircleOutlined style={{ fontSize: 12, color: '#faad14' }} />
+                        <Text strong style={{ fontSize: 14, color: '#faad14' }}>
                           {pendingPlayers.length}
                         </Text>
-                        <Text type="secondary" style={{ fontSize: 10 }}>Pending</Text>
+                        <Text type="secondary" style={{ fontSize: 9 }}>Pending</Text>
                       </Space>
                     </Card>
                   </Col>
                 </Row>
               </Col>
             </Row>
-          </Card>
 
-          {/* Logged-in Player Section */}
-          {loggedInPlayer && (
-            <Card style={{ 
-              borderRadius: 12, 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              border: `2px solid ${token.colorPrimary}`
-            }}>
-              <Title level={4} style={{ 
-                marginBottom: 16, 
-                color: token.colorPrimary 
-              }}>
-                <UserOutlined /> Your Participation Status
-              </Title>
-              <Row gutter={[16, 12]} align="middle">
-                <Col xs={24} sm={8}>
-                  <Space align="center">
-                    <Avatar 
-                      size={40} 
-                      icon={<UserOutlined />}
-                      style={{ 
-                        backgroundColor: token.colorPrimary,
-                        border: `2px solid ${token.colorPrimary}`
-                      }}
-                    />
-                    <div>
-                      <Space>
+            {/* Logged-in Player Section */}
+            {loggedInPlayer && (
+              <>
+                <Divider style={{ margin: '8px 0' }} />
+                <div>
+                  <Title level={4} style={{ 
+                    marginBottom: 8, 
+                    color: token.colorPrimary 
+                  }}>
+                    <UserOutlined /> Your Participation Status
+                  </Title>
+                  <Row gutter={[16, 8]} align="middle">
+                    <Col xs={24} sm={6}>
+                      <Space align="center">
+                        <Avatar 
+                          size={32} 
+                          icon={<UserOutlined />}
+                          style={{ 
+                            backgroundColor: token.colorPrimary,
+                            border: `2px solid ${token.colorPrimary}`
+                          }}
+                        />
+                        <div>
+                          <Space>
+                            <Text strong style={{ 
+                              fontSize: "14px",
+                              color: token.colorText
+                            }}>
+                              {loggedInPlayer.playerName}
+                            </Text>
+                            <StarFilled style={{ color: '#faad14' }} />
+                          </Space>
+                          <div>
+                            <Text type="secondary" style={{ fontSize: "12px" }}>
+                              ID: {loggedInPlayer.employeeId}
+                            </Text>
+                          </div>
+                        </div>
+                      </Space>
+                    </Col>
+                    <Col xs={24} sm={6}>
+                      <div>
                         <Text strong style={{ 
-                          fontSize: "14px",
+                          fontSize: "14px", 
+                          display: "block", 
+                          marginBottom: 4,
                           color: token.colorText
                         }}>
-                          {loggedInPlayer.playerName}
+                          Participation Status
                         </Text>
-                        <StarFilled style={{ color: '#faad14' }} />
-                      </Space>
+                        <Select
+                          value={
+                            loggedInPlayer.participationStatus === true
+                              ? "true"
+                              : loggedInPlayer.participationStatus === false
+                              ? "false"
+                              : "Select"
+                          }
+                          onChange={(value) => {
+                            handleUpdate(
+                              loggedInPlayer.playerId,
+                              editedComments[loggedInPlayer.playerId] || loggedInPlayer.comments || "",
+                              value === "true"
+                            );
+                          }}
+                          disabled={isUpdating}
+                          style={{ width: "100%" }}
+                          size="large"
+                        >
+                          <Option value="true">
+                            <Space>
+                              <CheckCircleTwoTone twoToneColor="#52c41a" />
+                              Yes
+                            </Space>
+                          </Option>
+                          <Option value="false">
+                            <Space>
+                              <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
+                              No
+                            </Space>
+                          </Option>
+                        </Select>
+                      </div>
+                    </Col>
+                    <Col xs={24} sm={12}>
                       <div>
-                        <Text type="secondary" style={{ fontSize: "12px" }}>
-                          ID: {loggedInPlayer.employeeId}
+                        <Text strong style={{ 
+                          fontSize: "14px", 
+                          display: "block", 
+                          marginBottom: 4,
+                          color: token.colorText
+                        }}>
+                          <EditOutlined /> Comments
                         </Text>
+                        <DebouncedInput
+                          isDisabled={false}
+                          placeholder="Add your comments here..."
+                          debounceDuration={1000}
+                          onChange={(value) => {
+                            setEditedComments({
+                              ...editedComments,
+                              [loggedInPlayer.playerId]: value,
+                            });
+                            handleUpdate(loggedInPlayer.playerId, value, loggedInPlayer.participationStatus);
+                          }}
+                          value={editedComments[loggedInPlayer.playerId] || loggedInPlayer.comments || ""}
+                        />
                       </div>
-                      <div style={{ marginTop: 4 }}>
-                        {getStatusBadge(loggedInPlayer.participationStatus)}
-                      </div>
-                    </div>
-                  </Space>
-                </Col>
-                <Col xs={24} sm={8}>
-                  <div>
-                    <Text strong style={{ 
-                      fontSize: "12px", 
-                      display: "block", 
-                      marginBottom: 4,
-                      color: token.colorText
-                    }}>
-                      Participation Status
-                    </Text>
-                    <Select
-                      value={
-                        loggedInPlayer.participationStatus === true
-                          ? "true"
-                          : loggedInPlayer.participationStatus === false
-                          ? "false"
-                          : "Select"
-                      }
-                      onChange={(value) => {
-                        handleUpdate(
-                          loggedInPlayer.playerId,
-                          editedComments[loggedInPlayer.playerId] || loggedInPlayer.comments || "",
-                          value === "true"
-                        );
-                      }}
-                      disabled={isUpdating}
-                      style={{ width: "100%" }}
-                      size="middle"
-                    >
-                      <Option value="true">
-                        <Space>
-                          <CheckCircleTwoTone twoToneColor="#52c41a" />
-                          Yes
-                        </Space>
-                      </Option>
-                      <Option value="false">
-                        <Space>
-                          <CloseCircleOutlined style={{ color: "#ff4d4f" }} />
-                          No
-                        </Space>
-                      </Option>
-                    </Select>
-                  </div>
-                </Col>
-                <Col xs={24} sm={8}>
-                  <div>
-                    <Text strong style={{ 
-                      fontSize: "12px", 
-                      display: "block", 
-                      marginBottom: 4,
-                      color: token.colorText
-                    }}>
-                      <EditOutlined /> Comments
-                    </Text>
-                    <DebouncedInput
-                      isDisabled={false}
-                      placeholder="Add your comments here..."
-                      debounceDuration={1000}
-                      onChange={(value) => {
-                        setEditedComments({
-                          ...editedComments,
-                          [loggedInPlayer.playerId]: value,
-                        });
-                        handleUpdate(loggedInPlayer.playerId, value, loggedInPlayer.participationStatus);
-                      }}
-                      value={editedComments[loggedInPlayer.playerId] || loggedInPlayer.comments || ""}
-                    />
-                  </div>
-                </Col>
-              </Row>
-            </Card>
-          )}
+                    </Col>
+                  </Row>
+                </div>
+              </>
+            )}
+          </Card>
 
           {/* Tournament Participants Table */}
           <Card style={{ 
@@ -486,8 +482,8 @@ export default function JoinTournament() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             borderColor: token.colorBorder
           }}>
-            <Row gutter={[16, 16]} align="middle" style={{ marginBottom: 16 }}>
-              <Col xs={24} sm={12}>
+            <Row gutter={[16, 12]} align="middle" style={{ marginBottom: 16 }}>
+              <Col xs={24} sm={8}>
                 <Title level={4} style={{ 
                   margin: 0,
                   color: token.colorText
@@ -495,43 +491,48 @@ export default function JoinTournament() {
                   <TeamOutlined /> Tournament Participants
                 </Title>
               </Col>
-              <Col xs={24} sm={12}>
-                <Space direction="vertical" style={{ width: "100%" }}>
-                  <Search
-                    placeholder="Search by name or employee ID..."
-                    prefix={<SearchOutlined />}
-                    onSearch={(value) => setSearchTerm(value)}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ width: "100%" }}
-                    size={screens.xs ? "small" : "middle"}
-                    allowClear
-                  />
-                  <Space wrap style={{ width: "100%" }}>
+              <Col xs={24} sm={16}>
+                <Row gutter={[8, 8]} align="middle">
+                  <Col xs={12} sm={6}>
                     <Select
                       value={sortBy}
                       onChange={setSortBy}
-                      style={{ width: screens.xs ? "100%" : 140 }}
-                      size={screens.xs ? "small" : "middle"}
+                      style={{ width: "100%" }}
+                      size="middle"
                       prefix={<SortAscendingOutlined />}
                     >
                       <Option value="name">Sort by Name</Option>
                       <Option value="employeeId">Sort by ID</Option>
                       <Option value="status">Sort by Status</Option>
                     </Select>
+                  </Col>
+                  <Col xs={12} sm={8}>
                     <Radio.Group
                       value={participationFilter}
                       onChange={(e) => setParticipationFilter(e.target.value)}
                       optionType="button"
                       buttonStyle="solid"
-                      size={screens.xs ? "small" : "middle"}
+                      size="small"
+                      style={{ width: "100%" }}
                     >
                       <Radio.Button value="all">All</Radio.Button>
                       <Radio.Button value="participating">✅</Radio.Button>
                       <Radio.Button value="pending">⏳</Radio.Button>
                       <Radio.Button value="not-participating">❌</Radio.Button>
                     </Radio.Group>
-                  </Space>
-                </Space>
+                  </Col>
+                  <Col xs={24} sm={10}>
+                    <Search
+                      placeholder="Search by name or employee ID..."
+                      prefix={<SearchOutlined />}
+                      onSearch={(value) => setSearchTerm(value)}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{ width: "100%" }}
+                      size="middle"
+                      allowClear
+                    />
+                  </Col>
+                </Row>
               </Col>
             </Row>
 

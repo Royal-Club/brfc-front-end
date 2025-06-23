@@ -46,11 +46,6 @@
 
 }
 
-/* table  */
-.ant-table-wrapper {
-    min-height: 600px;
-}
-
 .SingleTournament-container .bottom-card {
     display: flex;
 }
