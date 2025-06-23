@@ -98,7 +98,8 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
     dataIndex: `month_${monthNumber}`,
     key: `month_${monthNumber}`,
     align: "center",
-    width: 70,
+    width: window.innerWidth <= 576 ? 55 : 70,
+    className: "month-column",
     sorter: (a, b) => (a[`month_${monthNumber}`] || 0) - (b[`month_${monthNumber}`] || 0),
     sortOrder: sortField === `month_${monthNumber}` ? sortOrder : null,
     render: (amount: number, record: TableRow) => {
@@ -120,9 +121,9 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
 
       return {
         style: {
-          minWidth: 40,
-          paddingLeft: 8,
-          paddingRight: 8,
+          minWidth: window.innerWidth <= 576 ? 30 : 40,
+          paddingLeft: window.innerWidth <= 576 ? 2 : 8,
+          paddingRight: window.innerWidth <= 576 ? 2 : 8,
           whiteSpace: "nowrap",
           backgroundColor: showWarning ? token.colorWarningBg : undefined,
         },
@@ -136,23 +137,42 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       dataIndex: "index",
       key: "index",
       fixed: "left",
-      width: 50,
+      width: window.innerWidth <= 576 ? 30 : 50,
       sorter: (a, b) => a.index - b.index,
       sortOrder: sortField === "index" ? sortOrder : null,
       defaultSortOrder: "ascend",
       render: (_: any, __: any, index: number) => index + 1,
-      onCell: () => ({ style: { minWidth: 30, paddingLeft: 8, paddingRight: 8 } }),
+      onCell: () => ({ 
+        style: { 
+          minWidth: window.innerWidth <= 576 ? 25 : 30, 
+          paddingLeft: window.innerWidth <= 576 ? 2 : 8, 
+          paddingRight: window.innerWidth <= 576 ? 2 : 8 
+        } 
+      }),
     },
     {
       title: "Name",
       dataIndex: "playerName",
       key: "playerName",
       fixed: "left",
-      width: 200,
+      width: window.innerWidth <= 576 ? 100 : (window.innerWidth <= 768 ? 120 : 200),
       sorter: (a, b) => a.playerName.localeCompare(b.playerName),
       sortOrder: sortField === "playerName" ? sortOrder : null,
-      render: (text: string) => <b style={{ color: token.colorText }}>{text}</b>,
-      onCell: () => ({ style: { minWidth: 150, paddingLeft: 8, paddingRight: 8 } }),
+      render: (text: string) => (
+        <b style={{ 
+          color: token.colorText,
+          fontSize: window.innerWidth <= 576 ? '10px' : undefined
+        }}>
+          {window.innerWidth <= 576 ? text.substring(0, 12) + (text.length > 12 ? '...' : '') : text}
+        </b>
+      ),
+      onCell: () => ({ 
+        style: { 
+          minWidth: window.innerWidth <= 576 ? 80 : 150, 
+          paddingLeft: window.innerWidth <= 576 ? 2 : 8, 
+          paddingRight: window.innerWidth <= 576 ? 2 : 8 
+        } 
+      }),
     },
     ...monthNames.map((month, idx) =>
       createMonthColumn(month, idx + 1)
@@ -192,54 +212,65 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
   };
 
   return (
-    <Space direction="vertical" style={{ width: "100%" }} className={className}>
-      <Space wrap>
-        <Select
-          size="small"
-          style={{ width: 150 }}
-          placeholder="Select Year"
-          value={selectedYear || undefined}
-          onChange={handleYearChange}
-          loading={isLoading}
-          disabled={isLoading}
-          allowClear={false}
+    <div className={`player-metrics-table-container ${className || ''}`}>
+      <div className="player-metrics-controls">
+        <Space 
+          wrap 
+          style={{ 
+            width: "100%", 
+            justifyContent: window.innerWidth <= 768 ? "center" : "flex-start" 
+          }}
         >
-          {years.map((year: number) => (
-            <Option key={year} value={year}>
-              {year}
-            </Option>
-          ))}
-        </Select>
-        <Radio.Group
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          disabled={isLoading}
-          optionType="button"
-          buttonStyle="solid"
-          size="small"
-        >
-          <Radio.Button value="all">All Players</Radio.Button>
-          <Radio.Button value="active">Active</Radio.Button>
-          <Radio.Button value="inactive">Inactive</Radio.Button>
-        </Radio.Group>
-        <Button size="small" onClick={resetSorting} disabled={!sortField}>
-          Reset Sorting
-        </Button>
-      </Space>
+          <Select
+            size="small"
+            style={{ width: window.innerWidth <= 768 ? "100%" : 150 }}
+            placeholder="Select Year"
+            value={selectedYear || undefined}
+            onChange={handleYearChange}
+            loading={isLoading}
+            disabled={isLoading}
+            allowClear={false}
+          >
+            {years.map((year: number) => (
+              <Option key={year} value={year}>
+                {year}
+              </Option>
+            ))}
+          </Select>
+          <Radio.Group
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            disabled={isLoading}
+            optionType="button"
+            buttonStyle="solid"
+            size="small"
+            style={{ width: window.innerWidth <= 768 ? "100%" : "auto" }}
+          >
+            <Radio.Button value="all">All</Radio.Button>
+            <Radio.Button value="active">Active</Radio.Button>
+            <Radio.Button value="inactive">Inactive</Radio.Button>
+          </Radio.Group>
+          <Button size="small" onClick={resetSorting} disabled={!sortField}>
+            Reset Sort
+          </Button>
+        </Space>
+      </div>
 
-      <Table
-        size="small"
-        bordered
-        columns={columns}
-        dataSource={dataSource}
-        pagination={false}
-        scroll={{ x: "max-content" }}
-        loading={isLoading}
-        style={{ borderColor: token.colorBorder }}
-        rowKey="key"
-        onChange={handleTableChange}
-      />
-    </Space>
+      <div className="player-metrics-table">
+        <Table
+          size="small"
+          bordered
+          columns={columns}
+          dataSource={dataSource}
+          pagination={false}
+          scroll={{ x: "max-content" }}
+          loading={isLoading}
+          style={{ borderColor: token.colorBorder }}
+          rowKey="key"
+          onChange={handleTableChange}
+        />
+      </div>
+    </div>
   );
 };
 
