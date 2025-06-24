@@ -195,7 +195,7 @@ const LoginPage: React.FC = () => {
                             className="club-logo"
                             src={require("../../assets/logo.png")}
                             alt="royal club football logo"
-                            style={{ width: "80px", height: "80px" }}
+                            style={{  objectFit: "cover"}}
                         />
                         <h1 className="mobile-club-title">
                             Royal Football Club
