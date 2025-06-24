@@ -30,33 +30,10 @@ const Dashboard: React.FC = () => {
   } = theme.useToken();
 
   const [selectedYear, setSelectedYear] = useState<number>();
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
 
   // Queries
   const { data: accountSummaryData, isLoading: isSummaryLoading } =
     useGetAccountSummaryQuery();
-
-  React.useEffect(() => {
-    const checkScreenSize = () => {
-      const width = window.innerWidth;
-      setIsMobile(width <= 768);
-      setIsTablet(width <= 1024 && width > 768);
-    };
-
-    checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
-
-  // Muted gradient colors
-  const getMutedColors = () => ({
-    success: 'linear-gradient(135deg, #95d475, #73c653)',
-    error: 'linear-gradient(135deg, #ff7875, #ff4d4f)', 
-    primary: 'linear-gradient(135deg, #69c0ff, #1890ff)'
-  });
-
-  const mutedColors = getMutedColors();
 
   return (
     <div className={styles.dashboardContainer}>
@@ -72,7 +49,7 @@ const Dashboard: React.FC = () => {
         styles={{
           body: { 
             background: colorBgContainer,
-            padding: isMobile ? '12px' : '16px'
+            padding: '16px'
           }
         }}
       >
@@ -84,136 +61,70 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <Row gutter={[isMobile ? 8 : 12, isMobile ? 8 : 12]} className={styles.summaryRow}>
+          <Row gutter={[12, 12]}>
             <Col xs={8} sm={8} md={8} lg={8} xl={8}>
-              <div 
-                className={`${styles.analyticsCard} ${isMobile ? styles.mobile : isTablet ? styles.tablet : styles.desktop}`}
-                style={{
-                  background: mutedColors.success,
-                  padding: isMobile ? '8px' : isTablet ? '12px' : '16px',
-                  minHeight: isMobile ? '70px' : isTablet ? '85px' : '100px'
-                }}
-              >
-                <DollarOutlined 
-                  className={styles.cardIcon} 
-                  style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px' }}
-                />
+              <div className={`${styles.analyticsCard} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} style={{
+                background: `linear-gradient(135deg, ${colorSuccess}, #52c41a)`,
+              }}>
+                <DollarOutlined className={`${styles.cardIcon} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} />
                 <Statistic
-                  title={
-                    <span 
-                      className={styles.cardTitle}
-                      style={{ 
-                        fontSize: isMobile ? '9px' : isTablet ? '11px' : '12px'
-                      }}
-                    >
-                      {isMobile ? 'Collections' : 'Total Collections'}
-                    </span>
-                  }
+                  title={<span className={`${styles.cardTitle} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>
+                    {window.innerWidth <= 576 ? 'Collections' : 'Total Collections'}
+                  </span>}
                   value={accountSummaryData?.content?.totalCollection}
                   precision={2}
                   valueStyle={{ 
                     color: "white", 
-                    fontSize: isMobile ? '14px' : isTablet ? '17px' : '20px',
+                    fontSize: window.innerWidth <= 576 ? '14px' : '20px',
                     fontWeight: 'bold',
                     lineHeight: 1
                   }}
                   formatter={formatter}
-                  suffix={
-                    <span 
-                      className={styles.cardSuffix}
-                      style={{ fontSize: isMobile ? '10px' : isTablet ? '12px' : '14px' }}
-                    >
-                      ৳
-                    </span>
-                  }
+                  suffix={<span className={`${styles.cardSuffix} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>৳</span>}
                 />
               </div>
             </Col>
             <Col xs={8} sm={8} md={8} lg={8} xl={8}>
-              <div 
-                className={`${styles.analyticsCard} ${isMobile ? styles.mobile : isTablet ? styles.tablet : styles.desktop}`}
-                style={{
-                  background: mutedColors.error,
-                  padding: isMobile ? '8px' : isTablet ? '12px' : '16px',
-                  minHeight: isMobile ? '70px' : isTablet ? '85px' : '100px'
-                }}
-              >
-                <MinusCircleOutlined 
-                  className={styles.cardIcon}
-                  style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px' }}
-                />
+              <div className={`${styles.analyticsCard} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} style={{
+                background: `linear-gradient(135deg, ${colorError}, #ff4d4f)`,
+              }}>
+                <MinusCircleOutlined className={`${styles.cardIcon} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} />
                 <Statistic
-                  title={
-                    <span 
-                      className={styles.cardTitle}
-                      style={{ 
-                        fontSize: isMobile ? '9px' : isTablet ? '11px' : '12px'
-                      }}
-                    >
-                      {isMobile ? 'Expenses' : 'Total Expenses'}
-                    </span>
-                  }
+                  title={<span className={`${styles.cardTitle} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>
+                    {window.innerWidth <= 576 ? 'Expenses' : 'Total Expenses'}
+                  </span>}
                   value={accountSummaryData?.content?.totalExpense}
                   precision={2}
                   valueStyle={{ 
                     color: "white", 
-                    fontSize: isMobile ? '14px' : isTablet ? '17px' : '20px',
+                    fontSize: window.innerWidth <= 576 ? '14px' : '20px',
                     fontWeight: 'bold',
                     lineHeight: 1
                   }}
                   formatter={formatter}
-                  suffix={
-                    <span 
-                      className={styles.cardSuffix}
-                      style={{ fontSize: isMobile ? '10px' : isTablet ? '12px' : '14px' }}
-                    >
-                      ৳
-                    </span>
-                  }
+                  suffix={<span className={`${styles.cardSuffix} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>৳</span>}
                 />
               </div>
             </Col>
             <Col xs={8} sm={8} md={8} lg={8} xl={8}>
-              <div 
-                className={`${styles.analyticsCard} ${isMobile ? styles.mobile : isTablet ? styles.tablet : styles.desktop}`}
-                style={{
-                  background: mutedColors.primary,
-                  padding: isMobile ? '8px' : isTablet ? '12px' : '16px',
-                  minHeight: isMobile ? '70px' : isTablet ? '85px' : '100px'
-                }}
-              >
-                <WalletOutlined 
-                  className={styles.cardIcon}
-                  style={{ fontSize: isMobile ? '16px' : isTablet ? '18px' : '20px' }}
-                />
+              <div className={`${styles.analyticsCard} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} style={{
+                background: `linear-gradient(135deg, ${colorPrimary}, #1890ff)`,
+              }}>
+                <WalletOutlined className={`${styles.cardIcon} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} />
                 <Statistic
-                  title={
-                    <span 
-                      className={styles.cardTitle}
-                      style={{ 
-                        fontSize: isMobile ? '9px' : isTablet ? '11px' : '12px'
-                      }}
-                    >
-                      {isMobile ? 'Balance' : 'Account Balance'}
-                    </span>
-                  }
+                  title={<span className={`${styles.cardTitle} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>
+                    {window.innerWidth <= 576 ? 'Balance' : 'Account Balance'}
+                  </span>}
                   value={accountSummaryData?.content?.currentBalance}
                   precision={2}
                   valueStyle={{ 
                     color: "white", 
-                    fontSize: isMobile ? '14px' : isTablet ? '17px' : '20px',
+                    fontSize: window.innerWidth <= 576 ? '14px' : '20px',
                     fontWeight: 'bold',
                     lineHeight: 1
                   }}
                   formatter={formatter}
-                  suffix={
-                    <span 
-                      className={styles.cardSuffix}
-                      style={{ fontSize: isMobile ? '10px' : isTablet ? '12px' : '14px' }}
-                    >
-                      ৳
-                    </span>
-                  }
+                  suffix={<span className={`${styles.cardSuffix} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>৳</span>}
                 />
               </div>
             </Col>
@@ -224,14 +135,7 @@ const Dashboard: React.FC = () => {
       {/* Player Contributions Section */}
       <Card
         title={
-          <Title 
-            level={4} 
-            style={{ 
-              color: colorText, 
-              margin: 0, 
-              fontSize: isMobile ? '16px' : isTablet ? '17px' : '18px'
-            }}
-          >
+          <Title level={4} style={{ color: colorText, margin: 0, fontSize: '18px' }}>
             Player Collection Metrics
           </Title>
         }
@@ -244,10 +148,10 @@ const Dashboard: React.FC = () => {
         styles={{
           body: { 
             background: colorBgContainer,
-            padding: isMobile ? '8px' : '12px'
+            padding: '12px'
           },
           header: {
-            padding: isMobile ? '8px 12px' : '12px 16px'
+            padding: '12px 16px'
           }
         }}
       >

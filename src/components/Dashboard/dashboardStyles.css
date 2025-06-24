@@ -1,0 +1,538 @@
+.glassmorphic-container {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.dashboard-container {
+  padding: 12px;
+}
+
+/* Summary Card */
+.summary-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Controls Row */
+.controls-row {
+  margin-bottom: 24px;
+}
+
+.filter-container, .month-selector-container {
+  width: 100%;
+  display: flex;
+}
+
+/* Stats Row */
+.stats-row {
+  margin-bottom: 24px;
+}
+
+/* Stat Boxes (most styling is now inline) */
+.stat-title {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* Player Grid */
+.player-grid {
+  margin-bottom: 24px;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+/* Contributions title container for mobile filter button */
+.contributions-title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.mobile-filter-button {
+  padding: 4px 8px;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Mobile filter summary */
+.mobile-filters-summary {
+  margin-bottom: 16px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* View Mode Selector */
+.view-mode-selector {
+  width: 100%;
+  display: flex;
+}
+
+.view-mode-selector .ant-btn-group {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.view-mode-selector .ant-btn {
+  border-radius: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Player Collection Metrics Table Responsive Styles */
+.player-metrics-table-container {
+  width: 100%;
+}
+
+.player-metrics-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.player-metrics-table {
+  overflow-x: auto;
+}
+
+/* Name column tooltip styling */
+.player-metrics-table .ant-table-tbody > tr > td {
+  position: relative;
+}
+
+.player-metrics-table .ant-table-tbody > tr > td b[style*="cursor: help"] {
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+}
+
+[data-theme="dark"] .player-metrics-table .ant-table-tbody > tr > td b[style*="cursor: help"] {
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.3);
+}
+
+/* Tooltip improvements */
+.ant-tooltip {
+  max-width: 300px !important;
+}
+
+.ant-tooltip-inner {
+  word-wrap: break-word !important;
+  white-space: normal !important;
+  text-align: center !important;
+  font-weight: 500 !important;
+}
+
+/* Remove the shadow that causes gaps */
+.player-metrics-table .ant-table-cell-fix-left {
+  box-shadow: none !important;
+}
+
+/* Ensure proper border styling for fixed columns without shadow */
+.player-metrics-table .ant-table-cell-fix-left::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  content: '';
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 8px;
+  }
+  
+  .stat-title {
+    font-size: 12px;
+  }
+  
+  .stat-value {
+    font-size: 16px;
+  }
+  
+  .controls-row > div {
+    margin-bottom: 12px;
+  }
+
+  /* Make cards full width on mobile */
+  .summary-card, 
+  .contributions-card {
+    margin: 0 0 12px 0;
+    width: 100%;
+  }
+
+  /* Ensure card titles are visible on small screens */
+  .ant-card-head-title {
+    white-space: normal;
+  }
+
+  /* Better spacing for mobile */
+  .stat-box {
+    padding: 10px !important;
+  }
+
+  /* Make pagination simple and centered */
+  .pagination-container {
+    margin-top: 16px;
+  }
+
+  /* Fix any spacing issues with columns */
+  .ant-col {
+    padding: 8px !important;
+  }
+
+  /* Ensure proper spacing in card bodies */
+  .ant-card-body {
+    padding: 8px !important;
+  }
+  
+  /* Player metrics table mobile styles */
+  .player-metrics-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .player-metrics-controls .ant-space {
+    justify-content: center;
+  }
+  
+  .player-metrics-controls .ant-select {
+    width: 100% !important;
+  }
+  
+  .player-metrics-controls .ant-radio-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .player-metrics-controls .ant-radio-button-wrapper {
+    flex: 1;
+    text-align: center;
+  }
+  
+  /* Table responsive adjustments - no forced colors */
+  .ant-table-thead > tr > th {
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Make fixed columns more narrow on mobile */
+  .ant-table-fixed-left {
+    max-width: 120px;
+  }
+  
+  /* Ensure table scrolls horizontally on mobile */
+  .ant-table-container {
+    overflow-x: auto;
+  }
+  
+  .ant-table-content {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Ensure modals fit screen */
+  .ant-modal {
+    max-width: calc(100vw - 16px) !important;
+    margin: 8px auto !important;
+  }
+
+  .ant-modal-content {
+    padding: 12px !important;
+  }
+
+  .ant-modal-header {
+    padding: 12px !important;
+  }
+
+  .ant-modal-body {
+    padding: 12px !important;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  
+  /* Extra small screens - spacing only, no colors */
+  .player-metrics-controls .ant-btn {
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+  }
+  
+  .ant-table-thead > tr > th {
+    padding: 4px 2px !important;
+    font-size: 12px !important;
+    min-width: 35px;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: 4px 2px !important;
+    font-size: 12px !important;
+    min-width: 35px;
+  }
+  
+  /* Make name column narrower on very small screens */
+  .ant-table-fixed-left {
+    max-width: 100px;
+  }
+  
+  /* Compress month columns on very small screens */
+  .month-column {
+    min-width: 30px !important;
+    width: 30px !important;
+  }
+}
+
+/* Analytics cards - always one row */
+.analytics-cards .ant-col {
+  display: flex !important;
+  align-items: stretch !important;
+}
+
+.analytics-cards .ant-col > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Remove gradient styles that don't adapt to dark mode */
+.glassmorphic-container,
+.dashboard-header h1,
+.stat-card,
+.month-cell-high,
+.month-cell-medium,
+.month-cell-low,
+.filter-button-active,
+.filter-button-inactive:hover {
+  background: inherit;  
+}
+
+/* Other existing styles preserved */
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+  background: linear-gradient(to right, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.dashboard-header p {
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.stat-card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 10px;
+  color: white;
+  transition: all 0.3s ease;
+  padding: 20px;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.player-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.player-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-top: 4px solid #764ba2;
+}
+
+.player-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.player-header h3 {
+  margin: 0;
+  font-weight: 600;
+  color: #303030;
+}
+
+.player-id {
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.year-section {
+  margin: 16px;
+}
+
+.year-header {
+  background: linear-gradient(to right, #667eea, #764ba2);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 380px) {
+  .month-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.month-cell {
+  border-radius: 6px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.month-cell:hover {
+  transform: scale(1.05);
+}
+
+.month-cell .month {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.month-cell .amount {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.month-cell-paid {
+  color: white;
+}
+
+.month-cell-unpaid {
+  color: #666;
+  border: 1px dashed #ccc;
+  background: #f5f5f5;
+}
+
+.month-cell-high {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.month-cell-medium {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.month-cell-low {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  color: white;
+}
+
+.player-card-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-top: 1px solid #f0f0f0;
+}
+
+.filter-buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.filter-button {
+  border-radius: 20px;
+  padding: 6px 16px;
+  height: auto;
+  font-weight: 500;
+}
+
+.filter-button-active {
+  background: linear-gradient(to right, #667eea, #764ba2);
+  color: white;
+  border: none;
+}
+
+.filter-button-inactive {
+  background: white;
+  color: #303030;
+  border: 1px solid #e5e7eb;
+}
+
+.filter-button-inactive:hover {
+  background: linear-gradient(to right, #667eea, #764ba2);
+  color: white;
+  border: none;
+}
+
+.current-month-status {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f0f4f8;
+  margin-bottom: 12px;
+}
