@@ -1,0 +1,103 @@
+.dashboardContainer {
+  padding: 12px;
+}
+
+.summaryCard {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.analyticsCard {
+  position: relative;
+  border-radius: 8px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.analyticsCard .cardIcon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0.7;
+}
+
+.analyticsCard.mobile {
+  padding: 8px;
+  min-height: 70px;
+}
+
+.analyticsCard.desktop {
+  padding: 16px;
+  min-height: 100px;
+}
+
+.analyticsCard.mobile .cardIcon {
+  font-size: 16px;
+}
+
+.analyticsCard.desktop .cardIcon {
+  font-size: 20px;
+}
+
+.cardTitle {
+  color: rgba(255, 255, 255, 0.9);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.cardTitle.mobile {
+  font-size: 9px;
+}
+
+.cardTitle.desktop {
+  font-size: 12px;
+}
+
+.cardValue {
+  color: white;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.cardValue.mobile {
+  font-size: 14px;
+}
+
+.cardValue.desktop {
+  font-size: 20px;
+}
+
+.cardSuffix.mobile {
+  font-size: 10px;
+}
+
+.cardSuffix.desktop {
+  font-size: 14px;
+}
+
+.loadingContainer {
+  text-align: center;
+  padding: 32px;
+}
+
+.loadingText {
+  margin-top: 12px;
+}
+
+.contributionsCard {
+  /* Specific styles for contributions card if needed */
+}
+
+@media (max-width: 768px) {
+  .dashboardContainer {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Mobile specific styles */
+}

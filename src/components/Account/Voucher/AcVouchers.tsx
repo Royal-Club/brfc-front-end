@@ -30,6 +30,7 @@ const { Text } = Typography;
 
 function AcVouchers() {
     const loginInfo = useSelector(selectLoginInfo);
+    const [isMobile, setIsMobile] = useState(false);
 
     var [tableLoadingSpin, setTableSpinLoading] = useState(false);
     var [playerApiLoading, setPlayerApiLoading] = useState(false);
@@ -384,24 +385,37 @@ function AcVouchers() {
             });
     };
 
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     return (
-        <>
+        <div style={{ padding: isMobile ? '16px' : '24px', minHeight: '100vh' }}>
             <Row>
-                <Col md={24}>
+                <Col span={24}>
                     <div>
-                        <Title level={3}>Voucher</Title>
-                        {/* {loginInfo.roles.includes("ADMIN") && <Button type="primary" onClick={showModal}>
-              Create
-            </Button>} */}
+                        <Title level={3} style={{ fontSize: isMobile ? '18px' : '24px' }}>Voucher</Title>
                         <Table
                             loading={tableLoadingSpin}
-                            size="small"
+                            size={isMobile ? "small" : "middle"}
                             pagination={{
                                 showTotal: (total) => `Total ${total} records`,
+                                showSizeChanger: !isMobile,
+                                showQuickJumper: !isMobile,
+                                size: isMobile ? "small" : "default",
                             }}
                             dataSource={acVouchers}
                             columns={acVoucherColumns}
-                            scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
+                            scroll={{ 
+                                x: isMobile ? 600 : "max-content",
+                                y: isMobile ? "60vh" : undefined
+                            }}
                         />
 
                         <Modal
@@ -531,7 +545,7 @@ function AcVouchers() {
                     </div>
                 </Col>
             </Row>
-        </>
+        </div>
     );
 }
 

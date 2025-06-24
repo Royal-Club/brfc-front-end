@@ -56,3 +56,223 @@
 .SingleTournament-container .goalkeepers-container {
     width: 300px;
 }
+
+/* Fix for uneven analytics boxes - ensure consistent heights */
+.tournament-stats-row .ant-col {
+    display: flex;
+}
+
+.tournament-stats-row .ant-card {
+    width: 100%;
+    height: 100%;
+    min-height: 55px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all 0.2s ease-in-out;
+}
+
+.tournament-stats-row .ant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tournament-stats-row .ant-card-body {
+    padding: 8px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    min-height: 39px;
+}
+
+.tournament-stats-row .ant-space-vertical {
+    width: 100%;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px !important;
+}
+
+/* Better text handling for medium screens */
+@media (min-width: 992px) and (max-width: 1625px) {
+    .tournament-stats-row .ant-card {
+        min-height: 60px;
+    }
+    
+    .tournament-stats-row .ant-card-body {
+        min-height: 44px;
+        padding: 6px !important;
+    }
+}
+
+/* Ensure proper alignment for small text */
+.tournament-stats-row .ant-typography[style*="fontSize: 9"] {
+    line-height: 1.2;
+    font-size: 8px !important;
+    font-weight: 500;
+}
+
+/* Additional responsive handling */
+@media (min-width: 576px) and (max-width: 991px) {
+    .tournament-stats-row .ant-card {
+        min-height: 50px;
+    }
+}
+
+/* Mobile Tournament Cards */
+.tournament-mobile-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.tournament-mobile-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.tournament-mobile-card .ant-card-body {
+    padding: 16px !important;
+}
+
+.tournament-mobile-card .ant-typography {
+    margin-bottom: 0;
+}
+
+.tournament-mobile-card .ant-space-item {
+    display: flex;
+    align-items: center;
+}
+
+/* Hide scrollbar for mobile tournament list */
+.mobile-tournament-scroll {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.mobile-tournament-scroll::-webkit-scrollbar {
+    display: none; /* WebKit */
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+    .tournament-mobile-card {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        margin-bottom: 12px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .tournament-mobile-card:first-child {
+        margin-top: 0;
+    }
+    
+    .tournament-mobile-card:last-child {
+        margin-bottom: 8px !important;
+    }
+
+    /* Ensure dropdown doesn't get triggered by card click */
+    .tournament-mobile-card .ant-dropdown-trigger {
+        position: relative;
+        z-index: 10;
+    }
+    
+    /* Fix mobile container padding */
+    .tournaments-mobile-container {
+        padding: 8px !important;
+        margin: 0 !important;
+    }
+    
+    /* Fix mobile card content overflow */
+    .tournament-mobile-card .ant-card-body {
+        padding: 12px !important;
+        overflow: hidden;
+    }
+    
+    /* Ensure mobile rows are not cut off */
+    .tournament-mobile-card .ant-row {
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    
+    .tournament-mobile-card .ant-col {
+        padding: 0 4px !important;
+    }
+    
+    /* Fix mobile text wrapping */
+    .tournament-mobile-card .ant-typography {
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    
+    /* Mobile scroll container */
+    .mobile-tournament-container {
+        height: calc(100vh - 120px) !important;
+        overflow-y: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    /* Fix mobile title overflow */
+    .tournament-mobile-card .ant-typography h5 {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+}
+
+/* Better spacing for mobile cards */
+@media (max-width: 480px) {
+    .tournaments-mobile-container {
+        padding: 4px !important;
+    }
+    
+    .tournament-mobile-card {
+        margin-bottom: 8px !important;
+        border-radius: 6px !important;
+    }
+    
+    .tournament-mobile-card .ant-card-body {
+        padding: 8px !important;
+    }
+    
+    .tournament-mobile-card .ant-typography h5 {
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+        margin-bottom: 4px !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+    }
+    
+    .tournament-mobile-card .ant-typography {
+        font-size: 10px !important;
+    }
+    
+    .tournament-mobile-card .ant-tag {
+        font-size: 8px !important;
+        padding: 0 3px;
+        margin: 0 !important;
+    }
+    
+    .mobile-tournament-container {
+        height: calc(100vh - 100px) !important;
+    }
+}
+
+/* Ensure dropdown doesn't overflow on mobile */
+@media (max-width: 768px) {
+    .ant-dropdown {
+        z-index: 1050;
+    }
+    
+    .tournament-mobile-card .ant-dropdown-trigger {
+        padding: 4px;
+        background: transparent;
+        border: none;
+    }
+}

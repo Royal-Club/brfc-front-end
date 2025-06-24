@@ -1,0 +1,157 @@
+.compact-table .ant-table-cell {
+  padding: 8px 12px !important;
+}
+
+.compact-table .ant-table-thead > tr > th {
+  padding: 8px 12px !important;
+  font-weight: 600;
+}
+
+.ant-tabs-tab {
+  padding: 6px 12px !important;
+}
+
+.player-list-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+  /* Remove margin to match tournament page */
+}
+
+.player-header-row {
+  margin-bottom: 16px;
+}
+
+.player-search-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.player-search-input {
+  width: 250px;
+}
+
+.mobile-action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .player-list-card {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+  
+  .player-list-card .ant-card-body {
+    padding: 12px !important;
+  }
+  
+  .player-header-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+  }
+  
+  .player-search-actions {
+    width: 100% !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+  }
+  
+  .player-search-input {
+    width: calc(100% - 120px) !important;
+    min-width: 150px !important;
+  }
+  
+  .ant-tabs-tab {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  .ant-tabs-tab-btn {
+    font-size: 12px !important;
+  }
+  
+  .ant-badge-count {
+    font-size: 9px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    line-height: 16px !important;
+  }
+  
+  .compact-table .ant-table-cell {
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  .compact-table .ant-table-thead > tr > th {
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  .player-title {
+    font-size: 18px !important;
+  }
+  
+  .mobile-action-buttons {
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+  
+  .mobile-action-buttons .ant-btn {
+    font-size: 11px !important;
+    padding: 2px 8px !important;
+    height: 28px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-search-actions {
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+  
+  .player-search-input {
+    width: 100% !important;
+  }
+  
+  .ant-tabs-nav {
+    margin-bottom: 8px !important;
+  }
+  
+  .ant-table-pagination {
+    text-align: center !important;
+  }
+  
+  .ant-pagination {
+    font-size: 12px !important;
+  }
+  
+  .ant-avatar {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 10px !important;
+  }
+}
+
+/* Reset password modal styles */
+.reset-password-modal .ant-modal-header {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}
+
+.reset-password-modal .ant-modal-body {
+  padding: 24px;
+}
+
+.reset-password-modal .ant-modal-footer {
+  padding: 10px 16px;
+  text-align: right;
+  border-top: 1px solid #f0f0f0;
+}

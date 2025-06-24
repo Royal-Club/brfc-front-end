@@ -20,6 +20,7 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import Title from "antd/es/typography/Title";
 import { FileTextOutlined } from "@ant-design/icons"; // Adding an icon for each rule
 import clubRulesCover from "../../assets/club-rules-cover.png";
+import "./ClubRules.css";
 
 const { Text } = Typography;
 
@@ -78,30 +79,17 @@ export default function ClubRules() {
     };
 
     return (
-        <>
+        <div className="club-rules-container">
             <img
                 src={clubRulesCover}
                 alt="Club Rules Cover"
-                style={{ width: "100%" }}
+                className="club-rules-cover"
             />
 
             {loginInfo.roles.includes("ADMIN") && (
                 <Button
                     type="primary"
-                    style={{
-                        position: "absolute",
-                        bottom: "0px",
-                        right: "0px",
-                        transform: "translate(-50%, -50%)",
-                        height: "60px",
-                        width: "60px",
-                        borderRadius: "50%",
-                        border: "none",
-                        color: "white",
-                        fontSize: "24px",
-                        zIndex: 10,
-                        cursor: "pointer",
-                    }}
+                    className="club-rules-fab"
                     onClick={() => showModal()}
                 >
                     +
@@ -109,41 +97,25 @@ export default function ClubRules() {
             )}
 
             <List
-                style={{ marginBottom: "80px", marginTop: "10px" }}
+                className="club-rules-list"
                 dataSource={clubRules?.content}
                 renderItem={(rule) => (
-                    <List.Item
-                        style={{
-                            padding: "12px",
-                            marginBottom: "12px",
-                            display: "flex",
-                        }}
-                        actions={
-                            loginInfo.roles.includes("ADMIN")
-                                ? [
-                                      <Button
-                                          type="link"
-                                          onClick={() => showModal(rule)}
-                                      >
-                                          Edit
-                                      </Button>,
-                                  ]
-                                : []
-                        }
-                    >
-                        <Row
-                            style={{
-                                display: "flex",
-                                gap: "10px",
-                            }}
-                        >
-                            <FileTextOutlined
-                                style={{
-                                    color: "#1890ff",
-                                }}
-                            />
-                            <Text>{rule.description}</Text>
-                        </Row>
+                    <List.Item className="club-rules-item">
+                        <div className="club-rules-content">
+                            <FileTextOutlined className="club-rules-icon" />
+                            <Text className="club-rules-text">{rule.description}</Text>
+                        </div>
+                        {loginInfo.roles.includes("ADMIN") && (
+                            <div className="club-rules-actions">
+                                <Button
+                                    type="link"
+                                    onClick={() => showModal(rule)}
+                                    size="small"
+                                >
+                                    Edit
+                                </Button>
+                            </div>
+                        )}
                     </List.Item>
                 )}
             />
@@ -154,6 +126,9 @@ export default function ClubRules() {
                 onOk={handleOk}
                 onCancel={() => setModalOpen(false)}
                 okText={isEdit ? "Update" : "Create"}
+                className="club-rules-modal"
+                destroyOnClose
+                centered
             >
                 <Form form={form} layout="vertical">
                     <Form.Item
@@ -169,10 +144,12 @@ export default function ClubRules() {
                         <Input.TextArea
                             rows={4}
                             placeholder="Enter club rule description"
+                            autoSize={{ minRows: 3, maxRows: 6 }}
                         />
                     </Form.Item>
                 </Form>
             </Modal>
-        </>
+        </div>
     );
 }
+              

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Table, Skeleton, Alert, Typography, Space, theme } from "antd";
+import { Layout, Table, Skeleton, Alert, Typography, Space, theme, Card, Button, Tag, Row, Col, Pagination } from "antd";
 import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { IoTournamentSingleSummaryType } from "../../state/features/tournaments/tournamentTypes";
 import TournamentsActionDropdown from "./Atoms/TournamentsActionDropdown";
@@ -8,16 +8,16 @@ import CreateTournament from "./Atoms/CreateTournamentModal";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { showBdLocalTime } from "../../utils/utils";
-
+import { CalendarOutlined, EnvironmentOutlined, ClockCircleOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
-const { Title } = Typography;
-
+const { Title, Text } = Typography;
 
 const TournamentsPage: React.FC = () => {
   const loginInfo = useSelector(selectLoginInfo);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isMobile, setIsMobile] = useState(false);
   const [sorter, setSorter] = useState<{
     sortedBy: string;
     sortDirection: "ASC" | "DESC";
@@ -44,13 +44,28 @@ const TournamentsPage: React.FC = () => {
 
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleMenuClick = (e: any, record: IoTournamentSingleSummaryType) => {
     if (e.key === "join") {
       navigate(`/tournaments/join-tournament/${record.id}`);
     } else if (e.key === "team-building") {
       navigate(`/tournaments/team-building/${record.id}`);
-    } else if (e.type === "click" && record.activeStatus
-    ) {
+    } else if (e.type === "click" && record.activeStatus) {
+      navigate(`/tournaments/join-tournament/${record.id}`);
+    }
+  };
+
+  const handleCardClick = (record: IoTournamentSingleSummaryType) => {
+    if (record.activeStatus) {
       navigate(`/tournaments/join-tournament/${record.id}`);
     }
   };
@@ -67,6 +82,106 @@ const TournamentsPage: React.FC = () => {
   useEffect(() => {
     refetchTournaments();
   }, [currentPage, pageSize, sorter, refetchTournaments]);
+
+  const getStatusColor = (status: string | undefined, activeStatus: boolean) => {
+    if (!activeStatus || !status) return "default";
+    switch (status) {
+      case "UPCOMING": return "processing";
+      case "COMPLETED": return "success";
+      case "ONGOING": return "warning";
+      default: return "default";
+    }
+  };
+
+  const getStatusText = (status: string | undefined) => {
+    if (!status) return "Unknown";
+    switch (status) {
+      case "UPCOMING": return "Upcoming";
+      case "COMPLETED": return "Completed";
+      case "ONGOING": return "Ongoing";
+      default: return status;
+    }
+  };
+
+  // Mobile Card Component
+  const TournamentCard = ({ tournament }: { tournament: IoTournamentSingleSummaryType }) => (
+    <Card
+      className="tournament-mobile-card"
+      hoverable={tournament.activeStatus}
+      style={{
+        marginBottom: 8,
+        opacity: tournament.activeStatus ? 1 : 0.6,
+      }}
+      bodyStyle={{ padding: '12px' }}
+    >
+      <Row justify="space-between" align="top" gutter={[8, 4]}>
+        <Col 
+          xs={17}
+          onClick={() => handleCardClick(tournament)}
+          style={{ 
+            cursor: tournament.activeStatus ? 'pointer' : 'default' 
+          }}
+        >
+          <Title 
+            level={5} 
+            style={{ 
+              margin: '0 0 6px 0', 
+              color: tournament.activeStatus ? 'inherit' : '#999',
+              fontSize: '14px',
+              lineHeight: '1.2'
+            }}
+            ellipsis={{ rows: 2, tooltip: tournament.name }}
+          >
+            {tournament.name}
+          </Title>
+          
+          <Space direction="vertical" size={2} style={{ width: '100%' }}>
+            <Space size={4} wrap>
+              <CalendarOutlined style={{ color: '#1890ff', fontSize: '11px' }} />
+              <Text style={{ fontSize: '11px', color: tournament.activeStatus ? 'inherit' : '#999' }}>
+                {tournament.tournamentDate && showBdLocalTime(tournament.tournamentDate)}
+              </Text>
+            </Space>
+            
+            <Space size={4} wrap>
+              <EnvironmentOutlined style={{ color: '#52c41a', fontSize: '11px' }} />
+              <Text 
+                style={{ fontSize: '11px', color: tournament.activeStatus ? 'inherit' : '#999' }}
+                ellipsis={{ tooltip: tournament.venueName }}
+              >
+                {tournament.venueName}
+              </Text>
+            </Space>
+          </Space>
+        </Col>
+        
+        <Col 
+          xs={7}
+          style={{ textAlign: 'right' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Space direction="vertical" size={4} style={{ width: '100%', alignItems: 'flex-end' }}>
+            <Tag 
+              color={getStatusColor(tournament.tournamentStatus, tournament.activeStatus)}
+              style={{ margin: 0, fontSize: '9px', padding: '0 4px' }}
+            >
+              {getStatusText(tournament.tournamentStatus)}
+            </Tag>
+            
+            {tournament.tournamentDate && (
+              <div onClick={(e) => e.stopPropagation()}>
+                <TournamentsActionDropdown
+                  record={tournament}
+                  onMenuClick={handleMenuClick}
+                  tournamentId={tournament.id}
+                />
+              </div>
+            )}
+          </Space>
+        </Col>
+      </Row>
+    </Card>
+  );
 
   const columns = [
     {
@@ -233,6 +348,35 @@ const TournamentsPage: React.FC = () => {
   };
 
   if (isLoading) {
+    if (isMobile) {
+      return (
+        <div style={{ padding: '16px' }}>
+          <Space direction="vertical" size="large" style={{ width: "100%" }}>
+            <Space
+              style={{
+                width: "100%",
+                justifyContent: "space-between",
+                padding: "8px 0",
+                display: "flex",
+                flexWrap: "wrap",
+              }}
+            >
+              <Skeleton.Input active style={{ width: 120, height: 28 }} />
+              {loginInfo.roles.includes("ADMIN") && (
+                <Skeleton.Button active style={{ width: 100, height: 28 }} />
+              )}
+            </Space>
+            
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Card key={index} style={{ marginBottom: 12 }}>
+                <Skeleton active paragraph={{ rows: 2 }} />
+              </Card>
+            ))}
+          </Space>
+        </div>
+      );
+    }
+
     return (
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
         <Space
@@ -258,15 +402,83 @@ const TournamentsPage: React.FC = () => {
 
   if (isError || !tournamentSummaries) {
     return (
-      <Alert
-        message="Error"
-        description="Failed to load tournaments."
-        type="error"
-        showIcon
-      />
+      <div style={{ padding: isMobile ? "16px" : "0" }}>
+        <Alert
+          message="Error"
+          description="Failed to load tournaments."
+          type="error"
+          showIcon
+        />
+      </div>
     );
   }
 
+  // Mobile View
+  if (isMobile) {
+    return (
+      <div className="tournaments-mobile-container" style={{ 
+        height: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column',
+        overflow: 'hidden',
+        padding: '8px'
+      }}>
+        <div style={{
+          flexShrink: 0,
+          marginBottom: '12px'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 0 }}>
+            <Col>
+              <Title style={{ margin: 0, fontSize: "18px" }}>Tournaments</Title>
+            </Col>
+            <Col>
+              {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
+            </Col>
+          </Row>
+        </div>
+
+        <div 
+          className="mobile-tournament-container mobile-tournament-scroll" 
+          style={{ 
+            flex: 1, 
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            marginBottom: '12px',
+            padding: 0
+          }}
+        >
+          {tournamentSummaries.content.tournaments.length === 0 ? (
+            <Card style={{ margin: 0 }}>
+              <Text>No tournaments found.</Text>
+            </Card>
+          ) : (
+            tournamentSummaries.content.tournaments.map((tournament) => (
+              <TournamentCard key={tournament.id} tournament={tournament} />
+            ))
+          )}
+        </div>
+
+        <div style={{ flexShrink: 0 }}>
+          <Pagination
+            current={currentPage}
+            pageSize={pageSize}
+            total={tournamentSummaries?.content?.totalCount}
+            onChange={(page, size) => {
+              setCurrentPage(page);
+              setPageSize(size || pageSize);
+            }}
+            showSizeChanger={false}
+            showQuickJumper={false}
+            showTotal={(total, range) => `${range[0]}-${range[1]}/${total}`}
+            size="small"
+            style={{ textAlign: 'center' }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop View (existing table)
   const dataSource = [
     ...tournamentSummaries.content.tournaments,
     ...emptyRowPlaceholder(),

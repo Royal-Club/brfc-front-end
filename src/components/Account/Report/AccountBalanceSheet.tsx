@@ -8,9 +8,16 @@ import { useGetAcBalanceSheetListQuery } from "../../../state/features/account/a
 function AccountBalanceSheet() {
     const { data, isLoading, refetch } = useGetAcBalanceSheetListQuery();
     const [balanceSheet, setBalanceSheet] = useState<IBalanceSheetReport[]>([]);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        refetch();
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     useEffect(() => {
@@ -51,25 +58,31 @@ function AccountBalanceSheet() {
     ];
 
     return (
-        <>
+        <div style={{ padding: isMobile ? '16px' : '24px', minHeight: '100vh' }}>
             <Row>
-                <Col md={24}>
+                <Col span={24}>
                     <div>
-                        <Title level={3}>Balance Sheet</Title>
+                        <Title level={3} style={{ fontSize: isMobile ? '18px' : '24px' }}>Balance Sheet</Title>
                         <Table
                             loading={isLoading}
-                            size="small"
+                            size={isMobile ? "small" : "middle"}
                             dataSource={balanceSheet}
                             columns={balanceSheetColumns}
                             pagination={{
                                 showTotal: (total) => `Total ${total} records`,
+                                showSizeChanger: !isMobile,
+                                showQuickJumper: !isMobile,
+                                size: isMobile ? "small" : "default",
                             }}
-                            scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
+                            scroll={{ 
+                                x: isMobile ? 600 : "max-content",
+                                y: isMobile ? "60vh" : undefined
+                            }}
                         />
                     </div>
                 </Col>
             </Row>
-        </>
+        </div>
     );
 }
 

@@ -8,9 +8,16 @@ import { useGetAcReportListQuery } from "../../../state/features/account/account
 function AccountsReport() {
     const { data, isLoading, refetch } = useGetAcReportListQuery();
     const [accountsReport, setAccountsReport] = useState<IAccountsReport[]>([]);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
-        refetch();
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     useEffect(() => {
@@ -64,22 +71,30 @@ function AccountsReport() {
     ];
 
     return (
-        <>
+        <div style={{ padding: isMobile ? '16px' : '24px', minHeight: '100vh' }}>
             <Row>
-                <Col md={24}>
+                <Col span={24}>
                     <div>
-                        <Title level={3}>Accounts Report</Title>
+                        <Title level={3} style={{ fontSize: isMobile ? '18px' : '24px' }}>Accounts Report</Title>
                         <Table
                             loading={isLoading}
-                            size="small"
+                            size={isMobile ? "small" : "middle"}
                             dataSource={accountsReport}
                             columns={accountsReportColumns}
-                            scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
+                            scroll={{ 
+                                x: isMobile ? 600 : "max-content",
+                                y: isMobile ? "60vh" : undefined
+                            }}
+                            pagination={{
+                                showSizeChanger: !isMobile,
+                                showQuickJumper: !isMobile,
+                                size: isMobile ? "small" : "default",
+                            }}
                         />
                     </div>
                 </Col>
             </Row>
-        </>
+        </div>
     );
 }
 

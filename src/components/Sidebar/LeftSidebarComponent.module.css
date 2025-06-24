@@ -1,0 +1,75 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.sider {
+  height: 100vh;
+  transition: all 0.2s ease-in-out;
+}
+
+.sider.mobile {
+  position: fixed;
+  z-index: 1000;
+  transition: left 0.2s ease-in-out;
+}
+
+.sider.desktop {
+  position: relative;
+  z-index: auto;
+}
+
+.sider.mobileCollapsed {
+  left: -260px;
+}
+
+.sider.mobileExpanded {
+  left: 0;
+}
+
+.logoVertical {
+  margin: 10px;
+  border-radius: 6px;
+  justify-content: center;
+  align-content: left;
+  display: flex;
+  cursor: pointer;
+}
+
+.logoVertical.mobile {
+  margin: 5px;
+}
+
+.logoImage {
+  height: 37px;
+  object-fit: contain;
+}
+
+.logoImage.mobile {
+  height: 30px;
+}
+
+.logoTitle {
+  transition: all 0.2s ease-in-out;
+}
+
+.logoTitle.collapsed {
+  margin: 0;
+  font-size: 0;
+}
+
+.logoTitle.expanded {
+  margin: 0 80px 0 10px;
+  font-size: 32px;
+}
+
+.menu {
+  border-right: 0;
+  height: calc(100vh - 64px);
+  overflow: auto;
+}
