@@ -209,10 +209,8 @@
         overflow-wrap: break-word !important;
     }
     
-    /* Mobile scroll container */
+    /* Mobile container - remove fixed height and scroll */
     .mobile-tournament-container {
-        height: calc(100vh - 120px) !important;
-        overflow-y: auto !important;
         padding: 0 !important;
         margin: 0 !important;
     }
@@ -258,10 +256,6 @@
         padding: 0 3px;
         margin: 0 !important;
     }
-    
-    .mobile-tournament-container {
-        height: calc(100vh - 100px) !important;
-    }
 }
 
 /* Ensure dropdown doesn't overflow on mobile */
@@ -276,3 +270,4 @@
         border: none;
     }
 }
+    
