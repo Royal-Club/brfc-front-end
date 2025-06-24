@@ -109,14 +109,14 @@ const TournamentsPage: React.FC = () => {
       className="tournament-mobile-card"
       hoverable={tournament.activeStatus}
       style={{
-        marginBottom: 12,
+        marginBottom: 8,
         opacity: tournament.activeStatus ? 1 : 0.6,
       }}
-      bodyStyle={{ padding: '16px' }}
+      bodyStyle={{ padding: '12px' }}
     >
-      <Row justify="space-between" align="top">
+      <Row justify="space-between" align="top" gutter={[8, 4]}>
         <Col 
-          span={18}
+          xs={17}
           onClick={() => handleCardClick(tournament)}
           style={{ 
             cursor: tournament.activeStatus ? 'pointer' : 'default' 
@@ -125,27 +125,30 @@ const TournamentsPage: React.FC = () => {
           <Title 
             level={5} 
             style={{ 
-              margin: '0 0 8px 0', 
+              margin: '0 0 6px 0', 
               color: tournament.activeStatus ? 'inherit' : '#999',
-              fontSize: '16px',
-              lineHeight: '1.3'
+              fontSize: '14px',
+              lineHeight: '1.2'
             }}
-            ellipsis={{ rows: 2 }}
+            ellipsis={{ rows: 2, tooltip: tournament.name }}
           >
             {tournament.name}
           </Title>
           
-          <Space direction="vertical" size={4} style={{ width: '100%' }}>
-            <Space size={4}>
-              <CalendarOutlined style={{ color: '#1890ff', fontSize: '12px' }} />
-              <Text style={{ fontSize: '12px', color: tournament.activeStatus ? 'inherit' : '#999' }}>
+          <Space direction="vertical" size={2} style={{ width: '100%' }}>
+            <Space size={4} wrap>
+              <CalendarOutlined style={{ color: '#1890ff', fontSize: '11px' }} />
+              <Text style={{ fontSize: '11px', color: tournament.activeStatus ? 'inherit' : '#999' }}>
                 {tournament.tournamentDate && showBdLocalTime(tournament.tournamentDate)}
               </Text>
             </Space>
             
-            <Space size={4}>
-              <EnvironmentOutlined style={{ color: '#52c41a', fontSize: '12px' }} />
-              <Text style={{ fontSize: '12px', color: tournament.activeStatus ? 'inherit' : '#999' }}>
+            <Space size={4} wrap>
+              <EnvironmentOutlined style={{ color: '#52c41a', fontSize: '11px' }} />
+              <Text 
+                style={{ fontSize: '11px', color: tournament.activeStatus ? 'inherit' : '#999' }}
+                ellipsis={{ tooltip: tournament.venueName }}
+              >
                 {tournament.venueName}
               </Text>
             </Space>
@@ -153,14 +156,14 @@ const TournamentsPage: React.FC = () => {
         </Col>
         
         <Col 
-          span={6} 
+          xs={7}
           style={{ textAlign: 'right' }}
           onClick={(e) => e.stopPropagation()}
         >
-          <Space direction="vertical" size={8} style={{ width: '100%', alignItems: 'flex-end' }}>
+          <Space direction="vertical" size={4} style={{ width: '100%', alignItems: 'flex-end' }}>
             <Tag 
               color={getStatusColor(tournament.tournamentStatus, tournament.activeStatus)}
-              style={{ margin: 0, fontSize: '10px' }}
+              style={{ margin: 0, fontSize: '9px', padding: '0 4px' }}
             >
               {getStatusText(tournament.tournamentStatus)}
             </Tag>
@@ -413,37 +416,39 @@ const TournamentsPage: React.FC = () => {
   // Mobile View
   if (isMobile) {
     return (
-      <div style={{ 
-        padding: '16px', 
+      <div className="tournaments-mobile-container" style={{ 
         height: '100vh', 
         display: 'flex', 
         flexDirection: 'column',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        padding: '8px'
       }}>
-        <Space
-          style={{
-            width: "100%",
-            justifyContent: "space-between",
-            padding: "8px 0 16px 0",
-            display: "flex",
-            flexWrap: "wrap",
-          }}
-        >
-          <Title style={{ margin: 0, fontSize: "20px" }}>Tournaments</Title>
-          {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
-        </Space>
+        <div style={{
+          flexShrink: 0,
+          marginBottom: '12px'
+        }}>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 0 }}>
+            <Col>
+              <Title style={{ margin: 0, fontSize: "18px" }}>Tournaments</Title>
+            </Col>
+            <Col>
+              {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
+            </Col>
+          </Row>
+        </div>
 
         <div 
-          className="mobile-tournament-scroll" 
+          className="mobile-tournament-container mobile-tournament-scroll" 
           style={{ 
             flex: 1, 
-            overflowY: 'auto', 
-            marginBottom: '16px',
-            paddingRight: '4px'
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            marginBottom: '12px',
+            padding: 0
           }}
         >
           {tournamentSummaries.content.tournaments.length === 0 ? (
-            <Card>
+            <Card style={{ margin: 0 }}>
               <Text>No tournaments found.</Text>
             </Card>
           ) : (
@@ -453,20 +458,22 @@ const TournamentsPage: React.FC = () => {
           )}
         </div>
 
-        <Pagination
-          current={currentPage}
-          pageSize={pageSize}
-          total={tournamentSummaries?.content?.totalCount}
-          onChange={(page, size) => {
-            setCurrentPage(page);
-            setPageSize(size || pageSize);
-          }}
-          showSizeChanger={false}
-          showQuickJumper={false}
-          showTotal={(total, range) => `${range[0]}-${range[1]}/${total}`}
-          size="small"
-          style={{ textAlign: 'center', flexShrink: 0 }}
-        />
+        <div style={{ flexShrink: 0 }}>
+          <Pagination
+            current={currentPage}
+            pageSize={pageSize}
+            total={tournamentSummaries?.content?.totalCount}
+            onChange={(page, size) => {
+              setCurrentPage(page);
+              setPageSize(size || pageSize);
+            }}
+            showSizeChanger={false}
+            showQuickJumper={false}
+            showTotal={(total, range) => `${range[0]}-${range[1]}/${total}`}
+            size="small"
+            style={{ textAlign: 'center' }}
+          />
+        </div>
       </div>
     );
   }

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { Table, Select, Space, Radio, Button, theme } from "antd";
+import { Table, Select, Space, Radio, Button, theme, Tooltip, Switch } from "antd";
+import { TableOutlined, AppstoreOutlined } from "@ant-design/icons";
 import type {
   ColumnType,
   ColumnsType,
@@ -10,6 +11,7 @@ import type {
 } from "antd/es/table/interface";
 import { useGetPlayerCollectionMetricsQuery } from "../../state/features/account/playerCollectionMetricsSlice";
 import { PlayerMetric } from "../../interfaces/IPlayerCollectionMetrics";
+import styles from "./PlayerCollectionMetricsTable.module.css";
 
 const { Option } = Select;
 
@@ -43,6 +45,8 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
   const [filter, setFilter] = useState<FilterType>("active");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileView, setMobileView] = useState<'cards' | 'table'>('cards');
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -108,7 +112,7 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       const isActive = playerData?.active ?? false;
 
       if (isCurrentCell && amount <= 0 && isActive) {
-        return <span style={{ color: token.colorError, fontWeight: "bold" }}>Due</span>;
+        return <span style={{ fontWeight: "bold" }}>Due</span>;
       }
       return amount > 0 ? amount.toFixed(0) : "";
     },
@@ -137,16 +141,16 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       dataIndex: "index",
       key: "index",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 30 : 50,
+      width: window.innerWidth <= 576 ? 35 : 50,
       sorter: (a, b) => a.index - b.index,
       sortOrder: sortField === "index" ? sortOrder : null,
       defaultSortOrder: "ascend",
       render: (_: any, __: any, index: number) => index + 1,
       onCell: () => ({ 
         style: { 
-          minWidth: window.innerWidth <= 576 ? 25 : 30, 
-          paddingLeft: window.innerWidth <= 576 ? 2 : 8, 
-          paddingRight: window.innerWidth <= 576 ? 2 : 8 
+          minWidth: window.innerWidth <= 576 ? 30 : 45, 
+          paddingLeft: window.innerWidth <= 576 ? 4 : 8, 
+          paddingRight: window.innerWidth <= 576 ? 4 : 8 
         } 
       }),
     },
@@ -155,22 +159,49 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       dataIndex: "playerName",
       key: "playerName",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 100 : (window.innerWidth <= 768 ? 120 : 200),
+      width: window.innerWidth <= 576 ? 90 : (window.innerWidth <= 768 ? 110 : 180),
       sorter: (a, b) => a.playerName.localeCompare(b.playerName),
       sortOrder: sortField === "playerName" ? sortOrder : null,
-      render: (text: string) => (
-        <b style={{ 
-          color: token.colorText,
-          fontSize: window.innerWidth <= 576 ? '10px' : undefined
-        }}>
-          {window.innerWidth <= 576 ? text.substring(0, 12) + (text.length > 12 ? '...' : '') : text}
-        </b>
-      ),
+      render: (text: string) => {
+        const isMobile = window.innerWidth <= 576;
+        const isTablet = window.innerWidth <= 768;
+        const maxLength = isMobile ? 10 : isTablet ? 12 : 20;
+        const shouldTruncate = text.length > maxLength;
+        const displayText = shouldTruncate ? text.substring(0, maxLength) + '...' : text;
+        
+        const nameElement = (
+          <b style={{ 
+            fontSize: isMobile ? '11px' : undefined,
+            cursor: shouldTruncate ? 'help' : 'default'
+          }}>
+            {displayText}
+          </b>
+        );
+
+        // Only show tooltip if text is truncated
+        if (shouldTruncate) {
+          return (
+            <Tooltip 
+              title={text} 
+              placement="topLeft"
+              mouseEnterDelay={0.3}
+              overlayStyle={{
+                maxWidth: '300px',
+                fontSize: '14px'
+              }}
+            >
+              {nameElement}
+            </Tooltip>
+          );
+        }
+
+        return nameElement;
+      },
       onCell: () => ({ 
         style: { 
-          minWidth: window.innerWidth <= 576 ? 80 : 150, 
-          paddingLeft: window.innerWidth <= 576 ? 2 : 8, 
-          paddingRight: window.innerWidth <= 576 ? 2 : 8 
+          minWidth: window.innerWidth <= 576 ? 80 : 140, 
+          paddingLeft: window.innerWidth <= 576 ? 4 : 8, 
+          paddingRight: window.innerWidth <= 576 ? 4 : 8 
         } 
       }),
     },
@@ -211,9 +242,92 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
     setSortOrder(null);
   };
 
+  React.useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setMobileView('table'); // Always use table on desktop
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const renderMobileCards = () => {
+    return (
+      <div className={styles.mobileCardView}>
+        {/* Legend */}
+        <div className={styles.legendContainer}>
+          <div className={styles.legendItem}>
+            <div className={`${styles.legendDot} ${styles.paid}`}></div>
+            <span className={styles.legendText}>Paid</span>
+          </div>
+          <div className={styles.legendItem}>
+            <div className={`${styles.legendDot} ${styles.current}`}></div>
+            <span className={styles.legendText}>Current</span>
+          </div>
+          <div className={styles.legendItem}>
+            <div className={`${styles.legendDot} ${styles.due}`}></div>
+            <span className={styles.legendText}>Due</span>
+          </div>
+          
+        </div>
+
+        {dataSource.map((player, index) => {
+          const playerData = metrics.find((p: PlayerMetric) => p.playerId === player.key);
+          const isActive = playerData?.active ?? false;
+          
+          return (
+            <div key={player.key} className={styles.playerCard}>
+              <div className={styles.playerHeader}>
+                <span className={styles.playerName}>{player.playerName}</span>
+                <span className={styles.playerIndex}>#{index + 1}</span>
+              </div>
+              
+              <div className={styles.monthsGrid}>
+                {monthNames.map((month, idx) => {
+                  const monthNumber = idx + 1;
+                  const amount = player[`month_${monthNumber}`] || 0;
+                  const isCurrentCell = selectedYear === currentYear && monthNumber === currentMonth;
+                  const showDue = isCurrentCell && amount <= 0 && isActive;
+                  const hasData = amount > 0 || showDue;
+                  
+                  let monthClass = styles.monthItem;
+                  
+                  if (showDue) {
+                    monthClass += ` ${styles.monthDue}`;
+                  } else if (isCurrentCell && amount > 0) {
+                    monthClass += ` ${styles.monthCurrent}`;
+                  } else if (amount > 0) {
+                    monthClass += ` ${styles.monthPaid}`;
+                  } else {
+                    monthClass += ` ${styles.monthEmpty}`;
+                  }
+                  
+                  return (
+                    <div key={monthNumber} className={monthClass}>
+                      {hasData && <div className={styles.monthIndicator}></div>}
+                      <div className={styles.monthName}>{month}</div>
+                      <div className={styles.monthAmount}>
+                        {showDue ? 'Due' : (amount > 0 ? amount.toFixed(0) : '-')}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
-    <div className={`player-metrics-table-container ${className || ''}`}>
-      <div className="player-metrics-controls">
+    <div className={`${styles.tableContainer} ${className || ''}`}>
+      <div className={styles.controls}>
         <Space 
           wrap 
           style={{ 
@@ -256,22 +370,68 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
         </Space>
       </div>
 
-      <div className="player-metrics-table">
-        <Table
-          size="small"
-          bordered
-          columns={columns}
-          dataSource={dataSource}
-          pagination={false}
-          scroll={{ x: "max-content" }}
-          loading={isLoading}
-          style={{ borderColor: token.colorBorder }}
-          rowKey="key"
-          onChange={handleTableChange}
-        />
-      </div>
+      {/* Mobile View Toggle */}
+      {isMobile && (
+        <div className={styles.viewToggle}>
+          <Radio.Group
+            value={mobileView}
+            onChange={(e) => setMobileView(e.target.value)}
+            optionType="button"
+            buttonStyle="solid"
+            size="small"
+          >
+            <Radio.Button value="cards">
+              <AppstoreOutlined /> Cards
+            </Radio.Button>
+            <Radio.Button value="table">
+              <TableOutlined /> Table
+            </Radio.Button>
+          </Radio.Group>
+        </div>
+      )}
+
+      {/* Conditional rendering for mobile */}
+      {isMobile ? (
+        mobileView === 'cards' ? (
+          renderMobileCards()
+        ) : (
+          /* Mobile Table View */
+          <div className={`${styles.table} ${styles.mobileTableView}`}>
+            <Table
+              size="small"
+              bordered
+              columns={columns}
+              dataSource={dataSource}
+              pagination={false}
+              scroll={{ x: "max-content" }}
+              loading={isLoading}
+              rowKey="key"
+              onChange={handleTableChange}
+              className={styles.tableData}
+            />
+          </div>
+        )
+      ) : (
+        /* Desktop Table View */
+        <div className={styles.table}>
+          <Table
+            size="small"
+            bordered
+            columns={columns}
+            dataSource={dataSource}
+            pagination={false}
+            scroll={{ x: "max-content" }}
+            loading={isLoading}
+            rowKey="key"
+            onChange={handleTableChange}
+            className={styles.tableData}
+          />
+        </div>
+      )}
     </div>
   );
 };
+
+
 
 export default PlayerCollectionMetrics;

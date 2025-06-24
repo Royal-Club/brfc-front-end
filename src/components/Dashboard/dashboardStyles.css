@@ -9,12 +9,12 @@
 }
 
 .dashboard-container {
-  padding: 20px;
+  padding: 12px;
 }
 
 /* Summary Card */
 .summary-card {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* Controls Row */
@@ -110,7 +110,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   align-items: center;
 }
 
@@ -118,10 +118,50 @@
   overflow-x: auto;
 }
 
-/* Responsive adjustments */
+/* Name column tooltip styling */
+.player-metrics-table .ant-table-tbody > tr > td {
+  position: relative;
+}
+
+.player-metrics-table .ant-table-tbody > tr > td b[style*="cursor: help"] {
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+}
+
+[data-theme="dark"] .player-metrics-table .ant-table-tbody > tr > td b[style*="cursor: help"] {
+  border-bottom: 1px dotted rgba(255, 255, 255, 0.3);
+}
+
+/* Tooltip improvements */
+.ant-tooltip {
+  max-width: 300px !important;
+}
+
+.ant-tooltip-inner {
+  word-wrap: break-word !important;
+  white-space: normal !important;
+  text-align: center !important;
+  font-weight: 500 !important;
+}
+
+/* Remove the shadow that causes gaps */
+.player-metrics-table .ant-table-cell-fix-left {
+  box-shadow: none !important;
+}
+
+/* Ensure proper border styling for fixed columns without shadow */
+.player-metrics-table .ant-table-cell-fix-left::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  content: '';
+}
+
 @media (max-width: 768px) {
   .dashboard-container {
-    padding: 10px;
+    padding: 8px;
   }
   
   .stat-title {
@@ -139,7 +179,7 @@
   /* Make cards full width on mobile */
   .summary-card, 
   .contributions-card {
-    margin: 0 0 16px 0;
+    margin: 0 0 12px 0;
     width: 100%;
   }
 
@@ -165,14 +205,14 @@
 
   /* Ensure proper spacing in card bodies */
   .ant-card-body {
-    padding: 12px !important;
+    padding: 8px !important;
   }
   
   /* Player metrics table mobile styles */
   .player-metrics-controls {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 8px;
   }
   
   .player-metrics-controls .ant-space {
@@ -194,7 +234,7 @@
     text-align: center;
   }
   
-  /* Table responsive adjustments */
+  /* Table responsive adjustments - no forced colors */
   .ant-table-thead > tr > th {
     padding: 8px 4px !important;
     font-size: 12px !important;
@@ -241,7 +281,7 @@
     overflow-y: auto;
   }
   
-  /* Extra small screens */
+  /* Extra small screens - spacing only, no colors */
   .player-metrics-controls .ant-btn {
     font-size: 12px !important;
     padding: 4px 8px !important;
@@ -269,6 +309,17 @@
     min-width: 30px !important;
     width: 30px !important;
   }
+}
+
+/* Analytics cards - always one row */
+.analytics-cards .ant-col {
+  display: flex !important;
+  align-items: stretch !important;
+}
+
+.analytics-cards .ant-col > div {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Remove gradient styles that don't adapt to dark mode */

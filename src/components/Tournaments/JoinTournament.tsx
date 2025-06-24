@@ -574,7 +574,7 @@ export default function JoinTournament() {
               size={screens.xs ? "small" : "middle"}
               bordered
               pagination={{
-                pageSize: screens.xs ? 10 : 15,
+                pageSize: screens.xs ? 10 : 25,
                 showSizeChanger: !screens.xs,
                 showQuickJumper: !screens.xs,
                 size: screens.xs ? "small" : "default",

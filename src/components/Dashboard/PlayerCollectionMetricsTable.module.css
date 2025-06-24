@@ -1,0 +1,423 @@
+.tableContainer {
+  width: 100%;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.table {
+  overflow-x: auto;
+}
+
+.tableData {
+  /* Additional table-specific styles */
+}
+
+/* Mobile Card View */
+.mobileCardView {
+  display: none;
+}
+
+.playerCard {
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.playerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.playerName {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--ant-color-text);
+}
+
+.playerIndex {
+  background: var(--ant-color-fill-secondary);
+  color: var(--ant-color-text-secondary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.monthsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.monthItem {
+  position: relative;
+  text-align: center;
+  padding: 12px 8px;
+  border-radius: 8px;
+  border: 1px solid gray;
+  background: var(--ant-color-bg-layout);
+  transition: all 0.2s ease;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.monthItem:hover {
+  border-color: var(--ant-color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+}
+
+.monthName {
+  font-size: 11px;
+  color: var(--ant-color-text-secondary);
+  margin-bottom: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.monthAmount {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ant-color-text);
+  line-height: 1.2;
+}
+
+/* Status Indicators */
+.monthIndicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--ant-color-bg-container);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.monthPaid .monthIndicator {
+  background: #52c41a;
+  border-color: var(--ant-color-bg-container);
+}
+
+.monthDue .monthIndicator {
+  background: #ff4d4f;
+  border-color: var(--ant-color-bg-container);
+  animation: pulse 1.5s infinite;
+}
+
+.monthCurrent .monthIndicator {
+  background: #1890ff;
+  border-color: var(--ant-color-bg-container);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.monthEmpty .monthIndicator {
+  background: #d9d9d9;
+  border-color: var(--ant-color-bg-container);
+}
+
+/* Pulse animation for due payments */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Status highlighting with theme-aware colors */
+.monthCurrent {
+  border-color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg);
+}
+
+.monthDue {
+  border-color: var(--ant-color-error);
+  background: var(--ant-color-error-bg);
+}
+
+.monthDue .monthAmount {
+  color: var(--ant-color-error);
+  font-weight: 700;
+}
+
+.monthPaid {
+  border-color: var(--ant-color-success-border);
+  background: var(--ant-color-success-bg);
+}
+
+/* Legend for mobile view */
+.legendContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--ant-color-bg-layout);
+  border-radius: 8px;
+  border: 1px solid var(--ant-color-border-secondary);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--ant-color-bg-container);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.legendDot.paid {
+  background: #52c41a;
+}
+
+.legendDot.due {
+  background: #ff4d4f;
+}
+
+.legendDot.current {
+  background: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.legendDot.empty {
+  background: #d9d9d9;
+}
+
+.legendText {
+  font-size: 13px;
+  color: var(--ant-color-text);
+  font-weight: 500;
+}
+
+/* Name column tooltip styling */
+.table :global(.ant-table-tbody > tr > td) {
+  position: relative;
+}
+
+.table :global(.ant-table-tbody > tr > td b[style*="cursor: help"]) {
+  border-bottom: 1px dotted var(--ant-color-text-tertiary);
+  text-decoration: none;
+}
+
+/* Remove the shadow that causes gaps */
+.table :global(.ant-table-cell-fix-left) {
+  box-shadow: none !important;
+}
+
+/* Ensure proper border styling for fixed columns without shadow */
+.table :global(.ant-table-cell-fix-left::after) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  content: '';
+  background: var(--ant-color-border);
+}
+
+.viewToggle {
+  display: none;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .viewToggle {
+    display: flex;
+    justify-content: center;
+  }
+  
+  /* Show mobile card view by default */
+  .mobileCardView {
+    display: block;
+  }
+  
+  /* Hide table by default on mobile */
+  .table {
+    display: none;
+  }
+  
+  /* Override display when table view is selected */
+  .table.mobileTableView {
+    display: block !important;
+  }
+  
+  .mobileCardView.hidden {
+    display: none !important;
+  }
+  
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .controls :global(.ant-space) {
+    justify-content: center;
+  }
+  
+  .controls :global(.ant-select) {
+    width: 100% !important;
+  }
+  
+  .controls :global(.ant-radio-group) {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .controls :global(.ant-radio-button-wrapper) {
+    flex: 1;
+    text-align: center;
+  }
+  
+  /* Better mobile padding */
+  .table :global(.ant-table-thead > tr > th) {
+    padding: 12px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  .table :global(.ant-table-tbody > tr > td) {
+    padding: 12px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Make fixed columns more narrow on mobile */
+  .table :global(.ant-table-fixed-left) {
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .monthsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .monthItem {
+    padding: 10px 6px;
+    min-height: 50px;
+  }
+  
+  .monthName {
+    font-size: 10px;
+  }
+  
+  .monthAmount {
+    font-size: 12px;
+  }
+  
+  .legendContainer {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .controls :global(.ant-btn) {
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+  }
+  
+  /* Enhanced mobile padding for better readability */
+  .table :global(.ant-table-thead > tr > th) {
+    padding: 10px 6px !important;
+    font-size: 11px !important;
+    min-width: 40px;
+    font-weight: 600 !important;
+  }
+  
+  .table :global(.ant-table-tbody > tr > td) {
+    padding: 10px 6px !important;
+    font-size: 11px !important;
+    min-width: 40px;
+    line-height: 1.4 !important;
+  }
+  
+  .table :global(.ant-table-fixed-left) {
+    max-width: 100px;
+  }
+  
+  .table :global(.month-column) {
+    min-width: 35px !important;
+    width: 35px !important;
+  }
+}
+
+/* Dark theme support for indicators */
+:global([data-theme="dark"]) .monthPaid .monthIndicator {
+  background: #52c41a;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .monthDue .monthIndicator {
+  background: #ff4d4f;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .monthCurrent .monthIndicator {
+  background: #1890ff;
+  border-color: #1f1f1f;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.3), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+:global([data-theme="dark"]) .monthEmpty .monthIndicator {
+  background: #434343;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendDot.paid {
+  background: #52c41a;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendDot.due {
+  background: #ff4d4f;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendDot.current {
+  background: #1890ff;
+  border-color: #1f1f1f;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+:global([data-theme="dark"]) .legendDot.empty {
+  background: #434343;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendText {
+  color: #ffffff;
+}

@@ -17,7 +17,7 @@ export default function ContentOutlet() {
     return (
         <div
             style={{
-                padding: "10px 10px 10px",
+                padding: "8px 8px 8px",
                 maxHeight: isMobile ? "calc(100vh - 64px)" : "calc(100vh - 64px)",
                 overflow: "auto",
             }}

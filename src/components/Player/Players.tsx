@@ -36,6 +36,7 @@ import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { ColumnsType } from "antd/es/table";
 import { useResetPlayerPasswordMutation } from "../../state/features/auth/authSlice";
+import "./Players.css";
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -68,33 +69,6 @@ function Players() {
   useEffect(() => {
     refetch();
   }, []);
-
-  // Create a style element using useEffect
-  useEffect(() => {
-    // Create a style element
-    const styleElement = document.createElement('style');
-    styleElement.type = 'text/css';
-    styleElement.innerHTML = `
-      .compact-table .ant-table-cell {
-        padding: 8px 12px !important;
-      }
-      .compact-table .ant-table-thead > tr > th {
-        padding: 8px 12px !important;
-        font-weight: 600;
-      }
-      .ant-tabs-tab {
-        padding: 6px 12px !important;
-      }
-    `;
-    
-    // Append it to the document head
-    document.head.appendChild(styleElement);
-    
-    // Clean up on unmount
-    return () => {
-      document.head.removeChild(styleElement);
-    };
-  }, []); // Empty dependency array ensures this runs once on component mount
 
   // Handle search input change
   const handleSearch = (value: string) => {
@@ -338,7 +312,7 @@ function Players() {
           title: "Action",
           key: "action",
           render: (_: any, record: IPlayer) => (
-            <Space size="middle">
+            <Space size="small" className="mobile-action-buttons">
               <Button 
                 type="primary" 
                 ghost 
@@ -354,7 +328,7 @@ function Players() {
                 icon={<LockTwoTone />}
                 onClick={() => showPasswordModal(record)}
               >
-                Reset Password
+                Reset
               </Button>
             </Space>
           ),
@@ -371,25 +345,24 @@ function Players() {
     <Card 
       bordered={false}
       className="player-list-card"
-      style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
     >
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-        <Col>
+      <Row justify="space-between" align="middle" className="player-header-row">
+        <Col xs={24} sm={8} md={8}>
           <Space align="center">
             <TeamOutlined style={{ fontSize: 24 }} />
-            <Title level={3} style={{ margin: 0 }}>Players</Title>
+            <Title level={3} className="player-title" style={{ margin: 0 }}>Players</Title>
           </Space>
         </Col>
-        <Col>
-            <Space size="middle">
+        <Col xs={24} sm={16} md={16}>
+          <div className="player-search-actions">
             <Input.Search
               placeholder="Search players"
               onSearch={handleSearch}
               onChange={(e) => handleSearch(e.target.value)}
-              style={{ width: 250 }}
+              className="player-search-input"
               prefix={<SearchOutlined />}
               allowClear
-              size="large"
+              size="middle"
             />
             
             {loginInfo.roles.includes("ADMIN") && (
@@ -398,16 +371,17 @@ function Players() {
                   type="primary" 
                   icon={<PlusOutlined />}
                   size="middle"
+                  style={{ whiteSpace: 'nowrap' }}
                 >
                   Add Player
                 </Button>
               </Link>
             )}
-          </Space>
+          </div>
         </Col>
       </Row>
 
-      <Row align="middle" style={{ marginBottom: 16 }}>
+      <Row align="middle" style={{ marginBottom: 12 }}>
         <Col flex="auto">
           <Tabs 
             defaultActiveKey="all" 
@@ -420,8 +394,8 @@ function Players() {
               tab={
                 <span>
                   <UserOutlined /> 
-                  All Players 
-                  <Badge count={allCount} size="small" style={{ marginLeft: 5, backgroundColor: '#1890ff', fontSize: '10px' }} />
+                  All
+                  <Badge count={allCount} size="small" style={{ marginLeft: 4, backgroundColor: '#1890ff', fontSize: '9px' }} />
                 </span>
               } 
               key="all"
@@ -431,7 +405,7 @@ function Players() {
                 <span>
                   <CheckCircleOutlined /> 
                   Active 
-                  <Badge count={activeCount} size="small" style={{ marginLeft: 5, backgroundColor: '#52c41a', fontSize: '10px' }} />
+                  <Badge count={activeCount} size="small" style={{ marginLeft: 4, backgroundColor: '#52c41a', fontSize: '9px' }} />
                 </span>
               } 
               key="active"
@@ -441,7 +415,7 @@ function Players() {
                 <span>
                   <CloseCircleOutlined /> 
                   Inactive 
-                  <Badge count={inactiveCount} size="small" style={{ marginLeft: 5, backgroundColor: '#ff4d4f', fontSize: '10px' }} />
+                  <Badge count={inactiveCount} size="small" style={{ marginLeft: 4, backgroundColor: '#ff4d4f', fontSize: '9px' }} />
                 </span>
               } 
               key="inactive"
@@ -455,15 +429,18 @@ function Players() {
         dataSource={filteredPlayers}
         columns={playersColumn}
         pagination={{
-          showTotal: (total) => `Total ${total} records`,
+          showTotal: (total, range) => window.innerWidth < 768 ? `${range[0]}-${range[1]} of ${total}` : `Total ${total} records`,
           pageSize: 9,
-          showSizeChanger: true,
+          showSizeChanger: window.innerWidth >= 768,
           pageSizeOptions: ['10', '20', '50'],
+          responsive: true,
+          showLessItems: window.innerWidth < 768,
+          size: window.innerWidth < 768 ? 'small' : 'default'
         }}
         rowKey="id"
         scroll={{ x: "max-content" }}
         style={{ 
-          borderRadius: 8,
+          borderRadius: 4,
           overflow: 'hidden'
         }}
         size="small"
