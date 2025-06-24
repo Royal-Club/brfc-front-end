@@ -1,4 +1,4 @@
-import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, SettingOutlined, LogoutOutlined, BulbOutlined } from "@ant-design/icons";
 import {
     Avatar,
     Button,
@@ -40,6 +40,7 @@ import Venue from "../Venue/Venue";
 import ContentOutlet from "./ContentOutlet";
 import ClubRules from "../ClubRules/ClubRules";
 import companyLogo from "../../assets/logo.png";
+import type { MenuProps } from "antd";
 
 const { Header, Content } = Layout;
 
@@ -98,23 +99,95 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
         });
     };
 
-    const items = [
+    const items: MenuProps['items'] = [
         {
-            label: "Profile",
+            label: (
+                <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'flex-start',
+                    padding: '8px 0',
+                    borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+                }}>
+                    <Typography.Text 
+                        strong 
+                        style={{ 
+                            fontSize: '14px', 
+                            lineHeight: '20px',
+                            marginBottom: '2px'
+                        }}
+                    >
+                        {user.username}
+                    </Typography.Text>
+                    <Typography.Text 
+                        type="secondary" 
+                        style={{ 
+                            fontSize: '12px', 
+                            lineHeight: '16px'
+                        }}
+                    >
+                        {loginInfo?.roles?.join(', ') || 'User'}
+                    </Typography.Text>
+                </div>
+            ),
+            key: "user-info",
+        },
+        {
+            label: (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <BulbOutlined />
+                        Theme
+                    </span>
+                    <Switch
+                        checked={isDarkMode}
+                        onChange={handleThemeChange}
+                        size="small"
+                        checkedChildren="🌙"
+                        unCheckedChildren="☀️"
+                        onClick={(checked, e) => {
+                            e?.stopPropagation();
+                        }}
+                    />
+                </div>
+            ),
+            key: "theme",
+        },
+        {
+            type: 'divider',
+            key: 'divider1',
+        },
+        {
+            label: (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <UserOutlined />
+                    Profile
+                </span>
+            ),
             key: "1",
             onClick: () => {
                 navigate("/profile");
             },
         },
         {
-            label: "Settings",
+            label: (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <SettingOutlined />
+                    Settings
+                </span>
+            ),
             key: "2",
             onClick: () => {
                 handleSettingsClick();
             },
         },
         {
-            label: "Logout",
+            label: (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ff4d4f' }}>
+                    <LogoutOutlined />
+                    Logout
+                </span>
+            ),
             key: "3",
             onClick: () => confirmLogout(),
         },
@@ -141,10 +214,13 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                         style={{
                             padding: 0,
                             backgroundColor: colorBgContainer,
+                            height: '64px',
+                            display: 'flex',
+                            alignItems: 'center',
                         }}
                     >
-                        <Row justify="space-between" align="middle">
-                            <Col>
+                        <Row justify="space-between" align="middle" style={{ width: '100%', height: '100%' }}>
+                            <Col style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
                                 <Button
                                     type="text"
                                     icon={
@@ -161,34 +237,81 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                                         fontSize: "16px",
                                         width: 64,
                                         height: 64,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
                                     }}
                                 />
+                                {isMobile && (
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        marginLeft: '8px',
+                                        height: '100%'
+                                    }}>
+                                        <img 
+                                            src={companyLogo} 
+                                            alt="BRFC Logo" 
+                                            style={{ 
+                                                height: '32px', 
+                                                objectFit: 'contain' 
+                                            }} 
+                                        />
+                                        <Typography.Text 
+                                            strong 
+                                            style={{ 
+                                                marginLeft: '8px', 
+                                                fontSize: '18px',
+                                                color: isDarkMode ? '#ffffff' : '#000000'
+                                            }}
+                                        >
+                                            BRFC
+                                        </Typography.Text>
+                                    </div>
+                                )}
                             </Col>
                             <Col
                                 style={{
-                                    textAlign: "right",
-                                    paddingRight: 32,
-                                    cursor: "pointer",
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    height: '100%',
+                                    paddingRight: isMobile ? 16 : 32,
                                 }}
                             >
-                                <Switch
-                                    checked={isDarkMode}
-                                    onChange={handleThemeChange}
-                                    checkedChildren="Dark"
-                                    unCheckedChildren="Light"
-                                />
-
                                 {user.token && (
                                     <Dropdown
                                         overlay={<Menu items={items} />}
                                         trigger={["click"]}
+                                        placement="bottomRight"
                                     >
-                                        <Space>
+                                        <Space style={{ cursor: 'pointer', height: '100%', alignItems: 'center' }}>
                                             <Avatar
                                                 src={user?.image}
                                                 alt={user.username}
+                                                size={isMobile ? 32 : 40}
                                             />
-                                            {user.username}
+                                            {!isMobile && (
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center' }}>
+                                                    <Typography.Text 
+                                                        strong 
+                                                        style={{ 
+                                                            fontSize: '14px', 
+                                                            lineHeight: '18px'
+                                                        }}
+                                                    >
+                                                        {user.username}
+                                                    </Typography.Text>
+                                                    <Typography.Text 
+                                                        type="secondary" 
+                                                        style={{ 
+                                                            fontSize: '12px', 
+                                                            lineHeight: '16px'
+                                                        }}
+                                                    >
+                                                        {loginInfo?.roles?.join(', ') || 'User'}
+                                                    </Typography.Text>
+                                                </div>
+                                            )}
                                         </Space>
                                     </Dropdown>
                                 )}
@@ -198,7 +321,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 )}
                 <Content
                     style={{
-                        minHeight: 'calc(100vh - 64px)',
+                        minHeight: isMobile ? 'calc(100vh - 64px)' : 'calc(100vh - 64px)',
                         overflow: 'auto',
                     }}
                 >

@@ -52,20 +52,6 @@
     color:rgb(255, 0, 0);
 }
 
-@media (max-width: 768px) {
-    .ant-layout-sider {
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-    }
-    
-    .demo-logo-vertical {
-        margin: 5px;
-    }
-    
-    .demo-logo-vertical img {
-        height: 30px;
-    }
-}
-
 /* Ensure smooth transitions for Ant Design components */
 .ant-layout-sider {
     transition: all 0.2s ease-in-out !important;
@@ -81,35 +67,150 @@
 
 /* User dropdown improvements */
 .ant-dropdown-menu {
-    border-radius: 8px !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    min-width: 200px !important;
+    padding: 8px !important;
 }
 
 .ant-dropdown-menu-item {
-    border-radius: 6px !important;
-    margin: 4px 8px !important;
+    border-radius: 8px !important;
+    margin: 2px 0 !important;
+    padding: 8px 12px !important;
     transition: all 0.2s ease !important;
+    font-size: 14px !important;
 }
 
 .ant-dropdown-menu-item:hover {
     background-color: rgba(0, 0, 0, 0.04) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* User info item in dropdown - no hover effect */
+.ant-dropdown-menu-item:first-child:hover {
+    background-color: transparent !important;
+    transform: none !important;
+}
+
+.ant-dropdown-menu-divider {
+    margin: 8px 0 !important;
+    background-color: rgba(0, 0, 0, 0.06) !important;
 }
 
 [data-theme="dark"] .ant-dropdown-menu {
     background-color: #1f1f1f !important;
     border: 1px solid #303030 !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
 }
 
 [data-theme="dark"] .ant-dropdown-menu-item:hover {
     background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
+[data-theme="dark"] .ant-dropdown-menu-item:first-child:hover {
+    background-color: transparent !important;
+}
+
+[data-theme="dark"] .ant-dropdown-menu-divider {
+    background-color: #303030 !important;
+}
+
+/* Theme toggle in dropdown */
+.ant-dropdown-menu-item .ant-switch {
+    margin-left: auto !important;
+}
+
+.ant-dropdown-menu-item:has(.ant-switch):hover {
+    background-color: transparent !important;
+    transform: none !important;
+}
+
+/* User info section in dropdown */
+.dropdown-user-info {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    margin-bottom: 4px;
+}
+
+[data-theme="dark"] .dropdown-user-info {
+    border-bottom-color: #303030;
+}
+
+@media (max-width: 768px) {
+    .ant-layout-sider {
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .demo-logo-vertical {
+        margin: 5px;
+    }
+    
+    .demo-logo-vertical img {
+        height: 30px;
+    }
+
+    /* Mobile header improvements */
+    .ant-layout-header {
+        height: 64px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* Mobile dropdown menu adjustments */
+    .ant-dropdown-menu {
+        min-width: 180px !important;
+        padding: 6px !important;
+    }
+
+    .ant-dropdown-menu-item {
+        padding: 6px 10px !important;
+        font-size: 13px !important;
+    }
+
+    /* Hide mobile user info classes since we're not using them anymore */
+    .mobile-user-info,
+    .mobile-username,
+    .mobile-user-role {
+        display: none;
+    }
+}
+
+/* Header specific fixes */
+.ant-layout-header {
+    height: 64px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.ant-layout-header .ant-row {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.ant-layout-header .ant-col {
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* Remove any conflicting line-height */
+.ant-layout-header * {
+    line-height: normal !important;
+}
+
 /* Switch improvements */
 .ant-switch {
     border-radius: 12px !important;
-    min-width: 48px !important;
-    height: 24px !important;
+    min-width: 44px !important;
+    height: 22px !important;
+}
+
+.ant-switch-small {
+    min-width: 36px !important;
+    height: 18px !important;
 }
 
 .ant-switch-checked {
@@ -120,37 +221,45 @@
     background: linear-gradient(135deg, #bfbfbf, #8c8c8c) !important;
 }
 
-
-.ant-dropdown-menu-item {
-    border-radius: 6px !important;
-    margin: 4px 8px !important;
-    transition: all 0.2s ease !important;
+.ant-switch-inner {
+    font-size: 10px !important;
 }
 
-.ant-dropdown-menu-item:hover {
-    background-color: rgba(0, 0, 0, 0.04) !important;
+/* Mobile header logo styles */
+.mobile-header-logo {
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
 }
 
-[data-theme="dark"] .ant-dropdown-menu {
-    background-color: #1f1f1f !important;
-    border: 1px solid #303030 !important;
+.mobile-header-logo img {
+    height: 32px;
+    object-fit: contain;
 }
 
-[data-theme="dark"] .ant-dropdown-menu-item:hover {
-    background-color: rgba(255, 255, 255, 0.08) !important;
+.mobile-header-title {
+    margin-left: 8px;
+    font-size: 18px;
+    font-weight: 600;
 }
 
-/* Switch improvements */
-.ant-switch {
-    border-radius: 12px !important;
-    min-width: 48px !important;
-    height: 24px !important;
+/* User info in header */
+.header-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 8px;
 }
 
-.ant-switch-checked {
-    background: linear-gradient(135deg, #1890ff, #096dd9) !important;
+.header-username {
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 600;
 }
 
-.ant-switch:not(.ant-switch-checked) {
-    background: linear-gradient(135deg, #bfbfbf, #8c8c8c) !important;
+.header-user-role {
+    font-size: 12px;
+    line-height: 16px;
+    opacity: 0.7;
 }
+
