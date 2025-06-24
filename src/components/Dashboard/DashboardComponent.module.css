@@ -18,65 +18,21 @@
   justify-content: center;
 }
 
-.analyticsCard .cardIcon {
+.analyticsCard:hover {
+  transform: translateY(-1px);
+}
+
+.cardIcon {
   position: absolute;
   top: 8px;
   right: 8px;
   opacity: 0.7;
 }
 
-.analyticsCard.mobile {
-  padding: 8px;
-  min-height: 70px;
-}
-
-.analyticsCard.desktop {
-  padding: 16px;
-  min-height: 100px;
-}
-
-.analyticsCard.mobile .cardIcon {
-  font-size: 16px;
-}
-
-.analyticsCard.desktop .cardIcon {
-  font-size: 20px;
-}
-
 .cardTitle {
   color: rgba(255, 255, 255, 0.9);
   display: block;
   margin-bottom: 2px;
-}
-
-.cardTitle.mobile {
-  font-size: 9px;
-}
-
-.cardTitle.desktop {
-  font-size: 12px;
-}
-
-.cardValue {
-  color: white;
-  font-weight: bold;
-  line-height: 1;
-}
-
-.cardValue.mobile {
-  font-size: 14px;
-}
-
-.cardValue.desktop {
-  font-size: 20px;
-}
-
-.cardSuffix.mobile {
-  font-size: 10px;
-}
-
-.cardSuffix.desktop {
-  font-size: 14px;
 }
 
 .loadingContainer {
@@ -88,16 +44,51 @@
   margin-top: 12px;
 }
 
-.contributionsCard {
-  /* Specific styles for contributions card if needed */
+.summaryRow {
+  margin: 0;
+}
+
+/* Tablet styles */
+@media (max-width: 1024px) {
+  .dashboardContainer {
+    padding: 10px;
+  }
 }
 
 @media (max-width: 768px) {
   .dashboardContainer {
     padding: 8px;
   }
+  
+  .summaryCard {
+    margin-bottom: 12px !important;
+  }
+  
+  .summaryRow > [class*="ant-col"] {
+    padding: 4px !important;
+  }
 }
 
-@media (max-width: 576px) {
-  /* Mobile specific styles */
+@media (max-width: 480px) {
+  .dashboardContainer {
+    padding: 6px;
+  }
+  
+  .analyticsCard {
+    border-radius: 6px;
+  }
+  
+  .loadingContainer {
+    padding: 20px;
+  }
+  
+  .loadingText {
+    margin-top: 8px;
+    font-size: 14px;
+  }
+  
+  .cardIcon {
+    top: 6px;
+    right: 6px;
+  }
 }

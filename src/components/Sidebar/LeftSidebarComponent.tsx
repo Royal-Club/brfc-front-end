@@ -51,6 +51,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   const navigate = useNavigate();
   const loginInfo = useSelector(selectLoginInfo);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
 
   const isUserAdmin = loginInfo.roles.includes("ADMIN");
 
@@ -94,27 +95,37 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   ];
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      const mobile = width < 768;
+      const tablet = width >= 768 && width < 1024;
+      
+      setIsMobile(mobile);
+      setIsTablet(tablet);
+      
+      // Auto-collapse on mobile and tablet
+      if (mobile || tablet) {
+        onToggleCollapse(true);
+      }
     };
 
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, [onToggleCollapse]);
 
   const onClick: MenuProps["onClick"] = (e) => {
     navigate(e.key);
-    // Close sidebar on mobile after navigation
-    if (isMobile) {
+    // Close sidebar on mobile/tablet after navigation
+    if (isMobile || isTablet) {
       onToggleCollapse(true);
     }
   };
 
   return (
     <>
-      {/* Mobile overlay */}
-      {isMobile && !collapsed && (
+      {/* Mobile/Tablet overlay */}
+      {(isMobile || isTablet) && !collapsed && (
         <div
           style={{
             position: 'fixed',
@@ -130,11 +141,10 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
       )}
       
       <Sider
-        width={260}
+        width={isMobile ? 240 : 260}
         theme={isDarkMode ? "dark" : "light"}
         breakpoint="lg"
         onBreakpoint={(broken: any) => {
-          // Auto collapse on mobile
           if (broken && !collapsed) {
             onToggleCollapse(true);
           }
@@ -144,10 +154,11 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         }}
         style={{
           height: "100vh",
-          position: isMobile ? 'fixed' : 'relative',
-          left: isMobile && collapsed ? '-260px' : '0',
-          zIndex: isMobile ? 1000 : 'auto',
-          transition: isMobile ? 'left 0.2s ease-in-out' : 'all 0.2s ease-in-out',
+          position: (isMobile || isTablet) ? 'fixed' : 'relative',
+          left: (isMobile || isTablet) && collapsed ? '-260px' : '0',
+          zIndex: (isMobile || isTablet) ? 1000 : 'auto',
+          transition: (isMobile || isTablet) ? 'left 0.2s ease-in-out' : 'all 0.2s ease-in-out',
+          overflow: 'hidden',
         }}
         trigger={null}
         collapsible
@@ -158,14 +169,22 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
           onClick={() => navigate("/")}
           style={{
             cursor: "pointer",
+            padding: isMobile ? '12px' : '16px',
           }}
         >
-          <img src={companyLogo} alt="" />
+          <img 
+            src={companyLogo} 
+            alt="" 
+            style={{
+              height: isMobile ? '28px' : '32px',
+              objectFit: 'contain'
+            }}
+          />
           <Title
             level={2}
             style={{
-              margin: collapsed ? "0px" : "0 80px 0 10px",
-              fontSize: collapsed ? "0px" : "32px",
+              margin: collapsed ? "0px" : `0 ${isMobile ? '60px' : '80px'} 0 10px`,
+              fontSize: collapsed ? "0px" : isMobile ? "28px" : "32px",
               transition: "all 0.2s ease-in-out",
             }}
           >
@@ -181,8 +200,10 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
             borderRight: 0,
             height: "calc(100vh - 64px)",
             overflow: "auto",
+            fontSize: isMobile ? '14px' : '16px'
           }}
           theme={isDarkMode ? "dark" : "light"}
+          inlineIndent={isMobile ? 16 : 24}
         />
       </Sider>
     </>

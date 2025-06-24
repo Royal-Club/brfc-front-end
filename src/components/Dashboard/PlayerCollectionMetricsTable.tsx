@@ -46,6 +46,7 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"ascend" | "descend" | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
   const [mobileView, setMobileView] = useState<'cards' | 'table'>('cards');
 
   const now = new Date();
@@ -93,7 +94,7 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
     });
   }, [metrics, filter]);
 
-  // Helper function to create a month column
+  // Helper function to create a month column with responsive width
   const createMonthColumn = (
     monthName: string,
     monthNumber: number
@@ -102,7 +103,6 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
     dataIndex: `month_${monthNumber}`,
     key: `month_${monthNumber}`,
     align: "center",
-    width: window.innerWidth <= 576 ? 55 : 70,
     className: "month-column",
     sorter: (a, b) => (a[`month_${monthNumber}`] || 0) - (b[`month_${monthNumber}`] || 0),
     sortOrder: sortField === `month_${monthNumber}` ? sortOrder : null,
@@ -112,9 +112,13 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       const isActive = playerData?.active ?? false;
 
       if (isCurrentCell && amount <= 0 && isActive) {
-        return <span style={{ fontWeight: "bold" }}>Due</span>;
+        return <span className={styles.dueText}>Due</span>;
       }
-      return amount > 0 ? amount.toFixed(0) : "";
+      return amount > 0 ? (
+        <span className={styles.amountText}>
+          {amount.toFixed(0)}
+        </span>
+      ) : "";
     },
     onCell: (record: TableRow) => {
       const isCurrentCell = selectedYear === currentYear && monthNumber === currentMonth;
@@ -124,13 +128,7 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       const showWarning = isCurrentCell && amount <= 0 && isActive;
 
       return {
-        style: {
-          minWidth: window.innerWidth <= 576 ? 30 : 40,
-          paddingLeft: window.innerWidth <= 576 ? 2 : 8,
-          paddingRight: window.innerWidth <= 576 ? 2 : 8,
-          whiteSpace: "nowrap",
-          backgroundColor: showWarning ? token.colorWarningBg : undefined,
-        },
+        className: showWarning ? styles.warningCell : '',
       };
     },
   });
@@ -141,44 +139,35 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       dataIndex: "index",
       key: "index",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 35 : 50,
+      className: "index-column",
       sorter: (a, b) => a.index - b.index,
       sortOrder: sortField === "index" ? sortOrder : null,
       defaultSortOrder: "ascend",
-      render: (_: any, __: any, index: number) => index + 1,
-      onCell: () => ({ 
-        style: { 
-          minWidth: window.innerWidth <= 576 ? 30 : 45, 
-          paddingLeft: window.innerWidth <= 576 ? 4 : 8, 
-          paddingRight: window.innerWidth <= 576 ? 4 : 8 
-        } 
-      }),
+      render: (_: any, __: any, index: number) => (
+        <span className={styles.indexText}>
+          {index + 1}
+        </span>
+      ),
     },
     {
       title: "Name",
       dataIndex: "playerName",
       key: "playerName",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 90 : (window.innerWidth <= 768 ? 110 : 180),
+      className: "name-column",
       sorter: (a, b) => a.playerName.localeCompare(b.playerName),
       sortOrder: sortField === "playerName" ? sortOrder : null,
       render: (text: string) => {
-        const isMobile = window.innerWidth <= 576;
-        const isTablet = window.innerWidth <= 768;
-        const maxLength = isMobile ? 10 : isTablet ? 12 : 20;
+        const maxLength = isMobile ? 8 : isTablet ? 12 : 20;
         const shouldTruncate = text.length > maxLength;
         const displayText = shouldTruncate ? text.substring(0, maxLength) + '...' : text;
         
         const nameElement = (
-          <b style={{ 
-            fontSize: isMobile ? '11px' : undefined,
-            cursor: shouldTruncate ? 'help' : 'default'
-          }}>
+          <b className={styles.nameText}>
             {displayText}
           </b>
         );
 
-        // Only show tooltip if text is truncated
         if (shouldTruncate) {
           return (
             <Tooltip 
@@ -197,13 +186,6 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
 
         return nameElement;
       },
-      onCell: () => ({ 
-        style: { 
-          minWidth: window.innerWidth <= 576 ? 80 : 140, 
-          paddingLeft: window.innerWidth <= 576 ? 4 : 8, 
-          paddingRight: window.innerWidth <= 576 ? 4 : 8 
-        } 
-      }),
     },
     ...monthNames.map((month, idx) =>
       createMonthColumn(month, idx + 1)
@@ -243,17 +225,20 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
   };
 
   React.useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth <= 768;
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      const mobile = width <= 768;
+      const tablet = width <= 1024 && width > 768;
       setIsMobile(mobile);
+      setIsTablet(tablet);
       if (!mobile) {
-        setMobileView('table'); // Always use table on desktop
+        setMobileView('table');
       }
     };
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   const renderMobileCards = () => {
@@ -330,14 +315,10 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       <div className={styles.controls}>
         <Space 
           wrap 
-          style={{ 
-            width: "100%", 
-            justifyContent: window.innerWidth <= 768 ? "center" : "flex-start" 
-          }}
+          className={styles.controlsSpace}
         >
           <Select
-            size="small"
-            style={{ width: window.innerWidth <= 768 ? "100%" : 150 }}
+            className={styles.yearSelect}
             placeholder="Select Year"
             value={selectedYear || undefined}
             onChange={handleYearChange}
@@ -357,14 +338,17 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
             disabled={isLoading}
             optionType="button"
             buttonStyle="solid"
-            size="small"
-            style={{ width: window.innerWidth <= 768 ? "100%" : "auto" }}
+            className={styles.filterGroup}
           >
             <Radio.Button value="all">All</Radio.Button>
             <Radio.Button value="active">Active</Radio.Button>
             <Radio.Button value="inactive">Inactive</Radio.Button>
           </Radio.Group>
-          <Button size="small" onClick={resetSorting} disabled={!sortField}>
+          <Button 
+            className={styles.resetButton}
+            onClick={resetSorting} 
+            disabled={!sortField}
+          >
             Reset Sort
           </Button>
         </Space>
@@ -390,12 +374,11 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
         </div>
       )}
 
-      {/* Conditional rendering for mobile */}
+      {/* Conditional rendering for mobile/tablet */}
       {isMobile ? (
         mobileView === 'cards' ? (
           renderMobileCards()
         ) : (
-          /* Mobile Table View */
           <div className={`${styles.table} ${styles.mobileTableView}`}>
             <Table
               size="small"
@@ -412,10 +395,9 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
           </div>
         )
       ) : (
-        /* Desktop Table View */
         <div className={styles.table}>
           <Table
-            size="small"
+            size={isTablet ? "small" : "middle"}
             bordered
             columns={columns}
             dataSource={dataSource}
@@ -435,3 +417,4 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
 
 
 export default PlayerCollectionMetrics;
+             
