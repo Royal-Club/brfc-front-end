@@ -11,8 +11,9 @@ import {
     Space,
     Switch,
     theme,
+    Typography,
 } from "antd";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useAuthHook } from "../../hooks/useAuthHook";
@@ -38,6 +39,7 @@ import TournamentsPage from "../Tournaments/TournamentsPage";
 import Venue from "../Venue/Venue";
 import ContentOutlet from "./ContentOutlet";
 import ClubRules from "../ClubRules/ClubRules";
+import companyLogo from "../../assets/logo.png";
 
 const { Header, Content } = Layout;
 
@@ -59,12 +61,15 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     } = theme.useToken();
     const loginInfo = useSelector(selectLoginInfo);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     const { user, logout } = useAuthHook();
     const navigate = useNavigate();
 
     const { data: playerProfileData, refetch } = useGetUserProfileQuery({
-        id: loginInfo?.userId,
+        id: loginInfo?.userId || "",
+    }, {
+        skip: !loginInfo?.userId
     });
 
     const handleSettingsClick = () => {
@@ -115,9 +120,22 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
         },
     ];
 
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
+
     return (
         <>
-            <Layout>
+            <Layout style={{ 
+                marginLeft: isMobile ? 0 : 0,
+                minHeight: '100vh'
+            }}>
                 {user?.token && (
                     <Header
                         style={{
@@ -180,7 +198,8 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 )}
                 <Content
                     style={{
-                        minHeight: 360,
+                        minHeight: 'calc(100vh - 64px)',
+                        overflow: 'auto',
                     }}
                 >
                     <Routes>
@@ -245,7 +264,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                         </Route>
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
-                    {playerProfileData && (
+                    {playerProfileData && loginInfo?.userId && (
                         <SettingsModal
                             visible={isModalVisible}
                             onClose={handleModalClose}
@@ -268,5 +287,6 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
         </>
     );
 };
+
 
 export default ContentComponent;

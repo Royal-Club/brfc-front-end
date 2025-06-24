@@ -6,11 +6,19 @@ import { useGetAcBalanceSummaryListQuery } from "../../../state/features/account
 import IAccountBalanceSummary from "../../../interfaces/IAccountBalanceSummary";
 
 function AccountBalanceSummary() {
-    const { data, error, isLoading, refetch } =
-        useGetAcBalanceSummaryListQuery();
-    const [accountSummary, setAccountSummary] = useState<
-        IAccountBalanceSummary[]
-    >([]);
+    const { data, error, isLoading, refetch } = useGetAcBalanceSummaryListQuery();
+    const [accountSummary, setAccountSummary] = useState<IAccountBalanceSummary[]>([]);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     useEffect(() => {
         refetch();
@@ -64,34 +72,40 @@ function AccountBalanceSummary() {
 
     // Return loading or error state
     if (isLoading) {
-        return <div>Loading...</div>;
+        return <div style={{ padding: isMobile ? '16px' : '24px' }}>Loading...</div>;
     }
 
     if (error) {
-        return <div>Failed to load account summary</div>;
+        return <div style={{ padding: isMobile ? '16px' : '24px' }}>Failed to load account summary</div>;
     }
 
     return (
-        <>
+        <div style={{ padding: isMobile ? '16px' : '24px', minHeight: '100vh' }}>
             <Row>
-                <Col md={24}>
+                <Col span={24}>
                     <div>
-                        <Title level={3}>Account Balances Summary</Title>
+                        <Title level={3} style={{ fontSize: isMobile ? '18px' : '24px' }}>Account Balances Summary</Title>
                         <Table
                             loading={isLoading}
-                            size="small"
+                            size={isMobile ? "small" : "middle"}
                             dataSource={accountSummary}
                             columns={accountSummaryColumns}
                             pagination={{
                                 showTotal: (total) => `Total ${total} records`,
+                                showSizeChanger: !isMobile,
+                                showQuickJumper: !isMobile,
+                                size: isMobile ? "small" : "default",
                             }}
-                            scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
+                            scroll={{ 
+                                x: isMobile ? 600 : "max-content",
+                                y: isMobile ? "60vh" : undefined
+                            }}
                             rowKey={(record) => record.accountType}
                         />
                     </div>
                 </Col>
             </Row>
-        </>
+        </div>
     );
 }
 

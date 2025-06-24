@@ -44,3 +44,87 @@ code {
 .ant-table-row:hover{
     cursor: pointer;
 }
+
+/* Mobile table improvements for all account pages */
+@media (max-width: 768px) {
+    .ant-table-wrapper {
+        font-size: 12px;
+    }
+    
+    .ant-table-small .ant-table-thead > tr > th {
+        background: rgba(0, 0, 0, 0.02);
+        padding: 8px 4px !important;
+        font-size: 11px;
+    }
+    
+    .ant-table-small .ant-table-tbody > tr > td {
+        border-bottom: 1px solid #f0f0f0;
+        padding: 6px 4px !important;
+        font-size: 11px;
+    }
+    
+    /* Better touch targets for mobile */
+    .ant-table-tbody > tr {
+        min-height: 40px;
+    }
+    
+    /* Responsive pagination */
+    .ant-pagination {
+        font-size: 12px;
+    }
+    
+    .ant-pagination-options {
+        display: none;
+    }
+}
+
+/* Fix layout height issues */
+.ant-layout {
+    min-height: 100vh;
+}
+
+.ant-layout-content {
+    background: transparent;
+}
+
+/* User dropdown menu improvements */
+.ant-dropdown {
+    border-radius: 8px;
+}
+
+.ant-avatar {
+    transition: all 0.2s ease;
+}
+
+.ant-avatar:hover {
+    transform: scale(1.05);
+}
+
+/* Theme-specific improvements */
+@media (prefers-color-scheme: dark) {
+    .ant-layout-header {
+        border-bottom-color: #303030 !important;
+    }
+}
+
+@media (prefers-color-scheme: light) {
+    .ant-layout-header {
+        border-bottom-color: #f0f0f0 !important;
+    }
+}
+
+/* Better mobile header spacing */
+@media (max-width: 768px) {
+    .ant-layout-header .ant-row {
+        padding: 0 8px;
+    }
+    
+    .ant-layout-header .ant-typography {
+        font-size: 16px !important;
+    }
+}
+
+/* Smooth transitions for all interactive elements */
+.ant-btn, .ant-switch, .ant-dropdown-trigger {
+    transition: all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}

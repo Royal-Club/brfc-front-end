@@ -6,7 +6,9 @@ import {
   TeamOutlined,
   SearchOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined
+  CloseCircleOutlined,
+  SkypeOutlined,
+  PhoneOutlined
 } from "@ant-design/icons";
 import { 
   Button, 
@@ -301,11 +303,11 @@ function Players() {
       render: (_, record: IPlayer) => (
         <Space direction="vertical" size="small">
           <div>
-            <Text type="secondary">Skype: </Text>
+            <SkypeOutlined style={{ color: '#1890ff', marginRight: 6 }} />
             <Text>{record.skypeId}</Text>
           </div>
           <div>
-            <Text type="secondary">Mobile: </Text>
+            <PhoneOutlined style={{ color: '#1890ff', marginRight: 6 }} />
             <Text>{record.mobileNo}</Text>
           </div>
         </Space>
@@ -325,22 +327,6 @@ function Players() {
         <Tag color={active ? "success" : "error"} icon={active ? <CheckCircleOutlined /> : <CloseCircleOutlined />}>
           {active ? "Active" : "Inactive"}
         </Tag>
-      ),
-    },
-    {
-      title: "Dates",
-      key: "dates",
-      render: (_: any, record: IPlayer) => (
-        <Space direction="vertical" size="small">
-          <div>
-            <Text type="secondary">Created: </Text>
-            <Text>{moment.utc(record.createdDate).local().format("DD-MMM-YYYY")}</Text>
-          </div>
-          <div>
-            <Text type="secondary">Modified: </Text>
-            <Text>{moment.utc(record.updatedDate).local().format("DD-MMM-YYYY")}</Text>
-          </div>
-        </Space>
       ),
     },
   ];

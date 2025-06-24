@@ -311,67 +311,75 @@ export default function JoinTournament() {
                 </Space>
               </Col>
               <Col xs={24} lg={8}>
-                <Row gutter={[4, 4]}>
+                <Row gutter={[4, 4]} className="tournament-stats-row">
                   <Col xs={12} sm={6}>
-                    <Card size="small" style={{ 
-                      textAlign: 'center',
-                      borderColor: token.colorBorder,
-                      padding: '4px'
-                    }}>
-                      <Space direction="vertical" size={1}>
-                        <TeamOutlined style={{ fontSize: 12, color: '#1890ff' }} />
-                        <Text strong style={{ 
-                          fontSize: 14,
-                          color: token.colorText
-                        }}>{players.length}</Text>
-                        <Text type="secondary" style={{ fontSize: 9 }}>Total</Text>
-                      </Space>
-                    </Card>
+                    <Tooltip title="Total Players" placement="top">
+                      <Card size="small" style={{ 
+                        textAlign: 'center',
+                        borderColor: token.colorBorder,
+                        padding: '4px',
+                        cursor: 'pointer'
+                      }}>
+                        <Space direction="vertical" size={1}>
+                          <TeamOutlined style={{ fontSize: 12, color: '#1890ff' }} />
+                          <Text strong style={{ 
+                            fontSize: 14,
+                            color: token.colorText
+                          }}>{players.length}</Text>
+                        </Space>
+                      </Card>
+                    </Tooltip>
                   </Col>
                   <Col xs={12} sm={6}>
-                    <Card size="small" style={{ 
-                      textAlign: 'center',
-                      borderColor: token.colorBorder,
-                      padding: '4px'
-                    }}>
-                      <Space direction="vertical" size={1}>
-                        <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: 12 }} />
-                        <Text strong style={{ fontSize: 14, color: '#52c41a' }}>
-                          {participatingPlayers.length}
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: 9 }}>Participating</Text>
-                      </Space>
-                    </Card>
+                    <Tooltip title="Participating" placement="top">
+                      <Card size="small" style={{ 
+                        textAlign: 'center',
+                        borderColor: token.colorBorder,
+                        padding: '4px',
+                        cursor: 'pointer'
+                      }}>
+                        <Space direction="vertical" size={1}>
+                          <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: 12 }} />
+                          <Text strong style={{ fontSize: 14, color: '#52c41a' }}>
+                            {participatingPlayers.length}
+                          </Text>
+                        </Space>
+                      </Card>
+                    </Tooltip>
                   </Col>
                   <Col xs={12} sm={6}>
-                    <Card size="small" style={{ 
-                      textAlign: 'center',
-                      borderColor: token.colorBorder,
-                      padding: '4px'
-                    }}>
-                      <Space direction="vertical" size={1}>
-                        <CloseCircleOutlined style={{ fontSize: 12, color: '#ff4d4f' }} />
-                        <Text strong style={{ fontSize: 14, color: '#ff4d4f' }}>
-                          {notParticipatingPlayers.length}
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: 9 }}>Not Participating</Text>
-                      </Space>
-                    </Card>
+                    <Tooltip title="Not Participating" placement="top">
+                      <Card size="small" style={{ 
+                        textAlign: 'center',
+                        borderColor: token.colorBorder,
+                        padding: '4px',
+                        cursor: 'pointer'
+                      }}>
+                        <Space direction="vertical" size={1}>
+                          <CloseCircleOutlined style={{ fontSize: 12, color: '#ff4d4f' }} />
+                          <Text strong style={{ fontSize: 14, color: '#ff4d4f' }}>
+                            {notParticipatingPlayers.length}
+                          </Text>
+                        </Space>
+                      </Card>
+                    </Tooltip>
                   </Col>
                   <Col xs={12} sm={6}>
-                    <Card size="small" style={{ 
-                      textAlign: 'center',
-                      borderColor: token.colorBorder,
-                      padding: '4px'
-                    }}>
-                      <Space direction="vertical" size={1}>
-                        <ClockCircleOutlined style={{ fontSize: 12, color: '#faad14' }} />
-                        <Text strong style={{ fontSize: 14, color: '#faad14' }}>
-                          {pendingPlayers.length}
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: 9 }}>Pending</Text>
-                      </Space>
-                    </Card>
+                    <Tooltip title="Pending Response" placement="top">
+                      <Card size="small" style={{ 
+                        textAlign: 'center',
+                        borderColor: token.colorBorder,
+                        padding: '4px',
+                        cursor: 'pointer'
+                      }}>
+                        <Space direction="vertical" size={1}>
+                          <ClockCircleOutlined style={{ fontSize: 12, color: '#faad14' }} />
+                          <Text strong style={{ fontSize: 14, color: '#faad14' }}>
+                            {pendingPlayers.length}
+                          </Text>
+                        </Space>
+                      </Card>
+                    </Tooltip>
                   </Col>
                 </Row>
               </Col>

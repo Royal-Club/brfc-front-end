@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
 import { Layout, Menu, Typography } from "antd";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
@@ -42,13 +42,15 @@ interface LeftSidebarComponentProps {
   onToggleCollapse: (value: boolean) => void;
   isDarkMode: boolean;
 }
+
 const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   collapsed,
   onToggleCollapse,
-  isDarkMode, // New prop for dark mode
+  isDarkMode,
 }) => {
   const navigate = useNavigate();
   const loginInfo = useSelector(selectLoginInfo);
+  const [isMobile, setIsMobile] = useState(false);
 
   const isUserAdmin = loginInfo.roles.includes("ADMIN");
 
@@ -91,23 +93,62 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
     getItem("Club Rules", "/club-rules", <BookOutlined />),
   ];
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const onClick: MenuProps["onClick"] = (e) => {
     navigate(e.key);
+    // Close sidebar on mobile after navigation
+    if (isMobile) {
+      onToggleCollapse(true);
+    }
   };
 
   return (
     <>
+      {/* Mobile overlay */}
+      {isMobile && !collapsed && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 999,
+          }}
+          onClick={() => onToggleCollapse(true)}
+        />
+      )}
+      
       <Sider
         width={260}
-        theme={isDarkMode ? "dark" : "light"} // Change theme based on dark mode
+        theme={isDarkMode ? "dark" : "light"}
         breakpoint="lg"
         onBreakpoint={(broken: any) => {
-          // handle breakpoint
+          // Auto collapse on mobile
+          if (broken && !collapsed) {
+            onToggleCollapse(true);
+          }
         }}
         onCollapse={(collapsed: any, type: any) => {
           onToggleCollapse(collapsed);
         }}
-        style={{ height: "100vh" }}
+        style={{
+          height: "100vh",
+          position: isMobile ? 'fixed' : 'relative',
+          left: isMobile && collapsed ? '-260px' : '0',
+          zIndex: isMobile ? 1000 : 'auto',
+          transition: isMobile ? 'left 0.2s ease-in-out' : 'all 0.2s ease-in-out',
+        }}
         trigger={null}
         collapsible
         collapsed={collapsed}
@@ -125,6 +166,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
             style={{
               margin: collapsed ? "0px" : "0 80px 0 10px",
               fontSize: collapsed ? "0px" : "32px",
+              transition: "all 0.2s ease-in-out",
             }}
           >
             BRFC
@@ -140,7 +182,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
             height: "calc(100vh - 64px)",
             overflow: "auto",
           }}
-          theme={isDarkMode ? "dark" : "light"} // Apply dark theme
+          theme={isDarkMode ? "dark" : "light"}
         />
       </Sider>
     </>
