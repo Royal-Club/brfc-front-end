@@ -8,7 +8,7 @@ import CreateTournament from "./Atoms/CreateTournamentModal";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { showBdLocalTime } from "../../utils/utils";
-import { CalendarOutlined, EnvironmentOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
 
 const { Header } = Layout;
 const { Title, Text } = Typography;
@@ -367,7 +367,7 @@ const TournamentsPage: React.FC = () => {
               )}
             </Space>
             
-            {Array.from({ length: 5 }).map((_, index) => (
+            {Array.from({ length: 7 }).map((_, index) => (
               <Card key={index} style={{ marginBottom: 12 }}>
                 <Skeleton active paragraph={{ rows: 2 }} />
               </Card>
@@ -417,14 +417,9 @@ const TournamentsPage: React.FC = () => {
   if (isMobile) {
     return (
       <div className="tournaments-mobile-container" style={{ 
-        height: '100vh', 
-        display: 'flex', 
-        flexDirection: 'column',
-        overflow: 'hidden',
         padding: '8px'
       }}>
         <div style={{
-          flexShrink: 0,
           marginBottom: '12px'
         }}>
           <Row justify="space-between" align="middle" style={{ marginBottom: 0 }}>
@@ -438,11 +433,8 @@ const TournamentsPage: React.FC = () => {
         </div>
 
         <div 
-          className="mobile-tournament-container mobile-tournament-scroll" 
+          className="mobile-tournament-container" 
           style={{ 
-            flex: 1, 
-            overflowY: 'auto',
-            overflowX: 'hidden',
             marginBottom: '12px',
             padding: 0
           }}
@@ -458,7 +450,7 @@ const TournamentsPage: React.FC = () => {
           )}
         </div>
 
-        <div style={{ flexShrink: 0 }}>
+        <div>
           <Pagination
             current={currentPage}
             pageSize={pageSize}
@@ -518,5 +510,6 @@ const TournamentsPage: React.FC = () => {
     </>
   );
 };
+
 
 export default TournamentsPage;

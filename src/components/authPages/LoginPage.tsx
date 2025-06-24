@@ -169,139 +169,53 @@ const LoginPage: React.FC = () => {
 
     return (
         <div className={`login-page-wrapper ${backgroundLoaded ? 'bg-loaded' : ''}`}>
-            <div
-                className="login-form-container"
-                style={{
-                    maxWidth: "1100px",
-                    width: "100%",
-                    borderRadius: "24px",
-                    boxShadow: "0 30px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.05)",
-                    overflow: "hidden",
-                    display: "flex",
-                    minHeight: "600px",
-                }}
-            >
+            <div className="login-form-container">
                 {/* Enhanced Left Side - Logo and Branding */}
-                <div
-                    className="login-left-section"
-                    style={{
-                        flex: 1,
-                        padding: "50px 40px",
-                        textAlign: "center",
-                        borderRight: "1px solid rgba(240, 240, 240, 0.5)",
-                    }}
-                >
+                <div className="login-left-section">
                     <div className="login-left-content">
                         <img
                             className="club-logo"
-                            style={{ 
-                                maxWidth: "220px", 
-                                width: "100%",
-                                marginBottom: "35px",
-                            }}
                             src={require("../../assets/logo.png")}
                             alt="royal club football logo"
                         />
-                        <h1
-                            className="club-title"
-                            style={{
-                                marginBottom: "18px",
-                                fontWeight: "700",
-                                fontSize: "32px",
-                                lineHeight: "1.2",
-                                letterSpacing: "-0.5px",
-                            }}
-                        >
+                        <h1 className="club-title">
                             Royal Football Club
                         </h1>
-                        <h3
-                            className="club-subtitle"
-                            style={{
-                                marginBottom: "25px",
-                                fontWeight: "500",
-                                fontSize: "18px",
-                                letterSpacing: "0.5px",
-                            }}
-                        >
+                        <h3 className="club-subtitle">
                             Management System
                         </h3>
-                        
                     </div>
                 </div>
 
                 {/* Enhanced Right Side - Login Form */}
-                <div
-                    className="login-right-section"
-                    style={{
-                        flex: 1,
-                        padding: "60px 50px",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                    }}
-                >
+                <div className="login-right-section">
                     {/* Enhanced Mobile Logo Section */}
-                    <div className="mobile-logo-section" style={{ 
-                        textAlign: "center", 
-                        marginBottom: "15px",
-                    }}>
+                    <div className="mobile-logo-section">
                         <img
                             className="club-logo"
-                            style={{ 
-                                minWidth: "140px",
-                                maxWidth: "140px", 
-                                width: "100%",
-                                marginBottom: "10px",
-                            }}
                             src={require("../../assets/logo.png")}
                             alt="royal club football logo"
+                            style={{ width: "80px", height: "80px" }}
                         />
-                        <h1 className="mobile-club-title" style={{
-                            marginBottom: "15px",
-                            fontWeight: "700",
-                            fontSize: "24px",
-                            lineHeight: "1.2",
-                            textAlign: "center",
-                            letterSpacing: "-0.5px",
-                        }}>
+                        <h1 className="mobile-club-title">
                             Royal Football Club
                         </h1>
                     </div>
 
-                    <div style={{ marginBottom: "25px" }}>
-                        <h2 className="welcome-back-heading" style={{
-                            color: "#1e293b",
-                            marginBottom: "6px",
-                            fontWeight: "600",
-                            fontSize: "28px",
-                            lineHeight: "1.3",
-                        }}>
+                    <div className="welcome-section">
+                        <h2 className="welcome-back-heading">
                             Welcome Back
                         </h2>
                    
-                        <p className="welcome-text" style={{ 
-                            color: colors.grayDark, 
-                            margin: 0,
-                            fontSize: "16px",
-                            lineHeight: "1.5"
-                        }}>
+                        <p className="welcome-text">
                             Sign in to access your dashboard and manage your team
                         </p>
                     </div>
 
                     <form onSubmit={onFinish}>
-                        {/* Email Input - keeping existing design */}
-                        <div className="form-group" style={{ marginBottom: "30px" }}>
-                            <label
-                                htmlFor="email"
-                                style={{
-                                    display: "block",
-                                    marginBottom: "12px",
-                                    color: colors.grayDark,
-                                    fontWeight: "500",
-                                    fontSize: "14px",
-                                }}
-                            >
+                        {/* Email Input */}
+                        <div className="form-group">
+                            <label htmlFor="email" className="form-label" style={{ color: colors.grayDark }}>
                                 <UserOutlined style={{ marginRight: 8 }} />
                                 Email Address
                             </label>
@@ -312,50 +226,22 @@ const LoginPage: React.FC = () => {
                                 placeholder="Enter your email address"
                                 value={loginData.email}
                                 onChange={onInputChange}
-                                className="underline-input"
-                                style={{
-                                    width: "100%",
-                                    padding: "12px 0",
-                                    fontSize: "16px",
-                                    border: "none",
-                                    borderBottom: `2px solid ${
-                                        errors.email ? "#ff4d4f" : "#e8e8e8"
-                                    }`,
-                                    background: "transparent",
-                                    outline: "none",
-                                    transition: "border-color 0.3s",
-                                }}
+                                className={`underline-input ${errors.email ? 'error' : ''}`}
                             />
                             {errors.email && (
-                                <div
-                                    className="error-message"
-                                    style={{
-                                        color: "#ff4d4f",
-                                        fontSize: "12px",
-                                        marginTop: "8px",
-                                    }}
-                                >
+                                <div className="error-message">
                                     {errors.email}
                                 </div>
                             )}
                         </div>
 
-                        {/* Password Input - keeping existing design */}
-                        <div className="form-group" style={{ marginBottom: "30px" }}>
-                            <label
-                                htmlFor="password"
-                                style={{
-                                    display: "block",
-                                    marginBottom: "12px",
-                                    color: colors.grayDark,
-                                    fontWeight: "500",
-                                    fontSize: "14px",
-                                }}
-                            >
+                        {/* Password Input */}
+                        <div className="form-group">
+                            <label htmlFor="password" className="form-label" style={{ color: colors.grayDark }}>
                                 <LockOutlined style={{ marginRight: 8 }} />
                                 Password
                             </label>
-                            <div style={{ position: "relative" }}>
+                            <div className="password-input-container">
                                 <input
                                     type={passwordVisible ? "text" : "password"}
                                     name="password"
@@ -363,31 +249,12 @@ const LoginPage: React.FC = () => {
                                     placeholder="Enter your password"
                                     value={loginData.password}
                                     onChange={onInputChange}
-                                    className="underline-input"
-                                    style={{
-                                        width: "100%",
-                                        padding: "12px 40px 12px 0",
-                                        fontSize: "16px",
-                                        border: "none",
-                                        borderBottom: `2px solid ${
-                                            errors.password ? "#ff4d4f" : "#e8e8e8"
-                                        }`,
-                                        background: "transparent",
-                                        outline: "none",
-                                        transition: "border-color 0.3s",
-                                    }}
+                                    className={`underline-input password-input ${errors.password ? 'error' : ''}`}
                                 />
                                 <div
                                     onClick={() => setPasswordVisible((prev) => !prev)}
-                                    style={{
-                                        position: "absolute",
-                                        right: 0,
-                                        top: "50%",
-                                        transform: "translateY(-50%)",
-                                        cursor: "pointer",
-                                        color: colors.grayDark,
-                                        padding: "5px",
-                                    }}
+                                    className="password-toggle"
+                                    style={{ color: colors.grayDark }}
                                 >
                                     {passwordVisible ? (
                                         <EyeInvisibleOutlined />
@@ -397,20 +264,13 @@ const LoginPage: React.FC = () => {
                                 </div>
                             </div>
                             {errors.password && (
-                                <div
-                                    className="error-message"
-                                    style={{
-                                        color: "#ff4d4f",
-                                        fontSize: "12px",
-                                        marginTop: "8px",
-                                    }}
-                                >
+                                <div className="error-message">
                                     {errors.password}
                                 </div>
                             )}
                         </div>
 
-                        <div style={{ marginBottom: "25px" }}>
+                        <div className="checkbox-container">
                             <Checkbox
                                 checked={rememberPassword}
                                 onChange={(e) => handleRememberPasswordChange(e.target.checked)}
@@ -429,13 +289,6 @@ const LoginPage: React.FC = () => {
                             loading={loading}
                             block
                             className="login-btn"
-                            style={{
-                                height: "52px",
-                                fontSize: "16px",
-                                fontWeight: "600",
-                                borderRadius: "12px",
-                                marginBottom: "20px",
-                            }}
                         >
                             {loading ? "Signing In..." : "Sign In to Dashboard"}
                         </Button>
@@ -448,4 +301,4 @@ const LoginPage: React.FC = () => {
 
 
 export default LoginPage;
-
+                             

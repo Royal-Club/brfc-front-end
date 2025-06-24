@@ -253,7 +253,7 @@ function Player() {
                                                 <Input 
                                                     prefix={<UserOutlined style={{ color: '#bfbfbf' }} />} 
                                                     placeholder="Player's full name" 
-                                                    size="large"
+                                                    size="middle"
                                                 />
                                             </Form.Item>
                                         </Col>
