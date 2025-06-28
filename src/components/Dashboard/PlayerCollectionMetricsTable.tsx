@@ -1,6 +1,16 @@
 import React, { useState, useMemo } from "react";
 import { Table, Select, Space, Radio, Button, theme, Tooltip, Card, Row, Col, Typography } from "antd";
-import { TableOutlined, AppstoreOutlined, BarChartOutlined } from "@ant-design/icons";
+import { 
+  TableOutlined, 
+  AppstoreOutlined, 
+  BarChartOutlined, 
+  CalendarOutlined,
+  TeamOutlined,
+  UserOutlined,
+  UserAddOutlined,
+  UserDeleteOutlined,
+  ReloadOutlined
+} from "@ant-design/icons";
 import type {
   ColumnType,
   ColumnsType,
@@ -35,12 +45,14 @@ interface PlayerCollectionMetricsProps {
   selectedYear?: number;
   onYearChange?: (year: number) => void;
   className?: string;
+  isDarkMode?: boolean;
 }
 
 const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
   selectedYear: propSelectedYear,
   onYearChange,
-  className
+  className,
+  isDarkMode = false
 }) => {
   const { token } = theme.useToken();
   const [internalSelectedYear, setInternalSelectedYear] = useState<number | null>(null);
@@ -139,20 +151,53 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
 
   const columns: ColumnsType<TableRow> = [
     {
-      title: "#",
-      dataIndex: "index",
-      key: "index",
+      title: (
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          minWidth: 80
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <CalendarOutlined style={{ fontSize: 10, color: token.colorPrimary }} />
+            <span style={{ 
+              fontSize: 11,
+              display: window.innerWidth <= 768 ? 'none' : 'inline'
+            }}>
+              Year
+            </span>
+          </div>
+          <Select
+            size="small"
+            style={{ width: window.innerWidth <= 768 ? 85 : 70 }}
+            value={selectedYear || undefined}
+            onChange={handleYearChange}
+            loading={isLoading}
+            disabled={isLoading}
+            dropdownStyle={{ minWidth: 60 }}
+            className={styles.headerYearSelect}
+          >
+            {years.map((year: number) => (
+              <Option key={year} value={year}>
+                {year}
+              </Option>
+            ))}
+          </Select>
+        </div>
+      ),
+      dataIndex: "year",
+      key: "year",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 35 : 50,
-      sorter: (a, b) => a.index - b.index,
-      sortOrder: sortField === "index" ? sortOrder : null,
-      defaultSortOrder: "ascend",
-      render: (_: any, __: any, index: number) => index + 1,
+      width: window.innerWidth <= 576 ? 90 : 110,
+      align: "center",
+      render: () => selectedYear,
       onCell: () => ({ 
         style: { 
-          minWidth: window.innerWidth <= 576 ? 30 : 45, 
-          paddingLeft: window.innerWidth <= 576 ? 4 : 8, 
-          paddingRight: window.innerWidth <= 576 ? 4 : 8 
+          minWidth: window.innerWidth <= 576 ? 85 : 105,
+          textAlign: 'center',
+          fontWeight: 600,
+          color: token.colorPrimary,
+          fontSize: 12
         } 
       }),
     },
@@ -161,13 +206,13 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       dataIndex: "playerName",
       key: "playerName",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 90 : (window.innerWidth <= 768 ? 110 : 180),
+      width: window.innerWidth <= 576 ? 100 : (window.innerWidth <= 768 ? 120 : 200),
       sorter: (a, b) => a.playerName.localeCompare(b.playerName),
       sortOrder: sortField === "playerName" ? sortOrder : null,
       render: (text: string) => {
         const isMobile = window.innerWidth <= 576;
         const isTablet = window.innerWidth <= 768;
-        const maxLength = isMobile ? 10 : isTablet ? 12 : 20;
+        const maxLength = isMobile ? 12 : isTablet ? 15 : 25;
         const shouldTruncate = text.length > maxLength;
         const displayText = shouldTruncate ? text.substring(0, maxLength) + '...' : text;
         
@@ -180,7 +225,6 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
           </b>
         );
 
-        // Only show tooltip if text is truncated
         if (shouldTruncate) {
           return (
             <Tooltip 
@@ -201,9 +245,9 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       },
       onCell: () => ({ 
         style: { 
-          minWidth: window.innerWidth <= 576 ? 80 : 140, 
-          paddingLeft: window.innerWidth <= 576 ? 4 : 8, 
-          paddingRight: window.innerWidth <= 576 ? 4 : 8 
+          minWidth: window.innerWidth <= 576 ? 95 : 150, 
+          paddingLeft: window.innerWidth <= 576 ? 6 : 12, 
+          paddingRight: window.innerWidth <= 576 ? 6 : 12 
         } 
       }),
     },
@@ -239,10 +283,7 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
     }
   };
 
-  const resetSorting = () => {
-    setSortField(null);
-    setSortOrder(null);
-  };
+
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -272,11 +313,9 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
         body: { padding: 0 }
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
         e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.12)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
       }}
     >
@@ -314,43 +353,47 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
           <Col xs={24} md={12}>
             <Space 
               wrap 
+              align="center"
               style={{ 
                 width: "100%", 
-                justifyContent: window.innerWidth <= 768 ? "center" : "flex-end" 
+                justifyContent: window.innerWidth <= 768 ? "center" : "flex-end",
+                alignItems: "center",
+                gap: 12
               }}
             >
-              <Select
-                size="small"
-                style={{ width: window.innerWidth <= 768 ? "100%" : 150 }}
-                placeholder="Select Year"
-                value={selectedYear || undefined}
-                onChange={handleYearChange}
-                loading={isLoading}
-                disabled={isLoading}
-                allowClear={false}
-              >
-                {years.map((year: number) => (
-                  <Option key={year} value={year}>
-                    {year}
-                  </Option>
-                ))}
-              </Select>
               <Radio.Group
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 disabled={isLoading}
                 optionType="button"
                 buttonStyle="solid"
-                size="small"
-                style={{ width: window.innerWidth <= 768 ? "100%" : "auto" }}
+                size="middle"
+                style={{ 
+                  width: window.innerWidth <= 768 ? "100%" : "auto",
+                  display: "flex",
+                  alignItems: "center"
+                }}
+                className={styles.styledRadioGroup}
               >
-                <Radio.Button value="all">All</Radio.Button>
-                <Radio.Button value="active">Active</Radio.Button>
-                <Radio.Button value="inactive">Inactive</Radio.Button>
+                <Radio.Button value="all" className={styles.styledRadioButton}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <TeamOutlined style={{ fontSize: 12 }} />
+                    <span>All</span>
+                  </div>
+                </Radio.Button>
+                <Radio.Button value="active" className={styles.styledRadioButton}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <UserAddOutlined style={{ fontSize: 12 }} />
+                    <span>Active</span>
+                  </div>
+                </Radio.Button>
+                <Radio.Button value="inactive" className={styles.styledRadioButton}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <UserDeleteOutlined style={{ fontSize: 12 }} />
+                    <span>Inactive</span>
+                  </div>
+                </Radio.Button>
               </Radio.Group>
-              <Button size="small" onClick={resetSorting} disabled={!sortField}>
-                Reset Sort
-              </Button>
             </Space>
           </Col>
         </Row>
@@ -370,13 +413,20 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
             onChange={(e) => setMobileView(e.target.value)}
             optionType="button"
             buttonStyle="solid"
-            size="small"
+            size="middle"
+            className={styles.styledRadioGroup}
           >
-            <Radio.Button value="cards">
-              <AppstoreOutlined /> Cards
+            <Radio.Button value="cards" className={styles.styledRadioButton}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <AppstoreOutlined style={{ fontSize: 12 }} />
+                <span>Cards</span>
+              </div>
             </Radio.Button>
-            <Radio.Button value="table">
-              <TableOutlined /> Table
+            <Radio.Button value="table" className={styles.styledRadioButton}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <TableOutlined style={{ fontSize: 12 }} />
+                <span>Table</span>
+              </div>
             </Radio.Button>
           </Radio.Group>
         </div>
@@ -392,6 +442,10 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
               selectedYear={selectedYear}
               currentYear={currentYear}
               currentMonth={currentMonth}
+              isDarkMode={isDarkMode}
+              years={years}
+              onYearChange={handleYearChange}
+              isLoading={isLoading}
             />
           ) : (
             <div style={{ padding: '16px 20px' }}>
@@ -405,7 +459,7 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
                 loading={isLoading}
                 rowKey="key"
                 onChange={handleTableChange}
-                className={styles.tableData}
+                className={`${styles.tableData} ${isDarkMode ? styles.darkTheme : styles.lightTheme}`}
               />
             </div>
           )
@@ -421,7 +475,7 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
               loading={isLoading}
               rowKey="key"
               onChange={handleTableChange}
-              className={styles.tableData}
+              className={`${styles.tableData} ${isDarkMode ? styles.darkTheme : styles.lightTheme}`}
             />
           </div>
         )}
@@ -430,4 +484,6 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
   );
 };
 
+
 export default PlayerCollectionMetrics;
+             

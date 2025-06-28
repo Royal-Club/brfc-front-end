@@ -1,16 +1,12 @@
 import {
   Col,
   Row,
-  Statistic,
-  StatisticProps,
   theme,
   Typography,
   Spin,
-  Card,
 } from "antd";
 import { DollarOutlined, MinusCircleOutlined, WalletOutlined } from "@ant-design/icons";
 import React, { useState } from "react";
-import CountUp from "react-countup";
 import { useGetAccountSummaryQuery } from "../../state/features/account/accountSummarySlice";
 import "./DashboardComponent.module.css";
 import styles from "./DashboardComponent.module.css";
@@ -18,14 +14,15 @@ import styles from "./DashboardComponent.module.css";
 // Import components
 import PlayerCollectionMetrics from "./PlayerCollectionMetricsTable";
 import LatestTournamentCard from "./LatestTournamentCard";
-
-const formatter: StatisticProps["formatter"] = (value) => (
-  <CountUp end={value as number} separator="," />
-);
+import AnalyticsCard from "./AnalyticsCard";
 
 const { Title } = Typography;
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  isDarkMode?: boolean;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ isDarkMode = false }) => {
   const {
     token: { colorBgContainer, borderRadius, colorText, colorPrimary, colorSuccess, colorError, colorBorder }
   } = theme.useToken();
@@ -55,133 +52,37 @@ const Dashboard: React.FC = () => {
         ) : (
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={8} md={8} lg={8} xl={8}>
-              <div className={`${styles.analyticsCard} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} style={{
-                background: '#F9E6DC',
-                border: '1px solid rgba(0, 0, 0, 0.06)',
-                borderRadius: '12px',
-                padding: '20px',
-                position: 'relative',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
-              }}>
-                <div>
-                  <div style={{ 
-                    color: '#8B4513', 
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    marginBottom: '8px'
-                  }}>
-                    {window.innerWidth <= 576 ? 'Collections' : 'Total Collections'}
-                  </div>
-                  <Statistic
-                    value={accountSummaryData?.content?.totalCollection}
-                    precision={2}
-                    valueStyle={{ 
-                      color: '#5D4037', 
-                      fontSize: window.innerWidth <= 576 ? '20px' : '28px',
-                      fontWeight: 'bold',
-                      lineHeight: 1
-                    }}
-                    formatter={formatter}
-                    suffix={<span style={{ fontSize: window.innerWidth <= 576 ? '16px' : '20px', color: '#5D4037' }}>৳</span>}
-                  />
-                </div>
-                <DollarOutlined style={{
-                  position: 'absolute',
-                  bottom: '16px',
-                  right: '16px',
-                  fontSize: '32px',
-                  color: 'rgba(139, 69, 19, 0.3)',
-                }} />
-              </div>
+              <AnalyticsCard
+                title="Total Collections"
+                value={accountSummaryData?.content?.totalCollection || 0}
+                backgroundColor="#F9E6DC"
+                textColor="#8B4513"
+                valueColor="#5D4037"
+                icon={<DollarOutlined />}
+                iconColor="rgba(139, 69, 19, 0.3)"
+              />
             </Col>
             <Col xs={24} sm={8} md={8} lg={8} xl={8}>
-              <div className={`${styles.analyticsCard} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} style={{
-                background: '#E2E3F6',
-                border: '1px solid rgba(0, 0, 0, 0.06)',
-                borderRadius: '12px',
-                padding: '20px',
-                position: 'relative',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
-              }}>
-                <div>
-                  <div style={{ 
-                    color: '#4527A0', 
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    marginBottom: '8px'
-                  }}>
-                    {window.innerWidth <= 576 ? 'Expenses' : 'Total Expenses'}
-                  </div>
-                  <Statistic
-                    value={accountSummaryData?.content?.totalExpense}
-                    precision={2}
-                    valueStyle={{ 
-                      color: '#311B92', 
-                      fontSize: window.innerWidth <= 576 ? '20px' : '28px',
-                      fontWeight: 'bold',
-                      lineHeight: 1
-                    }}
-                    formatter={formatter}
-                    suffix={<span style={{ fontSize: window.innerWidth <= 576 ? '16px' : '20px', color: '#311B92' }}>৳</span>}
-                  />
-                </div>
-                <MinusCircleOutlined style={{
-                  position: 'absolute',
-                  bottom: '16px',
-                  right: '16px',
-                  fontSize: '32px',
-                  color: 'rgba(69, 39, 160, 0.3)',
-                }} />
-              </div>
+              <AnalyticsCard
+                title="Total Expenses"
+                value={accountSummaryData?.content?.totalExpense || 0}
+                backgroundColor="#E2E3F6"
+                textColor="#4527A0"
+                valueColor="#311B92"
+                icon={<MinusCircleOutlined />}
+                iconColor="rgba(69, 39, 160, 0.3)"
+              />
             </Col>
             <Col xs={24} sm={8} md={8} lg={8} xl={8}>
-              <div className={`${styles.analyticsCard} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} style={{
-                background: '#D0F0F3',
-                border: '1px solid rgba(0, 0, 0, 0.06)',
-                borderRadius: '12px',
-                padding: '20px',
-                position: 'relative',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
-              }}>
-                <div>
-                  <div style={{ 
-                    color: '#00695C', 
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    marginBottom: '8px'
-                  }}>
-                    {window.innerWidth <= 576 ? 'Balance' : 'Account Balance'}
-                  </div>
-                  <Statistic
-                    value={accountSummaryData?.content?.currentBalance}
-                    precision={2}
-                    valueStyle={{ 
-                      color: '#004D40', 
-                      fontSize: window.innerWidth <= 576 ? '20px' : '28px',
-                      fontWeight: 'bold',
-                      lineHeight: 1
-                    }}
-                    formatter={formatter}
-                    suffix={<span style={{ fontSize: window.innerWidth <= 576 ? '16px' : '20px', color: '#004D40' }}>৳</span>}
-                  />
-                </div>
-                <WalletOutlined style={{
-                  position: 'absolute',
-                  bottom: '16px',
-                  right: '16px',
-                  fontSize: '32px',
-                  color: 'rgba(0, 105, 92, 0.3)',
-                }} />
-              </div>
+              <AnalyticsCard
+                title="Account Balance"
+                value={accountSummaryData?.content?.currentBalance || 0}
+                backgroundColor="#D0F0F3"
+                textColor="#00695C"
+                valueColor="#004D40"
+                icon={<WalletOutlined />}
+                iconColor="rgba(0, 105, 92, 0.3)"
+              />
             </Col>
           </Row>
         )}
@@ -200,6 +101,7 @@ const Dashboard: React.FC = () => {
         <PlayerCollectionMetrics 
           selectedYear={selectedYear}
           onYearChange={setSelectedYear}
+          isDarkMode={isDarkMode}
         />
       </div>
     </div>

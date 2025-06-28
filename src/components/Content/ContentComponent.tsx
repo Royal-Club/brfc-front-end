@@ -361,7 +361,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 >
                     <Routes>
                         <Route path="/" element={<ContentOutlet />}>
-                            <Route index element={<Dashboard />} />
+                            <Route index element={<Dashboard isDarkMode={isDarkMode} />} />
                             <Route path="/profile" element={<UserProfile />} />
                             <Route path="/player" element={<Player />} />
                             {loginInfo.roles.includes("ADMIN") && (
