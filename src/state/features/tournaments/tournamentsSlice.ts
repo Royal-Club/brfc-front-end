@@ -8,6 +8,7 @@ import {
   TournamentGoalKeeperInfoType,
   TournamentPlayerInfoType,
   TournamentSummeryResType,
+  LatestTournamentWithUserStatusType,
 } from "./tournamentTypes";
 
 const apiWithTags = apiSlice.enhanceEndpoints({
@@ -145,6 +146,16 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
       }),
       providesTags: ["tournaments"],
     }),
+    getLatestTournamentWithUserStatus: builder.query<
+      LatestTournamentWithUserStatusType,
+      void
+    >({
+      query: () => ({
+        url: `tournament-participants/latest/with-user-status`,
+        method: "GET",
+      }),
+      providesTags: ["tournaments"],
+    }),
   }),
 });
 
@@ -159,4 +170,5 @@ export const {
   useGetTournamentSummaryQuery,
   useGetTournamentGoalKeeperListQuery,
   useGetTournamentGoalkeeperHistoryListQuery,
+  useGetLatestTournamentWithUserStatusQuery,
 } = tournamentsApi;

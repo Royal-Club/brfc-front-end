@@ -1,35 +1,57 @@
-.tableContainer {
-  width: 100%;
+.tableData :global(.ant-table) {
+  border-radius: 12px !important;
+  overflow: hidden;
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-  align-items: center;
+.tableData :global(.ant-table-thead > tr > th) {
+  background: linear-gradient(135deg, var(--ant-color-fill-secondary) 0%, var(--ant-color-fill-tertiary) 100%) !important;
+  color: var(--ant-color-text) !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid var(--ant-color-border) !important;
+  position: relative;
 }
 
-.table {
-  overflow-x: auto;
+.tableData :global(.ant-table-tbody > tr) {
+  transition: all 0.2s ease !important;
 }
 
-.tableData {
-  /* Additional table-specific styles */
+.tableData :global(.ant-table-tbody > tr:hover) {
+  background: var(--ant-color-primary-bg-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 /* Mobile Card View */
 .mobileCardView {
-  display: none;
+  padding: 16px 20px;
+  background: var(--ant-color-bg-container);
 }
 
 .playerCard {
-  background: var(--ant-color-bg-container);
+  background: linear-gradient(135deg, var(--ant-color-bg-container) 0%, var(--ant-color-fill-quaternary) 100%);
   border: 1px solid var(--ant-color-border);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 20px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.playerCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.playerCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--ant-color-primary) 0%, var(--ant-color-primary-active) 100%);
 }
 
 .playerHeader {
@@ -48,40 +70,41 @@
 }
 
 .playerIndex {
-  background: var(--ant-color-fill-secondary);
-  color: var(--ant-color-text-secondary);
-  padding: 4px 8px;
-  border-radius: 6px;
+  background: linear-gradient(135deg, var(--ant-color-primary) 0%, var(--ant-color-primary-active) 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .monthsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
 
 .monthItem {
   position: relative;
   text-align: center;
-  padding: 12px 8px;
-  border-radius: 8px;
-  border: 1px solid gray;
-  background: var(--ant-color-bg-layout);
-  transition: all 0.2s ease;
-  min-height: 60px;
+  padding: 14px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--ant-color-border);
+  background: linear-gradient(135deg, var(--ant-color-bg-layout) 0%, var(--ant-color-fill-quaternary) 100%);
+  transition: all 0.3s ease;
+  min-height: 65px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  cursor: default;
 }
 
 .monthItem:hover {
   border-color: var(--ant-color-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .monthName {
@@ -103,18 +126,28 @@
 /* Status Indicators */
 .monthIndicator {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 10px;
-  height: 10px;
+  top: 6px;
+  right: 6px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   border: 2px solid var(--ant-color-bg-container);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.monthPaid {
+  border-color: var(--ant-color-success-border);
+  background: linear-gradient(135deg, var(--ant-color-success-bg) 0%, var(--ant-color-success-bg-hover) 100%);
 }
 
 .monthPaid .monthIndicator {
   background: #52c41a;
   border-color: var(--ant-color-bg-container);
+}
+
+.monthDue {
+  border-color: var(--ant-color-error);
+  background: linear-gradient(135deg, var(--ant-color-error-bg) 0%, var(--ant-color-error-bg-hover) 100%);
 }
 
 .monthDue .monthIndicator {
@@ -123,10 +156,20 @@
   animation: pulse 1.5s infinite;
 }
 
+.monthDue .monthAmount {
+  color: var(--ant-color-error);
+  font-weight: 700;
+}
+
+.monthCurrent {
+  border-color: var(--ant-color-primary);
+  background: linear-gradient(135deg, var(--ant-color-primary-bg) 0%, var(--ant-color-primary-bg-hover) 100%);
+}
+
 .monthCurrent .monthIndicator {
   background: #1890ff;
   border-color: var(--ant-color-bg-container);
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .monthEmpty .monthIndicator {
@@ -141,7 +184,7 @@
     opacity: 1;
   }
   50% {
-    transform: scale(1.2);
+    transform: scale(1.3);
     opacity: 0.7;
   }
   100% {
@@ -150,38 +193,18 @@
   }
 }
 
-/* Status highlighting with theme-aware colors */
-.monthCurrent {
-  border-color: var(--ant-color-primary);
-  background: var(--ant-color-primary-bg);
-}
-
-.monthDue {
-  border-color: var(--ant-color-error);
-  background: var(--ant-color-error-bg);
-}
-
-.monthDue .monthAmount {
-  color: var(--ant-color-error);
-  font-weight: 700;
-}
-
-.monthPaid {
-  border-color: var(--ant-color-success-border);
-  background: var(--ant-color-success-bg);
-}
-
 /* Legend for mobile view */
 .legendContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: var(--ant-color-bg-layout);
-  border-radius: 8px;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--ant-color-bg-layout) 0%, var(--ant-color-fill-quaternary) 100%);
+  border-radius: 12px;
   border: 1px solid var(--ant-color-border-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .legendItem {
@@ -191,11 +214,11 @@
 }
 
 .legendDot {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   border: 2px solid var(--ant-color-bg-container);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .legendDot.paid {
@@ -208,7 +231,7 @@
 
 .legendDot.current {
   background: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .legendDot.empty {
@@ -249,129 +272,25 @@
 
 .viewToggle {
   display: none;
-  margin-bottom: 12px;
+  padding: 12px 20px;
+  background: var(--ant-color-bg-layout);
+  border-bottom: 1px solid var(--ant-color-border);
+}
+
+.viewToggle :global(.ant-radio-group) {
+  border-radius: 8px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
 }
 
 @media (max-width: 768px) {
-  .viewToggle {
-    display: flex;
-    justify-content: center;
-  }
-  
-  /* Show mobile card view by default */
   .mobileCardView {
-    display: block;
-  }
-  
-  /* Hide table by default on mobile */
-  .table {
-    display: none;
-  }
-  
-  /* Override display when table view is selected */
-  .table.mobileTableView {
-    display: block !important;
-  }
-  
-  .mobileCardView.hidden {
-    display: none !important;
-  }
-  
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  
-  .controls :global(.ant-space) {
-    justify-content: center;
-  }
-  
-  .controls :global(.ant-select) {
-    width: 100% !important;
-  }
-  
-  .controls :global(.ant-radio-group) {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .controls :global(.ant-radio-button-wrapper) {
-    flex: 1;
-    text-align: center;
-  }
-  
-  /* Better mobile padding */
-  .table :global(.ant-table-thead > tr > th) {
-    padding: 12px 8px !important;
-    font-size: 12px !important;
-  }
-  
-  .table :global(.ant-table-tbody > tr > td) {
-    padding: 12px 8px !important;
-    font-size: 12px !important;
-  }
-  
-  /* Make fixed columns more narrow on mobile */
-  .table :global(.ant-table-fixed-left) {
-    max-width: 120px;
+    padding: 16px 20px;
   }
 }
 
 @media (max-width: 480px) {
-  .monthsGrid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-  }
-  
-  .monthItem {
-    padding: 10px 6px;
-    min-height: 50px;
-  }
-  
-  .monthName {
-    font-size: 10px;
-  }
-  
-  .monthAmount {
-    font-size: 12px;
-  }
-  
-  .legendContainer {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-}
-
-@media (max-width: 576px) {
-  .controls :global(.ant-btn) {
-    font-size: 12px !important;
-    padding: 4px 8px !important;
-  }
-  
-  /* Enhanced mobile padding for better readability */
-  .table :global(.ant-table-thead > tr > th) {
-    padding: 10px 6px !important;
-    font-size: 11px !important;
-    min-width: 40px;
-    font-weight: 600 !important;
-  }
-  
-  .table :global(.ant-table-tbody > tr > td) {
-    padding: 10px 6px !important;
-    font-size: 11px !important;
-    min-width: 40px;
-    line-height: 1.4 !important;
-  }
-  
-  .table :global(.ant-table-fixed-left) {
-    max-width: 100px;
-  }
-  
-  .table :global(.month-column) {
-    min-width: 35px !important;
-    width: 35px !important;
+  .mobileCardView {
+    padding: 16px;
   }
 }
 
@@ -389,7 +308,7 @@
 :global([data-theme="dark"]) .monthCurrent .monthIndicator {
   background: #1890ff;
   border-color: #1f1f1f;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.3), 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 :global([data-theme="dark"]) .monthEmpty .monthIndicator {
@@ -410,7 +329,213 @@
 :global([data-theme="dark"]) .legendDot.current {
   background: #1890ff;
   border-color: #1f1f1f;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:global([data-theme="dark"]) .legendDot.empty {
+  background: #434343;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendText {
+  color: #ffffff;
+}
+  
+.viewToggleButton:hover {
+  color: var(--ant-color-primary) !important;
+  background: var(--ant-color-primary-bg-hover) !important;
+}
+
+.viewToggleButton:global(.ant-radio-button-wrapper-checked) {
+  background: linear-gradient(135deg, var(--ant-color-primary) 0%, var(--ant-color-primary-active) 100%) !important;
+  color: white !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+@media (max-width: 768px) {
+  .viewToggle {
+    display: flex;
+  }
+  
+  .controlsRow {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .controlGroup {
+    width: 100%;
+  }
+  
+  .yearSelect {
+    width: 100% !important;
+  }
+  
+  .filterGroup {
+    width: 100%;
+  }
+  
+  .filterButton {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 8px 12px !important;
+    height: 40px !important;
+  }
+  
+  .resetButton {
+    width: 100% !important;
+    justify-content: center !important;
+    height: 40px !important;
+    padding: 8px 16px !important;
+  }
+  
+  .controls {
+    padding: 12px 16px;
+  }
+  
+  .table {
+    padding: 16px 20px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls {
+    padding: 12px;
+  }
+  
+  .table {
+    padding: 16px;
+  }
+  
+  .controlsRow {
+    gap: 12px;
+  }
+  
+  .controlLabel {
+    font-size: 12px;
+  }
+  
+  .filterButton {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+  }
+  
+  .resetButton {
+    font-size: 12px !important;
+  }
+}
+
+/* Dark theme support for indicators */
+:global([data-theme="dark"]) .monthPaid .monthIndicator {
+  background: #52c41a;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .monthDue .monthIndicator {
+  background: #ff4d4f;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .monthCurrent .monthIndicator {
+  background: #1890ff;
+  border-color: #1f1f1f;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+:global([data-theme="dark"]) .monthEmpty .monthIndicator {
+  background: #434343;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendDot.paid {
+  background: #52c41a;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendDot.due {
+  background: #ff4d4f;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendDot.current {
+  background: #1890ff;
+  border-color: #1f1f1f;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+:global([data-theme="dark"]) .legendDot.empty {
+  background: #434343;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendText {
+  color: #ffffff;
+}
+    
+
+@media (max-width: 480px) {
+  .controls {
+    padding: 12px;
+  }
+  
+  .table {
+    padding: 16px;
+  }
+  
+  .controlsRow {
+    gap: 12px;
+  }
+  
+  .controlLabel {
+    font-size: 12px;
+  }
+  
+  .filterButton {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+  }
+  
+  .resetButton {
+    font-size: 12px !important;
+  }
+}
+
+/* Dark theme support for indicators */
+:global([data-theme="dark"]) .monthPaid .monthIndicator {
+  background: #52c41a;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .monthDue .monthIndicator {
+  background: #ff4d4f;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .monthCurrent .monthIndicator {
+  background: #1890ff;
+  border-color: #1f1f1f;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+:global([data-theme="dark"]) .monthEmpty .monthIndicator {
+  background: #434343;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendDot.paid {
+  background: #52c41a;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendDot.due {
+  background: #ff4d4f;
+  border-color: #1f1f1f;
+}
+
+:global([data-theme="dark"]) .legendDot.current {
+  background: #1890ff;
+  border-color: #1f1f1f;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 :global([data-theme="dark"]) .legendDot.empty {

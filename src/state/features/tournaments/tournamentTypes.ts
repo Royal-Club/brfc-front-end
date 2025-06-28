@@ -96,3 +96,21 @@ export interface TournamentGoalKeeperHistoryInfoType extends BasicResType {
         ]; 
     };
 }
+
+export interface LatestTournamentWithUserStatusType extends BasicResType {
+    content: {
+        tournament: {
+            id: number;
+            name: string;
+            tournamentDate: string;
+            venueName: string;
+            activeStatus: boolean;
+            tournamentStatus: string;
+        };
+        totalParticipant: number;
+        remainParticipant: number;
+        totalPlayer: number;
+        userParticipated: boolean | null;
+        tournamentParticipantId?: number;
+    };
+}

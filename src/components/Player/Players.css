@@ -155,3 +155,39 @@
   text-align: right;
   border-top: 1px solid #f0f0f0;
 }
+
+/* Goalkeeping history drawer styles */
+.ant-drawer-body .ant-timeline {
+    margin-left: 0;
+}
+
+.ant-drawer-body .ant-timeline-item-content {
+    min-height: auto;
+    margin-left: 24px;
+}
+
+.ant-drawer-body .ant-timeline-item-tail {
+    border-left-color: #d9d9d9;
+}
+
+.ant-drawer-body .ant-timeline-item-head {
+    border: 2px solid #faad14;
+}
+
+/* Responsive drawer styles */
+@media (max-width: 768px) {
+    .ant-drawer-body .ant-timeline {
+        margin-left: 0;
+    }
+    
+    .ant-drawer-body .ant-timeline-item-content {
+        margin-left: 20px;
+        font-size: 14px;
+    }
+    
+    .ant-drawer-body .ant-timeline-item-head {
+        width: 20px;
+        height: 20px;
+        line-height: 16px;
+    }
+}

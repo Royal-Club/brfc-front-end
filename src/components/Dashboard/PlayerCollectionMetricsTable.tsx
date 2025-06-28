@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { Table, Select, Space, Radio, Button, theme, Tooltip, Switch } from "antd";
-import { TableOutlined, AppstoreOutlined } from "@ant-design/icons";
+import { Table, Select, Space, Radio, Button, theme, Tooltip, Card, Row, Col, Typography } from "antd";
+import { TableOutlined, AppstoreOutlined, BarChartOutlined } from "@ant-design/icons";
 import type {
   ColumnType,
   ColumnsType,
@@ -11,9 +11,11 @@ import type {
 } from "antd/es/table/interface";
 import { useGetPlayerCollectionMetricsQuery } from "../../state/features/account/playerCollectionMetricsSlice";
 import { PlayerMetric } from "../../interfaces/IPlayerCollectionMetrics";
+import PlayerCollectionMobileView from "./PlayerCollectionMobileView";
 import styles from "./PlayerCollectionMetricsTable.module.css";
 
 const { Option } = Select;
+const { Title } = Typography;
 
 const monthNames = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -256,123 +258,113 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const renderMobileCards = () => {
-    return (
-      <div className={styles.mobileCardView}>
-        {/* Legend */}
-        <div className={styles.legendContainer}>
-          <div className={styles.legendItem}>
-            <div className={`${styles.legendDot} ${styles.paid}`}></div>
-            <span className={styles.legendText}>Paid</span>
-          </div>
-          <div className={styles.legendItem}>
-            <div className={`${styles.legendDot} ${styles.current}`}></div>
-            <span className={styles.legendText}>Current</span>
-          </div>
-          <div className={styles.legendItem}>
-            <div className={`${styles.legendDot} ${styles.due}`}></div>
-            <span className={styles.legendText}>Due</span>
-          </div>
-          
-        </div>
-
-        {dataSource.map((player, index) => {
-          const playerData = metrics.find((p: PlayerMetric) => p.playerId === player.key);
-          const isActive = playerData?.active ?? false;
-          
-          return (
-            <div key={player.key} className={styles.playerCard}>
-              <div className={styles.playerHeader}>
-                <span className={styles.playerName}>{player.playerName}</span>
-                <span className={styles.playerIndex}>#{index + 1}</span>
-              </div>
-              
-              <div className={styles.monthsGrid}>
-                {monthNames.map((month, idx) => {
-                  const monthNumber = idx + 1;
-                  const amount = player[`month_${monthNumber}`] || 0;
-                  const isCurrentCell = selectedYear === currentYear && monthNumber === currentMonth;
-                  const showDue = isCurrentCell && amount <= 0 && isActive;
-                  const hasData = amount > 0 || showDue;
-                  
-                  let monthClass = styles.monthItem;
-                  
-                  if (showDue) {
-                    monthClass += ` ${styles.monthDue}`;
-                  } else if (isCurrentCell && amount > 0) {
-                    monthClass += ` ${styles.monthCurrent}`;
-                  } else if (amount > 0) {
-                    monthClass += ` ${styles.monthPaid}`;
-                  } else {
-                    monthClass += ` ${styles.monthEmpty}`;
-                  }
-                  
-                  return (
-                    <div key={monthNumber} className={monthClass}>
-                      {hasData && <div className={styles.monthIndicator}></div>}
-                      <div className={styles.monthName}>{month}</div>
-                      <div className={styles.monthAmount}>
-                        {showDue ? 'Due' : (amount > 0 ? amount.toFixed(0) : '-')}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
-    <div className={`${styles.tableContainer} ${className || ''}`}>
-      <div className={styles.controls}>
-        <Space 
-          wrap 
-          style={{ 
-            width: "100%", 
-            justifyContent: window.innerWidth <= 768 ? "center" : "flex-start" 
-          }}
-        >
-          <Select
-            size="small"
-            style={{ width: window.innerWidth <= 768 ? "100%" : 150 }}
-            placeholder="Select Year"
-            value={selectedYear || undefined}
-            onChange={handleYearChange}
-            loading={isLoading}
-            disabled={isLoading}
-            allowClear={false}
-          >
-            {years.map((year: number) => (
-              <Option key={year} value={year}>
-                {year}
-              </Option>
-            ))}
-          </Select>
-          <Radio.Group
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            disabled={isLoading}
-            optionType="button"
-            buttonStyle="solid"
-            size="small"
-            style={{ width: window.innerWidth <= 768 ? "100%" : "auto" }}
-          >
-            <Radio.Button value="all">All</Radio.Button>
-            <Radio.Button value="active">Active</Radio.Button>
-            <Radio.Button value="inactive">Inactive</Radio.Button>
-          </Radio.Group>
-          <Button size="small" onClick={resetSorting} disabled={!sortField}>
-            Reset Sort
-          </Button>
-        </Space>
+    <Card
+      style={{ 
+        borderRadius: 16, 
+        border: `1px solid ${token.colorBorder}`,
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorFillQuaternary} 100%)`,
+        transition: 'all 0.3s ease',
+        overflow: 'hidden'
+      }}
+      styles={{
+        body: { padding: 0 }
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.12)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+      }}
+    >
+      {/* Header Section */}
+      <div style={{ 
+        background: `linear-gradient(90deg, ${token.colorInfo}15 0%, ${token.colorInfo}08 100%)`,
+        padding: '16px 20px',
+        borderBottom: `1px solid ${token.colorBorder}`
+      }}>
+        <Row gutter={[16, 8]} align="middle">
+          <Col xs={24} md={12}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                background: token.colorInfo,
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <BarChartOutlined style={{ fontSize: 16, color: 'white' }} />
+              </div>
+              <Title level={4} style={{ 
+                margin: 0, 
+                color: token.colorText, 
+                fontSize: 18,
+                fontWeight: '600'
+              }}>
+                Player Collection Metrics
+              </Title>
+            </div>
+          </Col>
+          
+          <Col xs={24} md={12}>
+            <Space 
+              wrap 
+              style={{ 
+                width: "100%", 
+                justifyContent: window.innerWidth <= 768 ? "center" : "flex-end" 
+              }}
+            >
+              <Select
+                size="small"
+                style={{ width: window.innerWidth <= 768 ? "100%" : 150 }}
+                placeholder="Select Year"
+                value={selectedYear || undefined}
+                onChange={handleYearChange}
+                loading={isLoading}
+                disabled={isLoading}
+                allowClear={false}
+              >
+                {years.map((year: number) => (
+                  <Option key={year} value={year}>
+                    {year}
+                  </Option>
+                ))}
+              </Select>
+              <Radio.Group
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                disabled={isLoading}
+                optionType="button"
+                buttonStyle="solid"
+                size="small"
+                style={{ width: window.innerWidth <= 768 ? "100%" : "auto" }}
+              >
+                <Radio.Button value="all">All</Radio.Button>
+                <Radio.Button value="active">Active</Radio.Button>
+                <Radio.Button value="inactive">Inactive</Radio.Button>
+              </Radio.Group>
+              <Button size="small" onClick={resetSorting} disabled={!sortField}>
+                Reset Sort
+              </Button>
+            </Space>
+          </Col>
+        </Row>
       </div>
 
       {/* Mobile View Toggle */}
       {isMobile && (
-        <div className={styles.viewToggle}>
+        <div style={{
+          padding: '12px 20px',
+          background: token.colorBgLayout,
+          borderBottom: `1px solid ${token.colorBorder}`,
+          display: 'flex',
+          justifyContent: 'center'
+        }}>
           <Radio.Group
             value={mobileView}
             onChange={(e) => setMobileView(e.target.value)}
@@ -390,13 +382,35 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
         </div>
       )}
 
-      {/* Conditional rendering for mobile */}
-      {isMobile ? (
-        mobileView === 'cards' ? (
-          renderMobileCards()
+      {/* Content Section */}
+      <div style={{ background: token.colorBgContainer }}>
+        {isMobile ? (
+          mobileView === 'cards' ? (
+            <PlayerCollectionMobileView 
+              dataSource={dataSource}
+              metrics={metrics}
+              selectedYear={selectedYear}
+              currentYear={currentYear}
+              currentMonth={currentMonth}
+            />
+          ) : (
+            <div style={{ padding: '16px 20px' }}>
+              <Table
+                size="small"
+                bordered
+                columns={columns}
+                dataSource={dataSource}
+                pagination={false}
+                scroll={{ x: "max-content" }}
+                loading={isLoading}
+                rowKey="key"
+                onChange={handleTableChange}
+                className={styles.tableData}
+              />
+            </div>
+          )
         ) : (
-          /* Mobile Table View */
-          <div className={`${styles.table} ${styles.mobileTableView}`}>
+          <div style={{ padding: '16px 20px' }}>
             <Table
               size="small"
               bordered
@@ -410,28 +424,10 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
               className={styles.tableData}
             />
           </div>
-        )
-      ) : (
-        /* Desktop Table View */
-        <div className={styles.table}>
-          <Table
-            size="small"
-            bordered
-            columns={columns}
-            dataSource={dataSource}
-            pagination={false}
-            scroll={{ x: "max-content" }}
-            loading={isLoading}
-            rowKey="key"
-            onChange={handleTableChange}
-            className={styles.tableData}
-          />
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </Card>
   );
 };
-
-
 
 export default PlayerCollectionMetrics;

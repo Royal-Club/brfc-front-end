@@ -17,6 +17,7 @@ import styles from "./DashboardComponent.module.css";
 
 // Import components
 import PlayerCollectionMetrics from "./PlayerCollectionMetricsTable";
+import LatestTournamentCard from "./LatestTournamentCard";
 
 const formatter: StatisticProps["formatter"] = (value) => (
   <CountUp end={value as number} separator="," />
@@ -26,7 +27,7 @@ const { Title } = Typography;
 
 const Dashboard: React.FC = () => {
   const {
-    token: { colorBgContainer, borderRadius, colorText, colorPrimary, colorSuccess, colorError }
+    token: { colorBgContainer, borderRadius, colorText, colorPrimary, colorSuccess, colorError, colorBorder }
   } = theme.useToken();
 
   const [selectedYear, setSelectedYear] = useState<number>();
@@ -37,20 +38,11 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className={styles.dashboardContainer}>
+
       {/* Account Summary Section */}
-      <Card
-        className={styles.summaryCard}
+      <div
         style={{ 
-          marginBottom: '16px', 
-          borderRadius,
-          background: colorBgContainer,
-          border: `1px solid ${theme.useToken().token.colorBorder}`
-        }}
-        styles={{
-          body: { 
-            background: colorBgContainer,
-            padding: '16px'
-          }
+          marginBottom: '20px', 
         }}
       >
         {isSummaryLoading ? (
@@ -61,105 +53,155 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <Row gutter={[12, 12]}>
-            <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={8} md={8} lg={8} xl={8}>
               <div className={`${styles.analyticsCard} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} style={{
-                background: `linear-gradient(135deg, ${colorSuccess}, #52c41a)`,
+                background: '#F9E6DC',
+                border: '1px solid rgba(0, 0, 0, 0.06)',
+                borderRadius: '12px',
+                padding: '20px',
+                position: 'relative',
+                minHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
               }}>
-                <DollarOutlined className={`${styles.cardIcon} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} />
-                <Statistic
-                  title={<span className={`${styles.cardTitle} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>
+                <div>
+                  <div style={{ 
+                    color: '#8B4513', 
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px'
+                  }}>
                     {window.innerWidth <= 576 ? 'Collections' : 'Total Collections'}
-                  </span>}
-                  value={accountSummaryData?.content?.totalCollection}
-                  precision={2}
-                  valueStyle={{ 
-                    color: "white", 
-                    fontSize: window.innerWidth <= 576 ? '14px' : '20px',
-                    fontWeight: 'bold',
-                    lineHeight: 1
-                  }}
-                  formatter={formatter}
-                  suffix={<span className={`${styles.cardSuffix} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>৳</span>}
-                />
+                  </div>
+                  <Statistic
+                    value={accountSummaryData?.content?.totalCollection}
+                    precision={2}
+                    valueStyle={{ 
+                      color: '#5D4037', 
+                      fontSize: window.innerWidth <= 576 ? '20px' : '28px',
+                      fontWeight: 'bold',
+                      lineHeight: 1
+                    }}
+                    formatter={formatter}
+                    suffix={<span style={{ fontSize: window.innerWidth <= 576 ? '16px' : '20px', color: '#5D4037' }}>৳</span>}
+                  />
+                </div>
+                <DollarOutlined style={{
+                  position: 'absolute',
+                  bottom: '16px',
+                  right: '16px',
+                  fontSize: '32px',
+                  color: 'rgba(139, 69, 19, 0.3)',
+                }} />
               </div>
             </Col>
-            <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+            <Col xs={24} sm={8} md={8} lg={8} xl={8}>
               <div className={`${styles.analyticsCard} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} style={{
-                background: `linear-gradient(135deg, ${colorError}, #ff4d4f)`,
+                background: '#E2E3F6',
+                border: '1px solid rgba(0, 0, 0, 0.06)',
+                borderRadius: '12px',
+                padding: '20px',
+                position: 'relative',
+                minHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
               }}>
-                <MinusCircleOutlined className={`${styles.cardIcon} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} />
-                <Statistic
-                  title={<span className={`${styles.cardTitle} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>
+                <div>
+                  <div style={{ 
+                    color: '#4527A0', 
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px'
+                  }}>
                     {window.innerWidth <= 576 ? 'Expenses' : 'Total Expenses'}
-                  </span>}
-                  value={accountSummaryData?.content?.totalExpense}
-                  precision={2}
-                  valueStyle={{ 
-                    color: "white", 
-                    fontSize: window.innerWidth <= 576 ? '14px' : '20px',
-                    fontWeight: 'bold',
-                    lineHeight: 1
-                  }}
-                  formatter={formatter}
-                  suffix={<span className={`${styles.cardSuffix} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>৳</span>}
-                />
+                  </div>
+                  <Statistic
+                    value={accountSummaryData?.content?.totalExpense}
+                    precision={2}
+                    valueStyle={{ 
+                      color: '#311B92', 
+                      fontSize: window.innerWidth <= 576 ? '20px' : '28px',
+                      fontWeight: 'bold',
+                      lineHeight: 1
+                    }}
+                    formatter={formatter}
+                    suffix={<span style={{ fontSize: window.innerWidth <= 576 ? '16px' : '20px', color: '#311B92' }}>৳</span>}
+                  />
+                </div>
+                <MinusCircleOutlined style={{
+                  position: 'absolute',
+                  bottom: '16px',
+                  right: '16px',
+                  fontSize: '32px',
+                  color: 'rgba(69, 39, 160, 0.3)',
+                }} />
               </div>
             </Col>
-            <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+            <Col xs={24} sm={8} md={8} lg={8} xl={8}>
               <div className={`${styles.analyticsCard} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} style={{
-                background: `linear-gradient(135deg, ${colorPrimary}, #1890ff)`,
+                background: '#D0F0F3',
+                border: '1px solid rgba(0, 0, 0, 0.06)',
+                borderRadius: '12px',
+                padding: '20px',
+                position: 'relative',
+                minHeight: '120px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
               }}>
-                <WalletOutlined className={`${styles.cardIcon} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`} />
-                <Statistic
-                  title={<span className={`${styles.cardTitle} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>
+                <div>
+                  <div style={{ 
+                    color: '#00695C', 
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px'
+                  }}>
                     {window.innerWidth <= 576 ? 'Balance' : 'Account Balance'}
-                  </span>}
-                  value={accountSummaryData?.content?.currentBalance}
-                  precision={2}
-                  valueStyle={{ 
-                    color: "white", 
-                    fontSize: window.innerWidth <= 576 ? '14px' : '20px',
-                    fontWeight: 'bold',
-                    lineHeight: 1
-                  }}
-                  formatter={formatter}
-                  suffix={<span className={`${styles.cardSuffix} ${window.innerWidth <= 576 ? styles.mobile : styles.desktop}`}>৳</span>}
-                />
+                  </div>
+                  <Statistic
+                    value={accountSummaryData?.content?.currentBalance}
+                    precision={2}
+                    valueStyle={{ 
+                      color: '#004D40', 
+                      fontSize: window.innerWidth <= 576 ? '20px' : '28px',
+                      fontWeight: 'bold',
+                      lineHeight: 1
+                    }}
+                    formatter={formatter}
+                    suffix={<span style={{ fontSize: window.innerWidth <= 576 ? '16px' : '20px', color: '#004D40' }}>৳</span>}
+                  />
+                </div>
+                <WalletOutlined style={{
+                  position: 'absolute',
+                  bottom: '16px',
+                  right: '16px',
+                  fontSize: '32px',
+                  color: 'rgba(0, 105, 92, 0.3)',
+                }} />
               </div>
             </Col>
           </Row>
         )}
-      </Card>
+      </div>
+
+      {/* Latest Tournament Section */}
+      <div style={{
+          marginBottom: '20px',
+          borderRadius,
+      }}>
+        <LatestTournamentCard />
+      </div>
 
       {/* Player Contributions Section */}
-      <Card
-        title={
-          <Title level={4} style={{ color: colorText, margin: 0, fontSize: '18px' }}>
-            Player Collection Metrics
-          </Title>
-        }
-        className={styles.contributionsCard}
-        style={{ 
-          borderRadius, 
-          background: colorBgContainer,
-          border: `1px solid ${theme.useToken().token.colorBorder}`
-        }}
-        styles={{
-          body: { 
-            background: colorBgContainer,
-            padding: '12px'
-          },
-          header: {
-            padding: '12px 16px'
-          }
-        }}
-      >
+      <div style={{ marginBottom: '20px' }}>
         <PlayerCollectionMetrics 
           selectedYear={selectedYear}
           onYearChange={setSelectedYear}
         />
-      </Card>
+      </div>
     </div>
   );
 };
