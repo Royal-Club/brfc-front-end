@@ -110,7 +110,7 @@ export interface LatestTournamentWithUserStatusType extends BasicResType {
         totalParticipant: number;
         remainParticipant: number;
         totalPlayer: number;
-        userParticipated: boolean | null;
+        isUserParticipated: boolean | null;
         tournamentParticipantId?: number;
     };
 }

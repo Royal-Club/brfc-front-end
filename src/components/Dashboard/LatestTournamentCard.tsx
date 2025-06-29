@@ -88,8 +88,11 @@ const LatestTournamentCard: React.FC = () => {
         );
     }
 
-    const { tournament, totalParticipant, remainParticipant, totalPlayer, userParticipated } = latestTournamentData.content;
+    const { tournament, totalParticipant, remainParticipant, totalPlayer, isUserParticipated } = latestTournamentData.content;
 
+    console.log('Latest Tournament Data:', latestTournamentData);
+    console.log('User Participation Status:', isUserParticipated);
+    
     const getStatusBadge = () => {
         switch (tournament.tournamentStatus) {
             case 'UPCOMING':
@@ -104,8 +107,8 @@ const LatestTournamentCard: React.FC = () => {
     };
 
     const getParticipationValue = () => {
-        if (userParticipated === true) return 'true';
-        if (userParticipated === false) return 'false';
+        if (isUserParticipated === true) return 'true';
+        if (isUserParticipated === false) return 'false';
         return 'null';
     };
 
