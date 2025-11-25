@@ -1,6 +1,16 @@
 import React, { useState, useMemo } from "react";
-import { Table, Select, Space, Radio, Button, theme, Tooltip, Switch } from "antd";
-import { TableOutlined, AppstoreOutlined } from "@ant-design/icons";
+import { Table, Select, Space, Radio, Button, theme, Tooltip, Card, Row, Col, Typography } from "antd";
+import { 
+  TableOutlined, 
+  AppstoreOutlined, 
+  BarChartOutlined, 
+  CalendarOutlined,
+  TeamOutlined,
+  UserOutlined,
+  UserAddOutlined,
+  UserDeleteOutlined,
+  ReloadOutlined
+} from "@ant-design/icons";
 import type {
   ColumnType,
   ColumnsType,
@@ -11,9 +21,11 @@ import type {
 } from "antd/es/table/interface";
 import { useGetPlayerCollectionMetricsQuery } from "../../state/features/account/playerCollectionMetricsSlice";
 import { PlayerMetric } from "../../interfaces/IPlayerCollectionMetrics";
+import PlayerCollectionMobileView from "./PlayerCollectionMobileView";
 import styles from "./PlayerCollectionMetricsTable.module.css";
 
 const { Option } = Select;
+const { Title } = Typography;
 
 const monthNames = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -33,12 +45,14 @@ interface PlayerCollectionMetricsProps {
   selectedYear?: number;
   onYearChange?: (year: number) => void;
   className?: string;
+  isDarkMode?: boolean;
 }
 
 const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
   selectedYear: propSelectedYear,
   onYearChange,
-  className
+  className,
+  isDarkMode = false
 }) => {
   const { token } = theme.useToken();
   const [internalSelectedYear, setInternalSelectedYear] = useState<number | null>(null);
@@ -137,20 +151,53 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
 
   const columns: ColumnsType<TableRow> = [
     {
-      title: "#",
-      dataIndex: "index",
-      key: "index",
+      title: (
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          minWidth: 80
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <CalendarOutlined style={{ fontSize: 10, color: token.colorPrimary }} />
+            <span style={{ 
+              fontSize: 11,
+              display: window.innerWidth <= 768 ? 'none' : 'inline'
+            }}>
+              Year
+            </span>
+          </div>
+          <Select
+            size="small"
+            style={{ width: window.innerWidth <= 768 ? 85 : 70 }}
+            value={selectedYear || undefined}
+            onChange={handleYearChange}
+            loading={isLoading}
+            disabled={isLoading}
+            dropdownStyle={{ minWidth: 60 }}
+            className={styles.headerYearSelect}
+          >
+            {years.map((year: number) => (
+              <Option key={year} value={year}>
+                {year}
+              </Option>
+            ))}
+          </Select>
+        </div>
+      ),
+      dataIndex: "year",
+      key: "year",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 35 : 50,
-      sorter: (a, b) => a.index - b.index,
-      sortOrder: sortField === "index" ? sortOrder : null,
-      defaultSortOrder: "ascend",
-      render: (_: any, __: any, index: number) => index + 1,
+      width: window.innerWidth <= 576 ? 90 : 110,
+      align: "center",
+      render: () => selectedYear,
       onCell: () => ({ 
         style: { 
-          minWidth: window.innerWidth <= 576 ? 30 : 45, 
-          paddingLeft: window.innerWidth <= 576 ? 4 : 8, 
-          paddingRight: window.innerWidth <= 576 ? 4 : 8 
+          minWidth: window.innerWidth <= 576 ? 85 : 105,
+          textAlign: 'center',
+          fontWeight: 600,
+          color: token.colorPrimary,
+          fontSize: 12
         } 
       }),
     },
@@ -159,13 +206,13 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       dataIndex: "playerName",
       key: "playerName",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 90 : (window.innerWidth <= 768 ? 110 : 180),
+      width: window.innerWidth <= 576 ? 100 : (window.innerWidth <= 768 ? 120 : 200),
       sorter: (a, b) => a.playerName.localeCompare(b.playerName),
       sortOrder: sortField === "playerName" ? sortOrder : null,
       render: (text: string) => {
         const isMobile = window.innerWidth <= 576;
         const isTablet = window.innerWidth <= 768;
-        const maxLength = isMobile ? 10 : isTablet ? 12 : 20;
+        const maxLength = isMobile ? 12 : isTablet ? 15 : 25;
         const shouldTruncate = text.length > maxLength;
         const displayText = shouldTruncate ? text.substring(0, maxLength) + '...' : text;
         
@@ -178,7 +225,6 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
           </b>
         );
 
-        // Only show tooltip if text is truncated
         if (shouldTruncate) {
           return (
             <Tooltip 
@@ -199,9 +245,9 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       },
       onCell: () => ({ 
         style: { 
-          minWidth: window.innerWidth <= 576 ? 80 : 140, 
-          paddingLeft: window.innerWidth <= 576 ? 4 : 8, 
-          paddingRight: window.innerWidth <= 576 ? 4 : 8 
+          minWidth: window.innerWidth <= 576 ? 95 : 150, 
+          paddingLeft: window.innerWidth <= 576 ? 6 : 12, 
+          paddingRight: window.innerWidth <= 576 ? 6 : 12 
         } 
       }),
     },
@@ -237,10 +283,7 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
     }
   };
 
-  const resetSorting = () => {
-    setSortField(null);
-    setSortOrder(null);
-  };
+
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -256,147 +299,172 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const renderMobileCards = () => {
-    return (
-      <div className={styles.mobileCardView}>
-        {/* Legend */}
-        <div className={styles.legendContainer}>
-          <div className={styles.legendItem}>
-            <div className={`${styles.legendDot} ${styles.paid}`}></div>
-            <span className={styles.legendText}>Paid</span>
-          </div>
-          <div className={styles.legendItem}>
-            <div className={`${styles.legendDot} ${styles.current}`}></div>
-            <span className={styles.legendText}>Current</span>
-          </div>
-          <div className={styles.legendItem}>
-            <div className={`${styles.legendDot} ${styles.due}`}></div>
-            <span className={styles.legendText}>Due</span>
-          </div>
-          
-        </div>
-
-        {dataSource.map((player, index) => {
-          const playerData = metrics.find((p: PlayerMetric) => p.playerId === player.key);
-          const isActive = playerData?.active ?? false;
-          
-          return (
-            <div key={player.key} className={styles.playerCard}>
-              <div className={styles.playerHeader}>
-                <span className={styles.playerName}>{player.playerName}</span>
-                <span className={styles.playerIndex}>#{index + 1}</span>
-              </div>
-              
-              <div className={styles.monthsGrid}>
-                {monthNames.map((month, idx) => {
-                  const monthNumber = idx + 1;
-                  const amount = player[`month_${monthNumber}`] || 0;
-                  const isCurrentCell = selectedYear === currentYear && monthNumber === currentMonth;
-                  const showDue = isCurrentCell && amount <= 0 && isActive;
-                  const hasData = amount > 0 || showDue;
-                  
-                  let monthClass = styles.monthItem;
-                  
-                  if (showDue) {
-                    monthClass += ` ${styles.monthDue}`;
-                  } else if (isCurrentCell && amount > 0) {
-                    monthClass += ` ${styles.monthCurrent}`;
-                  } else if (amount > 0) {
-                    monthClass += ` ${styles.monthPaid}`;
-                  } else {
-                    monthClass += ` ${styles.monthEmpty}`;
-                  }
-                  
-                  return (
-                    <div key={monthNumber} className={monthClass}>
-                      {hasData && <div className={styles.monthIndicator}></div>}
-                      <div className={styles.monthName}>{month}</div>
-                      <div className={styles.monthAmount}>
-                        {showDue ? 'Due' : (amount > 0 ? amount.toFixed(0) : '-')}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
-    <div className={`${styles.tableContainer} ${className || ''}`}>
-      <div className={styles.controls}>
-        <Space 
-          wrap 
-          style={{ 
-            width: "100%", 
-            justifyContent: window.innerWidth <= 768 ? "center" : "flex-start" 
-          }}
-        >
-          <Select
-            size="small"
-            style={{ width: window.innerWidth <= 768 ? "100%" : 150 }}
-            placeholder="Select Year"
-            value={selectedYear || undefined}
-            onChange={handleYearChange}
-            loading={isLoading}
-            disabled={isLoading}
-            allowClear={false}
-          >
-            {years.map((year: number) => (
-              <Option key={year} value={year}>
-                {year}
-              </Option>
-            ))}
-          </Select>
-          <Radio.Group
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            disabled={isLoading}
-            optionType="button"
-            buttonStyle="solid"
-            size="small"
-            style={{ width: window.innerWidth <= 768 ? "100%" : "auto" }}
-          >
-            <Radio.Button value="all">All</Radio.Button>
-            <Radio.Button value="active">Active</Radio.Button>
-            <Radio.Button value="inactive">Inactive</Radio.Button>
-          </Radio.Group>
-          <Button size="small" onClick={resetSorting} disabled={!sortField}>
-            Reset Sort
-          </Button>
-        </Space>
+    <Card
+      style={{ 
+        borderRadius: 16, 
+        border: `1px solid ${token.colorBorder}`,
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorFillQuaternary} 100%)`,
+        transition: 'all 0.3s ease',
+        overflow: 'hidden'
+      }}
+      styles={{
+        body: { padding: 0 }
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.12)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+      }}
+    >
+      {/* Header Section */}
+      <div style={{ 
+        background: `linear-gradient(90deg, ${token.colorInfo}15 0%, ${token.colorInfo}08 100%)`,
+        padding: '16px 20px',
+        borderBottom: `1px solid ${token.colorBorder}`
+      }}>
+        <Row gutter={[16, 8]} align="middle">
+          <Col xs={24} md={12}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                background: token.colorInfo,
+                borderRadius: '50%',
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <BarChartOutlined style={{ fontSize: 16, color: 'white' }} />
+              </div>
+              <Title level={4} style={{ 
+                margin: 0, 
+                color: token.colorText, 
+                fontSize: 18,
+                fontWeight: '600'
+              }}>
+                Player Collection Metrics
+              </Title>
+            </div>
+          </Col>
+          
+          <Col xs={24} md={12}>
+            <Space 
+              wrap 
+              align="center"
+              style={{ 
+                width: "100%", 
+                justifyContent: window.innerWidth <= 768 ? "center" : "flex-end",
+                alignItems: "center",
+                gap: 12
+              }}
+            >
+              <Radio.Group
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                disabled={isLoading}
+                optionType="button"
+                buttonStyle="solid"
+                size="middle"
+                style={{ 
+                  width: window.innerWidth <= 768 ? "100%" : "auto",
+                  display: "flex",
+                  alignItems: "center"
+                }}
+                className={styles.styledRadioGroup}
+              >
+                <Radio.Button value="all" className={styles.styledRadioButton}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <TeamOutlined style={{ fontSize: 12 }} />
+                    <span>All</span>
+                  </div>
+                </Radio.Button>
+                <Radio.Button value="active" className={styles.styledRadioButton}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <UserAddOutlined style={{ fontSize: 12 }} />
+                    <span>Active</span>
+                  </div>
+                </Radio.Button>
+                <Radio.Button value="inactive" className={styles.styledRadioButton}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <UserDeleteOutlined style={{ fontSize: 12 }} />
+                    <span>Inactive</span>
+                  </div>
+                </Radio.Button>
+              </Radio.Group>
+            </Space>
+          </Col>
+        </Row>
       </div>
 
       {/* Mobile View Toggle */}
       {isMobile && (
-        <div className={styles.viewToggle}>
+        <div style={{
+          padding: '12px 20px',
+          background: token.colorBgLayout,
+          borderBottom: `1px solid ${token.colorBorder}`,
+          display: 'flex',
+          justifyContent: 'center'
+        }}>
           <Radio.Group
             value={mobileView}
             onChange={(e) => setMobileView(e.target.value)}
             optionType="button"
             buttonStyle="solid"
-            size="small"
+            size="middle"
+            className={styles.styledRadioGroup}
           >
-            <Radio.Button value="cards">
-              <AppstoreOutlined /> Cards
+            <Radio.Button value="cards" className={styles.styledRadioButton}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <AppstoreOutlined style={{ fontSize: 12 }} />
+                <span>Cards</span>
+              </div>
             </Radio.Button>
-            <Radio.Button value="table">
-              <TableOutlined /> Table
+            <Radio.Button value="table" className={styles.styledRadioButton}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <TableOutlined style={{ fontSize: 12 }} />
+                <span>Table</span>
+              </div>
             </Radio.Button>
           </Radio.Group>
         </div>
       )}
 
-      {/* Conditional rendering for mobile */}
-      {isMobile ? (
-        mobileView === 'cards' ? (
-          renderMobileCards()
+      {/* Content Section */}
+      <div style={{ background: token.colorBgContainer }}>
+        {isMobile ? (
+          mobileView === 'cards' ? (
+            <PlayerCollectionMobileView 
+              dataSource={dataSource}
+              metrics={metrics}
+              selectedYear={selectedYear}
+              currentYear={currentYear}
+              currentMonth={currentMonth}
+              isDarkMode={isDarkMode}
+              years={years}
+              onYearChange={handleYearChange}
+              isLoading={isLoading}
+            />
+          ) : (
+            <div style={{ padding: '16px 20px' }}>
+              <Table
+                size="small"
+                bordered
+                columns={columns}
+                dataSource={dataSource}
+                pagination={false}
+                scroll={{ x: "max-content" }}
+                loading={isLoading}
+                rowKey="key"
+                onChange={handleTableChange}
+                className={`${styles.tableData} ${isDarkMode ? styles.darkTheme : styles.lightTheme}`}
+              />
+            </div>
+          )
         ) : (
-          /* Mobile Table View */
-          <div className={`${styles.table} ${styles.mobileTableView}`}>
+          <div style={{ padding: '16px 20px' }}>
             <Table
               size="small"
               bordered
@@ -407,31 +475,15 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
               loading={isLoading}
               rowKey="key"
               onChange={handleTableChange}
-              className={styles.tableData}
+              className={`${styles.tableData} ${isDarkMode ? styles.darkTheme : styles.lightTheme}`}
             />
           </div>
-        )
-      ) : (
-        /* Desktop Table View */
-        <div className={styles.table}>
-          <Table
-            size="small"
-            bordered
-            columns={columns}
-            dataSource={dataSource}
-            pagination={false}
-            scroll={{ x: "max-content" }}
-            loading={isLoading}
-            rowKey="key"
-            onChange={handleTableChange}
-            className={styles.tableData}
-          />
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </Card>
   );
 };
 
 
-
 export default PlayerCollectionMetrics;
+             

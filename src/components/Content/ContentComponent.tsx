@@ -1,4 +1,4 @@
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, SettingOutlined, LogoutOutlined, BulbOutlined } from "@ant-design/icons";
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, SettingOutlined, LogoutOutlined, BulbOutlined, TrophyOutlined } from "@ant-design/icons";
 import {
     Avatar,
     Button,
@@ -12,6 +12,10 @@ import {
     Switch,
     theme,
     Typography,
+    Drawer,
+    Timeline,
+    Empty,
+    Spin,
 } from "antd";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -41,6 +45,8 @@ import ContentOutlet from "./ContentOutlet";
 import ClubRules from "../ClubRules/ClubRules";
 import companyLogo from "../../assets/logo.png";
 import type { MenuProps } from "antd";
+import { useGetMyGoalkeepingHistoryQuery } from "../../state/features/player/playerSlice";
+import { showBdLocalTime } from "../../utils/utils";
 
 const { Header, Content } = Layout;
 
@@ -63,6 +69,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     const loginInfo = useSelector(selectLoginInfo);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [goalkeepingHistoryDrawerVisible, setGoalkeepingHistoryDrawerVisible] = useState(false);
 
     const { user, logout } = useAuthHook();
     const navigate = useNavigate();
@@ -72,6 +79,12 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     }, {
         skip: !loginInfo?.userId
     });
+
+    const { 
+        data: goalkeepingHistoryData, 
+        isLoading: isLoadingGoalkeepingHistory,
+        refetch: refetchGoalkeepingHistory 
+    } = useGetMyGoalkeepingHistoryQuery();
 
     const handleSettingsClick = () => {
         setIsModalVisible(true);
@@ -97,6 +110,15 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 logout();
             },
         });
+    };
+
+    const handleGoalkeepingHistoryClick = () => {
+        setGoalkeepingHistoryDrawerVisible(true);
+        refetchGoalkeepingHistory();
+    };
+
+    const handleGoalkeepingHistoryClose = () => {
+        setGoalkeepingHistoryDrawerVisible(false);
     };
 
     const items: MenuProps['items'] = [
@@ -167,6 +189,18 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
             key: "1",
             onClick: () => {
                 navigate("/profile");
+            },
+        },
+        {
+            label: (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <TrophyOutlined />
+                    My Goalkeeping History
+                </span>
+            ),
+            key: "goalkeeping-history",
+            onClick: () => {
+                handleGoalkeepingHistoryClick();
             },
         },
         {
@@ -327,7 +361,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 >
                     <Routes>
                         <Route path="/" element={<ContentOutlet />}>
-                            <Route index element={<Dashboard />} />
+                            <Route index element={<Dashboard isDarkMode={isDarkMode} />} />
                             <Route path="/profile" element={<UserProfile />} />
                             <Route path="/player" element={<Player />} />
                             {loginInfo.roles.includes("ADMIN") && (
@@ -407,6 +441,97 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                     )}
                 </Content>
             </Layout>
+
+            {/* Goalkeeping History Drawer */}
+            <Drawer
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <TrophyOutlined style={{ color: '#faad14' }} />
+                        <span>My Goalkeeping History</span>
+                    </div>
+                }
+                placement="right"
+                onClose={handleGoalkeepingHistoryClose}
+                open={goalkeepingHistoryDrawerVisible}
+                width={isMobile ? '100%' : 480}
+                bodyStyle={{ padding: '24px' }}
+            >
+                {isLoadingGoalkeepingHistory ? (
+                    <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                        <Spin size="large" />
+                        <div style={{ marginTop: 16 }}>Loading your goalkeeping history...</div>
+                    </div>
+                ) : goalkeepingHistoryData?.content && goalkeepingHistoryData.content.length > 0 ? (
+                    <div>
+                        <div style={{ 
+                            marginBottom: 24, 
+                            padding: '16px', 
+                            borderRadius: '8px',
+                            border: '1px solid rgba(24, 144, 255, 0.2)'
+                        }}>
+                            <Typography.Title level={5} style={{ margin: 0, marginBottom: 8 }}>
+                                Summary
+                            </Typography.Title>
+                            <Typography.Text>
+                                You have played as goalkeeper <strong>{goalkeepingHistoryData.content.length}</strong> times.
+                            </Typography.Text>
+                        </div>
+                        
+                        <Timeline
+                            mode="left"
+                            style={{ marginTop: 16 }}
+                            items={goalkeepingHistoryData.content.map((record, index) => ({
+                                dot: <TrophyOutlined style={{ fontSize: '16px', color: '#faad14' }} />,
+                                children: (
+                                    <div style={{ 
+                                        padding: '12px 16px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #f0f0f0'
+                                    }}>
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'space-between', 
+                                            alignItems: 'center',
+                                            marginBottom: 4
+                                        }}>
+                                            <Typography.Text strong style={{ fontSize: '16px' }}>
+                                                Round {record.roundNumber}
+                                            </Typography.Text>
+                                            <Typography.Text 
+                                                type="secondary" 
+                                                style={{ fontSize: '12px' }}
+                                            >
+                                                #{goalkeepingHistoryData.content.length - index}
+                                            </Typography.Text>
+                                        </div>
+                                        <Typography.Text 
+                                            type="secondary" 
+                                            style={{ fontSize: '14px' }}
+                                        >
+                                            {showBdLocalTime(record.playedDate)}
+                                        </Typography.Text>
+                                    </div>
+                                ),
+                            }))}
+                        />
+                    </div>
+                ) : (
+                    <Empty
+                        image={<TrophyOutlined style={{ fontSize: '64px', color: '#d9d9d9' }} />}
+                        description={
+                            <div>
+                                <Typography.Title level={4} type="secondary">
+                                    No Goalkeeping History
+                                </Typography.Title>
+                                <Typography.Text type="secondary">
+                                    You haven't played as a goalkeeper yet. Keep playing and this section will show your goalkeeping records!
+                                </Typography.Text>
+                            </div>
+                        }
+                        style={{ padding: '40px 0' }}
+                    />
+                )}
+            </Drawer>
         </>
     );
 };

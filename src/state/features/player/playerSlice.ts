@@ -15,6 +15,17 @@ export interface PlayerPositions extends BasicResType {
     content: IFootballPosition[];
 }
 
+export interface GoalkeepingHistoryRecord {
+    playerId: number;
+    playerName: string;
+    roundNumber: number;
+    playedDate: string;
+}
+
+export interface PlayerGoalkeepingHistoryResType extends BasicResType {
+    content: GoalkeepingHistoryRecord[];
+}
+
 export const playerApi = apiWithTags.injectEndpoints({
     endpoints: (builder) => ({
         getPlayers: builder.query<PlayerList, void>({
@@ -24,7 +35,22 @@ export const playerApi = apiWithTags.injectEndpoints({
         getPlayerPositions: builder.query<PlayerPositions, void>({
             query: () => "football-positions",
         }),
+
+        getPlayerGoalkeepingHistory: builder.query<PlayerGoalkeepingHistoryResType, { playerId: number }>({
+            query: ({ playerId }) => `players/goalkeeping-history?playerId=${playerId}`,
+            providesTags: ["player"],
+        }),
+
+        getMyGoalkeepingHistory: builder.query<PlayerGoalkeepingHistoryResType, void>({
+            query: () => "players/goalkeeping-history",
+            providesTags: ["player"],
+        }),
     }),
 });
 
-export const { useGetPlayersQuery, useGetPlayerPositionsQuery } = playerApi;
+export const { 
+    useGetPlayersQuery, 
+    useGetPlayerPositionsQuery,
+    useGetPlayerGoalkeepingHistoryQuery,
+    useGetMyGoalkeepingHistoryQuery 
+} = playerApi;

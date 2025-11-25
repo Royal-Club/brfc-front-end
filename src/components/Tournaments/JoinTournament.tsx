@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   Select,
   Typography,
@@ -41,6 +41,7 @@ import {
 import { showBdLocalTime } from "./../../utils/utils";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -58,6 +59,7 @@ export default function JoinTournament() {
   const loginInfo = useSelector(selectLoginInfo);
   const { id = "" } = useParams();
   const tournamentId = Number(id);
+  const navigate = useNavigate();
   const { players, isLoading, isUpdating, handleUpdate, nextTournament } =
     useJoinTournament(tournamentId);
 
@@ -293,114 +295,102 @@ export default function JoinTournament() {
             }}
           >
             {/* Tournament Header Section */}
-            <Row gutter={[16, 12]} align="middle" style={{ marginBottom: 12 }}>
-              <Col xs={24} lg={16}>
-                <Space direction="vertical" size={2}>
+            <Row gutter={[16, 8]} align="middle" style={{ marginBottom: 8 }}>
+              <Col xs={24} sm={12} md={8}>
+                <Space direction="vertical" size={0}>
                   <Title level={2} style={{ 
                     margin: 0, 
-                    fontSize: screens.xs ? "18px" : "24px",
-                    color: token.colorText
+                    fontSize: screens.xs ? "18px" : "22px",
+                    color: token.colorText,
+                    lineHeight: 1.2
                   }}>
                     {nextTournament?.tournamentName}
                   </Title>
-                  <Text type="secondary" style={{ fontSize: "14px" }}>
+                  <Text type="secondary" style={{ fontSize: "13px" }}>
                     <RightSquareOutlined />{" "}
                     {nextTournament?.tournamentDate &&
                       showBdLocalTime(nextTournament?.tournamentDate)}
                   </Text>
                 </Space>
               </Col>
-              <Col xs={24} lg={8}>
-                <Row gutter={[4, 4]} className="tournament-stats-row">
-                  <Col xs={12} sm={6}>
+              
+              <Col xs={24} sm={12} md={10}>
+                <Row gutter={[4, 4]} className="tournament-stats-compact">
+                  <Col xs={6} sm={6}>
                     <Tooltip title="Total Players" placement="top">
-                      <Card size="small" style={{ 
-                        textAlign: 'center',
-                        borderColor: token.colorBorder,
-                        padding: '4px',
-                        cursor: 'pointer'
-                      }}>
-                        <Space direction="vertical" size={1}>
-                          <TeamOutlined style={{ fontSize: 12, color: '#1890ff' }} />
-                          <Text strong style={{ 
-                            fontSize: 14,
-                            color: token.colorText
-                          }}>{players.length}</Text>
-                        </Space>
-                      </Card>
+                      <div className="stat-item">
+                        <TeamOutlined style={{ fontSize: 14, color: '#1890ff' }} />
+                        <Text strong style={{ fontSize: 13, color: token.colorText }}>
+                          {players.length}
+                        </Text>
+                      </div>
                     </Tooltip>
                   </Col>
-                  <Col xs={12} sm={6}>
+                  <Col xs={6} sm={6}>
                     <Tooltip title="Participating" placement="top">
-                      <Card size="small" style={{ 
-                        textAlign: 'center',
-                        borderColor: token.colorBorder,
-                        padding: '4px',
-                        cursor: 'pointer'
-                      }}>
-                        <Space direction="vertical" size={1}>
-                          <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: 12 }} />
-                          <Text strong style={{ fontSize: 14, color: '#52c41a' }}>
-                            {participatingPlayers.length}
-                          </Text>
-                        </Space>
-                      </Card>
+                      <div className="stat-item">
+                        <CheckCircleTwoTone twoToneColor="#52c41a" style={{ fontSize: 14 }} />
+                        <Text strong style={{ fontSize: 13, color: '#52c41a' }}>
+                          {participatingPlayers.length}
+                        </Text>
+                      </div>
                     </Tooltip>
                   </Col>
-                  <Col xs={12} sm={6}>
+                  <Col xs={6} sm={6}>
                     <Tooltip title="Not Participating" placement="top">
-                      <Card size="small" style={{ 
-                        textAlign: 'center',
-                        borderColor: token.colorBorder,
-                        padding: '4px',
-                        cursor: 'pointer'
-                      }}>
-                        <Space direction="vertical" size={1}>
-                          <CloseCircleOutlined style={{ fontSize: 12, color: '#ff4d4f' }} />
-                          <Text strong style={{ fontSize: 14, color: '#ff4d4f' }}>
-                            {notParticipatingPlayers.length}
-                          </Text>
-                        </Space>
-                      </Card>
+                      <div className="stat-item">
+                        <CloseCircleOutlined style={{ fontSize: 14, color: '#ff4d4f' }} />
+                        <Text strong style={{ fontSize: 13, color: '#ff4d4f' }}>
+                          {notParticipatingPlayers.length}
+                        </Text>
+                      </div>
                     </Tooltip>
                   </Col>
-                  <Col xs={12} sm={6}>
+                  <Col xs={6} sm={6}>
                     <Tooltip title="Pending Response" placement="top">
-                      <Card size="small" style={{ 
-                        textAlign: 'center',
-                        borderColor: token.colorBorder,
-                        padding: '4px',
-                        cursor: 'pointer'
-                      }}>
-                        <Space direction="vertical" size={1}>
-                          <ClockCircleOutlined style={{ fontSize: 12, color: '#faad14' }} />
-                          <Text strong style={{ fontSize: 14, color: '#faad14' }}>
-                            {pendingPlayers.length}
-                          </Text>
-                        </Space>
-                      </Card>
+                      <div className="stat-item">
+                        <ClockCircleOutlined style={{ fontSize: 14, color: '#faad14' }} />
+                        <Text strong style={{ fontSize: 13, color: '#faad14' }}>
+                          {pendingPlayers.length}
+                        </Text>
+                      </div>
                     </Tooltip>
                   </Col>
                 </Row>
+              </Col>
+              
+              <Col xs={24} sm={24} md={6}>
+                <Space wrap style={{ justifyContent: screens.md ? 'flex-end' : 'flex-start', width: '100%' }}>
+                  <GoalKeeperDrawer tournamentId={tournamentId} />
+                  <Button 
+                    type="primary"
+                    onClick={() => navigate(`/tournaments/team-building/${tournamentId}`)}
+                    icon={<TeamOutlined />}
+                    size={screens.xs ? "small" : "middle"}
+                  >
+                    {screens.xs ? "Team" : "View Team"}
+                  </Button>
+                </Space>
               </Col>
             </Row>
 
             {/* Logged-in Player Section */}
             {loggedInPlayer && (
               <>
-                <Divider style={{ margin: '8px 0' }} />
+                <Divider style={{ margin: '6px 0' }} />
                 <div>
-                  <Title level={4} style={{ 
-                    marginBottom: 8, 
-                    color: token.colorPrimary 
+                  <Title level={5} style={{ 
+                    marginBottom: 6, 
+                    color: token.colorPrimary,
+                    fontSize: "14px"
                   }}>
-                    <UserOutlined /> Your Participation Status
+                    <UserOutlined /> Your Status
                   </Title>
-                  <Row gutter={[16, 8]} align="middle">
-                    <Col xs={24} sm={6}>
-                      <Space align="center">
+                  <Row gutter={[12, 6]} align="middle">
+                    <Col xs={24} sm={8} md={6}>
+                      <Space align="center" size={8}>
                         <Avatar 
-                          size={32} 
+                          size={28} 
                           icon={<UserOutlined />}
                           style={{ 
                             backgroundColor: token.colorPrimary,
@@ -408,32 +398,32 @@ export default function JoinTournament() {
                           }}
                         />
                         <div>
-                          <Space>
+                          <Space size={4}>
                             <Text strong style={{ 
-                              fontSize: "14px",
+                              fontSize: "13px",
                               color: token.colorText
                             }}>
                               {loggedInPlayer.playerName}
                             </Text>
-                            <StarFilled style={{ color: '#faad14' }} />
+                            <StarFilled style={{ color: '#faad14', fontSize: 12 }} />
                           </Space>
                           <div>
-                            <Text type="secondary" style={{ fontSize: "12px" }}>
+                            <Text type="secondary" style={{ fontSize: "11px" }}>
                               ID: {loggedInPlayer.employeeId}
                             </Text>
                           </div>
                         </div>
                       </Space>
                     </Col>
-                    <Col xs={24} sm={6}>
+                    <Col xs={12} sm={8} md={6}>
                       <div>
                         <Text strong style={{ 
-                          fontSize: "14px", 
+                          fontSize: "12px", 
                           display: "block", 
-                          marginBottom: 4,
+                          marginBottom: 2,
                           color: token.colorText
                         }}>
-                          Participation Status
+                          Status
                         </Text>
                         <Select
                           value={
@@ -452,7 +442,7 @@ export default function JoinTournament() {
                           }}
                           disabled={isUpdating}
                           style={{ width: "100%" }}
-                          size="large"
+                          size="small"
                         >
                           <Option value="true">
                             <Space>
@@ -469,19 +459,19 @@ export default function JoinTournament() {
                         </Select>
                       </div>
                     </Col>
-                    <Col xs={24} sm={12}>
+                    <Col xs={12} sm={8} md={12}>
                       <div>
                         <Text strong style={{ 
-                          fontSize: "14px", 
+                          fontSize: "12px", 
                           display: "block", 
-                          marginBottom: 4,
+                          marginBottom: 2,
                           color: token.colorText
                         }}>
                           <EditOutlined /> Comments
                         </Text>
                         <DebouncedInput
                           isDisabled={false}
-                          placeholder="Add your comments here..."
+                          placeholder="Add your comments..."
                           debounceDuration={1000}
                           onChange={(value) => {
                             setEditedComments({
