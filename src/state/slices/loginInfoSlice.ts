@@ -8,6 +8,7 @@ interface LoginInfoState {
     userId: string;
     image?: string;
     roles: string[];
+    resetPassword?: boolean;
 }
 
 const initialState: LoginInfoState = {
@@ -30,6 +31,7 @@ export const loginInfoSlice = createSlice({
             state.userId = action.payload.userId;
             state.roles = action.payload.roles;
             state.image = action.payload.image;
+            state.resetPassword = action.payload.resetPassword;
         },
         setToken: (state, action: PayloadAction<string>) => {
             state.token = action.payload;
@@ -49,6 +51,9 @@ export const loginInfoSlice = createSlice({
         setImage: (state, action: PayloadAction<string>) => {
             state.image = action.payload;
         },
+        setResetPassword: (state, action: PayloadAction<boolean>) => {
+            state.resetPassword = action.payload;
+        },
         removeUser: (state) => {
             return {
                 ...state,
@@ -58,6 +63,7 @@ export const loginInfoSlice = createSlice({
                 userId: "",
                 roles: [""],
                 image: "",
+                resetPassword: false,
             };
         },
     },
@@ -71,6 +77,7 @@ export const {
     setUserId,
     setRoles,
     setImage,
+    setResetPassword,
     removeUser,
 } = loginInfoSlice.actions;
 export default loginInfoSlice.reducer;
@@ -82,3 +89,4 @@ export const selectUserEmail = (state: RootState) => state.loginInfo.email;
 export const selectUserId = (state: RootState) => state.loginInfo.userId;
 export const selectUserRoles = (state: RootState) => state.loginInfo.roles;
 export const selectUserImage = (state: RootState) => state.loginInfo.image;
+export const selectResetPassword = (state: RootState) => state.loginInfo.resetPassword;
