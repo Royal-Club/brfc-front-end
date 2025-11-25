@@ -9,7 +9,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setResetPassword, removeUser, selectUserEmail, selectUserName } from "../../state/slices/loginInfoSlice";
-import { useResetPlayerPasswordMutation } from "../../state/features/auth/authSlice";
+import { useChangePasswordMutation } from "../../state/features/auth/authSlice";
 import colors from "../../utils/colors";
 import logo from "../../assets/logo.png";
 
@@ -17,7 +17,7 @@ const PasswordResetPage: React.FC = () => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [backgroundLoaded, setBackgroundLoaded] = useState(false);
-    const [resetPassword] = useResetPlayerPasswordMutation();
+    const [changePassword] = useChangePasswordMutation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const userEmail = useSelector(selectUserEmail);
@@ -39,14 +39,9 @@ const PasswordResetPage: React.FC = () => {
         return passwordRegex.test(password);
     };
 
-    const handleSubmit = async (values: { newPassword: string; confirmPassword: string }) => {
+    const handleSubmit = async (values: { oldPassword: string; newPassword: string }) => {
         if (!userEmail) {
             message.error("User email not found. Please login again.");
-            return;
-        }
-
-        if (values.newPassword !== values.confirmPassword) {
-            message.error("Passwords do not match!");
             return;
         }
 
@@ -60,19 +55,20 @@ const PasswordResetPage: React.FC = () => {
         setLoading(true);
 
         try {
-            await resetPassword({
+            await changePassword({
                 email: userEmail,
+                oldPassword: values.oldPassword,
                 newPassword: values.newPassword,
             }).unwrap();
 
-            message.success("Password reset successfully! Logging you out...");
+            message.success("Password changed successfully! Logging you out...");
             dispatch(removeUser());
             dispatch(setResetPassword(false));
             navigate("/login", { replace: true });
         } catch (error: any) {
             console.error(error);
             message.error(
-                error?.data?.message || "Failed to reset password. Please try again."
+                error?.data?.message || "Failed to change password. Please try again."
             );
         } finally {
             setLoading(false);
@@ -124,6 +120,34 @@ const PasswordResetPage: React.FC = () => {
                                 autoComplete="off"
                             >
                             <Form.Item
+                                name="oldPassword"
+                                label={
+                                    <span style={{ color: colors.grayDark }}>
+                                        <LockOutlined style={{ marginRight: 8 }} />
+                                        Old Password
+                                    </span>
+                                }
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please enter your old password!",
+                                    },
+                                ]}
+                            >
+                                <Input.Password
+                                    placeholder="Enter old password"
+                                    iconRender={(visible) =>
+                                        visible ? (
+                                            <EyeOutlined />
+                                        ) : (
+                                            <EyeInvisibleOutlined />
+                                        )
+                                    }
+                                    className="password-reset-input"
+                                />
+                            </Form.Item>
+
+                            <Form.Item
                                 name="newPassword"
                                 label={
                                     <span style={{ color: colors.grayDark }}>
@@ -145,34 +169,6 @@ const PasswordResetPage: React.FC = () => {
                             >
                                 <Input.Password
                                     placeholder="Enter new password"
-                                    iconRender={(visible) =>
-                                        visible ? (
-                                            <EyeOutlined />
-                                        ) : (
-                                            <EyeInvisibleOutlined />
-                                        )
-                                    }
-                                    className="password-reset-input"
-                                />
-                            </Form.Item>
-
-                            <Form.Item
-                                name="confirmPassword"
-                                label={
-                                    <span style={{ color: colors.grayDark }}>
-                                        <LockOutlined style={{ marginRight: 8 }} />
-                                        Confirm Password
-                                    </span>
-                                }
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: "Please confirm your password!",
-                                    },
-                                ]}
-                            >
-                                <Input.Password
-                                    placeholder="Confirm your password"
                                     iconRender={(visible) =>
                                         visible ? (
                                             <EyeOutlined />
