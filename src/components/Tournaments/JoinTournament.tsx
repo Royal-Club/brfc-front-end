@@ -32,7 +32,6 @@ import {
   SearchOutlined,
   ClockCircleOutlined,
   TeamOutlined,
-  SortAscendingOutlined,
   FilterOutlined,
   CaretRightOutlined,
   StarFilled,
@@ -513,7 +512,6 @@ export default function JoinTournament() {
                       onChange={setSortBy}
                       style={{ width: "100%" }}
                       size="middle"
-                      prefix={<SortAscendingOutlined />}
                     >
                       <Option value="name">Sort by Name</Option>
                       <Option value="employeeId">Sort by ID</Option>

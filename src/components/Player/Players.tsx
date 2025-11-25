@@ -399,14 +399,16 @@ function Players() {
               >
                 Reset
               </Button>
-              <Button
-                type="default"
-                size="small"
-                icon={<SafetyCertificateTwoTone twoToneColor="#52c41a" />}
-                onClick={() => showRolesModal(record)}
-              >
-                Set Roles
-              </Button>
+              {loginInfo.roles.includes("SUPERADMIN") && (
+                <Button
+                  type="default"
+                  size="small"
+                  icon={<SafetyCertificateTwoTone twoToneColor="#52c41a" />}
+                  onClick={() => showRolesModal(record)}
+                >
+                  Set Roles
+                </Button>
+              )}
             </Space>
           ),
         },
