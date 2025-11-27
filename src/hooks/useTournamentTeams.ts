@@ -165,8 +165,6 @@ const useTournamentTeams = (tournamentId: number) => {
             message.success("Player added to team successfully");
             await refetchPlayer();
             await refetchTournament();
-        } catch {
-            console.error("Failed to add player to team");
         } finally {
             setIsLoading(false);
         }
@@ -215,8 +213,6 @@ const useTournamentTeams = (tournamentId: number) => {
             message.info("Player removed from team successfully");
             await refetchTournament();
             await refetchPlayer();
-        } catch {
-            message.error("Failed to remove player from team");
         } finally {
             setIsLoading(false);
         }
@@ -245,8 +241,6 @@ const useTournamentTeams = (tournamentId: number) => {
                 `Renamed team with ID ${teamId} to ${newName} in tournament ${tournamentId}`
             );
             await refetchTournament();
-        } catch {
-            message.error("Failed to rename team");
         } finally {
             setIsLoading(false);
         }
@@ -265,8 +259,6 @@ const useTournamentTeams = (tournamentId: number) => {
             message.success("Team removed successfully");
             await refetchTournament();
             await refetchPlayer();
-        } catch {
-            message.error("Failed to remove team");
         } finally {
             setIsLoading(false);
         }

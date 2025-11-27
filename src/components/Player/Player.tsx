@@ -10,7 +10,6 @@ import {
     Space,
     Spin,
     message,
-    notification,
     Breadcrumb,
     Divider,
     Typography
@@ -43,8 +42,7 @@ const { Title } = Typography;
 function Player() {
     const loginInfo = useSelector(selectLoginInfo);
     const navigate = useNavigate();
-    const [notificationApi, contextHolder] = notification.useNotification();
-    //   const [notificationApi, contextHolder] = notification.useNotification();
+    const [notificationApi, contextHolder] = message.useMessage();
 
     const [footballPositions, setFootballPositions] = useState<
         IFootballPosition[]
@@ -93,14 +91,14 @@ function Player() {
                 .then((response) => {
                     message.success(response.data.message);
                     navigate("/players");
-                })
-                .catch((err) => {
-                    console.error("Server error:", err);
-                    notificationApi.error({
-                        message: "Error creating player",
-                        description: err.message,
-                    });
                 });
+                // .catch((err) => {
+                //     console.error("Server error:", err);
+                //     notificationApi.error({
+                //         message: "Error creating player",
+                //         description: err.message,
+                //     });
+                // });
         } else {
             axiosApi
                 .put(`${API_URL}/players/${id}`, playerData)
@@ -118,25 +116,25 @@ function Player() {
                             );
                             message.success(response.data.message);
                             navigate("/players");
-                        })
-                        .catch((statusError) => {
-                            console.error(
-                                "Error updating player status:",
-                                statusError
-                            );
-                            notificationApi.error({
-                                message: "Error updating player status",
-                                description: statusError.message,
-                            });
                         });
-                })
-                .catch((err) => {
-                    console.error("Server error:", err);
-                    notificationApi.error({
-                        message: "Error updating player",
-                        description: err.message,
-                    });
+                        // .catch((statusError) => {
+                        //     console.error(
+                        //         "Error updating player status:",
+                        //         statusError
+                        //     );
+                        //     notificationApi.error({
+                        //         message: "Error updating player status",
+                        //         description: statusError.message,
+                        //     });
+                        // });
                 });
+                // .catch((err) => {
+                //     console.error("Server error:", err);
+                //     notificationApi.error({
+                //         message: "Error updating player",
+                //         description: err.message,
+                //     });
+                // });
         }
     };
 

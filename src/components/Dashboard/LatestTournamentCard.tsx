@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Card, Button, Typography, Space, Row, Col, Radio, message, Tooltip, Badge, theme } from 'antd';
-import { 
-    TrophyOutlined, 
-    CalendarOutlined, 
-    EnvironmentOutlined, 
+import { Card, Button, Typography, Space, Row, Col, Radio, message, Badge, theme } from 'antd';
+import {
+    TrophyOutlined,
+    CalendarOutlined,
+    EnvironmentOutlined,
     TeamOutlined,
     UserOutlined,
     CheckCircleOutlined,
@@ -64,8 +64,6 @@ const LatestTournamentCard: React.FC = () => {
             
             message.success(statusMessage);
             refetch();
-        } catch (error) {
-            message.error('Failed to update participation status');
         } finally {
             setIsUpdating(false);
         }

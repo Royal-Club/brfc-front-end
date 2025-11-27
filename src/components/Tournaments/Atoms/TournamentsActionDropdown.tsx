@@ -56,9 +56,6 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
       .then(() => {
         message.success("Active status updated successfully");
         setIsActiveStatusModalVisible(false);
-      })
-      .catch(() => {
-        message.error("Failed to update active status");
       });
   };
 
