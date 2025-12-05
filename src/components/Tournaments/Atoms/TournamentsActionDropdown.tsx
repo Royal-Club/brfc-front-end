@@ -65,6 +65,7 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
         <Menu.Item key="join">Join Tournament</Menu.Item>
       ) : null}
       <Menu.Item key="team-building">Team Building</Menu.Item>
+      <Menu.Item key="fixtures">Manage Fixtures</Menu.Item>
       {loginInfo.roles.includes("ADMIN") && (
         <Menu.Item key="update">Update Tournament</Menu.Item>
       )}

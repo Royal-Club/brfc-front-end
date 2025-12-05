@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     Button,
     Card,
@@ -12,7 +12,8 @@ import {
 } from "antd";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import PlayerCard from "./PlayerCard";
-import { Team } from "../tournamentTypes";
+import EditPlayerDetailsModal from "./EditPlayerDetailsModal";
+import { Team, Player } from "../tournamentTypes";
 import { MoreOutlined } from "@ant-design/icons";
 import DoubleClickTextInputField from "../../CommonAtoms/DoubleClickTextInputField";
 import { useSelector } from "react-redux";
@@ -28,7 +29,10 @@ interface TeamCardProps {
         playingPosition: string,
         teamId: number,
         playerId: number,
-        id?: number
+        id?: number,
+        isCaptain?: boolean,
+        teamPlayerRole?: string,
+        jerseyNumber?: number
     ) => void;
 }
 
@@ -44,6 +48,9 @@ const TeamCard: React.FC<TeamCardProps> = ({
     const {
         token: { colorBgLayout },
       } = theme.useToken();
+
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
 
     const handleRenameTeamClick = (newName: string) => {
@@ -136,16 +143,8 @@ const TeamCard: React.FC<TeamCardProps> = ({
                         >
                             {team.players.map((player, index) => (
                                 <Draggable
-                                    key={player.playerId.toString()}
-                                    draggableId={
-                                        player.id && player?.teamId
-                                            ? player?.playerId.toString() +
-                                              "-" +
-                                              player?.id.toString() +
-                                              "-" +
-                                              player?.teamId.toString()
-                                            : player.playerId.toString()
-                                    }
+                                    key={`${team.teamId}-${player.playerId}`}
+                                    draggableId={`${team.teamId}-${player.playerId}`}
                                     index={index}
                                 >
                                     {(provided) => (
@@ -165,18 +164,15 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                             <PlayerCard
                                                 showOptions
                                                 player={player}
-                                                handleRemovePlayer={() =>
-                                                    handleRemovePlayer(
-                                                        team.teamId,
-                                                        player.playerId
-                                                    )
-                                                }
                                                 handleAddPosition={() => {
                                                     handleAddPlayerToTeam(
                                                         "GOALKEEPER",
                                                         team.teamId,
                                                         player.playerId,
-                                                        player.id
+                                                        player.id,
+                                                        player.isCaptain,
+                                                        player.teamPlayerRole,
+                                                        player.jerseyNumber
                                                     );
                                                 }}
                                                 handleRemovePosition={() => {
@@ -184,8 +180,26 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                                         "UNASSIGNED",
                                                         team.teamId,
                                                         player.playerId,
-                                                        player.id
+                                                        player.id,
+                                                        player.isCaptain,
+                                                        player.teamPlayerRole,
+                                                        player.jerseyNumber
                                                     );
+                                                }}
+                                                handleToggleCaptain={() => {
+                                                    handleAddPlayerToTeam(
+                                                        player.playingPosition || "UNASSIGNED",
+                                                        team.teamId,
+                                                        player.playerId,
+                                                        player.id,
+                                                        !player.isCaptain,
+                                                        !player.isCaptain ? "CAPTAIN" : "PLAYER",
+                                                        player.jerseyNumber
+                                                    );
+                                                }}
+                                                handleEditDetails={() => {
+                                                    setSelectedPlayer(player);
+                                                    setEditModalVisible(true);
                                                 }}
                                             />
                                         </div>
@@ -195,6 +209,33 @@ const TeamCard: React.FC<TeamCardProps> = ({
                             {provided.placeholder}
                         </div>
                     )}
+                    <EditPlayerDetailsModal
+                        visible={editModalVisible}
+                        player={selectedPlayer}
+                        onClose={() => {
+                            setEditModalVisible(false);
+                            setSelectedPlayer(null);
+                        }}
+                        onSave={(
+                            playerId,
+                            teamId,
+                            playingPosition,
+                            id,
+                            isCaptain,
+                            teamPlayerRole,
+                            jerseyNumber
+                        ) => {
+                            handleAddPlayerToTeam(
+                                playingPosition,
+                                teamId,
+                                playerId,
+                                id,
+                                isCaptain,
+                                teamPlayerRole,
+                                jerseyNumber
+                            );
+                        }}
+                    />
                 </Card>
             )}
         </Droppable>

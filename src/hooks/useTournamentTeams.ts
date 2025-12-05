@@ -3,6 +3,7 @@ import { message } from "antd";
 import { useGetTournamentSummaryQuery } from "../state/features/tournaments/tournamentsSlice";
 import {
     useAddPlayerToTeamMutation,
+    useUpdatePlayerInTeamMutation,
     useDeleteTournamentTeamMutation,
     usePlayerListToAddToTeamQuery,
     useRemovePlayerFromTeamMutation,
@@ -21,10 +22,14 @@ interface Player {
 }
 
 interface TeamPlayer {
+    id?: number;
     teamId: number;
     playerId: number;
     playerName: string;
     playingPosition?: string;
+    isCaptain?: boolean;
+    teamPlayerRole?: string;
+    jerseyNumber?: number;
 }
 
 interface Teams {
@@ -43,6 +48,7 @@ const useTournamentTeams = (tournamentId: number) => {
         usePlayerListToAddToTeamQuery(tournamentQueryParams);
 
     const [addPlayerToTeam] = useAddPlayerToTeamMutation();
+    const [updatePlayerInTeam] = useUpdatePlayerInTeamMutation();
     const [deleteTournamentTeam] = useDeleteTournamentTeamMutation();
     const [removePlayerFromTeam] = useRemovePlayerFromTeamMutation();
     const [renameTeam] = useRenameTeamMutation();
@@ -65,6 +71,9 @@ const useTournamentTeams = (tournamentId: number) => {
                         ? player.playingPosition
                         : "",
                     id: player.id,
+                    isCaptain: player.isCaptain,
+                    teamPlayerRole: player.teamPlayerRole,
+                    jerseyNumber: player.jerseyNumber,
                 })),
             }));
             setTeams(teams);
@@ -89,6 +98,9 @@ const useTournamentTeams = (tournamentId: number) => {
         teamId: number,
         playerId: number,
         id?: number,
+        isCaptain?: boolean,
+        teamPlayerRole?: string,
+        jerseyNumber?: number,
         previousTeamId?: number
     ) => {
         console.log(
@@ -97,72 +109,123 @@ const useTournamentTeams = (tournamentId: number) => {
             teamId,
             playerId,
             id,
+            isCaptain,
+            teamPlayerRole,
+            jerseyNumber,
             previousTeamId
         );
 
         try {
             setIsLoading(true);
 
-            // Update local state immediately
+            // Determine the operation type:
+            // - isUpdate: Player is already in THIS team (updating details like position, captain, jersey)
+            // - isMovingBetweenTeams: Player is moving from another team to this team (use POST)
+            // - isNewAddition: Player is being added from unassigned pool (use POST)
+            const isUpdate = id !== undefined && (!previousTeamId || previousTeamId === teamId);
+            const isMovingBetweenTeams = previousTeamId !== undefined && previousTeamId !== teamId;
 
-            playingPosition !== "GOALKEEPER" &&
-                setTeams((prevTeams) => {
-                    let updatedTeams = [...prevTeams];
-
-                    // Remove player from previous team if exists
-                    if (previousTeamId) {
-                        updatedTeams = updatedTeams.map((team) =>
-                            team.teamId === previousTeamId
+            // Use PUT for updates (player already in same team), POST for new additions or moves
+            if (isUpdate) {
+                // Player is already in this team - update their details (PUT)
+                // Optimistic update for better UX
+                playingPosition !== "GOALKEEPER" &&
+                    setTeams((prevTeams) =>
+                        prevTeams.map((team) =>
+                            team.teamId === teamId
                                 ? {
                                       ...team,
-                                      players: team.players.filter(
-                                          (player) =>
-                                              player.playerId !== playerId
+                                      players: team.players.map((player) =>
+                                          player.playerId === playerId
+                                              ? {
+                                                    ...player,
+                                                    playingPosition,
+                                                    isCaptain,
+                                                    teamPlayerRole,
+                                                    jerseyNumber,
+                                                }
+                                              : player
                                       ),
                                   }
                                 : team
-                        );
-                    } else {
-                        // Remove player from player list
-                        setPlayers((prevPlayers) =>
-                            prevPlayers.filter(
-                                (player) => player.playerId !== playerId
-                            )
-                        );
-                    }
-
-                    // Add player to the new team
-                    updatedTeams = updatedTeams.map((team) =>
-                        team.teamId === teamId
-                            ? {
-                                  ...team,
-                                  players: [
-                                      ...team.players,
-                                      {
-                                          teamId,
-                                          playerId,
-                                          playerName:
-                                              players.find(
-                                                  (p) => p.playerId === playerId
-                                              )?.playerName || "",
-                                          playingPosition,
-                                      },
-                                  ],
-                              }
-                            : team
+                        )
                     );
 
-                    return updatedTeams;
-                });
+                await updatePlayerInTeam({
+                    playingPosition,
+                    teamId,
+                    playerId,
+                    isCaptain,
+                    teamPlayerRole,
+                    jerseyNumber,
+                }).unwrap();
 
-            await addPlayerToTeam({
-                playingPosition,
-                teamId,
-                playerId,
-                id,
-            }).unwrap();
+                message.success("Player details updated successfully");
+                await refetchTournament();
+            } else if (isMovingBetweenTeams) {
+                // Moving between teams - let backend handle completely, no optimistic updates
+                // Backend will remove from old team and add to new team
+                await addPlayerToTeam({
+                    playingPosition,
+                    teamId,
+                    playerId,
+                    isCaptain,
+                    teamPlayerRole,
+                    jerseyNumber,
+                }).unwrap();
 
-            message.success("Player added to team successfully");
+                message.success("Player moved successfully");
+                await refetchPlayer();
+                await refetchTournament();
+            } else {
+                // Adding from unassigned pool - optimistic update
+                setPlayers((prevPlayers) =>
+                    prevPlayers.filter((player) => player.playerId !== playerId)
+                );
+
+                playingPosition !== "GOALKEEPER" &&
+                    setTeams((prevTeams) =>
+                        prevTeams.map((team) =>
+                            team.teamId === teamId
+                                ? {
+                                      ...team,
+                                      players: [
+                                          ...team.players,
+                                          {
+                                              teamId,
+                                              playerId,
+                                              playerName:
+                                                  players.find(
+                                                      (p) => p.playerId === playerId
+                                                  )?.playerName || "",
+                                              playingPosition,
+                                              isCaptain,
+                                              teamPlayerRole,
+                                              jerseyNumber,
+                                          },
+                                      ],
+                                  }
+                                : team
+                        )
+                    );
+
+                await addPlayerToTeam({
+                    playingPosition,
+                    teamId,
+                    playerId,
+                    isCaptain,
+                    teamPlayerRole,
+                    jerseyNumber,
+                }).unwrap();
+
+                message.success("Player added to team successfully");
+                await refetchPlayer();
+                await refetchTournament();
+            }
+        } catch (error: any) {
+            console.error("Failed to add/update player:", error);
+            // Error notification is already handled by apiSlice
+            // Revert the optimistic update
             await refetchPlayer();
             await refetchTournament();
         } finally {

@@ -43,6 +43,7 @@ import TournamentsPage from "../Tournaments/TournamentsPage";
 import Venue from "../Venue/Venue";
 import ContentOutlet from "./ContentOutlet";
 import ClubRules from "../ClubRules/ClubRules";
+import MatchDetailsPage from "../Tournaments/Fixtures/MatchDetailsPage";
 import companyLogo from "../../assets/logo.png";
 import type { MenuProps } from "antd";
 import { useGetMyGoalkeepingHistoryQuery } from "../../state/features/player/playerSlice";
@@ -382,6 +383,10 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             <Route
                                 path="/tournaments/join-tournament/:id"
                                 element={<JoinTournament />}
+                            />
+                            <Route
+                                path="/fixtures/:matchId"
+                                element={<MatchDetailsPage />}
                             />
                             <Route path="venues" element={<Venue />} />
                             <Route

@@ -58,6 +58,9 @@ const TournamentsPage: React.FC = () => {
     if (e.key === "join") {
       navigate(`/tournaments/join-tournament/${record.id}`);
     } else if (e.key === "team-building") {
+    } else if (e.key === "fixtures") {
+      navigate(`/tournaments/team-building/${record.id}`);
+
       navigate(`/tournaments/team-building/${record.id}`);
     } else if (e.type === "click" && record.activeStatus) {
       navigate(`/tournaments/join-tournament/${record.id}`);

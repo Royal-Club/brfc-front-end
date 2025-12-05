@@ -23,6 +23,9 @@ export interface TournamentPlayerInfoType {
     tournamentParticipantId: number;
     playingPosition?: string;
     tournamentStatus?: string;
+    isCaptain?: boolean;
+    teamPlayerRole?: string;
+    jerseyNumber?: number;
 }
 
 export interface IoTournamentSummaryResType extends BasicResType {

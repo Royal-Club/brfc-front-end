@@ -19,7 +19,7 @@ import {
   Avatar,
   Tooltip,
 } from "antd";
-import type { ColumnsType, TablePaginationConfig } from "antd/es/table/interface";
+import type { ColumnsType } from "antd/es/table/interface";
 import useJoinTournament from "../../hooks/useJoinTournament";
 import { TournamentPlayerInfoType } from "../../state/features/tournaments/tournamentTypes";
 import DebouncedInput from "./Atoms/DebouncedInput";

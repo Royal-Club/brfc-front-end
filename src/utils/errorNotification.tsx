@@ -42,6 +42,13 @@ const getErrorConfig = (statusCode?: number) => {
         bgColor: "#fff7e6",
         borderColor: "#ff9c6e",
       };
+    case 409:
+      return {
+        icon: React.createElement(ExclamationCircleOutlined, { style: { color: "#faad14", marginRight: "8px" } }),
+        title: "Conflict",
+        bgColor: "#fff7e6",
+        borderColor: "#faad14",
+      };
     case 500:
       return {
         icon: React.createElement(AlertOutlined, { style: { color: "#ff4d4f", marginRight: "8px" } }),
@@ -79,24 +86,35 @@ const ErrorToastContent = ({ icon, title, message }: { icon: React.ReactNode; ti
 );
 
 export const showErrorNotification = (errorConfig: ErrorConfig) => {
-  const { statusCode, message } = errorConfig;
-  const { icon, title, bgColor, borderColor } = getErrorConfig(statusCode);
+  try {
+    const { statusCode, message } = errorConfig;
 
-  toast.error(<ErrorToastContent icon={icon} title={title} message={message} />, {
-    position: "top-right",
-    autoClose: 4500,
-    hideProgressBar: false,
-    closeOnClick: true,
-    pauseOnHover: true,
-    draggable: true,
-    style: {
-      backgroundColor: bgColor,
-      border: `1px solid ${borderColor}`,
-      borderLeft: `4px solid ${borderColor}`,
-      borderRadius: "8px",
-      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-      color: "#000",
-      padding: "12px 16px",
-    },
-  });
+    // Ensure message is always a string
+    const messageText = typeof message === 'string'
+      ? message
+      : (message ? JSON.stringify(message) : 'An error occurred');
+
+    const { icon, title, bgColor, borderColor } = getErrorConfig(statusCode);
+
+    toast.error(<ErrorToastContent icon={icon} title={title} message={messageText} />, {
+      position: "top-right",
+      autoClose: 4500,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      style: {
+        backgroundColor: bgColor,
+        border: `1px solid ${borderColor}`,
+        borderLeft: `4px solid ${borderColor}`,
+        borderRadius: "8px",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+        color: "#000",
+        padding: "12px 16px",
+      },
+    });
+  } catch (error) {
+    // Silently fail if toast notification fails
+    console.error("Failed to show error notification:", error);
+  }
 };
