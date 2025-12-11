@@ -88,7 +88,7 @@ export default function CreateTournament({
                 tournamentName: tournamentData.name,
                 tournamentDate: moment(tournamentData.tournamentDate),
                 venueId: venuesData.content.find(
-                    (venue) => venue.name === tournamentData.venueName
+                    (venue: any) => venue.name === tournamentData.venueName
                 )?.id,
             });
         }
@@ -166,7 +166,7 @@ export default function CreateTournament({
                             ]}
                         >
                             <Select loading={isVenuesLoading}>
-                                {venuesData?.content.map((venue) => (
+                                {venuesData?.content.map((venue: any) => (
                                     <Option key={venue.id} value={venue.id}>
                                         {venue.name}
                                     </Option>

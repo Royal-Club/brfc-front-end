@@ -316,7 +316,7 @@ export default function FixtureGenerationModal({
                     size="large"
                     style={{ width: "100%" }}
                   >
-                    {venuesData?.content?.map((venue) => (
+                    {venuesData?.content?.map((venue: any) => (
                       <Select.Option key={venue.id} value={venue.id}>
                         <Tooltip
                           title={`${venue.name} - ${venue.address}`}

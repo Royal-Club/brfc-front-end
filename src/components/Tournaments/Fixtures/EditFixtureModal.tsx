@@ -138,7 +138,7 @@ export default function EditFixtureModal({
               loading={isVenuesLoading}
               optionLabelProp="label"
             >
-              {venues.map((venue) => (
+              {venues.map((venue: any) => (
                 <Select.Option key={venue.id} value={venue.id} label={venue.name}>
                   <div>
                     <div>{venue.name}</div>

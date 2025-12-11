@@ -126,14 +126,14 @@ function Venue() {
                     address: venueForm.getFieldValue("address"),
                 })
                     .unwrap()
-                    .then((response) => {
+                    .then((response: any) => {
                         setModalOpen(false);
                         clearModalField();
                         setModalConfirmLoading(false);
                         // getVenueList();
                         console.log(response);
                     })
-                    .catch((err) => {
+                    .catch((err: any) => {
                         console.log("server error");
                         setModalConfirmLoading(false);
                     });
@@ -144,7 +144,7 @@ function Venue() {
                     address: venueForm.getFieldValue("address"),
                 })
                     .unwrap()
-                    .then((response) => {
+                    .then((response: any) => {
                         clearModalField();
                         setModalOpen(false);
                         setModalConfirmLoading(false);
@@ -152,7 +152,7 @@ function Venue() {
                         setModalState("CREATE");
                         console.log(response);
                     })
-                    .catch((err) => {
+                    .catch((err: any) => {
                         console.log("server error");
                         setModalConfirmLoading(false);
                     });
@@ -168,7 +168,7 @@ function Venue() {
         showModal();
         setModalSpinLoading(true);
 
-        const singleVenue = venues?.content.find((venue) => venue.id === id);
+        const singleVenue = venues?.content.find((venue: any) => venue.id === id);
         venueForm.setFieldsValue({
             name: singleVenue?.name,
             address: singleVenue?.address,
