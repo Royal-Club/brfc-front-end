@@ -235,7 +235,11 @@ export const manualFixturesApi = apiWithTags.injectEndpoints({
         url: `/groups/${groupId}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["groups", "tournament-structure"],
+      invalidatesTags: (result, error, { groupId }) => [
+        { type: "groups", id: groupId },
+        "groups",
+        "tournament-structure",
+      ],
     }),
 
     /**

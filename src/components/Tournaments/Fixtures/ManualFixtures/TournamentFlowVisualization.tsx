@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect, useLayoutEffect } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import ReactFlow, {
   Node,
   Edge,
@@ -8,12 +8,11 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   BackgroundVariant,
-  Connection,
   ConnectionMode,
   Panel,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Card, Space, Typography, Button, Tooltip, Tag } from "antd";
+import { Card, Space, Typography, Button, Tooltip, theme } from "antd";
 import {
   ExpandOutlined,
   CompressOutlined,
@@ -25,19 +24,21 @@ import RoundNode from "./Components/RoundNode";
 import GroupNode from "./Components/GroupNode";
 import TeamNode from "./Components/TeamNode";
 import { TournamentStructureResponse } from "../../../../state/features/manualFixtures/manualFixtureTypes";
+import { IFixture } from "../../../../state/features/fixtures/fixtureTypes";
+import { isMatchOngoing } from "../../../../utils/matchTimeUtils";
+
+const { useToken } = theme;
 
 const { Text } = Typography;
 
 interface TournamentFlowVisualizationProps {
   tournamentStructure: TournamentStructureResponse;
+  fixtures?: IFixture[];
   onNodeClick?: (nodeId: string, nodeType: string, data: any) => void;
-  hoveredRoundId?: number | null;
-  hoveredGroupId?: number | null;
-  onHoverRound?: (roundId: number | null) => void;
-  onHoverGroup?: (groupId: number | null) => void;
   onCreateRound?: () => void;
   onCreateGroup?: (roundId: number) => void;
   onAssignTeams?: (groupId: number) => void;
+  onGenerateMatches?: (roundId: number) => void;
   onRefresh?: () => void;
 }
 
@@ -56,33 +57,76 @@ const nodeTypes = {
  */
 export default function TournamentFlowVisualization({
   tournamentStructure,
+  fixtures = [],
   onNodeClick,
-  hoveredRoundId,
-  hoveredGroupId,
-  onHoverRound,
-  onHoverGroup,
   onCreateRound,
   onCreateGroup,
   onAssignTeams,
+  onGenerateMatches,
   onRefresh,
 }: TournamentFlowVisualizationProps) {
+  const { token } = useToken();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Get background color from theme - use colorBgLayout for the main background
+  // In dark mode it's #000000, in light mode it's #f0f2f5
+  const backgroundColor = token.colorBgLayout || "#f5f5f5";
+  // Determine if dark mode based on background color
+  const isDarkMode = token.colorBgLayout === "#000000" || token.colorBgContainer === "#141414";
 
-  // Generate nodes and edges from tournament structure
+  // Generate nodes and edges from tournament structure (only when structure changes)
+  // Use useMemo to create a stable structure identifier to prevent unnecessary re-renders
+  // This prevents the visualization from blinking/resetting when data updates
+  const structureKey = useMemo(() => {
+    if (!tournamentStructure?.rounds) return '';
+    return JSON.stringify({
+      rounds: tournamentStructure.rounds.map(r => ({
+        id: r.id,
+        roundName: r.roundName,
+        roundType: r.roundType,
+        groups: r.groups?.map(g => ({ 
+          id: g.id, 
+          groupName: g.groupName,
+          teamCount: g.teams?.length || 0,
+          totalMatches: g.totalMatches || 0
+        })) || []
+      }))
+    });
+  }, [tournamentStructure]);
+
   useEffect(() => {
     const generatedNodes: Node[] = [];
     const generatedEdges: Edge[] = [];
 
-    const roundSpacing = 400; // Horizontal space between rounds
-    const groupSpacing = 200; // Vertical space between groups
-    const startX = 50;
-    const startY = 100;
+    const roundSpacing = 800; // Horizontal space between rounds (increased from 600 to spread nodes more)
+    const groupSpacing = 500; // Vertical space between groups (increased from 380 to prevent overlap)
+    const startX = 150; // Increased from 50 to give more left margin
+    const startY = 200; // Increased from 100 to give more top margin
 
     tournamentStructure.rounds.forEach((round, roundIndex) => {
       const roundX = startX + roundIndex * roundSpacing;
       const roundY = startY;
+
+      // Get ongoing matches for this round
+      // Match by tournamentId, roundNumber (fixture.round or fixture.roundNumber), or round ID
+      const roundOngoingMatches = fixtures.filter((f) => {
+        // Ensure tournamentId matches
+        const matchesTournament = f.tournamentId === tournamentStructure.tournamentId;
+        if (!matchesTournament) return false;
+        
+        // Try multiple matching strategies for round
+        const fixtureRoundNumber = f.roundNumber ?? f.round; // Use roundNumber if available, fallback to round
+        const matchesByRoundNumber = fixtureRoundNumber === round.roundNumber;
+        const matchesByRoundId = f.round === round.id;
+        const matches = matchesByRoundNumber || matchesByRoundId;
+        
+        // Check if match is ongoing
+        const isOngoing = isMatchOngoing(f.matchStatus);
+        
+        return matches && isOngoing;
+      });
 
       // Create round node
       generatedNodes.push({
@@ -92,14 +136,14 @@ export default function TournamentFlowVisualization({
         data: {
           roundName: round.roundName,
           roundType: round.roundType,
+          roundFormat: round.roundFormat,
           status: round.status,
           totalMatches: round.totalMatches,
           completedMatches: round.completedMatches,
           sequenceOrder: round.sequenceOrder,
           roundId: round.id,
           groups: round.groups,
-          isHovered: hoveredRoundId === round.id,
-          onHover: onHoverRound,
+          ongoingMatches: roundOngoingMatches,
           onCreateGroup: onCreateGroup,
           onCreateRound: onCreateRound,
         },
@@ -108,8 +152,32 @@ export default function TournamentFlowVisualization({
       // Create group nodes for GROUP_BASED rounds
       if (round.roundType === "GROUP_BASED" && round.groups) {
         round.groups.forEach((group, groupIndex) => {
-          const groupX = roundX;
-          const groupY = roundY + 150 + groupIndex * groupSpacing;
+          // Position groups to the left of the round
+          const groupX = roundX - 550; // Position groups further to the left (increased from 400)
+          const groupY = roundY + 300 + groupIndex * groupSpacing; // Increased vertical offset from 200
+
+          // Get ongoing matches for this group
+          // Match by tournamentId, groupName, and roundNumber
+          const groupOngoingMatches = fixtures.filter((f) => {
+            // Ensure tournamentId matches
+            const matchesTournament = f.tournamentId === tournamentStructure.tournamentId;
+            if (!matchesTournament) return false;
+            
+            // Match by groupName
+            const matchesGroup = f.groupName === group.groupName;
+            if (!matchesGroup) return false;
+            
+            // Try multiple matching strategies for round
+            const fixtureRoundNumber = f.roundNumber ?? f.round; // Use roundNumber if available, fallback to round
+            const matchesByRoundNumber = fixtureRoundNumber === round.roundNumber;
+            const matchesByRoundId = f.round === round.id;
+            const matchesRound = matchesByRoundNumber || matchesByRoundId;
+            
+            // Check if match is ongoing
+            const isOngoing = isMatchOngoing(f.matchStatus);
+            
+            return matchesRound && isOngoing;
+          });
 
           generatedNodes.push({
             id: `group-${group.id}`,
@@ -124,22 +192,27 @@ export default function TournamentFlowVisualization({
               status: group.status,
               groupId: group.id,
               teams: group.teams,
-              isHovered: hoveredGroupId === group.id,
-              onHover: onHoverGroup,
+              matches: [], // Matches not available in tournament structure - would need separate fetch
+              ongoingMatches: groupOngoingMatches, // Ongoing matches for display
+              standings: group.standings || [], // Standings from group data
               onAssignTeams: onAssignTeams,
             },
-            parentNode: `round-${round.id}`,
-            extent: "parent" as const,
+            // Removed parentNode and extent to allow free movement
           });
 
-          // Edge from round to group
+          // Edge from round to group (connecting from left side of round to right side of group)
           generatedEdges.push({
             id: `edge-round-${round.id}-group-${group.id}`,
             source: `round-${round.id}`,
+            sourceHandle: "left-source", // Connect from left side of round
             target: `group-${group.id}`,
+            targetHandle: "right", // Connect to right side of group
             type: "smoothstep",
             animated: group.status === "ONGOING",
-            style: { stroke: group.status === "COMPLETED" ? "#52c41a" : "#d9d9d9" },
+            style: { 
+              stroke: group.status === "COMPLETED" ? "#52c41a" : "#d9d9d9",
+              strokeWidth: 3, // Make edges larger
+            },
           });
 
           // Optionally create team nodes (can be toggled for performance)
@@ -171,16 +244,18 @@ export default function TournamentFlowVisualization({
         });
       }
 
-      // Create edges between rounds (advancement connections)
+      // Create edges between rounds (advancement connections) - from right to left
       if (roundIndex > 0) {
         const previousRound = tournamentStructure.rounds[roundIndex - 1];
         generatedEdges.push({
           id: `edge-round-${previousRound.id}-round-${round.id}`,
           source: `round-${previousRound.id}`,
+          sourceHandle: "right", // Connect from right side of previous round
           target: `round-${round.id}`,
+          targetHandle: "left", // Connect to left side of current round
           type: "smoothstep",
           animated: true,
-          style: { stroke: "#1890ff", strokeWidth: 2 },
+          style: { stroke: "#1890ff", strokeWidth: 3 }, // Make edges larger
           label: "Advance",
           labelStyle: { fontSize: 12, fill: "#1890ff" },
         });
@@ -189,7 +264,7 @@ export default function TournamentFlowVisualization({
 
     setNodes(generatedNodes);
     setEdges(generatedEdges);
-  }, [tournamentStructure, hoveredRoundId, hoveredGroupId, onHoverRound, onHoverGroup, onCreateRound, onCreateGroup, onAssignTeams, setNodes, setEdges]);
+  }, [structureKey, fixtures, onCreateRound, onCreateGroup, onAssignTeams, onGenerateMatches, setNodes, setEdges, tournamentStructure]);
 
   const handleNodeClick = useCallback(
     (_event: any, node: Node) => {
@@ -238,17 +313,22 @@ export default function TournamentFlowVisualization({
           type: "smoothstep",
           animated: false,
         }}
-        style={{ backgroundColor: "#f5f5f5" }}
+        style={{ backgroundColor }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+        <Background 
+          variant={BackgroundVariant.Dots} 
+          gap={16} 
+          size={1}
+          color={isDarkMode ? "#434343" : "#d9d9d9"}
+        />
         <Controls />
         <MiniMap
           nodeStrokeWidth={3}
           zoomable
           pannable
           style={{
-            backgroundColor: "#ffffff",
-            border: "1px solid #d9d9d9",
+            backgroundColor: token.colorBgElevated || (isDarkMode ? "#1f1f1f" : "#ffffff"),
+            border: `1px solid ${token.colorBorder || (isDarkMode ? "#303030" : "#d9d9d9")}`,
           }}
         />
 

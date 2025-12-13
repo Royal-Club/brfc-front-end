@@ -40,7 +40,8 @@ export interface IFixture {
   homeTeamScore: number;
   awayTeamScore: number;
   matchOrder: number;
-  round: number | null;
+  round: number | null; // This is the roundNumber
+  roundNumber?: number | null; // Explicit roundNumber field (if backend provides it separately)
   groupName: string | null;
   matchDurationMinutes?: number;
   elapsedTimeSeconds?: number;

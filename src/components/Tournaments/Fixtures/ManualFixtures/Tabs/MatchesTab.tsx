@@ -1,38 +1,36 @@
-import React, { useState } from "react";
+import React, { useMemo, useEffect } from "react";
 import {
   Card,
   Empty,
   Typography,
-  Select,
   Space,
   Button,
-  Row,
-  Col,
-  Statistic,
+  Divider,
   message,
+  Tag,
 } from "antd";
 import {
   ReloadOutlined,
   TrophyOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  PlayCircleOutlined,
-  FilterOutlined,
+  TeamOutlined,
 } from "@ant-design/icons";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../../../../../state/store";
 import { TournamentStructureResponse } from "../../../../../state/features/manualFixtures/manualFixtureTypes";
 import { useGetFixturesQuery } from "../../../../../state/features/fixtures/fixturesSlice";
+import { setEditingFixture, setIsEditModalVisible } from "../../../../../state/features/manualFixtures/manualFixturesUISlice";
 import FixturesTable from "../../FixturesTable";
 import EditFixtureModal from "../../EditFixtureModal";
 import { IFixture } from "../../../../../state/features/fixtures/fixtureTypes";
 
 const { Text, Title } = Typography;
-const { Option } = Select;
 
 interface MatchesTabProps {
   tournamentId: number;
   tournamentStructure?: TournamentStructureResponse;
   isLoading: boolean;
   onRefresh: () => void;
+  isActive?: boolean;
 }
 
 export default function MatchesTab({
@@ -40,49 +38,128 @@ export default function MatchesTab({
   tournamentStructure,
   isLoading,
   onRefresh,
+  isActive = false,
 }: MatchesTabProps) {
-  const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null);
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const [editingFixture, setEditingFixture] = useState<IFixture | null>(null);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const dispatch = useDispatch();
+  const { editingFixture, isEditModalVisible } = useSelector((state: RootState) => state.manualFixturesUI);
 
   // Fetch all fixtures for the tournament
+  // Only fetch when tab is active to avoid unnecessary API calls
+  // No polling - only fetch once when tab becomes active
   const {
     data: fixturesData,
     isLoading: fixturesLoading,
     refetch: refetchFixtures,
-  } = useGetFixturesQuery({ tournamentId });
+  } = useGetFixturesQuery(
+    { tournamentId },
+    { skip: !isActive }
+  );
 
   const fixtures = fixturesData?.content || [];
+  
+  // Check if there are ongoing matches for display purposes
+  const hasOngoingMatches = fixtures.some(
+    (f) => f.matchStatus === "ONGOING" || f.matchStatus === "PAUSED"
+  );
+  
+  const finalFixtures = fixtures;
 
-  // Filter fixtures based on selections
-  const filteredFixtures = fixtures.filter((fixture) => {
-    // Filter by round (check if fixture's group belongs to selected round)
-    if (selectedRoundId) {
-      const round = tournamentStructure?.rounds.find((r) => r.id === selectedRoundId);
-      if (round) {
-        const groupIds = round.groups.map((g) => g.id);
-        // Note: We need to add groupId to fixture response or use another method
-        // For now, we'll skip this filter
+  // Group fixtures by round and group
+  const fixturesByRoundAndGroup = useMemo(() => {
+    const grouped: Record<number, Record<string, IFixture[]>> = {};
+    const unmatchedFixtures: IFixture[] = [];
+
+    // Debug: Log fixture and round data
+    if (finalFixtures.length > 0 && tournamentStructure) {
+      console.log("MatchesTab Debug - Fixtures:", finalFixtures.map(f => ({ id: f.id, round: f.round, groupName: f.groupName })));
+      console.log("MatchesTab Debug - Rounds:", tournamentStructure.rounds.map(r => ({ id: r.id, roundNumber: r.roundNumber, roundName: r.roundName })));
+    }
+
+    finalFixtures.forEach((fixture) => {
+      // Match fixture to round by tournamentId, roundNumber, or round ID
+      let roundId: number | null = null;
+      let matchedRound = null;
+      
+      if (!tournamentStructure) {
+        unmatchedFixtures.push(fixture);
+        return;
       }
+
+      // Ensure tournamentId matches first
+      const matchesTournament = fixture.tournamentId === tournamentStructure.tournamentId;
+      if (!matchesTournament) {
+        unmatchedFixtures.push(fixture);
+        return;
+      }
+
+      // Try to find round by roundNumber (prefer fixture.roundNumber, fallback to fixture.round)
+      const fixtureRoundNumber = fixture.roundNumber ?? fixture.round;
+      if (fixtureRoundNumber) {
+        matchedRound = tournamentStructure.rounds.find(
+          (r) => r.roundNumber === fixtureRoundNumber
+        );
+        if (matchedRound) {
+          roundId = matchedRound.id;
+        }
+      }
+
+      // If no match found, try to match by groupName (for group-based rounds)
+      if (!roundId && fixture.groupName) {
+        for (const round of tournamentStructure.rounds) {
+          if (round.groups?.some((g) => g.groupName === fixture.groupName)) {
+            matchedRound = round;
+            roundId = round.id;
+            break;
+          }
+        }
+      }
+
+      // If still no match, try to match by round ID if fixture.round is actually a round ID
+      if (!roundId && fixture.round) {
+        matchedRound = tournamentStructure.rounds.find(
+          (r) => r.id === fixture.round
+        );
+        if (matchedRound) {
+          roundId = matchedRound.id;
+        }
+      }
+
+      // If still no match, add to unmatched fixtures (we'll show them separately)
+      if (!roundId) {
+        unmatchedFixtures.push(fixture);
+        return;
+      }
+
+      // Determine group name - use "No Group" for non-group-based rounds
+      const groupName = matchedRound?.roundType === "GROUP_BASED" 
+        ? (fixture.groupName || "No Group")
+        : "No Group";
+
+      if (!grouped[roundId]) {
+        grouped[roundId] = {};
+      }
+
+      if (!grouped[roundId][groupName]) {
+        grouped[roundId][groupName] = [];
+      }
+
+      grouped[roundId][groupName].push(fixture);
+    });
+
+    // Sort fixtures within each group by matchOrder (create new array to avoid mutating read-only array)
+    Object.keys(grouped).forEach((roundId) => {
+      Object.keys(grouped[Number(roundId)]).forEach((groupName) => {
+        grouped[Number(roundId)][groupName] = [...grouped[Number(roundId)][groupName]].sort((a, b) => a.matchOrder - b.matchOrder);
+      });
+    });
+
+    // Store unmatched fixtures in a special key for display
+    if (unmatchedFixtures.length > 0) {
+      grouped[-1] = { "Unmatched": unmatchedFixtures };
     }
 
-    // Filter by status
-    if (selectedStatus && fixture.matchStatus !== selectedStatus) {
-      return false;
-    }
-
-    return true;
-  });
-
-  // Calculate statistics
-  const stats = {
-    total: fixtures.length,
-    pending: fixtures.filter((f) => f.matchStatus === "PENDING").length,
-    live: fixtures.filter((f) => f.matchStatus === "LIVE").length,
-    completed: fixtures.filter((f) => f.matchStatus === "COMPLETED").length,
-  };
+    return grouped;
+  }, [finalFixtures, tournamentStructure]);
 
   const handleRefresh = () => {
     refetchFixtures();
@@ -90,21 +167,9 @@ export default function MatchesTab({
     message.success("Matches refreshed");
   };
 
-  const handleClearFilters = () => {
-    setSelectedRoundId(null);
-    setSelectedGroupId(null);
-    setSelectedStatus(null);
-  };
-
   const handleEditFixture = (fixture: IFixture) => {
-    setEditingFixture(fixture);
-    setIsEditModalVisible(true);
+    dispatch(setEditingFixture(fixture));
   };
-
-  const availableGroups =
-    selectedRoundId && tournamentStructure
-      ? tournamentStructure.rounds.find((r) => r.id === selectedRoundId)?.groups || []
-      : [];
 
   if (!tournamentStructure || tournamentStructure.rounds.length === 0) {
     return (
@@ -115,7 +180,7 @@ export default function MatchesTab({
               <Text type="secondary">No matches available yet.</Text>
               <br />
               <Text type="secondary">
-                Create rounds and generate matches in the Builder tab.
+                Create rounds and generate matches in the Tournament tab.
               </Text>
             </div>
           }
@@ -124,159 +189,210 @@ export default function MatchesTab({
     );
   }
 
+  if (finalFixtures.length === 0) {
+    return (
+      <div style={{ padding: 24 }}>
+        <Card>
+          <Empty
+            description={
+              <div>
+                <Text type="secondary">No matches found.</Text>
+                <br />
+                <Text type="secondary">
+                  Generate matches in the Tournament tab.
+                </Text>
+              </div>
+            }
+          />
+        </Card>
+      </div>
+    );
+  }
+
+  // Get rounds sorted by sequence order (create new array to avoid mutating read-only array)
+  const sortedRounds = [...tournamentStructure.rounds].sort((a, b) => 
+    (a.sequenceOrder || 0) - (b.sequenceOrder || 0)
+  );
+
+  // Check if we have any matched fixtures
+  const hasMatchedFixtures = sortedRounds.some((round) => {
+    const roundFixtures = fixturesByRoundAndGroup[round.id] || {};
+    return Object.keys(roundFixtures).length > 0;
+  });
+
+  // If no matches are found in rounds but we have fixtures, show them all
+  const shouldShowAllFixtures = finalFixtures.length > 0 && !hasMatchedFixtures && !fixturesByRoundAndGroup[-1];
+
   return (
     <div style={{ padding: 24 }}>
-      {/* Statistics */}
-      <Card style={{ marginBottom: 24 }}>
-        <Row gutter={[16, 16]}>
-          <Col xs={12} sm={6}>
-            <Statistic
-              title="Total Matches"
-              value={stats.total}
-              prefix={<TrophyOutlined />}
-            />
-          </Col>
-          <Col xs={12} sm={6}>
-            <Statistic
-              title="Pending"
-              value={stats.pending}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: "#1890ff" }}
-            />
-          </Col>
-          <Col xs={12} sm={6}>
-            <Statistic
-              title="Live"
-              value={stats.live}
-              prefix={<PlayCircleOutlined />}
-              valueStyle={{ color: "#fa8c16" }}
-            />
-          </Col>
-          <Col xs={12} sm={6}>
-            <Statistic
-              title="Completed"
-              value={stats.completed}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: "#52c41a" }}
-            />
-          </Col>
-        </Row>
-      </Card>
+      {/* Refresh Button */}
+      <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
+        <Button
+          type="primary"
+          icon={<ReloadOutlined />}
+          onClick={handleRefresh}
+          loading={fixturesLoading || isLoading}
+        >
+          Refresh
+        </Button>
+      </div>
 
-      {/* Filters */}
-      <Card style={{ marginBottom: 24 }}>
-        <Space direction="vertical" size={16} style={{ width: "100%" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Space size={4}>
-              <FilterOutlined />
-              <Text strong>Filters</Text>
-            </Space>
+      {/* Show all fixtures if grouping failed */}
+      {shouldShowAllFixtures && (
+        <Card
+          title={
             <Space>
-              <Button size="small" onClick={handleClearFilters}>
-                Clear Filters
-              </Button>
-              <Button
-                type="primary"
-                size="small"
-                icon={<ReloadOutlined />}
-                onClick={handleRefresh}
-              >
-                Refresh
-              </Button>
+              <TrophyOutlined />
+              <Text strong>All Matches</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                ({fixtures.length} matches)
+              </Text>
             </Space>
-          </div>
+          }
+        >
+          <FixturesTable
+            fixtures={[...finalFixtures].sort((a, b) => a.matchOrder - b.matchOrder)}
+            isLoading={fixturesLoading || isLoading}
+            onEditFixture={handleEditFixture}
+          />
+        </Card>
+      )}
 
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Round
-              </Text>
-              <Select
-                placeholder="All Rounds"
-                style={{ width: "100%", marginTop: 4 }}
-                allowClear
-                value={selectedRoundId}
-                onChange={setSelectedRoundId}
-              >
-                {tournamentStructure.rounds.map((round) => (
-                  <Option key={round.id} value={round.id}>
-                    {round.roundName} ({round.totalMatches} matches)
-                  </Option>
-                ))}
-              </Select>
-            </Col>
+      {/* Matches organized by Round and Group */}
+      {!shouldShowAllFixtures && (
+        <Space direction="vertical" size={24} style={{ width: "100%" }}>
+          {/* Show unmatched fixtures first if any */}
+          {fixturesByRoundAndGroup[-1] && (
+            <Card
+              title={
+                <Space>
+                  <TrophyOutlined />
+                  <Text strong>Unmatched Matches</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    ({fixturesByRoundAndGroup[-1]["Unmatched"]?.length || 0} matches)
+                  </Text>
+                </Space>
+              }
+            >
+              <FixturesTable
+                fixtures={fixturesByRoundAndGroup[-1]["Unmatched"] || []}
+                isLoading={fixturesLoading || isLoading}
+                onEditFixture={handleEditFixture}
+              />
+            </Card>
+          )}
 
-            <Col xs={24} sm={8}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Group
-              </Text>
-              <Select
-                placeholder="All Groups"
-                style={{ width: "100%", marginTop: 4 }}
-                allowClear
-                value={selectedGroupId}
-                onChange={setSelectedGroupId}
-                disabled={!selectedRoundId}
-              >
-                {availableGroups.map((group) => (
-                  <Option key={group.id} value={group.id}>
-                    {group.groupName} ({group.totalMatches} matches)
-                  </Option>
-                ))}
-              </Select>
-            </Col>
+          {sortedRounds.map((round) => {
+            const roundFixtures = fixturesByRoundAndGroup[round.id] || {};
+            const hasMatches = Object.keys(roundFixtures).length > 0;
 
-            <Col xs={24} sm={8}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Status
-              </Text>
-              <Select
-                placeholder="All Statuses"
-                style={{ width: "100%", marginTop: 4 }}
-                allowClear
-                value={selectedStatus}
-                onChange={setSelectedStatus}
-              >
-                <Option value="PENDING">Pending</Option>
-                <Option value="LIVE">Live</Option>
-                <Option value="COMPLETED">Completed</Option>
-                <Option value="PAUSED">Paused</Option>
-              </Select>
-            </Col>
-          </Row>
+            if (!hasMatches) return null;
+
+          return (
+            <Card
+              key={round.id}
+              title={
+                <Space>
+                  <TrophyOutlined />
+                  <Text strong style={{ fontSize: 16 }}>{round.roundName}</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Round {round.roundNumber} • {round.roundType.replace("_", " ")} • {round.totalMatches} {round.totalMatches === 1 ? 'match' : 'matches'}
+                  </Text>
+                </Space>
+              }
+              extra={
+                <Tag color={round.status === "COMPLETED" ? "success" : round.status === "ONGOING" ? "processing" : "default"}>
+                  {round.status}
+                </Tag>
+              }
+            >
+              <Space direction="vertical" size={16} style={{ width: "100%" }}>
+                {round.roundType === "GROUP_BASED" && round.groups ? (
+                  // Group-based rounds - show by groups
+                  round.groups.map((group) => {
+                    const groupMatches = roundFixtures[group.groupName || ""] || [];
+                    if (groupMatches.length === 0) return null;
+
+                    return (
+                      <div key={group.id}>
+                        <Divider orientation="left">
+                          <Space>
+                            <TeamOutlined />
+                            <Text strong style={{ fontSize: 14 }}>{group.groupName}</Text>
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                              ({groupMatches.length} {groupMatches.length === 1 ? 'match' : 'matches'})
+                            </Text>
+                          </Space>
+                        </Divider>
+                        <FixturesTable
+                          fixtures={groupMatches}
+                          isLoading={fixturesLoading || isLoading}
+                          onEditFixture={handleEditFixture}
+                        />
+                      </div>
+                    );
+                  })
+                ) : (
+                  // Direct knockout rounds - show all matches for the round
+                  (() => {
+                    const allRoundMatches: IFixture[] = [];
+                    Object.values(roundFixtures).forEach((groupMatches) => {
+                      allRoundMatches.push(...groupMatches);
+                    });
+                    // Create new array before sorting to avoid mutating read-only array
+                    const sortedMatches = [...allRoundMatches].sort((a, b) => a.matchOrder - b.matchOrder);
+
+                    if (sortedMatches.length === 0) return null;
+
+                    return (
+                      <FixturesTable
+                        fixtures={sortedMatches}
+                        isLoading={fixturesLoading || isLoading}
+                        onEditFixture={handleEditFixture}
+                      />
+                    );
+                  })()
+                )}
+
+                {/* Show matches that don't belong to any group (fallback) */}
+                {Object.keys(roundFixtures).map((groupName) => {
+                  if (groupName === "No Group" || groupName === "null") {
+                    const noGroupMatches = roundFixtures[groupName] || [];
+                    if (noGroupMatches.length === 0) return null;
+
+                    return (
+                      <div key={`no-group-${round.id}`}>
+                        <Divider orientation="left">
+                          <Space>
+                            <Text strong>Other Matches</Text>
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                              ({noGroupMatches.length} matches)
+                            </Text>
+                          </Space>
+                        </Divider>
+                        <FixturesTable
+                          fixtures={noGroupMatches}
+                          isLoading={fixturesLoading || isLoading}
+                          onEditFixture={handleEditFixture}
+                        />
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </Space>
+            </Card>
+          );
+        })}
         </Space>
-      </Card>
-
-      {/* Matches Table */}
-      <Card
-        title={
-          <Space>
-            <TrophyOutlined />
-            <Text strong>
-              Matches {filteredFixtures.length < fixtures.length && `(${filteredFixtures.length} of ${fixtures.length})`}
-            </Text>
-          </Space>
-        }
-      >
-        <FixturesTable
-          fixtures={filteredFixtures}
-          isLoading={fixturesLoading || isLoading}
-          onEditFixture={handleEditFixture}
-        />
-      </Card>
+      )}
 
       {/* Edit Fixture Modal */}
       {editingFixture && (
         <EditFixtureModal
           fixture={editingFixture}
           isModalVisible={isEditModalVisible}
-          handleSetIsModalVisible={setIsEditModalVisible}
+          handleSetIsModalVisible={(visible: boolean) => dispatch(setIsEditModalVisible(visible))}
           onSuccess={() => {
             refetchFixtures();
             onRefresh();

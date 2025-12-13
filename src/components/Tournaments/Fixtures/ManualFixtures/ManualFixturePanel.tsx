@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import { Tabs, Spin, Card, Alert } from "antd";
 import {
   AppstoreOutlined,
   NodeIndexOutlined,
   UnorderedListOutlined,
 } from "@ant-design/icons";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../../../../state/store";
 import { selectLoginInfo } from "../../../../state/slices/loginInfoSlice";
 import { useGetTournamentStructureQuery } from "../../../../state/features/manualFixtures/manualFixturesSlice";
+import { setActiveTab } from "../../../../state/features/manualFixtures/manualFixturesUISlice";
 import InteractiveTournamentTab from "./Tabs/InteractiveTournamentTab";
 import MatchesTab from "./Tabs/MatchesTab";
 
@@ -20,12 +22,13 @@ export default function ManualFixturePanel({
   tournamentId,
   teams,
 }: ManualFixturePanelProps) {
+  const dispatch = useDispatch();
   const loginInfo = useSelector(selectLoginInfo);
   const isAdmin =
     loginInfo.roles?.includes("ADMIN") ||
     loginInfo.roles?.includes("SUPER_ADMIN");
 
-  const [activeTab, setActiveTab] = useState("tournament");
+  const activeTab = useSelector((state: RootState) => state.manualFixturesUI.activeTab);
 
   const {
     data: structureData,
@@ -64,6 +67,7 @@ export default function ManualFixturePanel({
           tournamentStructure={tournamentStructure}
           isLoading={isLoading}
           onRefresh={refetch}
+          isActive={activeTab === "tournament"}
         />
       ),
     },
@@ -81,6 +85,7 @@ export default function ManualFixturePanel({
           tournamentStructure={tournamentStructure}
           isLoading={isLoading}
           onRefresh={refetch}
+          isActive={activeTab === "matches"}
         />
       ),
     },
@@ -90,7 +95,7 @@ export default function ManualFixturePanel({
     <Spin spinning={isLoading}>
       <Tabs
         activeKey={activeTab}
-        onChange={setActiveTab}
+        onChange={(key) => dispatch(setActiveTab(key))}
         items={tabItems}
         size="large"
         style={{ minHeight: "calc(100vh - 250px)" }}

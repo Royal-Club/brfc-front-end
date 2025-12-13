@@ -95,33 +95,76 @@ export default function TeamAssignment({
     roundName: string;
     groupId: number;
     roundId: number;
+    isSameRound?: boolean;
   }>();
 
+  // Find the current round to check for same-round assignments
+  const currentRound = tournamentStructure?.rounds.find((r) => {
+    if (isDirectKnockout) {
+      return r.id === roundId;
+    } else {
+      return r.groups?.some((g) => g.id === groupId);
+    }
+  });
+
   // Iterate through all rounds and groups to find team assignments
+  console.log('[TeamAssignment] Tournament Structure:', tournamentStructure);
+  console.log('[TeamAssignment] Rounds:', tournamentStructure?.rounds);
+
   tournamentStructure?.rounds.forEach((round) => {
+    console.log(`[TeamAssignment] Processing round: ${round.roundName} (ID: ${round.id})`);
+    console.log(`[TeamAssignment] Round has groups:`, round.groups);
+
     if (round.groups) {
       round.groups.forEach((grp) => {
+        console.log(`[TeamAssignment]   Processing group: ${grp.groupName} (ID: ${grp.id})`);
+        console.log(`[TeamAssignment]   Group has teams:`, grp.teams);
+
         if (grp.teams) {
           grp.teams.forEach((team: any) => {
+            console.log(`[TeamAssignment]     Team: ${team.teamName}, teamId: ${team.teamId}, isPlaceholder: ${team.isPlaceholder}`);
+
             if (team.teamId && !team.isPlaceholder) {
               // Only track if not the current group (for group assignment) or current round (for round assignment)
               const isCurrentGroup = !isDirectKnockout && groupId === grp.id;
               const isCurrentRound = isDirectKnockout && roundId === round.id;
-              
+
+              // For group-based rounds, track teams in other groups of the SAME round
+              // This is critical - teams in same round should be disabled
+              const isSameRoundDifferentGroup = !isDirectKnockout &&
+                currentRound &&
+                round.id === currentRound.id &&
+                grp.id !== groupId;
+
+              console.log(`[TeamAssignment]     isCurrentGroup: ${isCurrentGroup}, isCurrentRound: ${isCurrentRound}, isSameRoundDifferentGroup: ${isSameRoundDifferentGroup}`);
+
+              // Track all teams not in current group/round, including same-round teams
               if (!isCurrentGroup && !isCurrentRound) {
+                console.log(`[TeamAssignment]     ✓ Adding team ${team.teamName} (${team.teamId}) from ${grp.groupName} to map. isSameRound: ${isSameRoundDifferentGroup}`);
                 teamAssignmentMap.set(team.teamId, {
                   groupName: grp.groupName,
                   roundName: round.roundName,
                   groupId: grp.id,
                   roundId: round.id,
+                  isSameRound: isSameRoundDifferentGroup,
                 });
+              } else {
+                console.log(`[TeamAssignment]     ✗ Skipping team (current group or round)`);
               }
             }
           });
+        } else {
+          console.log(`[TeamAssignment]   No teams in group ${grp.groupName}`);
         }
       });
+    } else {
+      console.log(`[TeamAssignment] No groups in round ${round.roundName}`);
     }
   });
+
+  console.log('[TeamAssignment] Current Round:', currentRound?.roundName);
+  console.log('[TeamAssignment] Current Group ID:', groupId);
+  console.log('[TeamAssignment] Team Assignment Map:', Array.from(teamAssignmentMap.entries()));
 
   // Create a map of team performance from previous round
   const teamPerformanceMap = new Map<number, {
@@ -168,7 +211,17 @@ export default function TeamAssignment({
     // Don't allow toggling if team is already assigned to another group
     const assignment = teamAssignmentMap.get(teamId);
     if (assignment) {
-      message.warning(`Team is already assigned to ${assignment.groupName} in ${assignment.roundName}`);
+      if (assignment.isSameRound) {
+        message.warning(`Team is already assigned to ${assignment.groupName} in the same round. Remove it from that group first.`);
+      } else {
+        message.warning(`Team is already assigned to ${assignment.groupName} in ${assignment.roundName}`);
+      }
+      return;
+    }
+
+    // Also check if already assigned to current group/round
+    if (assignedTeamIds.includes(teamId)) {
+      message.warning("Team is already assigned to this group/round");
       return;
     }
 
@@ -368,7 +421,6 @@ export default function TeamAssignment({
                               key={standing.teamId}
                               style={{
                                 borderBottom: "1px solid #f0f0f0",
-                                backgroundColor: standing.position && standing.position <= 2 ? "#f6ffed" : "transparent",
                               }}
                             >
                               <td style={{ padding: "4px 8px" }}>
@@ -440,7 +492,6 @@ export default function TeamAssignment({
                       size="small"
                       style={{
                         borderColor: "#1890ff",
-                        backgroundColor: "#e6f7ff",
                       }}
                     >
                       <Space>
@@ -479,7 +530,10 @@ export default function TeamAssignment({
                 const assignment = teamAssignmentMap.get(team.teamId);
                 const isAlreadyAssigned = assignedTeamIds.includes(team.teamId);
                 const isAssignedToOtherGroup = assignment !== undefined;
-                const isDisabled = isAlreadyAssigned || isAssignedToOtherGroup;
+                // For same-round groups, disable teams that are in other groups of the same round
+                // This prevents assigning the same team to multiple groups in the same round
+                const isInSameRoundOtherGroup = !isDirectKnockout && assignment?.isSameRound === true;
+                const isDisabled = isAlreadyAssigned || isAssignedToOtherGroup || isInSameRoundOtherGroup;
 
                 return (
                   <Col key={team.teamId} xs={24} sm={12} md={8}>
@@ -490,11 +544,6 @@ export default function TeamAssignment({
                       style={{
                         width: "100%",
                         padding: "8px 12px",
-                        background: isDisabled
-                          ? "#f5f5f5"
-                          : selectedTeamIds.includes(team.teamId)
-                          ? "#e6f7ff"
-                          : "#fff",
                         border: `1px solid ${
                           isDisabled
                             ? "#d9d9d9"
@@ -510,15 +559,15 @@ export default function TeamAssignment({
                       <Space direction="vertical" size={2} style={{ width: "100%" }}>
                         <Space>
                           <TeamOutlined />
-                          <Text 
+                          <Text
                             strong={performance?.position !== undefined && performance.position <= 2}
                             type={isDisabled ? "secondary" : undefined}
                           >
                             {team.teamName}
                           </Text>
                           {isAssignedToOtherGroup && assignment && (
-                            <Tag color="orange" style={{ fontSize: 10 }}>
-                              In {assignment.groupName}
+                            <Tag color={assignment.isSameRound ? "red" : "orange"} style={{ fontSize: 10 }}>
+                              {assignment.isSameRound ? `⚠ ${assignment.groupName}` : `In ${assignment.groupName}`}
                             </Tag>
                           )}
                           {isAlreadyAssigned && (
@@ -529,7 +578,10 @@ export default function TeamAssignment({
                         </Space>
                         {isAssignedToOtherGroup && assignment && (
                           <Text type="secondary" style={{ fontSize: 10, fontStyle: "italic" }}>
-                            Already assigned to {assignment.groupName} in {assignment.roundName}
+                            {assignment.isSameRound
+                              ? `Already in ${assignment.groupName} (same round)`
+                              : `Already assigned to ${assignment.groupName} in ${assignment.roundName}`
+                            }
                           </Text>
                         )}
                         {performance && !isAssignedToOtherGroup && (

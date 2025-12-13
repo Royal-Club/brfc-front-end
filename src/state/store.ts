@@ -4,6 +4,7 @@ import { persistReducer } from "redux-persist";
 import localStorage from "redux-persist/es/storage";
 import apiSlice from "./api/apiSlice";
 import loginInfoSlice from "./slices/loginInfoSlice";
+import manualFixturesUISlice from "./features/manualFixtures/manualFixturesUISlice";
 
 const persistConfig = {
     key: "root",
@@ -14,6 +15,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
     [apiSlice.reducerPath]: apiSlice.reducer,
     loginInfo: loginInfoSlice,
+    manualFixturesUI: manualFixturesUISlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

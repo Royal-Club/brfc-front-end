@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -19,6 +19,7 @@ import {
   ClockCircleOutlined,
 } from "@ant-design/icons";
 import { useGenerateGroupMatchesMutation } from "../../../../state/features/manualFixtures/manualFixturesSlice";
+import { GroupFormat } from "../../../../state/features/manualFixtures/manualFixtureTypes";
 import dayjs from "dayjs";
 
 const { Text } = Typography;
@@ -28,6 +29,7 @@ interface GroupMatchGenerationModalProps {
   groupId: number | null;
   groupName: string | null;
   teamCount: number;
+  groupFormat?: GroupFormat;
   isModalVisible: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -38,13 +40,23 @@ export default function GroupMatchGenerationModal({
   groupId,
   groupName,
   teamCount,
+  groupFormat,
   isModalVisible,
   onClose,
   onSuccess,
   venues = [],
 }: GroupMatchGenerationModalProps) {
   const [form] = Form.useForm();
-  const [doubleRoundRobin, setDoubleRoundRobin] = useState(false);
+  // Initialize doubleRoundRobin based on group format
+  const initialDoubleRoundRobin = groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE;
+  const [doubleRoundRobin, setDoubleRoundRobin] = useState(initialDoubleRoundRobin);
+  
+  // Update doubleRoundRobin when groupFormat changes
+  useEffect(() => {
+    if (groupFormat) {
+      setDoubleRoundRobin(groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE);
+    }
+  }, [groupFormat]);
 
   const [generateMatches, { isLoading }] = useGenerateGroupMatchesMutation();
 

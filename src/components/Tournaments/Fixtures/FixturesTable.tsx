@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   Tag,
@@ -8,11 +8,12 @@ import {
   Spin,
   Tooltip,
 } from "antd";
-import { EyeOutlined, EditOutlined } from "@ant-design/icons";
+import { EyeOutlined, EditOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { ColumnsType } from "antd/es/table";
-import { IFixture } from "../../../state/features/fixtures/fixtureTypes";
+import { IFixture, MatchStatus } from "../../../state/features/fixtures/fixtureTypes";
 import { getStatusColor } from "../../../utils/matchStatusUtils";
+import { formatMatchTime, isMatchOngoing, calculateElapsedTime } from "../../../utils/matchTimeUtils";
 import { useNavigate } from "react-router-dom";
 
 interface FixturesTableProps {
@@ -29,6 +30,22 @@ export default function FixturesTable({
   onEditFixture,
 }: FixturesTableProps) {
   const navigate = useNavigate();
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  // Update time every second for ongoing matches
+  useEffect(() => {
+    const hasOngoingMatches = fixtures.some(f => isMatchOngoing(f.matchStatus));
+    if (!hasOngoingMatches) {
+      setCurrentTime(Date.now()); // Set once if no ongoing matches
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [fixtures]); // Only depend on fixtures, not currentTime
 
   const columns: ColumnsType<IFixture> = [
     {
@@ -82,10 +99,29 @@ export default function FixturesTable({
       title: "Status",
       dataIndex: "matchStatus",
       key: "matchStatus",
-      width: 120,
-      render: (status: string) => {
+      width: 150,
+      render: (status: string, record: IFixture) => {
         const color = getStatusColor(status);
-        return <Tag color={color}>{status}</Tag>;
+        const isOngoing = isMatchOngoing(status);
+        const matchTime = formatMatchTime(
+          record.matchStatus,
+          record.startedAt,
+          record.elapsedTimeSeconds,
+          record.completedAt
+        );
+        
+        return (
+          <Space direction="vertical" size={2}>
+            <Tag color={color} icon={isOngoing ? <PlayCircleOutlined /> : undefined}>
+              {status}
+            </Tag>
+            {isOngoing && matchTime && (
+              <Tag color="green" style={{ margin: 0, cursor: "pointer" }}>
+                {matchTime}
+              </Tag>
+            )}
+          </Space>
+        );
       },
       sorter: (a, b) => a.matchStatus.localeCompare(b.matchStatus),
     },
@@ -138,6 +174,16 @@ export default function FixturesTable({
           }}
           scroll={{ x: "max-content" }}
           size="small"
+          onRow={(record) => ({
+            onClick: () => {
+              if (isMatchOngoing(record.matchStatus)) {
+                navigate(`/fixtures/${record.id}`);
+              }
+            },
+            style: {
+              cursor: isMatchOngoing(record.matchStatus) ? "pointer" : "default",
+            },
+          })}
         />
       )}
     </Spin>
