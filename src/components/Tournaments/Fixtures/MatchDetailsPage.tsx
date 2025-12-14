@@ -69,18 +69,6 @@ export default function MatchDetailsPage() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <Button
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(-1)}
-          style={{ marginBottom: 16 }}
-          size="large"
-        >
-          Back
-        </Button>
-      </div>
-
       {/* Electric Team Banner */}
       <ElectricTeamBanner
         match={match}

@@ -6,13 +6,7 @@ export enum RoundType {
   DIRECT_KNOCKOUT = "DIRECT_KNOCKOUT",
 }
 
-export enum RoundFormat {
-  ROUND_ROBIN = "ROUND_ROBIN",
-  SINGLE_ELIMINATION = "SINGLE_ELIMINATION",
-  DOUBLE_ELIMINATION = "DOUBLE_ELIMINATION",
-  SWISS_SYSTEM = "SWISS_SYSTEM",
-  CUSTOM = "CUSTOM",
-}
+// RoundFormat enum removed - use FixtureFormat for match generation instead
 
 export enum GroupFormat {
   MANUAL = "MANUAL",
@@ -91,7 +85,6 @@ export interface TournamentRoundResponse {
   roundNumber: number;
   roundName: string;
   roundType: RoundType;
-  roundFormat: RoundFormat;
   advancementRule: string | null;
   status: RoundStatus;
   sequenceOrder: number;
@@ -108,7 +101,6 @@ export interface TournamentRoundRequest {
   roundNumber: number;
   roundName: string;
   roundType: string;
-  roundFormat?: string;
   advancementRule?: string;
   sequenceOrder: number;
   startDate?: string;
@@ -144,8 +136,7 @@ export interface PlaceholderTeamRequest {
 export interface RoundCompletionRequest {
   roundId: number;
   recalculateStandings?: boolean;
-  autoAdvanceTeams?: boolean;
-  selectedTeamIds?: number[]; // Manual team selection for advancement
+  selectedTeamIds?: number[]; // Manual team selection for advancement (required for team advancement)
 }
 
 export interface AdvancedTeamInfo {
@@ -236,11 +227,11 @@ export interface IMatch {
 }
 
 export interface GroupMatchGenerationRequest {
+  fixtureFormat: FixtureFormat;
   startDate: string;
   matchTimeGapMinutes?: number;
   matchDurationMinutes?: number;
   venueId?: number;
-  doubleRoundRobin?: boolean;
 }
 
 export type GenerateGroupMatchesResponse = ApiResponse<IMatch[]>;

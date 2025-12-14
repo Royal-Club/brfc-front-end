@@ -29,7 +29,6 @@ import {
 } from "../../../../state/features/manualFixtures/manualFixturesSlice";
 import {
   RoundType,
-  RoundFormat,
   TournamentRoundResponse,
 } from "../../../../state/features/manualFixtures/manualFixtureTypes";
 
@@ -51,13 +50,6 @@ const ROUND_TYPE_OPTIONS = [
   { value: RoundType.DIRECT_KNOCKOUT, label: "Direct Knockout", description: "Teams directly in round (e.g., Semi Finals)" },
 ];
 
-const ROUND_FORMAT_OPTIONS = [
-  { value: RoundFormat.ROUND_ROBIN, label: "Round Robin", description: "All teams play each other" },
-  { value: RoundFormat.SINGLE_ELIMINATION, label: "Single Elimination", description: "Knockout - lose once = eliminated" },
-  { value: RoundFormat.DOUBLE_ELIMINATION, label: "Double Elimination", description: "Knockout with losers bracket" },
-  { value: RoundFormat.SWISS_SYSTEM, label: "Swiss System", description: "Pairings based on performance" },
-  { value: RoundFormat.CUSTOM, label: "Custom", description: "Manual fixture creation" },
-];
 
 export default function RoundManagement({
   tournamentId,
@@ -91,7 +83,6 @@ export default function RoundManagement({
       form.setFieldsValue({
         roundName: existingRound.roundName,
         roundType: existingRound.roundType,
-        roundFormat: existingRound.roundFormat,
         advancementRule: existingRound.advancementRule,
         startDate: existingRound.startDate ? dayjs(existingRound.startDate) : null,
         endDate: existingRound.endDate ? dayjs(existingRound.endDate) : null,
@@ -100,7 +91,6 @@ export default function RoundManagement({
       // Set default values for new round (roundNumber and sequenceOrder will be auto-calculated)
       form.setFieldsValue({
         roundType: RoundType.GROUP_BASED,
-        roundFormat: RoundFormat.ROUND_ROBIN,
       });
     }
     
@@ -139,7 +129,6 @@ export default function RoundManagement({
         roundNumber,
         roundName: values.roundName,
         roundType: values.roundType,
-        roundFormat: values.roundFormat || undefined,
         sequenceOrder,
         advancementRule: values.advancementRule || undefined,
         startDate: values.startDate
@@ -268,37 +257,6 @@ export default function RoundManagement({
                 optionLabelProp="label"
               >
                 {ROUND_TYPE_OPTIONS.map((option) => (
-                  <Option 
-                    key={option.value} 
-                    value={option.value}
-                    label={option.label}
-                  >
-                    <div style={{ padding: "4px 0" }}>
-                      <div style={{ fontWeight: 500, marginBottom: 4 }}>
-                        {option.label}
-                      </div>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        {option.description}
-                      </Text>
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item 
-              name="roundFormat" 
-              label="Round Format"
-              tooltip="Format for how matches are played in this round"
-            >
-              <Select 
-                placeholder="Select format (optional)"
-                size="large"
-                optionLabelProp="label"
-                allowClear
-              >
-                {ROUND_FORMAT_OPTIONS.map((option) => (
                   <Option 
                     key={option.value} 
                     value={option.value}

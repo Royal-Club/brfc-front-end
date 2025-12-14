@@ -45,7 +45,6 @@ export default function MatchesTab({
 
   // Fetch all fixtures for the tournament
   // Only fetch when tab is active to avoid unnecessary API calls
-  // No polling - only fetch once when tab becomes active
   const {
     data: fixturesData,
     isLoading: fixturesLoading,
@@ -56,6 +55,13 @@ export default function MatchesTab({
   );
 
   const fixtures = fixturesData?.content || [];
+
+  // Refetch fixtures when tab becomes active
+  useEffect(() => {
+    if (isActive) {
+      refetchFixtures();
+    }
+  }, [isActive, refetchFixtures]);
   
   // Check if there are ongoing matches for display purposes
   const hasOngoingMatches = fixtures.some(
@@ -354,8 +360,8 @@ export default function MatchesTab({
                   })()
                 )}
 
-                {/* Show matches that don't belong to any group (fallback) */}
-                {Object.keys(roundFixtures).map((groupName) => {
+                {/* Show matches that don't belong to any group (fallback) - only for GROUP_BASED rounds */}
+                {round.roundType === "GROUP_BASED" && Object.keys(roundFixtures).map((groupName) => {
                   if (groupName === "No Group" || groupName === "null") {
                     const noGroupMatches = roundFixtures[groupName] || [];
                     if (noGroupMatches.length === 0) return null;

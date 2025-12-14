@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Modal,
   Button,
@@ -203,9 +203,77 @@ export default function TeamAssignment({
     }
   }, [isModalVisible]);
 
+  // Filter teams based on round sequence
+  // For Round 1 (sequenceOrder === 1), show all tournament teams
+  // For Round 2+, show only teams that advanced from the previous round
+  const availableTeamsForAssignment = useMemo(() => {
+    // If no round data or it's Round 1, show all tournament teams
+    if (!round || !round.sequenceOrder || round.sequenceOrder === 1) {
+      return teams;
+    }
+
+    // For Round 2+, get teams from the previous round
+    if (!previousRound) {
+      // No previous round found, return empty array (shouldn't happen, but handle gracefully)
+      console.warn(`No previous round found for round ${round.roundName} (sequence ${round.sequenceOrder})`);
+      return [];
+    }
+
+    // Get teams from previous round based on round type
+    const previousRoundTeams: Array<{ teamId: number; teamName: string }> = [];
+
+    if (previousRound.roundType === "GROUP_BASED" && previousRound.groups) {
+      // For GROUP_BASED rounds, get all teams from all groups' standings
+      // If standings exist, use them (more accurate as they show actual participation)
+      // Otherwise, fall back to teams in groups
+      previousRound.groups.forEach((group) => {
+        if (group.standings && group.standings.length > 0) {
+          // Use standings (shows teams that actually played)
+          group.standings.forEach((standing) => {
+            if (standing.teamId && !previousRoundTeams.find(t => t.teamId === standing.teamId)) {
+              previousRoundTeams.push({
+                teamId: standing.teamId,
+                teamName: standing.teamName,
+              });
+            }
+          });
+        } else if (group.teams) {
+          // Fall back to teams in group if no standings
+          group.teams.forEach((team) => {
+            if (team.teamId && !team.isPlaceholder) {
+              if (!previousRoundTeams.find(t => t.teamId === team.teamId)) {
+                previousRoundTeams.push({
+                  teamId: team.teamId,
+                  teamName: team.teamName || "",
+                });
+              }
+            }
+          });
+        }
+      });
+    } else if (previousRound.roundType === "DIRECT_KNOCKOUT") {
+      // For DIRECT_KNOCKOUT rounds, get all teams from the round
+      // Teams are stored directly in the round's teams field
+      if (previousRound.teams) {
+        previousRound.teams.forEach((team) => {
+          if (team.teamId && !team.isPlaceholder) {
+            if (!previousRoundTeams.find(t => t.teamId === team.teamId)) {
+              previousRoundTeams.push({
+                teamId: team.teamId,
+                teamName: team.teamName || "",
+              });
+            }
+          }
+        });
+      }
+    }
+
+    return previousRoundTeams;
+  }, [round, previousRound, teams]);
+
   // Filter teams - exclude those already assigned to current group/round
   // But keep all teams in the list to show which ones are disabled
-  const allTeams = teams;
+  const allTeams = availableTeamsForAssignment;
 
   const handleTeamToggle = (teamId: number, checked: boolean) => {
     // Don't allow toggling if team is already assigned to another group
@@ -350,6 +418,15 @@ export default function TeamAssignment({
                       <Text type="secondary" style={{ fontSize: 12, marginTop: 4 }}>
                         Teams from: {previousRound.roundName} (Sequence {previousRound.sequenceOrder})
                       </Text>
+                    )}
+                    {round && round.sequenceOrder && round.sequenceOrder > 1 && (
+                      <Alert
+                        message="Advanced Teams Only"
+                        description={`Only teams from ${previousRound?.roundName || "the previous round"} can be assigned to this round.`}
+                        type="info"
+                        showIcon
+                        style={{ marginTop: 8, fontSize: 12 }}
+                      />
                     )}
                   </>
                 ) : (
@@ -512,7 +589,11 @@ export default function TeamAssignment({
           size="small"
           title={
             <Space>
-              <Text strong>All Teams</Text>
+              <Text strong>
+                {round && round.sequenceOrder && round.sequenceOrder > 1 
+                  ? `Teams from ${previousRound?.roundName || "Previous Round"}` 
+                  : "All Teams"}
+              </Text>
               <Tag color="green">{allTeams.filter(t => !teamAssignmentMap.has(t.teamId) && !assignedTeamIds.includes(t.teamId)).length} available</Tag>
               {teamAssignmentMap.size > 0 && (
                 <Tag color="orange">{teamAssignmentMap.size} already assigned</Tag>

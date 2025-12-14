@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Empty, Typography, Spin, theme, Button, Modal, message, Tooltip } from "antd";
+import { Card, Empty, Typography, Spin, theme, Button, Modal, message, Tooltip, Space, Tag } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { IMatchEvent } from "../../../state/features/fixtures/fixtureTypes";
@@ -29,8 +29,8 @@ export default function MatchEventTimeline({
   awayTeamId,
 }: MatchEventTimelineProps) {
   const { token } = useToken();
-  const { data: eventsData, isLoading } = useGetMatchEventsQuery({ matchId });
-  const [deleteMatchEvent] = useDeleteMatchEventMutation();
+  const { data: eventsData, isLoading, refetch } = useGetMatchEventsQuery({ matchId });
+  const [deleteMatchEvent, { isLoading: isDeleting }] = useDeleteMatchEventMutation();
   const loginInfo = useSelector(selectLoginInfo);
   const isAdmin = loginInfo.roles?.includes("ADMIN") || loginInfo.roles?.includes("SUPERADMIN");
 
@@ -45,10 +45,49 @@ export default function MatchEventTimeline({
       cancelText: "Cancel",
       onOk: async () => {
         try {
-          await deleteMatchEvent({ matchId, eventId }).unwrap();
+          const result = await deleteMatchEvent({ matchId, eventId }).unwrap();
           message.success("Event deleted successfully");
-        } catch (error) {
-          message.error("Failed to delete event");
+          // Manually refetch events to ensure UI updates immediately
+          refetch();
+          return result;
+        } catch (error: any) {
+          console.error("Delete event error:", error);
+          // Handle different error statuses - safely extract error message
+          let errorMessage = "Failed to delete event";
+          
+          try {
+            // RTK Query error structure: error.data or error.error
+            const errorData = error?.data || error?.error || error;
+            
+            // Check status code
+            const status = error?.status || errorData?.statusCode || errorData?.status;
+            
+            if (status === 409 || status === "CONFLICT") {
+              errorMessage = errorData?.message || 
+                            errorData?.detail || 
+                            errorData?.error || 
+                            "Cannot delete events from completed matches. The match has already been completed.";
+            } else if (status === 404 || status === "NOT_FOUND") {
+              errorMessage = errorData?.message || 
+                            errorData?.detail || 
+                            "Event not found. It may have already been deleted.";
+            } else {
+              // Try to extract message from various possible locations
+              errorMessage = errorData?.message || 
+                           errorData?.detail || 
+                           errorData?.error || 
+                           error?.message || 
+                           (typeof errorData === 'string' ? errorData : "Failed to delete event");
+            }
+          } catch (parseError) {
+            // If error parsing fails, use a safe default message
+            console.error("Error parsing error object:", parseError);
+            errorMessage = "Failed to delete event. The match may have been completed.";
+          }
+          
+          message.error(errorMessage);
+          // Don't reject the promise - let the modal close after showing the error
+          // This prevents uncaught promise rejection errors
         }
       },
     });
@@ -69,6 +108,10 @@ export default function MatchEventTimeline({
         return substituteIcon;
       case "INJURY":
         return injuryIcon;
+      case "MATCH_STARTED":
+      case "MATCH_COMPLETED":
+        // Use goal icon as placeholder for system events
+        return goalIcon;
       default:
         return goalIcon;
     }
@@ -89,6 +132,10 @@ export default function MatchEventTimeline({
         return "#722ed1";
       case "INJURY":
         return "#fa8c16";
+      case "MATCH_STARTED":
+        return "#52c41a"; // Green for start
+      case "MATCH_COMPLETED":
+        return "#1890ff"; // Blue for completion
       default:
         return "#8c8c8c";
     }
@@ -117,37 +164,218 @@ export default function MatchEventTimeline({
 
   return (
     <Card
+      title={
+        <Space>
+          <span style={{ fontSize: 16, fontWeight: 600 }}>Match Events Timeline</span>
+          <Tag color="blue" style={{ fontSize: 11 }}>{events.length} events</Tag>
+        </Space>
+      }
       style={{
         borderRadius: 16,
         border: `1px solid ${token.colorBorder}`,
-        height: 500,
-        overflow: "hidden",
+        height: 600,
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: `0 2px 8px ${token.colorFillSecondary}`,
       }}
       bodyStyle={{
         padding: "16px 0",
-        height: "100%",
-        overflowY: "auto",
+        flex: 1,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <div style={{ position: "relative" }}>
+      <div 
+        style={{ 
+          position: "relative",
+          flex: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          paddingBottom: 20,
+        }}
+      >
         {/* Center Timeline Line */}
         <div
           style={{
             position: "absolute",
             left: "50%",
             top: 0,
-            bottom: 0,
             width: 3,
+            height: "100%",
+            minHeight: "100%",
             background: `linear-gradient(180deg, ${token.colorBorder} 0%, ${token.colorBorderSecondary} 100%)`,
             transform: "translateX(-50%)",
             zIndex: 0,
+            pointerEvents: "none",
           }}
         />
 
         {/* Events */}
         {events.map((event: IMatchEvent, index: number) => {
-          const isHomeTeam = event.teamId === homeTeamId;
+          // System events (MATCH_STARTED, MATCH_COMPLETED) are centered
+          const isSystemEvent = event.eventType === "MATCH_STARTED" || event.eventType === "MATCH_COMPLETED";
+          const isHomeTeam = event.teamId != null && event.teamId === homeTeamId;
           const eventColor = getEventColor(event.eventType);
+
+          // Render system events centered
+          if (isSystemEvent) {
+            return (
+              <div
+                key={event.id}
+                style={{
+                  position: "relative",
+                  marginBottom: 40,
+                  marginTop: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingLeft: 40,
+                  paddingRight: 40,
+                  minHeight: 100,
+                }}
+              >
+                {/* Timeline Circle */}
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    top: 0,
+                    transform: "translateX(-50%)",
+                    zIndex: 2,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: "50%",
+                      background: eventColor,
+                      border: `4px solid ${token.colorBgContainer}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: `0 2px 8px ${eventColor}40`,
+                    }}
+                  >
+                    <Text
+                      strong
+                      style={{
+                        fontSize: 12,
+                        color: "white",
+                      }}
+                    >
+                      {event.eventTime}'
+                    </Text>
+                  </div>
+                </div>
+
+                {/* Centered Event Card */}
+                <Card
+                  size="small"
+                  hoverable
+                  style={{
+                    background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`,
+                    border: `2px solid ${eventColor}50`,
+                    borderRadius: 12,
+                    boxShadow: `0 4px 12px ${eventColor}20`,
+                    position: "relative",
+                    overflow: "visible",
+                    transition: "all 0.3s ease",
+                    width: "75%",
+                    maxWidth: 500,
+                    marginTop: 30,
+                    marginBottom: 30,
+                  }}
+                  bodyStyle={{ padding: "20px 24px" }}
+                >
+                  {isAdmin && (
+                    <Tooltip title="Delete Event">
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteEvent(event.id);
+                        }}
+                        style={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          padding: "4px 8px",
+                          minWidth: 32,
+                          height: 32,
+                          zIndex: 100,
+                          background: "rgba(255, 255, 255, 0.95)",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                          borderRadius: 4,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(255, 77, 79, 0.1)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
+                        }}
+                      />
+                    </Tooltip>
+                  )}
+                  <div style={{ 
+                    textAlign: "center",
+                    wordWrap: "break-word",
+                    overflowWrap: "break-word",
+                    whiteSpace: "normal",
+                  }}>
+                    <Text
+                      strong
+                      style={{
+                        fontSize: 18,
+                        color: eventColor,
+                        display: "block",
+                        wordBreak: "normal",
+                        whiteSpace: "normal",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {event.eventType === "MATCH_STARTED" ? "🚀 Match Started" : "🏁 Match Completed"}
+                    </Text>
+                    {event.playerName && (
+                      <Text
+                        type="secondary"
+                        style={{
+                          fontSize: 13,
+                          display: "block",
+                          marginTop: 6,
+                          fontStyle: "italic",
+                          wordBreak: "normal",
+                          whiteSpace: "normal",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        by {event.playerName}
+                      </Text>
+                    )}
+                    {event.description && (
+                      <Text
+                        type="secondary"
+                        style={{
+                          fontSize: 12,
+                          display: "block",
+                          marginTop: 6,
+                          wordBreak: "normal",
+                          whiteSpace: "normal",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        {event.description}
+                      </Text>
+                    )}
+                  </div>
+                </Card>
+              </div>
+            );
+          }
 
           return (
             <div
@@ -174,22 +402,32 @@ export default function MatchEventTimeline({
                   >
                     <Card
                       size="small"
+                      hoverable
                       style={{
                         background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`,
-                        border: `1px solid ${eventColor}40`,
+                        border: `2px solid ${eventColor}50`,
                         borderRadius: 12,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                        boxShadow: `0 4px 12px ${eventColor}20`,
                         position: "relative",
                         overflow: "hidden",
+                        transition: "all 0.3s ease",
                       }}
                       bodyStyle={{ padding: 0 }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateX(-4px)";
+                        e.currentTarget.style.boxShadow = `0 6px 16px ${eventColor}30`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateX(0)";
+                        e.currentTarget.style.boxShadow = `0 4px 12px ${eventColor}20`;
+                      }}
                     >
                       {isAdmin && (
                         <Tooltip title="Delete Event">
                           <Button
                             type="text"
                             danger
-                            size="large"
+                            size="small"
                             icon={<DeleteOutlined />}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -197,13 +435,21 @@ export default function MatchEventTimeline({
                             }}
                             style={{
                               position: "absolute",
-                              top: 8,
-                              left: 8,
-                              padding: 0,
-                              width: 32,
+                              top: 4,
+                              left: 4,
+                              padding: "4px 8px",
+                              minWidth: 32,
                               height: 32,
-                              zIndex: 10,
-                              background: "rgba(255, 255, 255, 0.9)",
+                              zIndex: 100,
+                              background: "rgba(255, 255, 255, 0.95)",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                              borderRadius: 4,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "rgba(255, 77, 79, 0.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
                             }}
                           />
                         </Tooltip>
@@ -235,18 +481,38 @@ export default function MatchEventTimeline({
                               textAlign: "right",
                             }}
                           >
-                            {event.eventType.replace("_", " ")}
+                            {event.eventType === "MATCH_STARTED" 
+                              ? "Match Started" 
+                              : event.eventType === "MATCH_COMPLETED"
+                              ? "Match Completed"
+                              : event.eventType.replace("_", " ")}
                           </Text>
-                          <Text
-                            strong
-                            style={{
-                              fontSize: 14,
-                              display: "block",
-                              textAlign: "right",
-                            }}
-                          >
-                            {event.playerName}
-                          </Text>
+                          {event.eventType !== "MATCH_STARTED" && event.eventType !== "MATCH_COMPLETED" && (
+                            <Text
+                              strong
+                              style={{
+                                fontSize: 14,
+                                display: "block",
+                                textAlign: "right",
+                              }}
+                            >
+                              {event.playerName}
+                            </Text>
+                          )}
+                          {event.eventType === "GOAL" && event.relatedPlayerName && (
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                color: "#1890ff",
+                                display: "block",
+                                textAlign: "right",
+                                marginTop: 2,
+                                fontStyle: "italic",
+                              }}
+                            >
+                              🎯 Assist: {event.relatedPlayerName}
+                            </Text>
+                          )}
                           {event.description && (
                             <Text
                               type="secondary"
@@ -369,22 +635,32 @@ export default function MatchEventTimeline({
                   >
                     <Card
                       size="small"
+                      hoverable
                       style={{
                         background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`,
-                        border: `1px solid ${eventColor}40`,
+                        border: `2px solid ${eventColor}50`,
                         borderRadius: 12,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                        boxShadow: `0 4px 12px ${eventColor}20`,
                         position: "relative",
                         overflow: "hidden",
+                        transition: "all 0.3s ease",
                       }}
                       bodyStyle={{ padding: 0 }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateX(4px)";
+                        e.currentTarget.style.boxShadow = `0 6px 16px ${eventColor}30`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateX(0)";
+                        e.currentTarget.style.boxShadow = `0 4px 12px ${eventColor}20`;
+                      }}
                     >
                       {isAdmin && (
                         <Tooltip title="Delete Event">
                           <Button
                             type="text"
                             danger
-                            size="large"
+                            size="small"
                             icon={<DeleteOutlined />}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -392,13 +668,21 @@ export default function MatchEventTimeline({
                             }}
                             style={{
                               position: "absolute",
-                              top: 8,
-                              right: 8,
-                              padding: 0,
-                              width: 32,
+                              top: 4,
+                              right: 4,
+                              padding: "4px 8px",
+                              minWidth: 32,
                               height: 32,
-                              zIndex: 10,
-                              background: "rgba(255, 255, 255, 0.9)",
+                              zIndex: 100,
+                              background: "rgba(255, 255, 255, 0.95)",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                              borderRadius: 4,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "rgba(255, 77, 79, 0.1)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
                             }}
                           />
                         </Tooltip>
@@ -451,18 +735,38 @@ export default function MatchEventTimeline({
                               textAlign: "left",
                             }}
                           >
-                            {event.eventType.replace("_", " ")}
+                            {event.eventType === "MATCH_STARTED" 
+                              ? "Match Started" 
+                              : event.eventType === "MATCH_COMPLETED"
+                              ? "Match Completed"
+                              : event.eventType.replace("_", " ")}
                           </Text>
-                          <Text
-                            strong
-                            style={{
-                              fontSize: 14,
-                              display: "block",
-                              textAlign: "left",
-                            }}
-                          >
-                            {event.playerName}
-                          </Text>
+                          {event.eventType !== "MATCH_STARTED" && event.eventType !== "MATCH_COMPLETED" && (
+                            <Text
+                              strong
+                              style={{
+                                fontSize: 14,
+                                display: "block",
+                                textAlign: "left",
+                              }}
+                            >
+                              {event.playerName}
+                            </Text>
+                          )}
+                          {event.eventType === "GOAL" && event.relatedPlayerName && (
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                color: "#1890ff",
+                                display: "block",
+                                textAlign: "left",
+                                marginTop: 2,
+                                fontStyle: "italic",
+                              }}
+                            >
+                              🎯 Assist: {event.relatedPlayerName}
+                            </Text>
+                          )}
                           {event.description && (
                             <Text
                               type="secondary"

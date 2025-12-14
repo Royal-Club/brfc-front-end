@@ -128,6 +128,16 @@ export default function TournamentFlowVisualization({
         return matches && isOngoing;
       });
 
+      // Get all matches for this round (for standings calculation in DIRECT_KNOCKOUT rounds)
+      const roundAllMatches = fixtures.filter((f) => {
+        const matchesTournament = f.tournamentId === tournamentStructure.tournamentId;
+        if (!matchesTournament) return false;
+        const fixtureRoundNumber = f.roundNumber ?? f.round;
+        const matchesByRoundNumber = fixtureRoundNumber === round.roundNumber;
+        const matchesByRoundId = f.round === round.id;
+        return matchesByRoundNumber || matchesByRoundId;
+      });
+
       // Create round node
       generatedNodes.push({
         id: `round-${round.id}`,
@@ -136,14 +146,15 @@ export default function TournamentFlowVisualization({
         data: {
           roundName: round.roundName,
           roundType: round.roundType,
-          roundFormat: round.roundFormat,
           status: round.status,
           totalMatches: round.totalMatches,
           completedMatches: round.completedMatches,
           sequenceOrder: round.sequenceOrder,
           roundId: round.id,
           groups: round.groups,
+          teams: round.teams, // Pass teams for standings calculation
           ongoingMatches: roundOngoingMatches,
+          allMatches: roundAllMatches, // Pass all matches for standings
           onCreateGroup: onCreateGroup,
           onCreateRound: onCreateRound,
         },

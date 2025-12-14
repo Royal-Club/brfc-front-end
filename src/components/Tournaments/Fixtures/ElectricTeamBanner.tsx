@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Card, Tag, Space } from "antd";
+import { Card, Tag, Space, Button } from "antd";
 import { gsap } from "gsap";
 import { IFixture } from "../../../state/features/fixtures/fixtureTypes";
-import { TrophyOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import { TrophyOutlined, EnvironmentOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import moment from "moment";
 import MatchLivePanel from "./MatchLivePanel";
+import { useNavigate } from "react-router-dom";
 
 interface ElectricTeamBannerProps {
   match: IFixture;
@@ -14,6 +15,7 @@ interface ElectricTeamBannerProps {
 }
 
 export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }: ElectricTeamBannerProps) {
+  const navigate = useNavigate();
   const homeScoreRef = useRef<HTMLDivElement>(null);
   const awayScoreRef = useRef<HTMLDivElement>(null);
   const homeGlowRef = useRef<HTMLDivElement>(null);
@@ -22,10 +24,12 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
   // Timer state
   const [displayTime, setDisplayTime] = useState("00:00");
 
-  // Format time from seconds to MM:SS
+  // Format time from seconds to MM:SS (capped at 120 minutes)
   const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    // Cap at 120 minutes (7200 seconds) for match duration
+    const cappedSeconds = Math.min(seconds, 7200);
+    const mins = Math.floor(cappedSeconds / 60);
+    const secs = cappedSeconds % 60;
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
@@ -100,14 +104,18 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
         const now = Date.now();
         const timeSinceStart = Math.floor((now - startTime) / 1000);
         const totalElapsed = initialElapsed + timeSinceStart;
-        setDisplayTime(formatTime(totalElapsed));
+        // Cap at 120 minutes (7200 seconds) for match duration
+        const cappedElapsed = Math.min(totalElapsed, 7200);
+        setDisplayTime(formatTime(cappedElapsed));
       };
 
       calculateElapsedTime();
       interval = setInterval(calculateElapsedTime, 1000);
     } else if (match.matchStatus === "PAUSED") {
       const pausedTime = match.elapsedTimeSeconds || 0;
-      setDisplayTime(formatTime(pausedTime));
+      // Cap at 120 minutes
+      const cappedPaused = Math.min(pausedTime, 7200);
+      setDisplayTime(formatTime(cappedPaused));
     } else if (match.matchStatus === "COMPLETED") {
       let finalTime = match.elapsedTimeSeconds || 0;
 
@@ -116,8 +124,10 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
         const endTime = moment.utc(match.completedAt).local().valueOf();
         finalTime = Math.floor((endTime - startTime) / 1000);
       }
-
-      setDisplayTime(formatTime(finalTime));
+      
+      // Cap at 120 minutes
+      const cappedFinal = Math.min(finalTime, 7200);
+      setDisplayTime(formatTime(cappedFinal));
     } else {
       setDisplayTime("00:00");
     }
@@ -422,8 +432,30 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
           flexWrap: "wrap",
         }}
       >
-        {/* Left Section: Tournament Info */}
+        {/* Left Section: Back Button & Tournament Info */}
         <Space size={12} align="center">
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(-1)}
+            style={{
+              background: "rgba(255, 255, 255, 0.15)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              color: "white",
+              borderRadius: 8,
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+            }}
+          >
+            Back
+          </Button>
           <div
             style={{
               width: 32,

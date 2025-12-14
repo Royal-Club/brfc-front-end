@@ -15,6 +15,7 @@ import {
   Popconfirm,
   Divider,
   Alert,
+  Table,
 } from "antd";
 import {
   PlusOutlined,
@@ -67,7 +68,6 @@ import {
 import { useGetFixturesQuery } from "../../../../../state/features/fixtures/fixturesSlice";
 import { IFixture } from "../../../../../state/features/fixtures/fixtureTypes";
 import { formatMatchTime, isMatchOngoing } from "../../../../../utils/matchTimeUtils";
-import { Table } from "antd";
 import { GroupFormat } from "../../../../../state/features/manualFixtures/manualFixtureTypes";
 import { useNavigate } from "react-router-dom";
 
@@ -122,8 +122,7 @@ export default function InteractiveTournamentTab({
 
   // Fetch fixtures for the tournament to show ongoing matches
   // Only fetch when tab is active to avoid unnecessary API calls
-  // No polling - only fetch once when tab becomes active
-  const { data: fixturesData } = useGetFixturesQuery(
+  const { data: fixturesData, refetch: refetchFixtures } = useGetFixturesQuery(
     { tournamentId },
     { skip: !isActive }
   );
@@ -145,13 +144,19 @@ export default function InteractiveTournamentTab({
     return () => clearInterval(interval);
   }, [hasOngoingMatches, isActive]);
   
-  // Refetch fixtures only when tab becomes active (one-time fetch)
+  // Refetch fixtures when tab becomes active
   useEffect(() => {
-    if (isActive && fixturesData) {
-      // Data already loaded, no need to refetch
-      return;
+    if (isActive) {
+      refetchFixtures();
     }
-  }, [isActive, fixturesData]);
+  }, [isActive, refetchFixtures]);
+
+  // Close drawer when selectedNode becomes null
+  useEffect(() => {
+    if (!selectedNode && showDetailsDrawer) {
+      dispatch(setShowDetailsDrawer(false));
+    }
+  }, [selectedNode, showDetailsDrawer, dispatch]);
   
   const finalFixtures = fixtures;
 
@@ -227,57 +232,121 @@ export default function InteractiveTournamentTab({
   const handleCompleteRound = async (roundId: number) => {
     // Find the round to show in modal
     const round = tournamentStructure?.rounds.find((r) => r.id === roundId);
-    if (round) {
-      // Check if round has next round
-      const nextRound = tournamentStructure?.rounds.find(
-        (r) => r.sequenceOrder === round.sequenceOrder + 1
-      );
-      
-      // If no next round, complete directly without team selection
-      if (!nextRound) {
-        try {
-          const result = await completeRound({
-            roundId,
-            recalculateStandings: true,
-            autoAdvanceTeams: false, // No next round, so no advancement
-          }).unwrap();
-          message.success("Round completed successfully");
-          dispatch(setSelectedNode(null));
-          onRefresh();
-        } catch (error: any) {
-          // Error handled by API slice
-        }
+    if (!round) return;
+
+    // Validate that all matches are completed
+    const allMatchesCompleted = round.totalMatches > 0 && round.completedMatches === round.totalMatches;
+    
+    // For group-based rounds, also check that all groups have completed matches
+    if (round.roundType === RoundType.GROUP_BASED && round.groups) {
+      const allGroupsCompleted = round.groups.every((group) => {
+        return group.totalMatches > 0 && group.completedMatches === group.totalMatches;
+      });
+
+      if (!allGroupsCompleted) {
+        const incompleteGroups = round.groups.filter(
+          (group) => !(group.totalMatches > 0 && group.completedMatches === group.totalMatches)
+        );
+        message.error(
+          `Cannot complete round. The following groups have incomplete matches: ${incompleteGroups.map(g => g.groupName).join(", ")}`
+        );
         return;
       }
-
-      // Show team selection modal for advancement
-      dispatch(setRoundToComplete(round));
-      dispatch(setShowTeamAdvancement(true));
     }
+
+    if (!allMatchesCompleted) {
+      message.error(
+        `Cannot complete round. Progress: ${round.completedMatches} / ${round.totalMatches} matches completed.`
+      );
+      return;
+    }
+
+    // Check if round has next round
+    const nextRound = tournamentStructure?.rounds.find(
+      (r) => r.sequenceOrder === round.sequenceOrder + 1
+    );
+    
+    // If no next round, complete directly without team selection
+    if (!nextRound) {
+      try {
+        const result = await completeRound({
+          roundId,
+          recalculateStandings: true,
+        }).unwrap();
+        message.success("Round completed successfully");
+        dispatch(setSelectedNode(null));
+        dispatch(setShowDetailsDrawer(false));
+        onRefresh();
+      } catch (error: any) {
+        // Show backend error message if available
+        const errorMessage = error?.data?.message || error?.message || "Failed to complete round. Please ensure all matches are completed.";
+        message.error(errorMessage);
+      }
+      return;
+    }
+
+    // Show team selection modal for advancement
+    dispatch(setRoundToComplete(round));
+    dispatch(setShowTeamAdvancement(true));
   };
 
   const handleConfirmAdvancement = async (selectedTeamIds: number[]) => {
     if (!roundToComplete) return;
 
+    if (selectedTeamIds.length === 0) {
+      message.warning("Please select at least one team to advance");
+      return;
+    }
+
+    // Re-validate that all matches are completed before submitting
+    const allMatchesCompleted = roundToComplete.totalMatches > 0 && roundToComplete.completedMatches === roundToComplete.totalMatches;
+    
+    // For group-based rounds, also check that all groups have completed matches
+    if (roundToComplete.roundType === RoundType.GROUP_BASED && roundToComplete.groups) {
+      const allGroupsCompleted = roundToComplete.groups.every((group) => {
+        return group.totalMatches > 0 && group.completedMatches === group.totalMatches;
+      });
+
+      if (!allGroupsCompleted) {
+        const incompleteGroups = roundToComplete.groups.filter(
+          (group) => !(group.totalMatches > 0 && group.completedMatches === group.totalMatches)
+        );
+        message.error(
+          `Cannot complete round. The following groups have incomplete matches: ${incompleteGroups.map(g => g.groupName).join(", ")}`
+        );
+        return;
+      }
+    }
+
+    if (!allMatchesCompleted) {
+      message.error(
+        `Cannot complete round. Progress: ${roundToComplete.completedMatches} / ${roundToComplete.totalMatches} matches completed.`
+      );
+      return;
+    }
+
     try {
       const result = await completeRound({
         roundId: roundToComplete.id,
         recalculateStandings: true,
-        autoAdvanceTeams: true,
-        selectedTeamIds: selectedTeamIds.length > 0 ? selectedTeamIds : undefined,
+        selectedTeamIds: selectedTeamIds,
       }).unwrap();
 
       message.success(
         `Round completed! ${result.content?.teamsAdvanced || 0} teams advanced to ${result.content?.targetRoundName || "next round"}`
       );
       dispatch(setSelectedNode(null));
+      dispatch(setShowDetailsDrawer(false));
       dispatch(setRoundToComplete(null));
       dispatch(setShowTeamAdvancement(false));
       onRefresh();
     } catch (error: any) {
-      // Error handled by API slice
+      // Show backend error message if available
+      const errorMessage = error?.data?.message || error?.message || "Failed to complete round. Please ensure all matches are completed.";
+      message.error(errorMessage);
     }
   };
+
 
   const handleCreateGroup = async (roundId: number) => {
     const round = tournamentStructure?.rounds.find((r) => r.id === roundId);
@@ -461,7 +530,175 @@ export default function InteractiveTournamentTab({
 
     const isGroupBased = round.roundType === RoundType.GROUP_BASED;
     const canStart = round.status === RoundStatus.NOT_STARTED;
-    const canComplete = round.status === RoundStatus.ONGOING;
+    // Can complete only if round is ONGOING and all matches are completed
+    // Once round is COMPLETED, the button should not show
+    const allMatchesCompleted = round.totalMatches > 0 && round.completedMatches === round.totalMatches;
+    const canComplete = round.status === RoundStatus.ONGOING && allMatchesCompleted;
+    
+    // Check if this is the last round
+    const isLastRound = tournamentStructure 
+      ? round.sequenceOrder === tournamentStructure.totalRounds
+      : false;
+
+    // Get all matches for this round to calculate standings (for DIRECT_KNOCKOUT rounds)
+    const roundMatches = finalFixtures.filter((f) => {
+      const matchesTournament = f.tournamentId === tournamentId;
+      if (!matchesTournament) return false;
+      const fixtureRoundNumber = f.roundNumber ?? f.round;
+      const matchesByRoundNumber = fixtureRoundNumber === round.roundNumber;
+      const matchesByRoundId = f.round === round.id;
+      const matches = matchesByRoundNumber || matchesByRoundId;
+      
+      // Debug logging
+      if (matches && isGroupBased === false) {
+        console.log('Round match found:', {
+          fixtureId: f.id,
+          fixtureRound: f.round,
+          fixtureRoundNumber: f.roundNumber,
+          roundId: round.id,
+          roundNumber: round.roundNumber,
+          matchStatus: f.matchStatus,
+          homeTeam: f.homeTeamName,
+          awayTeam: f.awayTeamName
+        });
+      }
+      
+      return matches;
+    });
+
+    // Calculate standings for DIRECT_KNOCKOUT rounds
+    const calculateRoundStandings = () => {
+      if (isGroupBased || roundMatches.length === 0) return [];
+
+      const teamStats: Record<number, {
+        teamId: number;
+        teamName: string;
+        matchesPlayed: number;
+        wins: number;
+        draws: number;
+        losses: number;
+        goalsFor: number;
+        goalsAgainst: number;
+        goalDifference: number;
+        points: number;
+      }> = {};
+
+      // Initialize team stats from round.teams if available
+      if (round.teams) {
+        round.teams.forEach((team: any) => {
+          if (!team.isPlaceholder && team.teamId) {
+            teamStats[team.teamId] = {
+              teamId: team.teamId,
+              teamName: team.teamName || "",
+              matchesPlayed: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              goalsFor: 0,
+              goalsAgainst: 0,
+              goalDifference: 0,
+              points: 0,
+            };
+          }
+        });
+      }
+
+      // Process completed matches and initialize teams from matches if not already in teamStats
+      roundMatches.forEach((match) => {
+        if (match.matchStatus !== "COMPLETED") return;
+
+        const homeTeamId = match.homeTeamId;
+        const awayTeamId = match.awayTeamId;
+        const homeScore = match.homeTeamScore || 0;
+        const awayScore = match.awayTeamScore || 0;
+
+        // Initialize home team if not already in stats
+        if (!teamStats[homeTeamId]) {
+          teamStats[homeTeamId] = {
+            teamId: homeTeamId,
+            teamName: match.homeTeamName || `Team ${homeTeamId}`,
+            matchesPlayed: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            points: 0,
+          };
+        }
+
+        // Initialize away team if not already in stats
+        if (!teamStats[awayTeamId]) {
+          teamStats[awayTeamId] = {
+            teamId: awayTeamId,
+            teamName: match.awayTeamName || `Team ${awayTeamId}`,
+            matchesPlayed: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            points: 0,
+          };
+        }
+
+        // Update home team stats
+        if (teamStats[homeTeamId]) {
+          teamStats[homeTeamId].matchesPlayed++;
+          teamStats[homeTeamId].goalsFor += homeScore;
+          teamStats[homeTeamId].goalsAgainst += awayScore;
+          teamStats[homeTeamId].goalDifference = teamStats[homeTeamId].goalsFor - teamStats[homeTeamId].goalsAgainst;
+
+          if (homeScore > awayScore) {
+            teamStats[homeTeamId].wins++;
+            teamStats[homeTeamId].points += 3;
+          } else if (homeScore === awayScore) {
+            teamStats[homeTeamId].draws++;
+            teamStats[homeTeamId].points += 1;
+          } else {
+            teamStats[homeTeamId].losses++;
+          }
+        }
+
+        // Update away team stats
+        if (teamStats[awayTeamId]) {
+          teamStats[awayTeamId].matchesPlayed++;
+          teamStats[awayTeamId].goalsFor += awayScore;
+          teamStats[awayTeamId].goalsAgainst += homeScore;
+          teamStats[awayTeamId].goalDifference = teamStats[awayTeamId].goalsFor - teamStats[awayTeamId].goalsAgainst;
+
+          if (awayScore > homeScore) {
+            teamStats[awayTeamId].wins++;
+            teamStats[awayTeamId].points += 3;
+          } else if (awayScore === homeScore) {
+            teamStats[awayTeamId].draws++;
+            teamStats[awayTeamId].points += 1;
+          } else {
+            teamStats[awayTeamId].losses++;
+          }
+        }
+      });
+
+      // Convert to array and sort by points, goal difference, goals for
+      const standings = Object.values(teamStats)
+        .filter((stat) => stat.matchesPlayed > 0)
+        .sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+          return b.goalsFor - a.goalsFor;
+        })
+        .map((stat, index) => ({
+          ...stat,
+          position: index + 1,
+          id: stat.teamId, // Use teamId as id for table rowKey
+        }));
+
+      return standings;
+    };
+
+    const roundStandings = !isGroupBased ? calculateRoundStandings() : [];
 
     // Check if previous round is completed (for starting validation)
     const previousRound = round.sequenceOrder && round.sequenceOrder > 1
@@ -492,9 +729,6 @@ export default function InteractiveTournamentTab({
         <Row gutter={[16, 16]}>
           <Col span={12}>
             <Statistic title="Type" value={round.roundType} />
-          </Col>
-          <Col span={12}>
-            <Statistic title="Format" value={round.roundFormat || "N/A"} />
           </Col>
         </Row>
 
@@ -527,15 +761,28 @@ export default function InteractiveTournamentTab({
           )}
 
           {canComplete && (
-            <Button
-              type="primary"
-              icon={<CheckCircleOutlined />}
-              onClick={() => handleCompleteRound(round.id)}
-              block
-            >
-              Complete Round & Advance Teams
-            </Button>
+            <>
+              <Button
+                type="primary"
+                icon={<CheckCircleOutlined />}
+                onClick={() => handleCompleteRound(round.id)}
+                block
+                disabled={!allMatchesCompleted && round.status === RoundStatus.ONGOING}
+              >
+                Complete Round & Advance Teams
+              </Button>
+              {round.status === RoundStatus.ONGOING && !allMatchesCompleted && (
+                <Alert
+                  message="Cannot Complete Round"
+                  description={`All matches must be completed first. Progress: ${round.completedMatches} / ${round.totalMatches} matches completed.`}
+                  type="warning"
+                  showIcon
+                  style={{ marginTop: 8 }}
+                />
+              )}
+            </>
           )}
+
 
           <Button
             icon={<EditOutlined />}
@@ -595,6 +842,57 @@ export default function InteractiveTournamentTab({
             </Button>
           </Popconfirm>
         </Space>
+
+        {/* Standings for DIRECT_KNOCKOUT rounds */}
+        {!isGroupBased && (
+          <>
+            <Divider />
+            <div>
+              <Title level={5}>
+                <BarChartOutlined /> Standings
+              </Title>
+              {roundStandings.length > 0 ? (
+                <Table
+                  columns={[
+                    { title: "Pos", dataIndex: "position", key: "position", width: 60 },
+                    { title: "Team", dataIndex: "teamName", key: "teamName" },
+                    { title: "P", dataIndex: "matchesPlayed", key: "matchesPlayed", width: 60 },
+                    { title: "W", dataIndex: "wins", key: "wins", width: 60 },
+                    { title: "D", dataIndex: "draws", key: "draws", width: 60 },
+                    { title: "L", dataIndex: "losses", key: "losses", width: 60 },
+                    { title: "GF", dataIndex: "goalsFor", key: "goalsFor", width: 60 },
+                    { title: "GA", dataIndex: "goalsAgainst", key: "goalsAgainst", width: 60 },
+                    {
+                      title: "GD",
+                      dataIndex: "goalDifference",
+                      key: "goalDifference",
+                      width: 70,
+                      render: (gd: number) => (
+                        <Text strong style={{ color: gd > 0 ? "#52c41a" : gd < 0 ? "#ff4d4f" : undefined }}>
+                          {gd > 0 ? `+${gd}` : gd}
+                        </Text>
+                      ),
+                    },
+                    { title: "Pts", dataIndex: "points", key: "points", width: 70, render: (pts: number) => <Text strong>{pts}</Text> },
+                  ]}
+                  dataSource={roundStandings}
+                  rowKey="id"
+                  pagination={false}
+                  size="small"
+                />
+              ) : (
+                <Empty 
+                  description={
+                    roundMatches.length === 0 
+                      ? "No matches found for this round. Generate matches to see standings."
+                      : "No completed matches yet. Complete some matches to see standings."
+                  }
+                  style={{ padding: "20px 0" }}
+                />
+              )}
+            </div>
+          </>
+        )}
 
         {/* Ongoing Matches Section */}
         {roundOngoingMatches.length > 0 && (
@@ -1002,7 +1300,7 @@ export default function InteractiveTournamentTab({
         }
         placement="right"
         width={400}
-        open={showDetailsDrawer}
+        open={showDetailsDrawer && selectedNode !== null}
         onClose={() => {
           dispatch(setShowDetailsDrawer(false));
           dispatch(setSelectedNode(null));
@@ -1065,6 +1363,14 @@ export default function InteractiveTournamentTab({
 
       <TeamAdvancementModal
         round={roundToComplete}
+        nextRound={
+          roundToComplete
+            ? tournamentStructure?.rounds.find(
+                (r) => r.sequenceOrder === roundToComplete.sequenceOrder + 1
+              ) || null
+            : null
+        }
+        allFixtures={finalFixtures}
         isModalVisible={showTeamAdvancement}
         onClose={() => {
           dispatch(setShowTeamAdvancement(false));
@@ -1073,6 +1379,7 @@ export default function InteractiveTournamentTab({
         onConfirm={handleConfirmAdvancement}
         isLoading={isCompletingRound}
       />
+
 
       <GroupMatchGenerationModal
         groupId={selectedNode?.type === "group" ? selectedNode.id : null}

@@ -1,7 +1,7 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState, useMemo } from "react";
 import { Handle, Position } from "reactflow";
-import { Card, Tag, Space, Typography, Button, theme } from "antd";
-import { TrophyOutlined, CheckCircleOutlined, ClockCircleOutlined, PlusOutlined, ThunderboltOutlined, PlayCircleOutlined } from "@ant-design/icons";
+import { Card, Tag, Space, Typography, Button, theme, Table } from "antd";
+import { TrophyOutlined, CheckCircleOutlined, ClockCircleOutlined, PlusOutlined, ThunderboltOutlined, PlayCircleOutlined, BarChartOutlined } from "@ant-design/icons";
 import { RoundStatus, RoundType } from "../../../../../state/features/manualFixtures/manualFixtureTypes";
 import { IFixture } from "../../../../../state/features/fixtures/fixtureTypes";
 import { formatMatchTime, isMatchOngoing, calculateElapsedTime } from "../../../../../utils/matchTimeUtils";
@@ -13,14 +13,15 @@ const { useToken } = theme;
 interface RoundNodeData {
   roundName: string;
   roundType: string;
-  roundFormat?: string;
   status: RoundStatus;
   totalMatches: number;
   completedMatches: number;
   sequenceOrder: number;
   roundId?: number;
   groups?: any[];
+  teams?: any[];
   ongoingMatches?: IFixture[];
+  allMatches?: IFixture[];
   isHovered?: boolean;
   onHover?: (roundId: number | null) => void;
   onCreateGroup?: (roundId: number) => void;
@@ -77,6 +78,131 @@ function RoundNode({ data, selected }: RoundNodeProps) {
 
   const isGroupBased = data.roundType === RoundType.GROUP_BASED;
   const isHovered = data.isHovered || false;
+  const allMatches = data.allMatches || [];
+  const teams = data.teams || [];
+
+  // Calculate standings for DIRECT_KNOCKOUT rounds
+  const standings = useMemo(() => {
+    if (isGroupBased || allMatches.length === 0) return [];
+
+    const teamStats: Record<number, {
+      teamId: number;
+      teamName: string;
+      matchesPlayed: number;
+      wins: number;
+      draws: number;
+      losses: number;
+      goalsFor: number;
+      goalsAgainst: number;
+      goalDifference: number;
+      points: number;
+    }> = {};
+
+    // Initialize team stats from teams if available
+    teams.forEach((team: any) => {
+      if (!team.isPlaceholder && team.teamId) {
+        teamStats[team.teamId] = {
+          teamId: team.teamId,
+          teamName: team.teamName || "",
+          matchesPlayed: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDifference: 0,
+          points: 0,
+        };
+      }
+    });
+
+    // Process completed matches
+    allMatches.forEach((match) => {
+      if (match.matchStatus !== "COMPLETED") return;
+
+      const homeTeamId = match.homeTeamId;
+      const awayTeamId = match.awayTeamId;
+      const homeScore = match.homeTeamScore || 0;
+      const awayScore = match.awayTeamScore || 0;
+
+      // Initialize teams from matches if not already in stats
+      if (!teamStats[homeTeamId]) {
+        teamStats[homeTeamId] = {
+          teamId: homeTeamId,
+          teamName: match.homeTeamName || `Team ${homeTeamId}`,
+          matchesPlayed: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDifference: 0,
+          points: 0,
+        };
+      }
+
+      if (!teamStats[awayTeamId]) {
+        teamStats[awayTeamId] = {
+          teamId: awayTeamId,
+          teamName: match.awayTeamName || `Team ${awayTeamId}`,
+          matchesPlayed: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDifference: 0,
+          points: 0,
+        };
+      }
+
+      // Update home team stats
+      teamStats[homeTeamId].matchesPlayed++;
+      teamStats[homeTeamId].goalsFor += homeScore;
+      teamStats[homeTeamId].goalsAgainst += awayScore;
+      teamStats[homeTeamId].goalDifference = teamStats[homeTeamId].goalsFor - teamStats[homeTeamId].goalsAgainst;
+
+      if (homeScore > awayScore) {
+        teamStats[homeTeamId].wins++;
+        teamStats[homeTeamId].points += 3;
+      } else if (homeScore === awayScore) {
+        teamStats[homeTeamId].draws++;
+        teamStats[homeTeamId].points += 1;
+      } else {
+        teamStats[homeTeamId].losses++;
+      }
+
+      // Update away team stats
+      teamStats[awayTeamId].matchesPlayed++;
+      teamStats[awayTeamId].goalsFor += awayScore;
+      teamStats[awayTeamId].goalsAgainst += homeScore;
+      teamStats[awayTeamId].goalDifference = teamStats[awayTeamId].goalsFor - teamStats[awayTeamId].goalsAgainst;
+
+      if (awayScore > homeScore) {
+        teamStats[awayTeamId].wins++;
+        teamStats[awayTeamId].points += 3;
+      } else if (awayScore === homeScore) {
+        teamStats[awayTeamId].draws++;
+        teamStats[awayTeamId].points += 1;
+      } else {
+        teamStats[awayTeamId].losses++;
+      }
+    });
+
+    // Convert to array and sort by points, goal difference, goals for
+    return Object.values(teamStats)
+      .filter((stat) => stat.matchesPlayed > 0)
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+        return b.goalsFor - a.goalsFor;
+      })
+      .map((stat, index) => ({
+        ...stat,
+        position: index + 1,
+        id: stat.teamId,
+      }));
+  }, [isGroupBased, allMatches, teams]);
 
   return (
     <>
@@ -130,11 +256,6 @@ function RoundNode({ data, selected }: RoundNodeProps) {
               <Text style={{ fontSize: 12, color: token.colorTextSecondary }}>
                 Matches: <Text strong style={{ color: token.colorText }}>{data.completedMatches} / {data.totalMatches}</Text>
               </Text>
-              {!isGroupBased && data.roundFormat && (
-                <Text style={{ fontSize: 12, color: token.colorTextSecondary }}>
-                  Format: <Text strong style={{ color: token.colorText }}>{data.roundFormat.replace("_", " ")}</Text>
-                </Text>
-              )}
               {isGroupBased && data.groups && (
                 <Text style={{ fontSize: 12, color: token.colorTextSecondary }}>
                   Groups: <Text strong style={{ color: token.colorText }}>{data.groups.length}</Text>
@@ -239,6 +360,62 @@ function RoundNode({ data, selected }: RoundNodeProps) {
                     </Text>
                   )}
                 </Space>
+              </div>
+            )}
+
+            {/* Standings for DIRECT_KNOCKOUT rounds */}
+            {!isGroupBased && standings.length > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 4 }}>
+                  <Text strong style={{ fontSize: 11, color: token.colorTextSecondary }}>
+                    <BarChartOutlined /> Standings:
+                  </Text>
+                </Space>
+                <div style={{ maxHeight: 200, overflowY: "auto" }}>
+                  <Table
+                    dataSource={standings.slice(0, 5)}
+                    pagination={false}
+                    size="small"
+                    showHeader={false}
+                    style={{ fontSize: 10 }}
+                    columns={[
+                      {
+                        title: "Pos",
+                        dataIndex: "position",
+                        key: "position",
+                        width: 30,
+                        render: (pos: number) => (
+                          <Text strong style={{ fontSize: 10 }}>{pos}</Text>
+                        ),
+                      },
+                      {
+                        title: "Team",
+                        dataIndex: "teamName",
+                        key: "teamName",
+                        ellipsis: true,
+                        render: (name: string) => (
+                          <Text style={{ fontSize: 10 }} ellipsis>{name}</Text>
+                        ),
+                      },
+                      {
+                        title: "Pts",
+                        dataIndex: "points",
+                        key: "points",
+                        width: 35,
+                        align: "right" as const,
+                        render: (pts: number) => (
+                          <Text strong style={{ fontSize: 10 }}>{pts}</Text>
+                        ),
+                      },
+                    ]}
+                    rowKey="id"
+                  />
+                </div>
+                {standings.length > 5 && (
+                  <Text style={{ fontSize: 9, color: token.colorTextSecondary, textAlign: "center", display: "block", marginTop: 4 }}>
+                    +{standings.length - 5} more teams
+                  </Text>
+                )}
               </div>
             )}
 

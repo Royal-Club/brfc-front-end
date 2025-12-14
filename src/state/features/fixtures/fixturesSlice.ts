@@ -5,9 +5,11 @@ import {
   IRecordMatchEventRequest,
   IGetFixturesResponse,
   IGetMatchResponse,
+  IStartMatchRequest,
   IStartMatchResponse,
   IPauseMatchResponse,
   IResumeMatchResponse,
+  ICompleteMatchRequest,
   ICompleteMatchResponse,
   IUpdateMatchResponse,
   IUpdateScoreResponse,
@@ -121,10 +123,14 @@ export const fixturesApi = apiWithTags.injectEndpoints({
     /**
      * Start a match (SCHEDULED -> ONGOING)
      */
-    startMatch: builder.mutation<IStartMatchResponse, { matchId: number }>({
-      query: ({ matchId }) => ({
+    startMatch: builder.mutation<IStartMatchResponse, IStartMatchRequest>({
+      query: ({ matchId, venueId, matchDurationMinutes }) => ({
         url: `/matches/${matchId}/start`,
         method: "POST",
+        body: {
+          venueId,
+          matchDurationMinutes,
+        },
       }),
       invalidatesTags: (result, error, { matchId }) => [
         "fixtures",
@@ -163,10 +169,13 @@ export const fixturesApi = apiWithTags.injectEndpoints({
     /**
      * Complete a match (ONGOING -> COMPLETED)
      */
-    completeMatch: builder.mutation<ICompleteMatchResponse, { matchId: number }>({
-      query: ({ matchId }) => ({
+    completeMatch: builder.mutation<ICompleteMatchResponse, ICompleteMatchRequest>({
+      query: ({ matchId, matchDurationMinutes }) => ({
         url: `/matches/${matchId}/complete`,
         method: "POST",
+        body: {
+          matchDurationMinutes,
+        },
       }),
       invalidatesTags: (result, error, { matchId }) => [
         "fixtures",
@@ -266,11 +275,12 @@ export const fixturesApi = apiWithTags.injectEndpoints({
       IDeleteEventResponse,
       { matchId: number; eventId: number }
     >({
-      query: ({ matchId, eventId }) => ({
-        url: `/matches/${matchId}/events/${eventId}`,
+      query: ({ eventId }) => ({
+        url: `/matches/events/${eventId}`,
         method: "DELETE",
       }),
       invalidatesTags: (result, error, { matchId }) => [
+        "fixtures",
         { type: "matches", id: matchId },
       ],
     }),

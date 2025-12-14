@@ -48,6 +48,7 @@ import GroupManagement from "./GroupManagement";
 import TeamAssignment from "./TeamAssignment";
 import GroupMatchGenerationModal from "./GroupMatchGenerationModal";
 import GroupMatchesView from "./GroupMatchesView";
+import TeamAdvancementModal from "./TeamAdvancementModal";
 
 const { Panel } = Collapse;
 const { Text, Title } = Typography;
@@ -95,6 +96,8 @@ export default function TournamentStructureView({
   const [showGroupModal, setShowGroupModal] = useState(false);
   const [showTeamAssignment, setShowTeamAssignment] = useState(false);
   const [showMatchGeneration, setShowMatchGeneration] = useState(false);
+  const [showTeamAdvancement, setShowTeamAdvancement] = useState(false);
+  const [roundToComplete, setRoundToComplete] = useState<TournamentRoundResponse | null>(null);
   const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [selectedGroupName, setSelectedGroupName] = useState<string | null>(null);
@@ -121,19 +124,57 @@ export default function TournamentStructureView({
   };
 
   const handleCompleteRound = async (roundId: number) => {
+    const round = tournamentStructure?.rounds.find((r) => r.id === roundId);
+    if (round) {
+      // Check if round has next round
+      const nextRound = tournamentStructure?.rounds.find(
+        (r) => r.sequenceOrder === round.sequenceOrder + 1
+      );
+      
+      // If no next round, complete directly without team selection
+      if (!nextRound) {
+        try {
+          const result = await completeRound({
+            roundId,
+            recalculateStandings: true,
+          }).unwrap();
+          message.success("Round completed successfully");
+          onRefresh();
+        } catch (error: any) {
+          // Error handled by API slice
+        }
+        return;
+      }
+
+      // Show team advancement modal
+      setRoundToComplete(round);
+      setShowTeamAdvancement(true);
+    }
+  };
+
+  const handleConfirmAdvancement = async (selectedTeamIds: number[]) => {
+    if (!roundToComplete) return;
+
+    if (selectedTeamIds.length === 0) {
+      message.warning("Please select at least one team to advance");
+      return;
+    }
+
     try {
       const result = await completeRound({
-        roundId,
+        roundId: roundToComplete.id,
         recalculateStandings: true,
-        autoAdvanceTeams: true,
+        selectedTeamIds: selectedTeamIds,
       }).unwrap();
 
       message.success(
-        `Round completed! ${result.content.teamsAdvanced} teams advanced to ${result.content.targetRoundName || "next round"}`
+        `Round completed! ${result.content?.teamsAdvanced || 0} teams advanced to ${result.content?.targetRoundName || "next round"}`
       );
+      setRoundToComplete(null);
+      setShowTeamAdvancement(false);
       onRefresh();
     } catch (error: any) {
-      // Error already shown by API slice
+      // Error handled by API slice
     }
   };
 
@@ -444,13 +485,20 @@ export default function TournamentStructureView({
         extra={
           <Space onClick={(e) => e.stopPropagation()}>
             {round.status === RoundStatus.ONGOING && (
-              <Tooltip title="Complete Round">
+              <Tooltip 
+                title={
+                  round.totalMatches > 0 && round.completedMatches < round.totalMatches
+                    ? `Complete all matches first (${round.completedMatches}/${round.totalMatches})`
+                    : "Complete Round"
+                }
+              >
                 <Button
                   type="primary"
                   size="small"
                   icon={<CheckCircleOutlined />}
                   loading={isCompletingRound}
                   onClick={() => handleCompleteRound(round.id)}
+                  disabled={round.totalMatches > 0 && round.completedMatches < round.totalMatches}
                 >
                   Complete
                 </Button>
@@ -493,9 +541,6 @@ export default function TournamentStructureView({
               <Space size="large">
                 <Text type="secondary">
                   Type: <Text>{round.roundType}</Text>
-                </Text>
-                <Text type="secondary">
-                  Format: <Text>{round.roundFormat || "N/A"}</Text>
                 </Text>
                 {round.startDate && (
                   <Text type="secondary">
@@ -549,6 +594,26 @@ export default function TournamentStructureView({
       >
         {tournamentStructure.rounds.map(renderRound)}
       </Collapse>
+
+      {/* Team Advancement Modal */}
+      <TeamAdvancementModal
+        round={roundToComplete}
+        nextRound={
+          roundToComplete
+            ? tournamentStructure?.rounds.find(
+                (r) => r.sequenceOrder === roundToComplete.sequenceOrder + 1
+              ) || null
+            : null
+        }
+        allFixtures={[]} // Fixtures not available in this view, standings will come from round data
+        isModalVisible={showTeamAdvancement}
+        onClose={() => {
+          setShowTeamAdvancement(false);
+          setRoundToComplete(null);
+        }}
+        onConfirm={handleConfirmAdvancement}
+        isLoading={isCompletingRound}
+      />
 
       {/* Group Management Modal */}
       <GroupManagement

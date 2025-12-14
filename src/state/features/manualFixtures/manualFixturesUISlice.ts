@@ -36,7 +36,7 @@ interface ManualFixturesUIState {
 }
 
 const initialState: ManualFixturesUIState = {
-  activeTab: "tournament",
+  activeTab: "overview",
   selectedNode: null,
   showRoundModal: false,
   showGroupModal: false,

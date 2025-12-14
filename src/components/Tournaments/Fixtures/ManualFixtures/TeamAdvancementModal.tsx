@@ -1,224 +1,353 @@
 import React, { useState, useMemo } from "react";
 import {
   Modal,
-  Checkbox,
   Space,
   Button,
   Typography,
-  Table,
   Tag,
   Alert,
   message,
   Empty,
   Row,
   Col,
-  Statistic,
+  Card,
+  Divider,
+  theme,
 } from "antd";
 import {
   TeamOutlined,
   CheckCircleOutlined,
   TrophyOutlined,
   BarChartOutlined,
+  ArrowRightOutlined,
 } from "@ant-design/icons";
 import { TournamentRoundResponse, RoundGroupResponse, GroupStandingResponse } from "../../../../state/features/manualFixtures/manualFixtureTypes";
+import { IFixture } from "../../../../state/features/fixtures/fixtureTypes";
 
 const { Title, Text } = Typography;
 
 interface TeamAdvancementModalProps {
   round: TournamentRoundResponse | null;
+  nextRound: TournamentRoundResponse | null;
+  allFixtures?: IFixture[];
   isModalVisible: boolean;
   onClose: () => void;
   onConfirm: (selectedTeamIds: number[]) => void;
   isLoading?: boolean;
 }
 
+interface TeamSlot {
+  teamId: number | null;
+  teamName: string | null;
+  seedPosition?: number;
+}
+
 export default function TeamAdvancementModal({
   round,
+  nextRound,
+  allFixtures = [],
   isModalVisible,
   onClose,
   onConfirm,
   isLoading = false,
 }: TeamAdvancementModalProps) {
-  const [selectedTeamIds, setSelectedTeamIds] = useState<number[]>([]);
-  const [selectionMode, setSelectionMode] = useState<"automatic" | "manual">("automatic");
+  const { token } = theme.useToken();
+  const [selectedTeamSlots, setSelectedTeamSlots] = useState<TeamSlot[]>([]);
 
-  // Get all teams from round (from groups or direct teams)
-  const availableTeams = useMemo(() => {
+  // Calculate standings for the current round
+  const standings = useMemo(() => {
     if (!round) return [];
 
-    const teams: Array<{
-      teamId: number;
-      teamName: string;
-      groupName?: string;
-      position?: number;
-      points?: number;
-      goalDifference?: number;
-    }> = [];
-
     if (round.roundType === "GROUP_BASED" && round.groups) {
-      // Get teams from all groups with standings
+      // For GROUP_BASED rounds, get standings from groups
+      const allStandings: Array<{
+        teamId: number;
+        teamName: string;
+        groupName?: string;
+        position?: number;
+        points?: number;
+        goalDifference?: number;
+        matchesPlayed?: number;
+        wins?: number;
+        draws?: number;
+        losses?: number;
+      }> = [];
+
       round.groups.forEach((group: RoundGroupResponse) => {
         if (group.standings && group.standings.length > 0) {
           group.standings.forEach((standing: GroupStandingResponse) => {
-            teams.push({
+            allStandings.push({
               teamId: standing.teamId,
               teamName: standing.teamName,
               groupName: group.groupName,
               position: standing.position || undefined,
               points: standing.points,
               goalDifference: standing.goalDifference,
+              matchesPlayed: standing.matchesPlayed,
+              wins: standing.wins,
+              draws: standing.draws,
+              losses: standing.losses,
             });
           });
-        } else {
-          // If no standings, get teams from group.teams
-          group.teams.forEach((team) => {
-            if (!team.isPlaceholder && team.teamId) {
-              teams.push({
-                teamId: team.teamId,
-                teamName: team.teamName || "",
-                groupName: group.groupName,
-              });
-            }
-          });
         }
       });
-    } else if (round.teams) {
-      // Direct knockout round
-      round.teams.forEach((team) => {
-        if (!team.isPlaceholder && team.teamId) {
-          teams.push({
-            teamId: team.teamId,
-            teamName: team.teamName || "",
-          });
+
+      // Sort by group, then by position
+      return allStandings.sort((a, b) => {
+        if (a.groupName !== b.groupName) {
+          return (a.groupName || "").localeCompare(b.groupName || "");
         }
+        return (a.position || 999) - (b.position || 999);
       });
-    }
-
-    // Sort by position/points if available
-    return teams.sort((a, b) => {
-      if (a.position && b.position) return a.position - b.position;
-      if (a.points && b.points) {
-        if (a.points !== b.points) return b.points - a.points;
-        if (a.goalDifference && b.goalDifference) return b.goalDifference - a.goalDifference;
-      }
-      return a.teamName.localeCompare(b.teamName);
-    });
-  }, [round]);
-
-  const handleTeamToggle = (teamId: number, checked: boolean) => {
-    if (checked) {
-      setSelectedTeamIds([...selectedTeamIds, teamId]);
     } else {
-      setSelectedTeamIds(selectedTeamIds.filter((id) => id !== teamId));
+      // For DIRECT_KNOCKOUT rounds, calculate standings from matches
+      const teamStats: Record<number, {
+        teamId: number;
+        teamName: string;
+        matchesPlayed: number;
+        wins: number;
+        draws: number;
+        losses: number;
+        goalsFor: number;
+        goalsAgainst: number;
+        goalDifference: number;
+        points: number;
+      }> = {};
+
+      // Initialize from teams
+      if (round.teams) {
+        round.teams.forEach((team: any) => {
+          if (!team.isPlaceholder && team.teamId) {
+            teamStats[team.teamId] = {
+              teamId: team.teamId,
+              teamName: team.teamName || "",
+              matchesPlayed: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              goalsFor: 0,
+              goalsAgainst: 0,
+              goalDifference: 0,
+              points: 0,
+            };
+          }
+        });
+      }
+
+      // Get matches for this round
+      const roundMatches = allFixtures.filter((f) => {
+        const fixtureRoundNumber = f.roundNumber ?? f.round;
+        const matchesByRoundNumber = fixtureRoundNumber === round.roundNumber;
+        const matchesByRoundId = f.round === round.id;
+        return matchesByRoundNumber || matchesByRoundId;
+      });
+
+      // Process completed matches
+      roundMatches.forEach((match) => {
+        if (match.matchStatus !== "COMPLETED") return;
+
+        const homeTeamId = match.homeTeamId;
+        const awayTeamId = match.awayTeamId;
+        const homeScore = match.homeTeamScore || 0;
+        const awayScore = match.awayTeamScore || 0;
+
+        // Initialize teams from matches if not already in stats
+        if (!teamStats[homeTeamId]) {
+          teamStats[homeTeamId] = {
+            teamId: homeTeamId,
+            teamName: match.homeTeamName || `Team ${homeTeamId}`,
+            matchesPlayed: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            points: 0,
+          };
+        }
+
+        if (!teamStats[awayTeamId]) {
+          teamStats[awayTeamId] = {
+            teamId: awayTeamId,
+            teamName: match.awayTeamName || `Team ${awayTeamId}`,
+            matchesPlayed: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            goalsFor: 0,
+            goalsAgainst: 0,
+            goalDifference: 0,
+            points: 0,
+          };
+        }
+
+        // Update stats
+        teamStats[homeTeamId].matchesPlayed++;
+        teamStats[homeTeamId].goalsFor += homeScore;
+        teamStats[homeTeamId].goalsAgainst += awayScore;
+        teamStats[homeTeamId].goalDifference = teamStats[homeTeamId].goalsFor - teamStats[homeTeamId].goalsAgainst;
+
+        teamStats[awayTeamId].matchesPlayed++;
+        teamStats[awayTeamId].goalsFor += awayScore;
+        teamStats[awayTeamId].goalsAgainst += homeScore;
+        teamStats[awayTeamId].goalDifference = teamStats[awayTeamId].goalsFor - teamStats[awayTeamId].goalsAgainst;
+
+        if (homeScore > awayScore) {
+          teamStats[homeTeamId].wins++;
+          teamStats[homeTeamId].points += 3;
+          teamStats[awayTeamId].losses++;
+        } else if (awayScore > homeScore) {
+          teamStats[awayTeamId].wins++;
+          teamStats[awayTeamId].points += 3;
+          teamStats[homeTeamId].losses++;
+        } else {
+          teamStats[homeTeamId].draws++;
+          teamStats[homeTeamId].points += 1;
+          teamStats[awayTeamId].draws++;
+          teamStats[awayTeamId].points += 1;
+        }
+      });
+
+      // Convert to array and sort
+      return Object.values(teamStats)
+        .filter((stat) => stat.matchesPlayed > 0)
+        .sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+          return b.goalsFor - a.goalsFor;
+        })
+        .map((stat, index) => ({
+          teamId: stat.teamId,
+          teamName: stat.teamName,
+          position: index + 1,
+          points: stat.points,
+          goalDifference: stat.goalDifference,
+          matchesPlayed: stat.matchesPlayed,
+          wins: stat.wins,
+          draws: stat.draws,
+          losses: stat.losses,
+        }));
     }
+  }, [round, allFixtures]);
+
+  // Initialize next round slots based on how many teams are needed
+  const initializeNextRoundSlots = useMemo(() => {
+    if (!nextRound) return [];
+    
+    // Determine how many slots are needed
+    // For DIRECT_KNOCKOUT, use existing teams count or calculate from round structure
+    // For GROUP_BASED, calculate total slots needed across all groups
+    let slotCount = 0;
+    
+    if (nextRound.roundType === "GROUP_BASED" && nextRound.groups) {
+      // Sum up maxTeams from all groups, or use current team count
+      slotCount = nextRound.groups.reduce((sum, group) => {
+        return sum + (group.maxTeams || group.teams?.length || 0);
+      }, 0);
+    } else {
+      // DIRECT_KNOCKOUT - use existing teams count or a reasonable default
+      slotCount = nextRound.teams?.length || 8;
+    }
+    
+    // Ensure at least 2 slots for next round
+    if (slotCount < 2) slotCount = 2;
+    
+    return Array.from({ length: slotCount }, (_, index) => ({
+      teamId: null,
+      teamName: null,
+      seedPosition: index + 1,
+    }));
+  }, [nextRound]);
+
+  // Initialize slots when modal opens
+  React.useEffect(() => {
+    if (isModalVisible && nextRound) {
+      setSelectedTeamSlots(initializeNextRoundSlots);
+    }
+  }, [isModalVisible, nextRound, initializeNextRoundSlots]);
+
+  const handleDragStart = (e: React.DragEvent, teamId: number, teamName: string) => {
+    e.dataTransfer.setData("teamId", teamId.toString());
+    e.dataTransfer.setData("teamName", teamName);
+    e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleSelectAll = () => {
-    setSelectedTeamIds(availableTeams.map((t) => t.teamId));
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDeselectAll = () => {
-    setSelectedTeamIds([]);
+  const handleDrop = (e: React.DragEvent, slotIndex: number) => {
+    e.preventDefault();
+    const teamId = parseInt(e.dataTransfer.getData("teamId"));
+    const teamName = e.dataTransfer.getData("teamName");
+
+    setSelectedTeamSlots((prev) => {
+      const newSlots = [...prev];
+      
+      // Remove team from any other slot if already selected
+      const existingSlotIndex = newSlots.findIndex((slot) => slot.teamId === teamId);
+      if (existingSlotIndex !== -1) {
+        newSlots[existingSlotIndex] = {
+          teamId: null,
+          teamName: null,
+          seedPosition: existingSlotIndex + 1,
+        };
+      }
+      
+      // Add team to the new slot
+      newSlots[slotIndex] = {
+        teamId,
+        teamName,
+        seedPosition: slotIndex + 1,
+      };
+      return newSlots;
+    });
+  };
+
+  const handleRemoveFromSlot = (slotIndex: number) => {
+    setSelectedTeamSlots((prev) => {
+      const newSlots = [...prev];
+      newSlots[slotIndex] = {
+        teamId: null,
+        teamName: null,
+        seedPosition: slotIndex + 1,
+      };
+      return newSlots;
+    });
   };
 
   const handleConfirm = () => {
-    if (selectionMode === "manual" && selectedTeamIds.length === 0) {
-      message.warning("Please select at least one team to advance");
+    const selectedTeamIds = selectedTeamSlots
+      .filter((slot) => slot.teamId !== null)
+      .map((slot) => slot.teamId!);
+
+    if (selectedTeamIds.length === 0) {
+      message.warning("Please drag at least one team to the next round slots");
       return;
     }
 
-    if (selectionMode === "automatic") {
-      // Use automatic advancement (no team selection)
-      onConfirm([]);
-    } else {
-      // Use manual selection
-      onConfirm(selectedTeamIds);
-    }
+    onConfirm(selectedTeamIds);
   };
 
   const handleCancel = () => {
-    setSelectedTeamIds([]);
-    setSelectionMode("automatic");
+    setSelectedTeamSlots(initializeNextRoundSlots);
     onClose();
   };
-
-  const columns = [
-    {
-      title: "",
-      key: "checkbox",
-      width: 50,
-      render: (_: any, record: any) => (
-        <Checkbox
-          checked={selectedTeamIds.includes(record.teamId)}
-          onChange={(e) => handleTeamToggle(record.teamId, e.target.checked)}
-          disabled={selectionMode === "automatic"}
-        />
-      ),
-    },
-    {
-      title: "Team",
-      dataIndex: "teamName",
-      key: "teamName",
-      render: (name: string, record: any) => (
-        <Space>
-          <TeamOutlined />
-          <Text strong>{name}</Text>
-          {record.groupName && (
-            <Tag color="blue" style={{ fontSize: 11 }}>
-              {record.groupName}
-            </Tag>
-          )}
-        </Space>
-      ),
-    },
-    ...(round?.roundType === "GROUP_BASED"
-      ? [
-          {
-            title: "Pos",
-            dataIndex: "position",
-            key: "position",
-            width: 60,
-            render: (pos: number | undefined) => (
-              <Text strong>{pos || "-"}</Text>
-            ),
-          },
-          {
-            title: "Pts",
-            dataIndex: "points",
-            key: "points",
-            width: 60,
-            render: (pts: number | undefined) => (
-              <Text>{pts !== undefined ? pts : "-"}</Text>
-            ),
-          },
-          {
-            title: "GD",
-            dataIndex: "goalDifference",
-            key: "goalDifference",
-            width: 70,
-            render: (gd: number | undefined) => (
-              <Text style={{ color: gd && gd > 0 ? "#52c41a" : gd && gd < 0 ? "#ff4d4f" : undefined }}>
-                {gd !== undefined ? (gd > 0 ? `+${gd}` : gd) : "-"}
-              </Text>
-            ),
-          },
-        ]
-      : []),
-  ];
 
   if (!round) {
     return null;
   }
 
-  // Note: We'll need to get next round from parent component
-  // For now, we'll assume there's a next round if sequenceOrder exists
-  const hasNextRound = round.sequenceOrder !== undefined;
+  const hasNextRound = nextRound !== null;
+  const selectedCount = selectedTeamSlots.filter((slot) => slot.teamId !== null).length;
 
   return (
     <Modal
       title={
         <Space>
-          <TrophyOutlined style={{ fontSize: 20, color: "#1890ff" }} />
+          <TrophyOutlined style={{ fontSize: 20, color: token.colorPrimary }} />
           <span style={{ fontSize: 18, fontWeight: 600 }}>
             Complete Round & Advance Teams
           </span>
@@ -226,7 +355,7 @@ export default function TeamAdvancementModal({
       }
       open={isModalVisible}
       onCancel={handleCancel}
-      width={800}
+      width={1200}
       footer={[
         <Button key="cancel" onClick={handleCancel}>
           Cancel
@@ -238,25 +367,23 @@ export default function TeamAdvancementModal({
           loading={isLoading}
           onClick={handleConfirm}
         >
-          {selectionMode === "automatic"
-            ? "Complete & Auto-Advance"
-            : `Complete & Advance ${selectedTeamIds.length} Team${selectedTeamIds.length !== 1 ? "s" : ""}`}
+          Complete & Advance {selectedCount} Team{selectedCount !== 1 ? "s" : ""}
         </Button>,
       ]}
     >
       <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <Alert
-        message={`Completing: ${round.roundName}`}
-        description={
-          hasNextRound
-            ? "Teams will advance to the next round"
-            : "This is the final round. No teams will advance."
-        }
-        type="info"
-        showIcon
-      />
+        <Alert
+          message={`Completing: ${round.roundName}`}
+          description={
+            hasNextRound
+              ? `Drag teams from standings to advance them to ${nextRound.roundName}`
+              : "This is the final round. No teams will advance."
+          }
+          type="info"
+          showIcon
+        />
 
-      {!hasNextRound && (
+        {!hasNextRound && (
           <Alert
             message="Final Round"
             description="This is the last round. Completing it will finish the tournament."
@@ -266,87 +393,266 @@ export default function TeamAdvancementModal({
         )}
 
         {hasNextRound && (
-          <>
-            <div>
-              <Space>
-                <Text strong>Advancement Mode:</Text>
-                <Button
-                  size="small"
-                  type={selectionMode === "automatic" ? "primary" : "default"}
-                  onClick={() => {
-                    setSelectionMode("automatic");
-                    setSelectedTeamIds([]);
-                  }}
-                >
-                  Automatic (Use Rules)
-                </Button>
-                <Button
-                  size="small"
-                  type={selectionMode === "manual" ? "primary" : "default"}
-                  onClick={() => setSelectionMode("manual")}
-                >
-                  Manual Selection
-                </Button>
-              </Space>
-            </div>
-
-            {selectionMode === "manual" && (
-              <>
-                <Row gutter={[16, 16]}>
-                  <Col span={8}>
-                    <Statistic
-                      title="Available Teams"
-                      value={availableTeams.length}
-                      prefix={<TeamOutlined />}
-                    />
-                  </Col>
-                  <Col span={8}>
-                    <Statistic
-                      title="Selected"
-                      value={selectedTeamIds.length}
-                      valueStyle={{ color: "#1890ff" }}
-                      prefix={<CheckCircleOutlined />}
-                    />
-                  </Col>
-                  <Col span={8}>
-                    <Space>
-                      <Button size="small" onClick={handleSelectAll}>
-                        Select All
-                      </Button>
-                      <Button size="small" onClick={handleDeselectAll}>
-                        Clear
-                      </Button>
-                    </Space>
-                  </Col>
-                </Row>
-
-                {availableTeams.length === 0 ? (
-                  <Empty description="No teams available to advance" />
+          <Row gutter={24} style={{ minHeight: 500 }}>
+            {/* Left Side - Standings */}
+            <Col span={12}>
+              <Card
+                title={
+                  <Space>
+                    <BarChartOutlined />
+                    <Text strong>Round Standings</Text>
+                    <Tag color="blue">{standings.length} teams</Tag>
+                  </Space>
+                }
+                size="small"
+              >
+                {standings.length === 0 ? (
+                  <Empty description="No standings available. Complete some matches first." />
                 ) : (
-                  <Table
-                    columns={columns}
-                    dataSource={availableTeams}
-                    rowKey="teamId"
-                    pagination={false}
-                    size="small"
-                    scroll={{ y: 300 }}
-                  />
-                )}
-              </>
-            )}
+                  <div style={{ maxHeight: 450, overflowY: "auto" }}>
+                    {round?.roundType === "GROUP_BASED" ? (
+                      // Group-based: Show standings grouped by group
+                      (() => {
+                        type StandingWithGroup = typeof standings[number] & { groupName?: string };
+                        const groupedStandings: Record<string, StandingWithGroup[]> = {};
+                        standings.forEach((standing) => {
+                          const standingWithGroup = standing as StandingWithGroup;
+                          const groupName = standingWithGroup.groupName || "Unknown";
+                          if (!groupedStandings[groupName]) {
+                            groupedStandings[groupName] = [];
+                          }
+                          groupedStandings[groupName].push(standingWithGroup);
+                        });
 
-            {selectionMode === "automatic" && (
-              <Alert
-                message="Automatic Advancement"
-                description="Teams will be advanced based on configured advancement rules (e.g., top 2 from each group)."
-                type="info"
-                showIcon
-              />
-            )}
-          </>
+                        return Object.keys(groupedStandings)
+                          .sort()
+                          .map((groupName) => (
+                            <div key={groupName} style={{ marginBottom: 16 }}>
+                              <Divider orientation="left" style={{ margin: "12px 0" }}>
+                                <Space>
+                                  <TeamOutlined />
+                                  <Text strong style={{ fontSize: 14 }}>
+                                    {groupName}
+                                  </Text>
+                                  <Tag color="cyan" style={{ fontSize: 11 }}>
+                                    {groupedStandings[groupName].length} teams
+                                  </Tag>
+                                </Space>
+                              </Divider>
+                              {groupedStandings[groupName].map((standing) => {
+                                const isSelected = selectedTeamSlots.some(
+                                  (slot) => slot.teamId === standing.teamId
+                                );
+                                return (
+                                  <Card
+                                    key={standing.teamId}
+                                    size="small"
+                                    draggable={!isSelected}
+                                    onDragStart={(e) => {
+                                      if (!isSelected) {
+                                        handleDragStart(e, standing.teamId, standing.teamName);
+                                      } else {
+                                        e.preventDefault();
+                                      }
+                                    }}
+                                    style={{
+                                      marginBottom: 8,
+                                      cursor: isSelected ? "not-allowed" : "grab",
+                                      opacity: isSelected ? 0.6 : 1,
+                                      backgroundColor: isSelected
+                                        ? token.colorFillSecondary
+                                        : "transparent",
+                                      border: isSelected 
+                                        ? `1px dashed ${token.colorBorder}` 
+                                        : `1px solid ${token.colorBorder}`,
+                                    }}
+                                    bodyStyle={{ padding: "12px" }}
+                                  >
+                                    <Space style={{ width: "100%", justifyContent: "space-between" }}>
+                                      <Space>
+                                        <Tag color="blue" style={{ minWidth: 40, textAlign: "center" }}>
+                                          {standing.position || "-"}
+                                        </Tag>
+                                        <TeamOutlined />
+                                        <Text strong>{standing.teamName}</Text>
+                                      </Space>
+                                      <Space>
+                                        {standing.points !== undefined && (
+                                          <Text type="secondary" style={{ fontSize: 12 }}>
+                                            {standing.points} pts
+                                          </Text>
+                                        )}
+                                        {standing.goalDifference !== undefined && (
+                                          <Text
+                                            type="secondary"
+                                            style={{
+                                              fontSize: 12,
+                                              color:
+                                                standing.goalDifference > 0
+                                                  ? token.colorSuccess
+                                                  : standing.goalDifference < 0
+                                                  ? token.colorError
+                                                  : token.colorTextSecondary,
+                                            }}
+                                          >
+                                            GD: {standing.goalDifference > 0 ? "+" : ""}
+                                            {standing.goalDifference}
+                                          </Text>
+                                        )}
+                                      </Space>
+                                    </Space>
+                                  </Card>
+                                );
+                              })}
+                            </div>
+                          ));
+                      })()
+                    ) : (
+                      // Direct knockout: Show flat list
+                      standings.map((standing) => {
+                        const isSelected = selectedTeamSlots.some(
+                          (slot) => slot.teamId === standing.teamId
+                        );
+                        return (
+                          <Card
+                            key={standing.teamId}
+                            size="small"
+                            draggable={!isSelected}
+                            onDragStart={(e) => {
+                              if (!isSelected) {
+                                handleDragStart(e, standing.teamId, standing.teamName);
+                              } else {
+                                e.preventDefault();
+                              }
+                            }}
+                            style={{
+                              marginBottom: 8,
+                              cursor: isSelected ? "not-allowed" : "grab",
+                              opacity: isSelected ? 0.6 : 1,
+                              backgroundColor: isSelected
+                                ? token.colorFillSecondary
+                                : "transparent",
+                              border: isSelected 
+                                ? `1px dashed ${token.colorBorder}` 
+                                : `1px solid ${token.colorBorder}`,
+                            }}
+                            bodyStyle={{ padding: "12px" }}
+                          >
+                            <Space style={{ width: "100%", justifyContent: "space-between" }}>
+                              <Space>
+                                <Tag color="blue" style={{ minWidth: 40, textAlign: "center" }}>
+                                  {standing.position || "-"}
+                                </Tag>
+                                <TeamOutlined />
+                                <Text strong>{standing.teamName}</Text>
+                              </Space>
+                              <Space>
+                                {standing.points !== undefined && (
+                                  <Text type="secondary" style={{ fontSize: 12 }}>
+                                    {standing.points} pts
+                                  </Text>
+                                )}
+                                {standing.goalDifference !== undefined && (
+                                  <Text
+                                    type="secondary"
+                                    style={{
+                                      fontSize: 12,
+                                      color:
+                                        standing.goalDifference > 0
+                                          ? token.colorSuccess
+                                          : standing.goalDifference < 0
+                                          ? token.colorError
+                                          : token.colorTextSecondary,
+                                    }}
+                                  >
+                                    GD: {standing.goalDifference > 0 ? "+" : ""}
+                                    {standing.goalDifference}
+                                  </Text>
+                                )}
+                              </Space>
+                            </Space>
+                          </Card>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </Card>
+            </Col>
+
+            {/* Right Side - Next Round Slots */}
+            <Col span={12}>
+              <Card
+                title={
+                  <Space>
+                    <TrophyOutlined />
+                    <Text strong>{nextRound?.roundName || "Next Round"}</Text>
+                    <Tag color="green">{selectedCount} / {selectedTeamSlots.length} slots</Tag>
+                  </Space>
+                }
+                size="small"
+              >
+                <div style={{ maxHeight: 450, overflowY: "auto" }}>
+                  {selectedTeamSlots.map((slot, index) => (
+                    <Card
+                      key={index}
+                      size="small"
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, index)}
+                      style={{
+                        marginBottom: 8,
+                        minHeight: 60,
+                        border: slot.teamId
+                          ? `2px solid ${token.colorSuccess}`
+                          : `2px dashed ${token.colorBorder}`,
+                        backgroundColor: slot.teamId 
+                          ? token.colorSuccessBg 
+                          : token.colorFillSecondary,
+                      }}
+                      bodyStyle={{ padding: "12px" }}
+                    >
+                      {slot.teamId ? (
+                        <Space
+                          style={{ width: "100%", justifyContent: "space-between" }}
+                        >
+                          <Space>
+                            <Tag color="green" style={{ minWidth: 40, textAlign: "center" }}>
+                              {slot.seedPosition}
+                            </Tag>
+                            <TeamOutlined />
+                            <Text strong>{slot.teamName}</Text>
+                          </Space>
+                          <Button
+                            size="small"
+                            danger
+                            type="text"
+                            onClick={() => handleRemoveFromSlot(index)}
+                          >
+                            Remove
+                          </Button>
+                        </Space>
+                      ) : (
+                        <Space
+                          style={{
+                            width: "100%",
+                            justifyContent: "center",
+                            color: token.colorTextDisabled,
+                          }}
+                        >
+                          <ArrowRightOutlined />
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            Drop team here (Slot {slot.seedPosition})
+                          </Text>
+                        </Space>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+            </Col>
+          </Row>
         )}
       </Space>
     </Modal>
   );
 }
-

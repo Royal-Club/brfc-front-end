@@ -1,15 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabs, Spin, Card, Alert } from "antd";
 import {
   AppstoreOutlined,
   NodeIndexOutlined,
   UnorderedListOutlined,
+  BarChartOutlined,
 } from "@ant-design/icons";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../../state/store";
 import { selectLoginInfo } from "../../../../state/slices/loginInfoSlice";
 import { useGetTournamentStructureQuery } from "../../../../state/features/manualFixtures/manualFixturesSlice";
 import { setActiveTab } from "../../../../state/features/manualFixtures/manualFixturesUISlice";
+import OverviewTab from "./Tabs/OverviewTab";
 import InteractiveTournamentTab from "./Tabs/InteractiveTournamentTab";
 import MatchesTab from "./Tabs/MatchesTab";
 
@@ -38,6 +40,13 @@ export default function ManualFixturePanel({
 
   const tournamentStructure = structureData?.content;
 
+  // Automatically refetch tournament structure when tab changes
+  useEffect(() => {
+    if (activeTab) {
+      refetch();
+    }
+  }, [activeTab, refetch]);
+
   if (!isAdmin) {
     return (
       <Card>
@@ -52,6 +61,24 @@ export default function ManualFixturePanel({
   }
 
   const tabItems = [
+    {
+      key: "overview",
+      label: (
+        <span>
+          <BarChartOutlined />
+          Overview
+        </span>
+      ),
+      children: (
+        <OverviewTab
+          tournamentId={tournamentId}
+          tournamentStructure={tournamentStructure}
+          isLoading={isLoading}
+          onRefresh={refetch}
+          isActive={activeTab === "overview"}
+        />
+      ),
+    },
     {
       key: "tournament",
       label: (

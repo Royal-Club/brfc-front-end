@@ -15,6 +15,8 @@ export enum MatchEventType {
   YELLOW_CARD = "YELLOW_CARD",
   SUBSTITUTION = "SUBSTITUTION",
   INJURY = "INJURY",
+  MATCH_STARTED = "MATCH_STARTED",
+  MATCH_COMPLETED = "MATCH_COMPLETED",
 }
 
 export enum TournamentType {
@@ -115,10 +117,10 @@ export interface IMatchEvent {
   id: number;
   matchId: number;
   eventType: MatchEventType | string;
-  playerId: number;
-  playerName: string;
-  teamId: number;
-  teamName: string;
+  playerId?: number | null;  // Optional for system events (MATCH_STARTED, MATCH_COMPLETED)
+  playerName?: string | null;  // Optional for system events
+  teamId?: number | null;  // Optional for system events
+  teamName?: string | null;  // Optional for system events
   eventTime: number;
   description?: string;
   relatedPlayerId?: number;
@@ -153,6 +155,12 @@ export interface IBulkMatchUpdateRequest {
 }
 
 // Match Status Update Responses
+export interface IStartMatchRequest {
+  matchId: number;
+  venueId?: number;
+  matchDurationMinutes?: number;
+}
+
 export interface IStartMatchResponse extends BasicResType {
   content: IFixture;
 }
@@ -163,6 +171,11 @@ export interface IPauseMatchResponse extends BasicResType {
 
 export interface IResumeMatchResponse extends BasicResType {
   content: IFixture;
+}
+
+export interface ICompleteMatchRequest {
+  matchId: number;
+  matchDurationMinutes?: number;
 }
 
 export interface ICompleteMatchResponse extends BasicResType {

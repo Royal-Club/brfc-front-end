@@ -32,7 +32,6 @@ interface QuickEventRecorderProps {
 
 const EVENT_TYPES = [
   { value: "GOAL", label: "Goal", icon: "⚽", color: "#52c41a" },
-  { value: "ASSIST", label: "Assist", icon: "🎯", color: "#1890ff" },
   { value: "YELLOW_CARD", label: "Yellow Card", icon: "🟨", color: "#faad14" },
   { value: "RED_CARD", label: "Red Card", icon: "🟥", color: "#f5222d" },
   { value: "SUBSTITUTION", label: "Substitution", icon: "🔄", color: "#722ed1" },
@@ -50,24 +49,28 @@ export default function QuickEventRecorder({
   const [selectedEventType, setSelectedEventType] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
+  const [assistPlayerId, setAssistPlayerId] = useState<number | null>(null);
   const [description, setDescription] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Calculate current elapsed time
+  // Calculate current elapsed time (capped at 120 minutes)
   const calculateElapsedTime = (): number => {
     if (!fixture) return 0;
 
+    let elapsedSeconds = 0;
+    
     if (fixture.matchStatus === "ONGOING" && fixture.startedAt) {
       const startTime = moment.utc(fixture.startedAt).local().valueOf();
       const now = Date.now();
       const timeSinceStart = Math.floor((now - startTime) / 1000);
-      const totalElapsed = (fixture.elapsedTimeSeconds || 0) + timeSinceStart;
-      return Math.floor(totalElapsed / 60);
+      elapsedSeconds = (fixture.elapsedTimeSeconds || 0) + timeSinceStart;
     } else if (fixture.matchStatus === "PAUSED" || fixture.matchStatus === "COMPLETED") {
-      return Math.floor((fixture.elapsedTimeSeconds || 0) / 60);
+      elapsedSeconds = fixture.elapsedTimeSeconds || 0;
     }
 
-    return 0;
+    // Cap at 120 minutes (7200 seconds)
+    const cappedSeconds = Math.min(elapsedSeconds, 7200);
+    return Math.floor(cappedSeconds / 60);
   };
 
   const handleEventTypeClick = (eventType: string) => {
@@ -81,16 +84,35 @@ export default function QuickEventRecorder({
       return;
     }
 
+    // For GOAL events, assist player is optional but recommended
+    if (selectedEventType === "GOAL" && !assistPlayerId) {
+      Modal.confirm({
+        title: "No Assist Recorded",
+        content: "No assist player selected. Do you want to record the goal without an assist?",
+        okText: "Record Without Assist",
+        cancelText: "Cancel",
+        onOk: async () => {
+          await submitEvent();
+        },
+      });
+      return;
+    }
+
+    await submitEvent();
+  };
+
+  const submitEvent = async () => {
     try {
       const currentMinute = calculateElapsedTime();
 
       await recordEvent({
         matchId,
-        eventType: selectedEventType,
-        playerId: selectedPlayerId,
-        teamId: selectedTeamId,
+        eventType: selectedEventType!,
+        playerId: selectedPlayerId!,
+        teamId: selectedTeamId!,
         eventTime: currentMinute,
         description: description.trim() || undefined,
+        relatedPlayerId: assistPlayerId || undefined, // For GOAL events, this is the assist player
       }).unwrap();
 
       message.success("Event recorded successfully");
@@ -106,6 +128,7 @@ export default function QuickEventRecorder({
     setSelectedEventType(null);
     setSelectedTeamId(null);
     setSelectedPlayerId(null);
+    setAssistPlayerId(null);
     setDescription("");
     setModalVisible(false);
   };
@@ -217,7 +240,9 @@ export default function QuickEventRecorder({
         open={modalVisible}
         onCancel={resetForm}
         onOk={handleRecordEvent}
-        okText="Record Event"
+        okText={selectedEventType === "GOAL" && !assistPlayerId 
+          ? "Record Goal (No Assist)" 
+          : "Record Event"}
         confirmLoading={isLoading}
         width={500}
         okButtonProps={{
@@ -286,14 +311,20 @@ export default function QuickEventRecorder({
           <div>
             <Text strong style={{ display: "block", marginBottom: 8 }}>
               <UserOutlined style={{ marginRight: 6 }} />
-              Select Player *
+              {selectedEventType === "GOAL" ? "Select Goal Scorer *" : "Select Player *"}
             </Text>
             <Select
               size="large"
-              placeholder="Choose a player"
+              placeholder={selectedEventType === "GOAL" ? "Choose goal scorer" : "Choose a player"}
               style={{ width: "100%", borderRadius: 8 }}
               value={selectedPlayerId}
-              onChange={setSelectedPlayerId}
+              onChange={(value) => {
+                setSelectedPlayerId(value);
+                // Reset assist player if goal scorer changes
+                if (selectedEventType === "GOAL") {
+                  setAssistPlayerId(null);
+                }
+              }}
               disabled={!selectedTeamId || currentTeamPlayers.length === 0}
               showSearch
               filterOption={(input, option) => {
@@ -311,6 +342,42 @@ export default function QuickEventRecorder({
               ))}
             </Select>
           </div>
+
+          {/* Assist Player Selection (only for GOAL events) */}
+          {selectedEventType === "GOAL" && selectedPlayerId && (
+            <div>
+              <Text strong style={{ display: "block", marginBottom: 8 }}>
+                🎯 Select Assist Player (Optional)
+              </Text>
+              <Select
+                size="large"
+                placeholder="Choose assist player (optional)"
+                style={{ width: "100%", borderRadius: 8 }}
+                value={assistPlayerId}
+                onChange={setAssistPlayerId}
+                allowClear
+                showSearch
+                filterOption={(input, option) => {
+                  const label = option?.label;
+                  if (typeof label === "string") {
+                    return label.toLowerCase().includes(input.toLowerCase());
+                  }
+                  return false;
+                }}
+              >
+                {currentTeamPlayers
+                  .filter((player) => player.id !== selectedPlayerId) // Exclude the goal scorer
+                  .map((player) => (
+                    <Select.Option key={player.id} value={player.id} label={player.name}>
+                      {player.name}
+                    </Select.Option>
+                  ))}
+              </Select>
+              <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 4 }}>
+                Select the player who provided the assist for this goal
+              </Text>
+            </div>
+          )}
 
           {/* Optional Notes */}
           <div>

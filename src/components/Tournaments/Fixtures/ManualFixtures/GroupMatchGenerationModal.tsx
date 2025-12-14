@@ -19,11 +19,16 @@ import {
   ClockCircleOutlined,
 } from "@ant-design/icons";
 import { useGenerateGroupMatchesMutation } from "../../../../state/features/manualFixtures/manualFixturesSlice";
-import { GroupFormat } from "../../../../state/features/manualFixtures/manualFixtureTypes";
+import { GroupFormat, FixtureFormat } from "../../../../state/features/manualFixtures/manualFixtureTypes";
 import dayjs from "dayjs";
 
 const { Text } = Typography;
 const { Option } = Select;
+
+const FIXTURE_FORMAT_OPTIONS: Array<{ value: FixtureFormat; label: string; description: string }> = [
+  { value: "ROUND_ROBIN", label: "Round Robin", description: "Each pair of teams plays once" },
+  { value: "DOUBLE_ROUND_ROBIN", label: "Double Round Robin", description: "Each pair of teams plays twice (home and away)" },
+];
 
 interface GroupMatchGenerationModalProps {
   groupId: number | null;
@@ -47,14 +52,16 @@ export default function GroupMatchGenerationModal({
   venues = [],
 }: GroupMatchGenerationModalProps) {
   const [form] = Form.useForm();
-  // Initialize doubleRoundRobin based on group format
-  const initialDoubleRoundRobin = groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE;
-  const [doubleRoundRobin, setDoubleRoundRobin] = useState(initialDoubleRoundRobin);
+  // Initialize fixtureFormat based on group format
+  const initialFixtureFormat: FixtureFormat = groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE 
+    ? "DOUBLE_ROUND_ROBIN" 
+    : "ROUND_ROBIN";
+  const [fixtureFormat, setFixtureFormat] = useState<FixtureFormat>(initialFixtureFormat);
   
-  // Update doubleRoundRobin when groupFormat changes
+  // Update fixtureFormat when groupFormat changes
   useEffect(() => {
     if (groupFormat) {
-      setDoubleRoundRobin(groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE);
+      setFixtureFormat(groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE ? "DOUBLE_ROUND_ROBIN" : "ROUND_ROBIN");
     }
   }, [groupFormat]);
 
@@ -64,7 +71,7 @@ export default function GroupMatchGenerationModal({
   const calculateMatchCount = () => {
     if (teamCount < 2) return 0;
     const singleRoundMatches = (teamCount * (teamCount - 1)) / 2;
-    return doubleRoundRobin ? singleRoundMatches * 2 : singleRoundMatches;
+    return fixtureFormat === "DOUBLE_ROUND_ROBIN" ? singleRoundMatches * 2 : singleRoundMatches;
   };
 
   const handleSubmit = async () => {
@@ -87,11 +94,11 @@ export default function GroupMatchGenerationModal({
 
       const payload = {
         groupId,
+        fixtureFormat: fixtureFormat,
         startDate: startDateISO,
         matchTimeGapMinutes: values.matchTimeGapMinutes || 180,
         matchDurationMinutes: values.matchDurationMinutes || 90,
         venueId: values.venueId || undefined,
-        doubleRoundRobin: doubleRoundRobin || false,
       };
 
       const response = await generateMatches(payload).unwrap();
@@ -110,7 +117,7 @@ export default function GroupMatchGenerationModal({
 
   const handleCancel = () => {
     form.resetFields();
-    setDoubleRoundRobin(false);
+    setFixtureFormat("ROUND_ROBIN");
     onClose();
   };
 
@@ -153,7 +160,7 @@ export default function GroupMatchGenerationModal({
               <div>Teams in group: <strong>{teamCount}</strong></div>
               <div>
                 Matches to be created: <strong>{matchCount}</strong> (
-                {doubleRoundRobin ? "Double Round-Robin" : "Single Round-Robin"})
+                {fixtureFormat === "DOUBLE_ROUND_ROBIN" ? "Double Round-Robin" : "Single Round-Robin"})
               </div>
             </div>
           }
@@ -192,29 +199,35 @@ export default function GroupMatchGenerationModal({
         </Form.Item>
 
         <Form.Item
+          name="fixtureFormat"
           label={
             <Space>
               <ClockCircleOutlined />
               Match Format
             </Space>
           }
+          rules={[{ required: true, message: "Please select match format" }]}
+          initialValue={fixtureFormat}
         >
-          <Space direction="vertical" style={{ width: "100%" }}>
-            <Space>
-              <Text>Round-Robin Type:</Text>
-              <Switch
-                checked={doubleRoundRobin}
-                onChange={setDoubleRoundRobin}
-                checkedChildren="Double (Home & Away)"
-                unCheckedChildren="Single"
-              />
-            </Space>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {doubleRoundRobin
-                ? "Each pair of teams plays twice (home and away)"
-                : "Each pair of teams plays once"}
-            </Text>
-          </Space>
+          <Select
+            value={fixtureFormat}
+            onChange={(value: FixtureFormat) => setFixtureFormat(value)}
+            size="large"
+            optionLabelProp="label"
+          >
+            {FIXTURE_FORMAT_OPTIONS.map((option) => (
+              <Option key={option.value} value={option.value} label={option.label}>
+                <div style={{ padding: "4px 0" }}>
+                  <div style={{ fontWeight: 500, marginBottom: 4 }}>
+                    {option.label}
+                  </div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {option.description}
+                  </Text>
+                </div>
+              </Option>
+            ))}
+          </Select>
         </Form.Item>
 
         <Form.Item

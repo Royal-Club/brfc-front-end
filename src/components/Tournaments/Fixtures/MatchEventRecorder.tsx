@@ -125,8 +125,42 @@ export default function MatchEventRecorder({
           message.success("Event deleted successfully");
           refetchEvents();
           onSuccess?.(); // Call onSuccess callback if provided
-        } catch (error) {
-          message.error("Failed to delete event");
+        } catch (error: any) {
+          console.error("Delete event error:", error);
+          // Handle different error statuses - safely extract error message
+          let errorMessage = "Failed to delete event";
+          
+          try {
+            // RTK Query error structure: error.data or error.error
+            const errorData = error?.data || error?.error || error;
+            
+            // Check status code
+            const status = error?.status || errorData?.statusCode || errorData?.status;
+            
+            if (status === 409 || status === "CONFLICT") {
+              errorMessage = errorData?.message || 
+                            errorData?.detail || 
+                            errorData?.error || 
+                            "Cannot delete events from completed matches. The match has already been completed.";
+            } else if (status === 404 || status === "NOT_FOUND") {
+              errorMessage = errorData?.message || 
+                            errorData?.detail || 
+                            "Event not found. It may have already been deleted.";
+            } else {
+              // Try to extract message from various possible locations
+              errorMessage = errorData?.message || 
+                           errorData?.detail || 
+                           errorData?.error || 
+                           error?.message || 
+                           (typeof errorData === 'string' ? errorData : "Failed to delete event");
+            }
+          } catch (parseError) {
+            // If error parsing fails, use a safe default message
+            console.error("Error parsing error object:", parseError);
+            errorMessage = "Failed to delete event. The match may have been completed.";
+          }
+          
+          message.error(errorMessage);
         }
       },
     });
