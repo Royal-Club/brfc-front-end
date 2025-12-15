@@ -76,6 +76,13 @@ function SingleTournament() {
       // Dragging from unassigned players to a team
       const draggedPlayerId = Number(draggableId);
 
+      // Validate that the player still exists in the unassigned pool
+      const playerExists = players.some(p => p.playerId === draggedPlayerId);
+      if (!playerExists) {
+        console.warn(`Player ${draggedPlayerId} no longer exists in unassigned pool`);
+        return;
+      }
+
       if (destinationTeamId !== "players") {
         // Add player to team with default values
         handleAddPlayerToTeam(
@@ -88,18 +95,29 @@ function SingleTournament() {
       // Dragging from a team
       // draggableId format: "teamId-playerId"
       const dragId = draggableId.split("-");
+      if (dragId.length !== 2) {
+        console.warn(`Invalid draggableId format: ${draggableId}`);
+        return;
+      }
+      
       const sourceTeamId = Number(dragId[0]);
       const draggedPlayerId = Number(dragId[1]);
+
+      // Validate that the player still exists in the source team
+      const sourceTeam = teams.find(t => t.teamId === sourceTeamId);
+      const player = sourceTeam?.players.find(p => p.playerId === draggedPlayerId);
+      
+      if (!player) {
+        console.warn(`Player ${draggedPlayerId} no longer exists in team ${sourceTeamId}`);
+        return;
+      }
 
       if (destinationTeamId === "players") {
         // Dragging back to unassigned players pool
         handleRemovePlayer(sourceTeamId, draggedPlayerId);
       } else {
         // Moving between teams
-        const sourceTeam = teams.find(t => t.teamId === sourceTeamId);
-        const player = sourceTeam?.players.find(p => p.playerId === draggedPlayerId);
-
-        if (player?.id) {
+        if (player.id) {
           // Player has existing team assignment, preserve their details
           handleAddPlayerToTeam(
             player.playingPosition || "UNASSIGNED",
@@ -236,19 +254,19 @@ function SingleTournament() {
                     )}
                   </div>
 
-                  <Droppable droppableId="players">
-                    {(provided) => (
-                      <Card
-                        title={`Players (${players.length})`}
-                        bordered={true}
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        style={{
-                          marginTop: "16px",
-                          marginBottom: "10px",
-                        }}
-                      >
+                  <Card
+                    title={`Players (${players.length})`}
+                    bordered={true}
+                    style={{
+                      marginTop: "16px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <Droppable droppableId="players">
+                      {(provided) => (
                         <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
                           style={{
                             display: "grid",
                             gridTemplateColumns:
@@ -257,6 +275,7 @@ function SingleTournament() {
                             maxHeight: "180px",
                             overflowY: "auto",
                             padding: "0 8px 0 0",
+                            minHeight: 0,
                           }}
                           className="team-player-container"
                         >
@@ -290,9 +309,9 @@ function SingleTournament() {
                           )}
                           {provided.placeholder}
                         </div>
-                      </Card>
-                    )}
-                  </Droppable>
+                      )}
+                    </Droppable>
+                  </Card>
                 </DragDropContext>
               </div>
             ),

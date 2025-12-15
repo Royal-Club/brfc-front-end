@@ -29,6 +29,8 @@ import {
   useGetGroupStandingsQuery,
 } from "../../../../state/features/manualFixtures/manualFixturesSlice";
 import { TournamentStructureResponse } from "../../../../state/features/manualFixtures/manualFixtureTypes";
+import { useGetFixturesQuery } from "../../../../state/features/fixtures/fixturesSlice";
+import { IFixture } from "../../../../state/features/fixtures/fixtureTypes";
 
 const { Text, Title } = Typography;
 
@@ -78,13 +80,29 @@ export default function TeamAssignment({
   const previousRound = round && round.sequenceOrder && round.sequenceOrder > 1
     ? tournamentStructure?.rounds.find((r) => r.sequenceOrder === round.sequenceOrder - 1)
     : null;
+  
+  // Get tournament ID from round or tournament structure
+  const tournamentId = round?.tournamentId || tournamentStructure?.tournamentId;
+  
+  // Fetch fixtures to calculate standings for DIRECT_KNOCKOUT rounds
+  const { data: fixturesData } = useGetFixturesQuery(
+    { tournamentId: tournamentId! },
+    { skip: !tournamentId || !previousRound || previousRound.roundType !== "DIRECT_KNOCKOUT" }
+  );
+  const fixtures = fixturesData?.content || [];
 
   // Get standings for all groups in previous round
   const previousRoundGroups = previousRound?.groups || [];
   
   const assignedTeamIds = isDirectKnockout
-    ? (round?.teams?.filter((t) => t.teamId !== null).map((t) => t.teamId!) || [])
-    : (group?.teams?.filter((t) => t.teamId !== null).map((t) => t.teamId!) || []);
+    ? (round?.teams?.filter((t) => {
+        const identifier = t.teamId ?? t.id;
+        return identifier !== null && identifier !== undefined;
+      }).map((t) => t.teamId ?? t.id) || [])
+    : (group?.teams?.filter((t) => {
+        const identifier = t.teamId ?? t.id;
+        return identifier !== null && identifier !== undefined;
+      }).map((t) => t.teamId ?? t.id) || []);
   
   const isAssigning = isAssigningToGroup || isAssigningToRound;
   const isFetching = isFetchingGroup || isFetchingRound;
@@ -108,12 +126,22 @@ export default function TeamAssignment({
   });
 
   // Iterate through all rounds and groups to find team assignments
+  // IMPORTANT: Only track teams from the SAME round to prevent conflicts
+  // Teams from previous rounds should be available for import
   console.log('[TeamAssignment] Tournament Structure:', tournamentStructure);
   console.log('[TeamAssignment] Rounds:', tournamentStructure?.rounds);
 
   tournamentStructure?.rounds.forEach((round) => {
     console.log(`[TeamAssignment] Processing round: ${round.roundName} (ID: ${round.id})`);
     console.log(`[TeamAssignment] Round has groups:`, round.groups);
+
+    // Only process teams from the SAME round as the current assignment
+    // Skip previous rounds - teams from previous rounds should be available for import
+    const isSameRound = currentRound && round.id === currentRound.id;
+    if (!isSameRound) {
+      console.log(`[TeamAssignment]   Skipping round ${round.roundName} (different round - teams should be available for import)`);
+      return;
+    }
 
     if (round.groups) {
       round.groups.forEach((grp) => {
@@ -122,9 +150,11 @@ export default function TeamAssignment({
 
         if (grp.teams) {
           grp.teams.forEach((team: any) => {
-            console.log(`[TeamAssignment]     Team: ${team.teamName}, teamId: ${team.teamId}, isPlaceholder: ${team.isPlaceholder}`);
+            // Use teamId if available, otherwise use id
+            const teamIdentifier = team.teamId ?? team.id;
+            console.log(`[TeamAssignment]     Team: ${team.teamName}, teamId: ${teamIdentifier}, isPlaceholder: ${team.isPlaceholder}`);
 
-            if (team.teamId && !team.isPlaceholder) {
+            if (teamIdentifier && !team.isPlaceholder) {
               // Only track if not the current group (for group assignment) or current round (for round assignment)
               const isCurrentGroup = !isDirectKnockout && groupId === grp.id;
               const isCurrentRound = isDirectKnockout && roundId === round.id;
@@ -138,18 +168,19 @@ export default function TeamAssignment({
 
               console.log(`[TeamAssignment]     isCurrentGroup: ${isCurrentGroup}, isCurrentRound: ${isCurrentRound}, isSameRoundDifferentGroup: ${isSameRoundDifferentGroup}`);
 
-              // Track all teams not in current group/round, including same-round teams
-              if (!isCurrentGroup && !isCurrentRound) {
-                console.log(`[TeamAssignment]     ✓ Adding team ${team.teamName} (${team.teamId}) from ${grp.groupName} to map. isSameRound: ${isSameRoundDifferentGroup}`);
-                teamAssignmentMap.set(team.teamId, {
+              // Only track teams from the SAME round (different groups)
+              // Teams from previous rounds are allowed and should NOT be in this map
+              if (!isCurrentGroup && !isCurrentRound && isSameRoundDifferentGroup) {
+                console.log(`[TeamAssignment]     ✓ Adding team ${team.teamName} (${teamIdentifier}) from ${grp.groupName} to map (same round, different group)`);
+                teamAssignmentMap.set(teamIdentifier, {
                   groupName: grp.groupName,
                   roundName: round.roundName,
                   groupId: grp.id,
                   roundId: round.id,
-                  isSameRound: isSameRoundDifferentGroup,
+                  isSameRound: true,
                 });
               } else {
-                console.log(`[TeamAssignment]     ✗ Skipping team (current group or round)`);
+                console.log(`[TeamAssignment]     ✗ Skipping team (current group/round or different round)`);
               }
             }
           });
@@ -239,11 +270,14 @@ export default function TeamAssignment({
           });
         } else if (group.teams) {
           // Fall back to teams in group if no standings
+          // Teams can have either teamId or id field
           group.teams.forEach((team) => {
-            if (team.teamId && !team.isPlaceholder) {
-              if (!previousRoundTeams.find(t => t.teamId === team.teamId)) {
+            // Use teamId if available, otherwise use id
+            const teamIdentifier = team.teamId ?? team.id;
+            if (teamIdentifier && !team.isPlaceholder) {
+              if (!previousRoundTeams.find(t => t.teamId === teamIdentifier)) {
                 previousRoundTeams.push({
-                  teamId: team.teamId,
+                  teamId: teamIdentifier,
                   teamName: team.teamName || "",
                 });
               }
@@ -254,12 +288,15 @@ export default function TeamAssignment({
     } else if (previousRound.roundType === "DIRECT_KNOCKOUT") {
       // For DIRECT_KNOCKOUT rounds, get all teams from the round
       // Teams are stored directly in the round's teams field
+      // Teams can have either teamId or id field
       if (previousRound.teams) {
         previousRound.teams.forEach((team) => {
-          if (team.teamId && !team.isPlaceholder) {
-            if (!previousRoundTeams.find(t => t.teamId === team.teamId)) {
+          // Use teamId if available, otherwise use id
+          const teamIdentifier = team.teamId ?? team.id;
+          if (teamIdentifier && !team.isPlaceholder) {
+            if (!previousRoundTeams.find(t => t.teamId === teamIdentifier)) {
               previousRoundTeams.push({
-                teamId: team.teamId,
+                teamId: teamIdentifier,
                 teamName: team.teamName || "",
               });
             }
@@ -271,19 +308,151 @@ export default function TeamAssignment({
     return previousRoundTeams;
   }, [round, previousRound, teams]);
 
+  // Calculate standings for DIRECT_KNOCKOUT previous round from fixtures
+  const previousRoundStandings = useMemo(() => {
+    if (!previousRound || previousRound.roundType !== "DIRECT_KNOCKOUT" || !previousRound.teams) {
+      return [];
+    }
+
+    // Get matches for the previous round
+    const roundMatches = fixtures.filter((f: IFixture) => {
+      const matchesTournament = f.tournamentId === tournamentId;
+      if (!matchesTournament) return false;
+      const fixtureRoundNumber = f.roundNumber ?? f.round;
+      const matchesByRoundNumber = fixtureRoundNumber === previousRound.roundNumber;
+      const matchesByRoundId = f.round === previousRound.id;
+      return matchesByRoundNumber || matchesByRoundId;
+    });
+
+    const teamStats: Record<number, {
+      teamId: number;
+      teamName: string;
+      matchesPlayed: number;
+      wins: number;
+      draws: number;
+      losses: number;
+      goalsFor: number;
+      goalsAgainst: number;
+      goalDifference: number;
+      points: number;
+    }> = {};
+
+    // Initialize team stats from previousRound.teams
+    previousRound.teams.forEach((team: any) => {
+      const identifier = team.teamId ?? team.id;
+      if (identifier && !team.isPlaceholder) {
+        teamStats[identifier] = {
+          teamId: identifier,
+          teamName: team.teamName || `Team ${identifier}`,
+          matchesPlayed: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDifference: 0,
+          points: 0,
+        };
+      }
+    });
+
+    // Process completed matches
+    roundMatches.forEach((match: IFixture) => {
+      if (match.matchStatus !== "COMPLETED") return;
+
+      const homeTeamId = match.homeTeamId;
+      const awayTeamId = match.awayTeamId;
+      const homeScore = match.homeTeamScore || 0;
+      const awayScore = match.awayTeamScore || 0;
+
+      // Initialize teams from matches if not already in stats
+      if (!teamStats[homeTeamId]) {
+        teamStats[homeTeamId] = {
+          teamId: homeTeamId,
+          teamName: match.homeTeamName || `Team ${homeTeamId}`,
+          matchesPlayed: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDifference: 0,
+          points: 0,
+        };
+      }
+
+      if (!teamStats[awayTeamId]) {
+        teamStats[awayTeamId] = {
+          teamId: awayTeamId,
+          teamName: match.awayTeamName || `Team ${awayTeamId}`,
+          matchesPlayed: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDifference: 0,
+          points: 0,
+        };
+      }
+
+      // Update home team stats
+      teamStats[homeTeamId].matchesPlayed++;
+      teamStats[homeTeamId].goalsFor += homeScore;
+      teamStats[homeTeamId].goalsAgainst += awayScore;
+      teamStats[homeTeamId].goalDifference = teamStats[homeTeamId].goalsFor - teamStats[homeTeamId].goalsAgainst;
+
+      if (homeScore > awayScore) {
+        teamStats[homeTeamId].wins++;
+        teamStats[homeTeamId].points += 3;
+      } else if (homeScore === awayScore) {
+        teamStats[homeTeamId].draws++;
+        teamStats[homeTeamId].points += 1;
+      } else {
+        teamStats[homeTeamId].losses++;
+      }
+
+      // Update away team stats
+      teamStats[awayTeamId].matchesPlayed++;
+      teamStats[awayTeamId].goalsFor += awayScore;
+      teamStats[awayTeamId].goalsAgainst += homeScore;
+      teamStats[awayTeamId].goalDifference = teamStats[awayTeamId].goalsFor - teamStats[awayTeamId].goalsAgainst;
+
+      if (awayScore > homeScore) {
+        teamStats[awayTeamId].wins++;
+        teamStats[awayTeamId].points += 3;
+      } else if (awayScore === homeScore) {
+        teamStats[awayTeamId].draws++;
+        teamStats[awayTeamId].points += 1;
+      } else {
+        teamStats[awayTeamId].losses++;
+      }
+    });
+
+    // Convert to array and sort by points, goal difference, goals for
+    return Object.values(teamStats)
+      .filter((stat) => stat.matchesPlayed > 0 || previousRound.teams?.some((t: any) => (t.teamId ?? t.id) === stat.teamId))
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
+        return b.goalsFor - a.goalsFor;
+      })
+      .map((stat, index) => ({
+        ...stat,
+        position: index + 1,
+      }));
+  }, [previousRound, fixtures, tournamentId]);
+
   // Filter teams - exclude those already assigned to current group/round
   // But keep all teams in the list to show which ones are disabled
   const allTeams = availableTeamsForAssignment;
 
   const handleTeamToggle = (teamId: number, checked: boolean) => {
-    // Don't allow toggling if team is already assigned to another group
+    // Don't allow toggling if team is already assigned to another group in the SAME round
+    // Teams from previous rounds are allowed
     const assignment = teamAssignmentMap.get(teamId);
-    if (assignment) {
-      if (assignment.isSameRound) {
-        message.warning(`Team is already assigned to ${assignment.groupName} in the same round. Remove it from that group first.`);
-      } else {
-        message.warning(`Team is already assigned to ${assignment.groupName} in ${assignment.roundName}`);
-      }
+    if (assignment && assignment.isSameRound) {
+      message.warning(`Team is already assigned to ${assignment.groupName} in the same round. Remove it from that group first.`);
       return;
     }
 
@@ -450,8 +619,8 @@ export default function TeamAssignment({
           />
         )}
 
-        {/* Previous Round Results */}
-        {previousRound && previousRoundGroups.length > 0 && (
+        {/* Previous Round Results - GROUP_BASED */}
+        {previousRound && previousRound.roundType === "GROUP_BASED" && previousRoundGroups.length > 0 && (
           <Card
             size="small"
             title={
@@ -544,6 +713,83 @@ export default function TeamAssignment({
           </Card>
         )}
 
+        {/* Previous Round Results - DIRECT_KNOCKOUT */}
+        {previousRound && previousRound.roundType === "DIRECT_KNOCKOUT" && previousRoundStandings.length > 0 && (
+            <Card
+              size="small"
+              title={
+                <Space>
+                  <Text strong>Previous Round: {previousRound.roundName}</Text>
+                  <Tag color="blue">Direct Knockout</Tag>
+                  <Tag color="green">{previousRoundStandings.length} Team{previousRoundStandings.length !== 1 ? 's' : ''}</Tag>
+                </Space>
+              }
+              style={{ marginBottom: 16 }}
+            >
+              {previousRoundStandings.length > 0 ? (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                        <th style={{ padding: "4px 8px", textAlign: "left" }}>Pos</th>
+                        <th style={{ padding: "4px 8px", textAlign: "left" }}>Team</th>
+                        <th style={{ padding: "4px 8px", textAlign: "center" }}>P</th>
+                        <th style={{ padding: "4px 8px", textAlign: "center" }}>W</th>
+                        <th style={{ padding: "4px 8px", textAlign: "center" }}>D</th>
+                        <th style={{ padding: "4px 8px", textAlign: "center" }}>L</th>
+                        <th style={{ padding: "4px 8px", textAlign: "center" }}>GD</th>
+                        <th style={{ padding: "4px 8px", textAlign: "center" }}>Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previousRoundStandings.map((standing: any) => (
+                        <tr
+                          key={standing.teamId}
+                          style={{
+                            borderBottom: "1px solid #f0f0f0",
+                          }}
+                        >
+                          <td style={{ padding: "4px 8px" }}>
+                            <Tag color={standing.position === 1 ? "gold" : standing.position === 2 ? "default" : undefined}>
+                              {standing.position}
+                            </Tag>
+                          </td>
+                          <td style={{ padding: "4px 8px" }}>
+                            <Text strong={standing.position !== null && standing.position !== undefined && standing.position <= 2}>
+                              {standing.teamName}
+                            </Text>
+                          </td>
+                          <td style={{ padding: "4px 8px", textAlign: "center" }}>
+                            {standing.matchesPlayed}
+                          </td>
+                          <td style={{ padding: "4px 8px", textAlign: "center" }}>
+                            {standing.wins}
+                          </td>
+                          <td style={{ padding: "4px 8px", textAlign: "center" }}>
+                            {standing.draws}
+                          </td>
+                          <td style={{ padding: "4px 8px", textAlign: "center" }}>
+                            {standing.losses}
+                          </td>
+                          <td style={{ padding: "4px 8px", textAlign: "center" }}>
+                            <Text style={{ color: standing.goalDifference && standing.goalDifference > 0 ? "#52c41a" : standing.goalDifference && standing.goalDifference < 0 ? "#ff4d4f" : undefined }}>
+                              {standing.goalDifference && standing.goalDifference > 0 ? `+${standing.goalDifference}` : standing.goalDifference}
+                            </Text>
+                          </td>
+                          <td style={{ padding: "4px 8px", textAlign: "center" }}>
+                            <Text strong>{standing.points}</Text>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <Text type="secondary">No teams available</Text>
+              )}
+            </Card>
+        )}
+
         {/* Currently Assigned Teams */}
         {assignedTeamIds.length > 0 && (
           <Card
@@ -562,7 +808,14 @@ export default function TeamAssignment({
           >
             <Row gutter={[8, 8]}>
               {(isDirectKnockout ? round?.teams : group?.teams)
-                ?.filter((t) => t.teamId !== null)
+                ?.filter((t) => {
+                  const identifier = t.teamId ?? t.id;
+                  return identifier !== null && identifier !== undefined;
+                })
+                .map((team) => {
+                  const teamIdentifier = team.teamId ?? team.id;
+                  return { ...team, teamId: teamIdentifier };
+                })
                 .map((team) => (
                   <Col key={team.id} xs={24} sm={12} md={8}>
                     <Card
@@ -610,11 +863,10 @@ export default function TeamAssignment({
                 const performance = teamPerformanceMap.get(team.teamId);
                 const assignment = teamAssignmentMap.get(team.teamId);
                 const isAlreadyAssigned = assignedTeamIds.includes(team.teamId);
-                const isAssignedToOtherGroup = assignment !== undefined;
-                // For same-round groups, disable teams that are in other groups of the same round
-                // This prevents assigning the same team to multiple groups in the same round
-                const isInSameRoundOtherGroup = !isDirectKnockout && assignment?.isSameRound === true;
-                const isDisabled = isAlreadyAssigned || isAssignedToOtherGroup || isInSameRoundOtherGroup;
+                // Only disable if team is assigned to another group in the SAME round
+                // Teams from previous rounds should be available for import
+                const isAssignedToOtherGroupInSameRound = assignment !== undefined && assignment.isSameRound === true;
+                const isDisabled = isAlreadyAssigned || isAssignedToOtherGroupInSameRound;
 
                 return (
                   <Col key={team.teamId} xs={24} sm={12} md={8}>
@@ -646,9 +898,9 @@ export default function TeamAssignment({
                           >
                             {team.teamName}
                           </Text>
-                          {isAssignedToOtherGroup && assignment && (
-                            <Tag color={assignment.isSameRound ? "red" : "orange"} style={{ fontSize: 10 }}>
-                              {assignment.isSameRound ? `⚠ ${assignment.groupName}` : `In ${assignment.groupName}`}
+                          {isAssignedToOtherGroupInSameRound && assignment && (
+                            <Tag color="red" style={{ fontSize: 10 }}>
+                              ⚠ {assignment.groupName}
                             </Tag>
                           )}
                           {isAlreadyAssigned && (
@@ -657,15 +909,12 @@ export default function TeamAssignment({
                             </Tag>
                           )}
                         </Space>
-                        {isAssignedToOtherGroup && assignment && (
+                        {isAssignedToOtherGroupInSameRound && assignment && (
                           <Text type="secondary" style={{ fontSize: 10, fontStyle: "italic" }}>
-                            {assignment.isSameRound
-                              ? `Already in ${assignment.groupName} (same round)`
-                              : `Already assigned to ${assignment.groupName} in ${assignment.roundName}`
-                            }
+                            Already in {assignment.groupName} (same round)
                           </Text>
                         )}
-                        {performance && !isAssignedToOtherGroup && (
+                        {performance && !isAssignedToOtherGroupInSameRound && (
                           <Space size={4} style={{ fontSize: 11 }}>
                             {performance.groupName && (
                               <Tag color="blue" style={{ fontSize: 10 }}>

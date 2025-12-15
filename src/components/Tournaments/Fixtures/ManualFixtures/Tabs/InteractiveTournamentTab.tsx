@@ -43,8 +43,6 @@ import {
   setShowMatchGeneration,
   setShowRoundMatchGeneration,
   setShowDetailsDrawer,
-  setShowTeamAdvancement,
-  setRoundToComplete,
   closeAllModals,
 } from "../../../../../state/features/manualFixtures/manualFixturesUISlice";
 import { TournamentStructureResponse, RoundStatus, RoundType, TournamentRoundResponse } from "../../../../../state/features/manualFixtures/manualFixtureTypes";
@@ -55,7 +53,6 @@ import TeamAssignment from "../TeamAssignment";
 import GroupMatchGenerationModal from "../GroupMatchGenerationModal";
 import RoundMatchGenerationModal from "../RoundMatchGenerationModal";
 import GroupMatchesView from "../GroupMatchesView";
-import TeamAdvancementModal from "../TeamAdvancementModal";
 import {
   useDeleteRoundMutation,
   useDeleteGroupMutation,
@@ -103,8 +100,6 @@ export default function InteractiveTournamentTab({
     showMatchGeneration,
     showRoundMatchGeneration,
     showDetailsDrawer,
-    showTeamAdvancement,
-    roundToComplete,
   } = useSelector((state: RootState) => state.manualFixturesUI);
 
   const [deleteRound] = useDeleteRoundMutation();
@@ -230,7 +225,7 @@ export default function InteractiveTournamentTab({
   };
 
   const handleCompleteRound = async (roundId: number) => {
-    // Find the round to show in modal
+    // Find the round
     const round = tournamentStructure?.rounds.find((r) => r.id === roundId);
     if (!round) return;
 
@@ -261,84 +256,15 @@ export default function InteractiveTournamentTab({
       return;
     }
 
-    // Check if round has next round
-    const nextRound = tournamentStructure?.rounds.find(
-      (r) => r.sequenceOrder === round.sequenceOrder + 1
-    );
-    
-    // If no next round, complete directly without team selection
-    if (!nextRound) {
-      try {
-        const result = await completeRound({
-          roundId,
-          recalculateStandings: true,
-        }).unwrap();
-        message.success("Round completed successfully");
-        dispatch(setSelectedNode(null));
-        dispatch(setShowDetailsDrawer(false));
-        onRefresh();
-      } catch (error: any) {
-        // Show backend error message if available
-        const errorMessage = error?.data?.message || error?.message || "Failed to complete round. Please ensure all matches are completed.";
-        message.error(errorMessage);
-      }
-      return;
-    }
-
-    // Show team selection modal for advancement
-    dispatch(setRoundToComplete(round));
-    dispatch(setShowTeamAdvancement(true));
-  };
-
-  const handleConfirmAdvancement = async (selectedTeamIds: number[]) => {
-    if (!roundToComplete) return;
-
-    if (selectedTeamIds.length === 0) {
-      message.warning("Please select at least one team to advance");
-      return;
-    }
-
-    // Re-validate that all matches are completed before submitting
-    const allMatchesCompleted = roundToComplete.totalMatches > 0 && roundToComplete.completedMatches === roundToComplete.totalMatches;
-    
-    // For group-based rounds, also check that all groups have completed matches
-    if (roundToComplete.roundType === RoundType.GROUP_BASED && roundToComplete.groups) {
-      const allGroupsCompleted = roundToComplete.groups.every((group) => {
-        return group.totalMatches > 0 && group.completedMatches === group.totalMatches;
-      });
-
-      if (!allGroupsCompleted) {
-        const incompleteGroups = roundToComplete.groups.filter(
-          (group) => !(group.totalMatches > 0 && group.completedMatches === group.totalMatches)
-        );
-        message.error(
-          `Cannot complete round. The following groups have incomplete matches: ${incompleteGroups.map(g => g.groupName).join(", ")}`
-        );
-        return;
-      }
-    }
-
-    if (!allMatchesCompleted) {
-      message.error(
-        `Cannot complete round. Progress: ${roundToComplete.completedMatches} / ${roundToComplete.totalMatches} matches completed.`
-      );
-      return;
-    }
-
+    // Complete round without team advancement
     try {
-      const result = await completeRound({
-        roundId: roundToComplete.id,
+      await completeRound({
+        roundId,
         recalculateStandings: true,
-        selectedTeamIds: selectedTeamIds,
       }).unwrap();
-
-      message.success(
-        `Round completed! ${result.content?.teamsAdvanced || 0} teams advanced to ${result.content?.targetRoundName || "next round"}`
-      );
+      message.success("Round completed successfully");
       dispatch(setSelectedNode(null));
       dispatch(setShowDetailsDrawer(false));
-      dispatch(setRoundToComplete(null));
-      dispatch(setShowTeamAdvancement(false));
       onRefresh();
     } catch (error: any) {
       // Show backend error message if available
@@ -346,6 +272,7 @@ export default function InteractiveTournamentTab({
       message.error(errorMessage);
     }
   };
+
 
 
   const handleCreateGroup = async (roundId: number) => {
@@ -768,8 +695,9 @@ export default function InteractiveTournamentTab({
                 onClick={() => handleCompleteRound(round.id)}
                 block
                 disabled={!allMatchesCompleted && round.status === RoundStatus.ONGOING}
+                loading={isCompletingRound}
               >
-                Complete Round & Advance Teams
+                Complete Round
               </Button>
               {round.status === RoundStatus.ONGOING && !allMatchesCompleted && (
                 <Alert
@@ -781,6 +709,35 @@ export default function InteractiveTournamentTab({
                 />
               )}
             </>
+          )}
+
+          {/* Import Teams from Previous Round - Only show for Round 2+ when previous round is completed */}
+          {round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status === RoundStatus.COMPLETED && (
+            <Button
+              type="default"
+              icon={<UserAddOutlined />}
+              onClick={() => {
+                if (isGroupBased) {
+                  message.info("Please select a group first, then use 'Assign Teams' to import teams from the previous round");
+                } else {
+                  // For DIRECT_KNOCKOUT, open team assignment for the round
+                  dispatch(setSelectedNode({ type: "round", id: round.id, data: round }));
+                  dispatch(setShowTeamAssignment(true));
+                }
+              }}
+              block
+            >
+              Import Teams from Previous Round
+            </Button>
+          )}
+
+          {round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status !== RoundStatus.COMPLETED && (
+            <Alert
+              message="Import Teams Unavailable"
+              description={`Previous round "${previousRound.roundName}" must be completed first before importing teams.`}
+              type="info"
+              showIcon
+            />
           )}
 
 
@@ -842,6 +799,134 @@ export default function InteractiveTournamentTab({
             </Button>
           </Popconfirm>
         </Space>
+
+        {/* Assigned Teams Section */}
+        <Divider>
+          <TeamOutlined /> Assigned Teams
+        </Divider>
+        {(() => {
+          // Debug: Log round data to see what we have
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Round data for assigned teams:', {
+              roundId: round.id,
+              roundName: round.roundName,
+              roundType: round.roundType,
+              isGroupBased,
+              hasGroups: !!round.groups,
+              groupsCount: round.groups?.length || 0,
+              hasTeams: !!round.teams,
+              teamsCount: round.teams?.length || 0,
+              groups: round.groups?.map((g: any) => ({
+                id: g.id,
+                name: g.groupName,
+                teamsCount: g.teams?.length || 0,
+                teams: g.teams?.map((t: any) => ({ teamId: t.teamId, teamName: t.teamName, isPlaceholder: t.isPlaceholder }))
+              })) || [],
+              teams: round.teams?.map((t: any) => ({ teamId: t.teamId, teamName: t.teamName, isPlaceholder: t.isPlaceholder })) || []
+            });
+          }
+          return null;
+        })()}
+        {isGroupBased ? (
+          // For GROUP_BASED rounds, show teams from all groups
+          round.groups && round.groups.length > 0 ? (
+            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+              {round.groups.map((group) => {
+                // Get teams from group - check both teams array and ensure we have valid team data
+                // Teams can have either teamId or id field
+                const groupTeams = (group.teams || [])
+                  .filter((t: any) => {
+                    // Filter out placeholders and ensure we have a valid identifier
+                    const hasIdentifier = (t.teamId !== null && t.teamId !== undefined) || (t.id !== null && t.id !== undefined);
+                    const isNotPlaceholder = !t.isPlaceholder;
+                    return hasIdentifier && isNotPlaceholder;
+                  })
+                  .map((t: any) => {
+                    // Use teamId if available, otherwise use id
+                    const identifier = t.teamId ?? t.id;
+                    return {
+                      teamId: identifier,
+                      id: identifier,
+                      teamName: t.teamName || `Team ${identifier}`,
+                    };
+                  });
+                
+                return (
+                  <Card
+                    key={group.id}
+                    size="small"
+                    title={
+                      <Space>
+                        <Text strong>{group.groupName}</Text>
+                        <Tag color="blue">{groupTeams.length} team{groupTeams.length !== 1 ? 's' : ''}</Tag>
+                      </Space>
+                    }
+                  >
+                    {groupTeams.length > 0 ? (
+                      <Space wrap>
+                        {groupTeams.map((team: any) => (
+                          <Tag key={team.teamId || team.id} color="default" style={{ marginBottom: 4 }}>
+                            {team.teamName}
+                          </Tag>
+                        ))}
+                      </Space>
+                    ) : (
+                      <Empty
+                        description="No teams assigned"
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        style={{ padding: "10px 0" }}
+                      />
+                    )}
+                  </Card>
+                );
+              })}
+            </Space>
+          ) : (
+            <Empty
+              description="No groups created yet"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              style={{ padding: "20px 0" }}
+            />
+          )
+        ) : (
+          // For DIRECT_KNOCKOUT rounds, show teams from round.teams
+          (() => {
+            // Get all teams, filtering out placeholders
+            // Teams can have either teamId or id field
+            const assignedTeams = (round.teams || [])
+              .filter((t: any) => {
+                // Filter out placeholders and ensure we have a valid identifier
+                const hasIdentifier = (t.teamId !== null && t.teamId !== undefined) || (t.id !== null && t.id !== undefined);
+                const isNotPlaceholder = !t.isPlaceholder;
+                return hasIdentifier && isNotPlaceholder;
+              })
+              .map((t: any) => {
+                // Use teamId if available, otherwise use id
+                const identifier = t.teamId ?? t.id;
+                return {
+                  teamId: identifier,
+                  id: identifier,
+                  teamName: t.teamName || `Team ${identifier}`,
+                };
+              });
+            
+            return assignedTeams.length > 0 ? (
+              <Space wrap>
+                {assignedTeams.map((team: any) => (
+                  <Tag key={team.teamId || team.id} color="default" style={{ marginBottom: 4, fontSize: 13, padding: "4px 12px" }}>
+                    {team.teamName}
+                  </Tag>
+                ))}
+              </Space>
+            ) : (
+              <Empty
+                description="No teams assigned to this round"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                style={{ padding: "20px 0" }}
+              />
+            );
+          })()
+        )}
 
         {/* Standings for DIRECT_KNOCKOUT rounds */}
         {!isGroupBased && (
@@ -1361,24 +1446,6 @@ export default function InteractiveTournamentTab({
         }}
       />
 
-      <TeamAdvancementModal
-        round={roundToComplete}
-        nextRound={
-          roundToComplete
-            ? tournamentStructure?.rounds.find(
-                (r) => r.sequenceOrder === roundToComplete.sequenceOrder + 1
-              ) || null
-            : null
-        }
-        allFixtures={finalFixtures}
-        isModalVisible={showTeamAdvancement}
-        onClose={() => {
-          dispatch(setShowTeamAdvancement(false));
-          dispatch(setRoundToComplete(null));
-        }}
-        onConfirm={handleConfirmAdvancement}
-        isLoading={isCompletingRound}
-      />
 
 
       <GroupMatchGenerationModal
