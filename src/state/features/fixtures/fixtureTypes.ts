@@ -203,6 +203,39 @@ export interface IClearFixturesResponse extends BasicResType {}
 // Delete Event Response
 export interface IDeleteEventResponse extends BasicResType {}
 
+// Create Match Request
+export interface ICreateMatchRequest {
+  tournamentId: number;
+  roundId?: number;
+  groupId?: number;
+  homeTeamId: number;
+  awayTeamId: number;
+  matchDate: string;
+  venueId?: number;
+  matchOrder?: number;
+  matchDurationMinutes?: number;
+  groupName?: string;
+}
+
+// Create Match Response
+export interface ICreateMatchResponse extends BasicResType {
+  content: IFixture;
+}
+
+// Delete Match Response
+export interface IDeleteMatchResponse extends BasicResType {}
+
+// Match Order Update Request
+export interface IMatchOrderUpdateRequest {
+  matchOrders: Array<{
+    matchId: number;
+    matchOrder: number;
+  }>;
+}
+
+// Match Order Update Response
+export interface IMatchOrderUpdateResponse extends BasicResType {}
+
 // If your API returns { content: IFixture }, you may need:
 // export interface IFixtureResponse {
 //   content: IFixture;

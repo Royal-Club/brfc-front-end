@@ -20,6 +20,11 @@ import {
   IGetMatchEventsResponse,
   IDeleteEventResponse,
   IUpdateElapsedTimeResponse,
+  ICreateMatchRequest,
+  ICreateMatchResponse,
+  IDeleteMatchResponse,
+  IMatchOrderUpdateRequest,
+  IMatchOrderUpdateResponse,
 } from "./fixtureTypes";
 
 const apiWithTags = apiSlice.enhanceEndpoints({
@@ -284,6 +289,47 @@ export const fixturesApi = apiWithTags.injectEndpoints({
         { type: "matches", id: matchId },
       ],
     }),
+
+    /**
+     * Create a new match
+     * Endpoint: POST /matches
+     */
+    createMatch: builder.mutation<ICreateMatchResponse, ICreateMatchRequest>({
+      query: (body) => ({
+        url: `/matches`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["fixtures"],
+    }),
+
+    /**
+     * Delete a match
+     * Endpoint: DELETE /matches/{matchId}
+     */
+    deleteMatch: builder.mutation<IDeleteMatchResponse, { matchId: number }>({
+      query: ({ matchId }) => ({
+        url: `/matches/${matchId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["fixtures"],
+    }),
+
+    /**
+     * Update match order (for drag and drop reordering)
+     * Endpoint: PUT /matches/order
+     */
+    updateMatchOrder: builder.mutation<
+      IMatchOrderUpdateResponse,
+      IMatchOrderUpdateRequest
+    >({
+      query: (body) => ({
+        url: `/matches/order`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["fixtures"],
+    }),
   }),
 });
 
@@ -305,4 +351,7 @@ export const {
   useUpdateElapsedTimeMutation,
   useGetFixtureByIdQuery,
   useGetMatchByIdQuery,
+  useCreateMatchMutation,
+  useDeleteMatchMutation,
+  useUpdateMatchOrderMutation,
 } = fixturesApi;

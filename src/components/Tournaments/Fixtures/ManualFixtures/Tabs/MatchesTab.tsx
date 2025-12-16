@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+  import React, { useMemo, useEffect } from "react";
 import {
   Card,
   Empty,
@@ -24,6 +24,35 @@ import EditFixtureModal from "../../EditFixtureModal";
 import { IFixture } from "../../../../../state/features/fixtures/fixtureTypes";
 
 const { Text, Title } = Typography;
+
+// Helper function to extract all unique teams from tournament structure
+function extractTeamsFromStructure(tournamentStructure?: TournamentStructureResponse): Array<{ teamId: number; teamName: string }> {
+  if (!tournamentStructure) return [];
+  
+  const teamsMap = new Map<number, { teamId: number; teamName: string }>();
+  
+  tournamentStructure.rounds?.forEach((round) => {
+    // Get teams from round
+    round.teams?.forEach((team) => {
+      const teamId = team.teamId ?? team.id;
+      if (teamId && team.teamName) {
+        teamsMap.set(teamId, { teamId, teamName: team.teamName });
+      }
+    });
+    
+    // Get teams from groups
+    round.groups?.forEach((group) => {
+      group.teams?.forEach((team) => {
+        const teamId = team.teamId ?? team.id;
+        if (teamId && team.teamName) {
+          teamsMap.set(teamId, { teamId, teamName: team.teamName });
+        }
+      });
+    });
+  });
+  
+  return Array.from(teamsMap.values());
+}
 
 interface MatchesTabProps {
   tournamentId: number;
@@ -260,6 +289,14 @@ export default function MatchesTab({
             fixtures={[...finalFixtures].sort((a, b) => a.matchOrder - b.matchOrder)}
             isLoading={fixturesLoading || isLoading}
             onEditFixture={handleEditFixture}
+            tournamentId={tournamentId}
+            teams={extractTeamsFromStructure(tournamentStructure)}
+            onRefresh={() => {
+              refetchFixtures();
+              onRefresh();
+            }}
+            enableAddRemove={true}
+            enableDragDrop={true}
           />
         </Card>
       )}
@@ -284,6 +321,14 @@ export default function MatchesTab({
                 fixtures={fixturesByRoundAndGroup[-1]["Unmatched"] || []}
                 isLoading={fixturesLoading || isLoading}
                 onEditFixture={handleEditFixture}
+                tournamentId={tournamentId}
+                teams={extractTeamsFromStructure(tournamentStructure)}
+                onRefresh={() => {
+                  refetchFixtures();
+                  onRefresh();
+                }}
+                enableAddRemove={true}
+                enableDragDrop={true}
               />
             </Card>
           )}
@@ -334,6 +379,17 @@ export default function MatchesTab({
                           fixtures={groupMatches}
                           isLoading={fixturesLoading || isLoading}
                           onEditFixture={handleEditFixture}
+                          tournamentId={tournamentId}
+                          roundId={round.id}
+                          groupId={group.id}
+                          groupName={group.groupName}
+                          teams={extractTeamsFromStructure(tournamentStructure)}
+                          onRefresh={() => {
+                            refetchFixtures();
+                            onRefresh();
+                          }}
+                          enableAddRemove={true}
+                          enableDragDrop={true}
                         />
                       </div>
                     );
@@ -355,6 +411,15 @@ export default function MatchesTab({
                         fixtures={sortedMatches}
                         isLoading={fixturesLoading || isLoading}
                         onEditFixture={handleEditFixture}
+                        tournamentId={tournamentId}
+                        roundId={round.id}
+                        teams={extractTeamsFromStructure(tournamentStructure)}
+                        onRefresh={() => {
+                          refetchFixtures();
+                          onRefresh();
+                        }}
+                        enableAddRemove={true}
+                        enableDragDrop={true}
                       />
                     );
                   })()
@@ -380,6 +445,15 @@ export default function MatchesTab({
                           fixtures={noGroupMatches}
                           isLoading={fixturesLoading || isLoading}
                           onEditFixture={handleEditFixture}
+                          tournamentId={tournamentId}
+                          roundId={round.id}
+                          teams={extractTeamsFromStructure(tournamentStructure)}
+                          onRefresh={() => {
+                            refetchFixtures();
+                            onRefresh();
+                          }}
+                          enableAddRemove={true}
+                          enableDragDrop={true}
                         />
                       </div>
                     );
