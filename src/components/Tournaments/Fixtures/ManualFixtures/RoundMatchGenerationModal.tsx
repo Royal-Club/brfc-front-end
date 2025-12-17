@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -34,6 +34,7 @@ interface RoundMatchGenerationModalProps {
   onClose: () => void;
   onSuccess: () => void;
   venues?: Array<{ id: number; name: string }>;
+  tournamentVenueId?: number | null;
 }
 
 export default function RoundMatchGenerationModal({
@@ -44,12 +45,20 @@ export default function RoundMatchGenerationModal({
   onClose,
   onSuccess,
   venues = [],
+  tournamentVenueId,
 }: RoundMatchGenerationModalProps) {
   const [form] = Form.useForm();
   const [fixtureFormat, setFixtureFormat] = useState<FixtureFormat>("SINGLE_ELIMINATION");
   const [doubleRoundRobin, setDoubleRoundRobin] = useState(false);
 
   const [generateMatches, { isLoading }] = useGenerateRoundMatchesMutation();
+
+  // Set tournament venue as default when modal opens
+  useEffect(() => {
+    if (isModalVisible && tournamentVenueId) {
+      form.setFieldsValue({ venueId: tournamentVenueId });
+    }
+  }, [isModalVisible, tournamentVenueId, form]);
 
   // Calculate match count based on format
   const calculateMatchCount = useMemo(() => {
@@ -278,13 +287,13 @@ export default function RoundMatchGenerationModal({
         <Form.Item
           name="matchTimeGapMinutes"
           label="Time Gap Between Matches (minutes)"
-          tooltip="Time interval between consecutive matches"
+          tooltip="Time interval between the end of one match and the start of the next match"
           initialValue={180}
         >
           <InputNumber
-            min={30}
+            min={5}
             max={1440}
-            step={30}
+            step={5}
             style={{ width: "100%" }}
             placeholder="180"
             addonAfter="minutes"
@@ -298,9 +307,9 @@ export default function RoundMatchGenerationModal({
           initialValue={90}
         >
           <InputNumber
-            min={30}
+            min={10}
             max={180}
-            step={15}
+            step={5}
             style={{ width: "100%" }}
             placeholder="90"
             addonAfter="minutes"

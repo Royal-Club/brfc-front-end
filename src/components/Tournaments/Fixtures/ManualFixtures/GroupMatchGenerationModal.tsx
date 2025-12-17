@@ -52,18 +52,28 @@ export default function GroupMatchGenerationModal({
   venues = [],
 }: GroupMatchGenerationModalProps) {
   const [form] = Form.useForm();
-  // Initialize fixtureFormat based on group format
-  const initialFixtureFormat: FixtureFormat = groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE 
-    ? "DOUBLE_ROUND_ROBIN" 
-    : "ROUND_ROBIN";
-  const [fixtureFormat, setFixtureFormat] = useState<FixtureFormat>(initialFixtureFormat);
-  
-  // Update fixtureFormat when groupFormat changes
-  useEffect(() => {
-    if (groupFormat) {
-      setFixtureFormat(groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE ? "DOUBLE_ROUND_ROBIN" : "ROUND_ROBIN");
+  // Map group format to fixture format - use group format as match format
+  const getFixtureFormatFromGroupFormat = (format?: GroupFormat): FixtureFormat => {
+    if (!format) return "ROUND_ROBIN";
+    switch (format) {
+      case GroupFormat.ROUND_ROBIN_DOUBLE:
+        return "DOUBLE_ROUND_ROBIN";
+      case GroupFormat.ROUND_ROBIN_SINGLE:
+        return "ROUND_ROBIN";
+      default:
+        return "ROUND_ROBIN";
     }
-  }, [groupFormat]);
+  };
+  
+  const fixtureFormat = getFixtureFormatFromGroupFormat(groupFormat);
+  
+  // Update form when groupFormat changes
+  useEffect(() => {
+    if (isModalVisible && groupFormat) {
+      const format = getFixtureFormatFromGroupFormat(groupFormat);
+      form.setFieldsValue({ fixtureFormat: format });
+    }
+  }, [isModalVisible, groupFormat, form]);
 
   const [generateMatches, { isLoading }] = useGenerateGroupMatchesMutation();
 
@@ -92,9 +102,12 @@ export default function GroupMatchGenerationModal({
       // Convert dayjs to ISO string, removing timezone info for LocalDateTime compatibility
       const startDateISO = values.startDate.format("YYYY-MM-DDTHH:mm:ss");
 
+      // Use fixtureFormat from form (which is set from groupFormat)
+      const selectedFixtureFormat = values.fixtureFormat || fixtureFormat;
+
       const payload = {
         groupId,
-        fixtureFormat: fixtureFormat,
+        fixtureFormat: selectedFixtureFormat,
         startDate: startDateISO,
         matchTimeGapMinutes: values.matchTimeGapMinutes || 180,
         matchDurationMinutes: values.matchDurationMinutes || 90,
@@ -117,7 +130,6 @@ export default function GroupMatchGenerationModal({
 
   const handleCancel = () => {
     form.resetFields();
-    setFixtureFormat("ROUND_ROBIN");
     onClose();
   };
 
@@ -211,7 +223,7 @@ export default function GroupMatchGenerationModal({
         >
           <Select
             value={fixtureFormat}
-            onChange={(value: FixtureFormat) => setFixtureFormat(value)}
+            disabled={true}
             size="large"
             optionLabelProp="label"
           >
@@ -229,17 +241,26 @@ export default function GroupMatchGenerationModal({
             ))}
           </Select>
         </Form.Item>
+        {groupFormat && (
+          <Alert
+            message="Match Format"
+            description={`Match format is automatically set based on the group format: ${groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE ? "Double Round Robin" : "Round Robin (Single)"}`}
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
         <Form.Item
           name="matchTimeGapMinutes"
           label="Time Gap Between Matches (minutes)"
-          tooltip="Time interval between consecutive matches"
+          tooltip="Time interval between the end of one match and the start of the next match"
           initialValue={180}
         >
           <InputNumber
-            min={30}
+            min={5}
             max={1440}
-            step={30}
+            step={5}
             style={{ width: "100%" }}
             placeholder="180"
             addonAfter="minutes"
@@ -253,9 +274,9 @@ export default function GroupMatchGenerationModal({
           initialValue={90}
         >
           <InputNumber
-            min={30}
+            min={10}
             max={180}
-            step={15}
+            step={5}
             style={{ width: "100%" }}
             placeholder="90"
             addonAfter="minutes"

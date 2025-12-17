@@ -60,6 +60,9 @@ export default function ManualFixturePanel({
     );
   }
 
+  // Check if teams are added - disable fixtures tab if no teams
+  const hasTeams = teams && teams.length > 0;
+
   const tabItems = [
     {
       key: "overview",
@@ -106,6 +109,7 @@ export default function ManualFixturePanel({
           Matches
         </span>
       ),
+      disabled: !hasTeams,
       children: (
         <MatchesTab
           tournamentId={tournamentId}
@@ -118,11 +122,19 @@ export default function ManualFixturePanel({
     },
   ];
 
+  // Prevent switching to disabled matches tab
+  const handleTabChange = (key: string) => {
+    if (key === "matches" && !hasTeams) {
+      return; // Don't allow switching to matches tab if no teams
+    }
+    dispatch(setActiveTab(key));
+  };
+
   return (
     <Spin spinning={isLoading}>
       <Tabs
         activeKey={activeTab}
-        onChange={(key) => dispatch(setActiveTab(key))}
+        onChange={handleTabChange}
         items={tabItems}
         size="large"
         style={{ minHeight: "calc(100vh - 250px)" }}

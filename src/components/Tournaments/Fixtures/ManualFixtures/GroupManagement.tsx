@@ -203,17 +203,36 @@ export default function GroupManagement({
           label="Group Format"
           tooltip="Determines how matches are created within the group"
         >
-          <Select placeholder="Select group format">
-            {GROUP_FORMAT_OPTIONS.map((option) => (
-              <Option key={option.value} value={option.value}>
-                <div>
-                  <div>{option.label}</div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {option.description}
-                  </Text>
-                </div>
-              </Option>
-            ))}
+          <Select 
+            placeholder="Select group format"
+            size="large"
+            optionLabelProp="label"
+          >
+            {GROUP_FORMAT_OPTIONS.map((option) => {
+              const isDisabled = option.value === GroupFormat.MANUAL || option.value === GroupFormat.CUSTOM_MULTIPLE;
+              return (
+                <Option 
+                  key={option.value} 
+                  value={option.value}
+                  label={option.label}
+                  disabled={isDisabled}
+                >
+                  <div style={{ padding: "4px 0" }}>
+                    <div style={{ fontWeight: 500, marginBottom: 4 }}>
+                      {option.label}
+                      {isDisabled && (
+                        <Text type="secondary" style={{ fontSize: 11, marginLeft: 8, fontStyle: "italic" }}>
+                          (Coming Soon)
+                        </Text>
+                      )}
+                    </div>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {option.description}
+                    </Text>
+                  </div>
+                </Option>
+              );
+            })}
           </Select>
         </Form.Item>
 

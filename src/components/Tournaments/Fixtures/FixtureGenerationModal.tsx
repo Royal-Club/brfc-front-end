@@ -437,14 +437,15 @@ export default function FixtureGenerationModal({
                 <InputNumber
                   value={timeGapMinutes}
                   onChange={(val) => setTimeGapMinutes(val || 120)}
-                  min={30}
+                  min={5}
                   max={480}
+                  step={5}
                   addonAfter="min"
                   size="large"
                   style={{ width: "100%" }}
                 />
                 <Text type="secondary" style={{ fontSize: 11 }}>
-                  Time from one match start to next
+                  Time from end of one match to start of next
                 </Text>
               </Space>
             </Col>
@@ -456,8 +457,9 @@ export default function FixtureGenerationModal({
                 <InputNumber
                   value={matchDurationMinutes}
                   onChange={(val) => setMatchDurationMinutes(val || 90)}
-                  min={30}
+                  min={10}
                   max={180}
+                  step={5}
                   addonAfter="min"
                   size="large"
                   style={{ width: "100%" }}

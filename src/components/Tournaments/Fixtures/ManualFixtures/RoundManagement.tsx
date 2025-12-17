@@ -27,6 +27,7 @@ import {
   useDeleteRoundMutation,
   useGetRoundByIdQuery,
 } from "../../../../state/features/manualFixtures/manualFixturesSlice";
+import { useGetTournamentSummaryQuery } from "../../../../state/features/tournaments/tournamentsSlice";
 import {
   RoundType,
   TournamentRoundResponse,
@@ -78,6 +79,14 @@ export default function RoundManagement({
 
   const existingRound = roundData?.content;
 
+  // Fetch tournament summary to get tournament date
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery(
+    { tournamentId },
+    { skip: !tournamentId }
+  );
+
+  const tournamentDate = tournamentSummary?.content?.[0]?.tournamentDate;
+
   useEffect(() => {
     if (isModalVisible && existingRound) {
       form.setFieldsValue({
@@ -89,8 +98,10 @@ export default function RoundManagement({
       });
     } else if (isModalVisible && !isEditing) {
       // Set default values for new round (roundNumber and sequenceOrder will be auto-calculated)
+      // Set startDate to tournament date if available
       form.setFieldsValue({
         roundType: RoundType.GROUP_BASED,
+        startDate: tournamentDate ? dayjs(tournamentDate) : null,
       });
     }
     
@@ -98,7 +109,7 @@ export default function RoundManagement({
     if (!isModalVisible) {
       form.resetFields();
     }
-  }, [isModalVisible, existingRound, form, existingRounds, isEditing]);
+  }, [isModalVisible, existingRound, form, existingRounds, isEditing, tournamentDate]);
 
   const handleSubmit = async () => {
     try {

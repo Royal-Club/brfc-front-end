@@ -123,7 +123,7 @@ export default function StartMatchModal({
           name="matchDurationMinutes"
           rules={[
             { required: true, message: "Please enter match duration" },
-            { type: "number", min: 1, max: 120, message: "Duration must be between 1 and 120 minutes" },
+            { type: "number", min: 10, max: 120, message: "Duration must be between 10 and 120 minutes" },
           ]}
         >
           <InputNumber

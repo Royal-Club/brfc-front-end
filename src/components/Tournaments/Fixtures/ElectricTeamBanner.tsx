@@ -1,11 +1,14 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Card, Tag, Space, Button } from "antd";
+import { Card, Tag, Space, Button, Typography } from "antd";
 import { gsap } from "gsap";
-import { IFixture } from "../../../state/features/fixtures/fixtureTypes";
+import { IFixture, IMatchEvent } from "../../../state/features/fixtures/fixtureTypes";
 import { TrophyOutlined, EnvironmentOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import moment from "moment";
 import MatchLivePanel from "./MatchLivePanel";
 import { useNavigate } from "react-router-dom";
+import { useGetMatchEventsQuery } from "../../../state/features/fixtures/fixturesSlice";
+
+const { Text } = Typography;
 
 interface ElectricTeamBannerProps {
   match: IFixture;
@@ -20,6 +23,19 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
   const awayScoreRef = useRef<HTMLDivElement>(null);
   const homeGlowRef = useRef<HTMLDivElement>(null);
   const awayGlowRef = useRef<HTMLDivElement>(null);
+
+  // Fetch match events to get goal scorers
+  const { data: eventsData } = useGetMatchEventsQuery({ matchId: match.id }, { skip: !match.id });
+  const events = eventsData?.content || [];
+  
+  // Filter goal events and group by team
+  const homeGoals = events.filter((e: IMatchEvent) => 
+    e.eventType === "GOAL" && e.teamId === match.homeTeamId
+  ).sort((a: IMatchEvent, b: IMatchEvent) => (a.eventTime || 0) - (b.eventTime || 0));
+  
+  const awayGoals = events.filter((e: IMatchEvent) => 
+    e.eventType === "GOAL" && e.teamId === match.awayTeamId
+  ).sort((a: IMatchEvent, b: IMatchEvent) => (a.eventTime || 0) - (b.eventTime || 0));
 
   // Timer state
   const [displayTime, setDisplayTime] = useState("00:00");
@@ -230,17 +246,54 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
 
             <div
               style={{
-                fontSize: 24,
-                fontWeight: 900,
-                color: "white",
-                textTransform: "uppercase",
-                letterSpacing: "1.5px",
-                textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: 4,
                 position: "relative",
                 zIndex: 1,
               }}
             >
-              {match.homeTeamName}
+              <div
+                style={{
+                  fontSize: 24,
+                  fontWeight: 900,
+                  color: "white",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                }}
+              >
+                {match.homeTeamName}
+              </div>
+              {homeGoals.length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginTop: 4,
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  {homeGoals.map((goal: IMatchEvent, index: number) => (
+                    <Text
+                      key={goal.id || index}
+                      style={{
+                        fontSize: 11,
+                        color: "rgba(255, 255, 255, 0.85)",
+                        lineHeight: 1.2,
+                        textShadow: "0 1px 4px rgba(0,0,0,0.3)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      ⚽ {goal.playerName || "Unknown"}
+                    </Text>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -404,17 +457,54 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
 
             <div
               style={{
-                fontSize: 24,
-                fontWeight: 900,
-                color: "white",
-                textTransform: "uppercase",
-                letterSpacing: "1.5px",
-                textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: 4,
                 position: "relative",
                 zIndex: 1,
               }}
             >
-              {match.awayTeamName}
+              <div
+                style={{
+                  fontSize: 24,
+                  fontWeight: 900,
+                  color: "white",
+                  textTransform: "uppercase",
+                  letterSpacing: "1.5px",
+                  textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                }}
+              >
+                {match.awayTeamName}
+              </div>
+              {awayGoals.length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginTop: 4,
+                    justifyContent: "flex-start",
+                  }}
+                >
+                  {awayGoals.map((goal: IMatchEvent, index: number) => (
+                    <Text
+                      key={goal.id || index}
+                      style={{
+                        fontSize: 11,
+                        color: "rgba(255, 255, 255, 0.85)",
+                        lineHeight: 1.2,
+                        textShadow: "0 1px 4px rgba(0,0,0,0.3)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      ⚽ {goal.playerName || "Unknown"}
+                    </Text>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

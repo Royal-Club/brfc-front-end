@@ -295,6 +295,10 @@ export default function MatchDetailsModal({
                     matchId={match.id}
                     homeTeamId={match.homeTeamId}
                     awayTeamId={match.awayTeamId}
+                    matchDurationMinutes={match.matchDurationMinutes}
+                    elapsedTimeSeconds={match.elapsedTimeSeconds}
+                    startedAt={match.startedAt}
+                    completedAt={match.completedAt}
                   />
                 ),
               },

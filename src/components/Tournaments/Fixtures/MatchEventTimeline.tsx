@@ -21,12 +21,20 @@ interface MatchEventTimelineProps {
   matchId: number;
   homeTeamId: number;
   awayTeamId: number;
+  matchDurationMinutes?: number;
+  elapsedTimeSeconds?: number;
+  startedAt?: string | null;
+  completedAt?: string | null;
 }
 
 export default function MatchEventTimeline({
   matchId,
   homeTeamId,
   awayTeamId,
+  matchDurationMinutes,
+  elapsedTimeSeconds,
+  startedAt,
+  completedAt,
 }: MatchEventTimelineProps) {
   const { token } = useToken();
   const { data: eventsData, isLoading, refetch } = useGetMatchEventsQuery({ matchId });
@@ -35,6 +43,67 @@ export default function MatchEventTimeline({
   const isAdmin = loginInfo.roles?.includes("ADMIN") || loginInfo.roles?.includes("SUPERADMIN");
 
   const events = eventsData?.content || [];
+
+  // Helper function to format event time as MM:SS
+  const formatEventTime = (event: IMatchEvent): string => {
+    // For MATCH_STARTED, always show 0:00
+    if (event.eventType === "MATCH_STARTED") {
+      return "0:00";
+    }
+    
+    // For MATCH_COMPLETED, calculate duration from completedAt - startedAt (like in match details)
+    if (event.eventType === "MATCH_COMPLETED") {
+      if (startedAt && completedAt) {
+        try {
+          const startTime = new Date(startedAt).getTime();
+          const endTime = new Date(completedAt).getTime();
+          const diffSeconds = Math.floor((endTime - startTime) / 1000);
+          if (diffSeconds >= 0) {
+            const minutes = Math.floor(diffSeconds / 60);
+            const seconds = diffSeconds % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+          }
+        } catch (e) {
+          // Fall through to other methods
+        }
+      }
+      // Fallback to matchDurationMinutes or elapsedTimeSeconds
+      if (matchDurationMinutes) {
+        const minutes = matchDurationMinutes;
+        const seconds = 0; // Completed at full duration
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      } else if (elapsedTimeSeconds !== undefined && elapsedTimeSeconds !== null) {
+        const minutes = Math.floor(elapsedTimeSeconds / 60);
+        const seconds = elapsedTimeSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      } else if (event.eventTime > 0) {
+        // Fallback to eventTime if available
+        const minutes = event.eventTime;
+        return `${minutes}:00`;
+      }
+      return "0:00";
+    }
+    
+    // For regular events, try to calculate seconds from timestamps if available
+    if (startedAt && event.createdDate) {
+      try {
+        const startTime = new Date(startedAt).getTime();
+        const eventTime = new Date(event.createdDate).getTime();
+        const diffSeconds = Math.floor((eventTime - startTime) / 1000);
+        if (diffSeconds >= 0) {
+          const minutes = Math.floor(diffSeconds / 60);
+          const seconds = diffSeconds % 60;
+          return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+      } catch (e) {
+        // Fall through to default
+      }
+    }
+    
+    // Fallback: eventTime is in minutes, show as MM:00
+    const minutes = event.eventTime || 0;
+    return `${minutes}:00`;
+  };
 
   const handleDeleteEvent = async (eventId: number) => {
     Modal.confirm({
@@ -265,7 +334,7 @@ export default function MatchEventTimeline({
                         color: "white",
                       }}
                     >
-                      {event.eventTime}'
+                      {formatEventTime(event)}
                     </Text>
                   </div>
                 </div>
@@ -582,7 +651,7 @@ export default function MatchEventTimeline({
                           color: "white",
                         }}
                       >
-                        {event.eventTime}'
+                        {formatEventTime(event)}
                       </Text>
                     </div>
                   </div>
@@ -621,7 +690,7 @@ export default function MatchEventTimeline({
                           color: "white",
                         }}
                       >
-                        {event.eventTime}'
+                        {formatEventTime(event)}
                       </Text>
                     </div>
                   </div>

@@ -57,11 +57,12 @@ function RoundNode({ data, selected }: RoundNodeProps) {
   const getStatusColor = () => {
     switch (data.status) {
       case "COMPLETED":
-        return "#52c41a";
+        return token.colorSuccess;
       case "ONGOING":
-        return "#1890ff";
+        return token.colorInfo;
       default:
-        return "#d9d9d9";
+        // NOT_STARTED or other statuses - use theme-aware secondary text color
+        return token.colorTextSecondary;
     }
   };
 
@@ -227,11 +228,11 @@ function RoundNode({ data, selected }: RoundNodeProps) {
             cursor: "pointer",
             transition: "all 0.2s ease",
           }}
-          bodyStyle={{ padding: "12px" }}
+          bodyStyle={{ padding: "16px", minHeight: "200px" }}
         >
-          <Space direction="vertical" size={8} style={{ width: "100%" }}>
+          <Space direction="vertical" size={12} style={{ width: "100%" }}>
             {/* Header */}
-            <Space style={{ width: "100%", justifyContent: "space-between" }}>
+            <Space direction="vertical" size={8} style={{ width: "100%" }}>
               <Space>
                 <TrophyOutlined style={{ fontSize: 16, color: token.colorPrimary }} />
                 <Text strong style={{ fontSize: 14, color: token.colorText }}>

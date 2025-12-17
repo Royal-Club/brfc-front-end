@@ -6,7 +6,7 @@ import {
   DropResult,
 } from "react-beautiful-dnd";
 import { useParams } from "react-router-dom";
-import { Button, Card, Col, Grid, Row, Space, theme, Typography, Tabs } from "antd";
+import { Button, Card, Col, Grid, Row, Space, theme, Typography, Tabs, Tooltip } from "antd";
 import useTournamentTeams from "../../hooks/useTournamentTeams";
 import "./tournament.css";
 import CreateTeamComponent from "./Atoms/CreateTeamComponent";
@@ -49,10 +49,25 @@ function SingleTournament() {
     return savedTab || "team-building";
   });
 
+  // Check if teams are added - disable fixtures tab if no teams
+  const hasTeams = Array.isArray(teams) && teams.length > 0;
+
   const handleTabChange = (key: string) => {
+    // Prevent switching to fixtures tab if no teams are added
+    if (key === "fixtures" && !hasTeams) {
+      return;
+    }
     setActiveTab(key);
     localStorage.setItem(`tournament-${tournamentId}-active-tab`, key);
   };
+
+  // If fixtures tab is active but no teams, switch back to team-building
+  useEffect(() => {
+    if (activeTab === "fixtures" && !hasTeams) {
+      setActiveTab("team-building");
+      localStorage.setItem(`tournament-${tournamentId}-active-tab`, "team-building");
+    }
+  }, [activeTab, hasTeams, tournamentId]);
 
   useEffect(() => {
     refetchTournament();
@@ -318,7 +333,12 @@ function SingleTournament() {
           },
           {
             key: "fixtures",
-            label: "Fixtures",
+            label: (
+              <Tooltip title={!hasTeams ? "Please add teams in Team Building tab first" : ""}>
+                <span>Fixtures</span>
+              </Tooltip>
+            ),
+            disabled: !hasTeams,
             children: <FixturesPanel tournamentId={tournamentId} teams={teams} />,
           },
         ]}

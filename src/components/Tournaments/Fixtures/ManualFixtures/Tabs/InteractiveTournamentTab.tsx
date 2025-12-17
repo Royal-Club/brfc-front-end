@@ -16,6 +16,8 @@ import {
   Divider,
   Alert,
   Table,
+  Modal,
+  theme,
 } from "antd";
 import {
   PlusOutlined,
@@ -61,12 +63,15 @@ import {
   useGetGroupStandingsQuery,
   useCreateGroupMutation,
   useRemoveTeamFromGroupMutation,
+  useRemoveTeamFromRoundMutation,
 } from "../../../../../state/features/manualFixtures/manualFixturesSlice";
 import { useGetFixturesQuery } from "../../../../../state/features/fixtures/fixturesSlice";
 import { IFixture } from "../../../../../state/features/fixtures/fixtureTypes";
 import { formatMatchTime, isMatchOngoing } from "../../../../../utils/matchTimeUtils";
 import { GroupFormat } from "../../../../../state/features/manualFixtures/manualFixtureTypes";
 import { useNavigate } from "react-router-dom";
+import { useGetTournamentSummaryQuery } from "../../../../../state/features/tournaments/tournamentsSlice";
+import { useGetVanuesQuery } from "../../../../../state/features/vanues/vanuesSlice";
 
 const { Title, Text } = Typography;
 
@@ -90,6 +95,7 @@ export default function InteractiveTournamentTab({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const { token } = theme.useToken();
   
   // Get UI state from Redux
   const {
@@ -107,6 +113,7 @@ export default function InteractiveTournamentTab({
   const [startRound, { isLoading: isStartingRound }] = useStartRoundMutation();
   const [completeRound, { isLoading: isCompletingRound }] = useCompleteRoundMutation();
   const [removeTeamFromGroup, { isLoading: isRemovingTeam }] = useRemoveTeamFromGroupMutation();
+  const [removeTeamFromRound, { isLoading: isRemovingTeamFromRound }] = useRemoveTeamFromRoundMutation();
   const [createGroup] = useCreateGroupMutation();
 
   // Get standings for selected group (only when group is selected)
@@ -122,6 +129,22 @@ export default function InteractiveTournamentTab({
     { skip: !isActive }
   );
   const fixtures = fixturesData?.content || [];
+
+  // Fetch tournament summary to get venue information
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery(
+    { tournamentId },
+    { skip: !tournamentId }
+  );
+  
+  // Fetch venues to match tournament venue name with venueId
+  const { data: venuesData } = useGetVanuesQuery();
+  const venues = venuesData?.content || [];
+  
+  // Get tournament venue name and find matching venueId
+  const tournamentVenueName = tournamentSummary?.content?.[0]?.venueName;
+  const tournamentVenueId = tournamentVenueName
+    ? venues.find((v) => v.name === tournamentVenueName)?.id || null
+    : null;
   
   // Check if there are ongoing matches for display purposes
   const hasOngoingMatches = fixtures.some(
@@ -318,6 +341,36 @@ export default function InteractiveTournamentTab({
     } catch (error: any) {
       // Error handled by API slice
     }
+  };
+
+  const handleRemoveTeamFromRound = async (teamId: number, teamName?: string) => {
+    if (!selectedNode || selectedNode.type !== "round") {
+      message.error("No round selected");
+      return;
+    }
+
+    const round = tournamentStructure?.rounds.find((r) => r.id === selectedNode.id);
+    if (!round) {
+      message.error("Round not found");
+      return;
+    }
+
+    Modal.confirm({
+      title: "Remove Team?",
+      content: `Are you sure you want to remove "${teamName || 'Team'}" from this round?`,
+      okText: "Remove",
+      okType: "danger",
+      onOk: async () => {
+        try {
+          await removeTeamFromRound({ roundId: round.id, teamId }).unwrap();
+          message.success(`Team "${teamName || 'Team'}" removed successfully`);
+          onRefresh();
+        } catch (error: any) {
+          console.error("Failed to remove team:", error);
+          // Error already shown by API slice
+        }
+      },
+    });
   };
 
   const handleRemoveTeamFromGroup = async (groupId: number, teamId: number, teamName?: string) => {
@@ -631,11 +684,24 @@ export default function InteractiveTournamentTab({
     const previousRound = round.sequenceOrder && round.sequenceOrder > 1
       ? tournamentStructure?.rounds.find((r) => r.sequenceOrder === round.sequenceOrder - 1)
       : null;
-    const canStartRound = canStart && (round.sequenceOrder === 1 || (previousRound?.status === RoundStatus.COMPLETED));
+    
+    // Check if round has groups (for GROUP_BASED) or teams (for DIRECT_KNOCKOUT)
+    const hasGroups = isGroupBased && round.groups && round.groups.length > 0;
+    const hasTeams = !isGroupBased && round.teams && round.teams.length > 0;
+    const hasRequiredStructure = isGroupBased ? hasGroups : hasTeams;
+    
+    const canStartRound = canStart && 
+      (round.sequenceOrder === 1 || (previousRound?.status === RoundStatus.COMPLETED)) &&
+      hasRequiredStructure;
+    
     const startRoundReason = !canStart
       ? `Round is already ${round.status}`
       : previousRound && previousRound.status !== RoundStatus.COMPLETED
       ? `Previous round "${previousRound.roundName}" must be completed first`
+      : !hasRequiredStructure
+      ? isGroupBased 
+        ? "Round must have at least one group before it can be started"
+        : "Round must have at least one team before it can be started"
       : null;
 
     return (
@@ -711,19 +777,13 @@ export default function InteractiveTournamentTab({
             </>
           )}
 
-          {/* Import Teams from Previous Round - Only show for Round 2+ when previous round is completed */}
-          {round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status === RoundStatus.COMPLETED && (
+          {/* Import Teams from Previous Round - Only show for GROUP_BASED rounds */}
+          {isGroupBased && round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status === RoundStatus.COMPLETED && (
             <Button
               type="default"
               icon={<UserAddOutlined />}
               onClick={() => {
-                if (isGroupBased) {
-                  message.info("Please select a group first, then use 'Assign Teams' to import teams from the previous round");
-                } else {
-                  // For DIRECT_KNOCKOUT, open team assignment for the round
-                  dispatch(setSelectedNode({ type: "round", id: round.id, data: round }));
-                  dispatch(setShowTeamAssignment(true));
-                }
+                message.info("Please select a group first, then use 'Assign Teams' to import teams from the previous round");
               }}
               block
             >
@@ -731,7 +791,7 @@ export default function InteractiveTournamentTab({
             </Button>
           )}
 
-          {round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status !== RoundStatus.COMPLETED && (
+          {isGroupBased && round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status !== RoundStatus.COMPLETED && (
             <Alert
               message="Import Teams Unavailable"
               description={`Previous round "${previousRound.roundName}" must be completed first before importing teams.`}
@@ -769,7 +829,9 @@ export default function InteractiveTournamentTab({
                 }}
                 block
               >
-                Assign Teams
+                {round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status === RoundStatus.COMPLETED
+                  ? "Import/Assign Teams"
+                  : "Assign Teams"}
               </Button>
               {round.teams && round.teams.length >= 2 && round.totalMatches === 0 && (
                 <Button
@@ -913,7 +975,16 @@ export default function InteractiveTournamentTab({
             return assignedTeams.length > 0 ? (
               <Space wrap>
                 {assignedTeams.map((team: any) => (
-                  <Tag key={team.teamId || team.id} color="default" style={{ marginBottom: 4, fontSize: 13, padding: "4px 12px" }}>
+                  <Tag 
+                    key={team.teamId || team.id} 
+                    color="default" 
+                    closable
+                    onClose={(e) => {
+                      e.preventDefault();
+                      handleRemoveTeamFromRound(team.teamId || team.id, team.teamName);
+                    }}
+                    style={{ marginBottom: 4, fontSize: 13, padding: "4px 12px" }}
+                  >
                     {team.teamName}
                   </Tag>
                 ))}
@@ -953,7 +1024,7 @@ export default function InteractiveTournamentTab({
                       key: "goalDifference",
                       width: 70,
                       render: (gd: number) => (
-                        <Text strong style={{ color: gd > 0 ? "#52c41a" : gd < 0 ? "#ff4d4f" : undefined }}>
+                        <Text strong style={{ color: gd > 0 ? token.colorSuccess : gd < 0 ? token.colorError : undefined }}>
                           {gd > 0 ? `+${gd}` : gd}
                         </Text>
                       ),
@@ -1001,13 +1072,13 @@ export default function InteractiveTournamentTab({
                     onClick={() => navigate(`/fixtures/${match.id}`)}
                     style={{
                       cursor: "pointer",
-                      border: "1px solid #52c41a",
-                      backgroundColor: "#f6ffed",
+                      border: `1px solid ${token.colorSuccess}`,
+                      backgroundColor: token.colorSuccessBg,
                     }}
                   >
                     <Space style={{ width: "100%", justifyContent: "space-between" }}>
                       <Space>
-                        <PlayCircleOutlined style={{ color: "#52c41a" }} />
+                        <PlayCircleOutlined style={{ color: token.colorSuccess }} />
                         <Text strong>{match.homeTeamName}</Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {match.homeTeamScore} - {match.awayTeamScore}
@@ -1130,7 +1201,7 @@ export default function InteractiveTournamentTab({
         key: "goalDifference",
         width: 70,
         render: (gd: number) => (
-          <Text strong style={{ color: gd > 0 ? "#52c41a" : gd < 0 ? "#ff4d4f" : undefined }}>
+          <Text strong style={{ color: gd > 0 ? token.colorSuccess : gd < 0 ? token.colorError : undefined }}>
             {gd > 0 ? `+${gd}` : gd}
           </Text>
         ),
@@ -1287,13 +1358,13 @@ export default function InteractiveTournamentTab({
                     onClick={() => navigate(`/fixtures/${match.id}`)}
                     style={{
                       cursor: "pointer",
-                      border: "1px solid #52c41a",
-                      backgroundColor: "#f6ffed",
+                      border: `1px solid ${token.colorSuccess}`,
+                      backgroundColor: token.colorSuccessBg,
                     }}
                   >
                     <Space style={{ width: "100%", justifyContent: "space-between" }}>
                       <Space>
-                        <PlayCircleOutlined style={{ color: "#52c41a" }} />
+                        <PlayCircleOutlined style={{ color: token.colorSuccess }} />
                         <Text strong>{match.homeTeamName}</Text>
                         <Text style={{ fontWeight: "bold" }}>
                           {match.homeTeamScore} - {match.awayTeamScore}
@@ -1489,6 +1560,7 @@ export default function InteractiveTournamentTab({
           dispatch(setShowRoundMatchGeneration(false));
           dispatch(setSelectedNode(null));
         }}
+        tournamentVenueId={tournamentVenueId}
       />
     </div>
   );

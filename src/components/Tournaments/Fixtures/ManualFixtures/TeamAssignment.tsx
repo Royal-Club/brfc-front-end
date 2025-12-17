@@ -24,6 +24,7 @@ import {
   useAssignTeamsToGroupMutation,
   useAssignTeamsToRoundMutation,
   useRemoveTeamFromGroupMutation,
+  useRemoveTeamFromRoundMutation,
   useGetGroupByIdQuery,
   useGetRoundByIdQuery,
   useGetGroupStandingsQuery,
@@ -60,6 +61,7 @@ export default function TeamAssignment({
   const [assignTeamsToGroup, { isLoading: isAssigningToGroup }] = useAssignTeamsToGroupMutation();
   const [assignTeamsToRound, { isLoading: isAssigningToRound }] = useAssignTeamsToRoundMutation();
   const [removeTeam, { isLoading: isRemoving }] = useRemoveTeamFromGroupMutation();
+  const [removeTeamFromRound] = useRemoveTeamFromRoundMutation();
 
   const { data: groupData, isLoading: isFetchingGroup } = useGetGroupByIdQuery(
     { groupId: groupId! },
@@ -511,9 +513,19 @@ export default function TeamAssignment({
 
   const handleRemoveTeam = async (teamId: number, teamName?: string) => {
     if (isDirectKnockout) {
-      // For direct knockout rounds, we might need a different endpoint
-      // For now, show a message
-      message.warning("Removing teams from direct knockout rounds is not yet supported");
+      if (!roundId) {
+        message.error("No round selected");
+        return;
+      }
+
+      try {
+        await removeTeamFromRound({ roundId, teamId }).unwrap();
+        message.success(`Team "${teamName || 'Team'}" removed successfully`);
+        onSuccess();
+      } catch (error: any) {
+        console.error("Failed to remove team:", error);
+        // Error already shown by API slice
+      }
       return;
     }
 

@@ -308,6 +308,24 @@ export const manualFixturesApi = apiWithTags.injectEndpoints({
     }),
 
     /**
+     * Remove team from round (for DIRECT_KNOCKOUT rounds)
+     * DELETE /api/rounds/{roundId}/teams/{teamId}
+     */
+    removeTeamFromRound: builder.mutation<
+      RemoveTeamResponse,
+      { roundId: number; teamId: number }
+    >({
+      query: ({ roundId, teamId }) => ({
+        url: `/rounds/${roundId}/teams/${teamId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (result, error, { roundId }) => [
+        { type: "rounds", id: roundId },
+        "tournament-structure",
+      ],
+    }),
+
+    /**
      * Create placeholder team
      * POST /api/groups/placeholder
      */
@@ -475,6 +493,7 @@ export const {
   useAssignTeamsToRoundMutation,
   useCreatePlaceholderTeamMutation,
   useRemoveTeamFromGroupMutation,
+  useRemoveTeamFromRoundMutation,
   useRecalculateGroupStandingsMutation,
   useGenerateGroupMatchesMutation,
   useGenerateRoundMatchesMutation,
