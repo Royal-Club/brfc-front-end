@@ -5,13 +5,14 @@ import {
   NodeIndexOutlined,
   UnorderedListOutlined,
   BarChartOutlined,
+  TrophyOutlined,
 } from "@ant-design/icons";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../../state/store";
-import { selectLoginInfo } from "../../../../state/slices/loginInfoSlice";
 import { useGetTournamentStructureQuery } from "../../../../state/features/manualFixtures/manualFixturesSlice";
 import { setActiveTab } from "../../../../state/features/manualFixtures/manualFixturesUISlice";
 import OverviewTab from "./Tabs/OverviewTab";
+import StatisticsTab from "./Tabs/StatisticsTab";
 import InteractiveTournamentTab from "./Tabs/InteractiveTournamentTab";
 import MatchesTab from "./Tabs/MatchesTab";
 
@@ -25,10 +26,6 @@ export default function ManualFixturePanel({
   teams,
 }: ManualFixturePanelProps) {
   const dispatch = useDispatch();
-  const loginInfo = useSelector(selectLoginInfo);
-  const isAdmin =
-    loginInfo.roles?.includes("ADMIN") ||
-    loginInfo.roles?.includes("SUPER_ADMIN");
 
   const activeTab = useSelector((state: RootState) => state.manualFixturesUI.activeTab);
 
@@ -47,18 +44,18 @@ export default function ManualFixturePanel({
     }
   }, [activeTab, refetch]);
 
-  if (!isAdmin) {
-    return (
-      <Card>
-        <Alert
-          message="Access Restricted"
-          description="Manual fixture management is only available to administrators."
-          type="warning"
-          showIcon
-        />
-      </Card>
-    );
-  }
+  // if (!isAdmin) {
+  //   return (
+  //     <Card>
+  //       <Alert
+  //         message="Access Restricted"
+  //         description="Manual fixture management is only available to administrators."
+  //         type="warning"
+  //         showIcon
+  //       />
+  //     </Card>
+  //   );
+  // }
 
   // Check if teams are added - disable fixtures tab if no teams
   const hasTeams = teams && teams.length > 0;
@@ -82,6 +79,21 @@ export default function ManualFixturePanel({
         />
       ),
     },
+    // {
+    //   key: "statistics",
+    //   label: (
+    //     <span>
+    //       <TrophyOutlined />
+    //       Statistics
+    //     </span>
+    //   ),
+    //   children: (
+    //     <StatisticsTab
+    //       tournamentId={tournamentId}
+    //       isActive={activeTab === "statistics"}
+    //     />
+    //   ),
+    // },
     {
       key: "tournament",
       label: (

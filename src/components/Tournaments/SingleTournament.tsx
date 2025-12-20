@@ -13,8 +13,10 @@ import CreateTeamComponent from "./Atoms/CreateTeamComponent";
 import PlayerCard from "./Atoms/PlayerCard";
 import TeamCard from "./Atoms/TeamCard";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import { RootState } from "../../state/store";
+import { setActiveMainTab } from "../../state/features/tournaments/tournamentUISlice";
 import PickerWheelModal from "./Atoms/pickerWheel/PickerWheelModal";
 import { FileExcelOutlined, RightSquareOutlined, TrophyOutlined } from "@ant-design/icons";
 import { exportToExcel, showBdLocalTime } from "../../utils/utils";
@@ -26,7 +28,9 @@ const { useBreakpoint } = Grid;
 function SingleTournament() {
   const { id = "" } = useParams();
   const tournamentId = Number(id);
+  const dispatch = useDispatch();
   const loginInfo = useSelector(selectLoginInfo);
+  const activeTab = useSelector((state: RootState) => state.tournamentUI.activeMainTab);
   const {
     token: { colorBgLayout },
   } = theme.useToken();
@@ -43,12 +47,6 @@ function SingleTournament() {
     refetchPlayer,
   } = useTournamentTeams(tournamentId);
 
-  // Persistent tab state
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    const savedTab = localStorage.getItem(`tournament-${tournamentId}-active-tab`);
-    return savedTab || "team-building";
-  });
-
   // Check if teams are added - disable fixtures tab if no teams
   const hasTeams = Array.isArray(teams) && teams.length > 0;
 
@@ -57,17 +55,8 @@ function SingleTournament() {
     if (key === "fixtures" && !hasTeams) {
       return;
     }
-    setActiveTab(key);
-    localStorage.setItem(`tournament-${tournamentId}-active-tab`, key);
+    dispatch(setActiveMainTab(key));
   };
-
-  // If fixtures tab is active but no teams, switch back to team-building
-  useEffect(() => {
-    if (activeTab === "fixtures" && !hasTeams) {
-      setActiveTab("team-building");
-      localStorage.setItem(`tournament-${tournamentId}-active-tab`, "team-building");
-    }
-  }, [activeTab, hasTeams, tournamentId]);
 
   useEffect(() => {
     refetchTournament();
@@ -225,7 +214,7 @@ function SingleTournament() {
                   refetchSummary={refetchTournament}
                 />
               )}
-              {loginInfo.roles.includes("ADMIN") && <PickerWheelModal />}
+              {loginInfo.roles.includes("ADMIN") && <PickerWheelModal teams={teams} />}
               <GoalKeeperDrawer tournamentId={tournamentId} />
               <Button onClick={handleExportTeams}>
                 <FileExcelOutlined />

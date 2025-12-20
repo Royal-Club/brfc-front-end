@@ -5,17 +5,20 @@ import localStorage from "redux-persist/es/storage";
 import apiSlice from "./api/apiSlice";
 import loginInfoSlice from "./slices/loginInfoSlice";
 import manualFixturesUISlice from "./features/manualFixtures/manualFixturesUISlice";
+import tournamentUISlice from "./features/tournaments/tournamentUISlice";
 
 const persistConfig = {
     key: "root",
     version: 1,
     storage: localStorage,
+    whitelist: ["loginInfo", "manualFixturesUI", "tournamentUI"], // Persist these slices
 };
 
 const rootReducer = combineReducers({
     [apiSlice.reducerPath]: apiSlice.reducer,
     loginInfo: loginInfoSlice,
     manualFixturesUI: manualFixturesUISlice,
+    tournamentUI: tournamentUISlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

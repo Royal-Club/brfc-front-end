@@ -72,6 +72,8 @@ import { GroupFormat } from "../../../../../state/features/manualFixtures/manual
 import { useNavigate } from "react-router-dom";
 import { useGetTournamentSummaryQuery } from "../../../../../state/features/tournaments/tournamentsSlice";
 import { useGetVanuesQuery } from "../../../../../state/features/vanues/vanuesSlice";
+import { selectLoginInfo } from "../../../../../state/slices/loginInfoSlice";
+import { hasAnyRole } from "../../../../../utils/roleUtils";
 
 const { Title, Text } = Typography;
 
@@ -96,6 +98,10 @@ export default function InteractiveTournamentTab({
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(Date.now());
   const { token } = theme.useToken();
+  const loginInfo = useSelector(selectLoginInfo);
+  
+  // Check if user can manage tournaments (ADMIN, SUPERADMIN, COORDINATOR)
+  const canManage = hasAnyRole(loginInfo.roles, ["ADMIN", "SUPERADMIN", "COORDINATOR"]);
   
   // Get UI state from Redux
   const {
@@ -239,11 +245,14 @@ export default function InteractiveTournamentTab({
       dispatch(setSelectedNode(null));
       onRefresh();
     } catch (error: any) {
-      // Error message already shown by API slice
-      // Additional handling if needed
-      if (error?.data?.message?.includes("previous round")) {
-        // Error already displayed by API slice
-      }
+      // Extract error message from backend response
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.error ||
+        error?.message ||
+        "Failed to start round";
+
+      message.error(errorMessage);
     }
   };
 
@@ -689,19 +698,36 @@ export default function InteractiveTournamentTab({
     const hasGroups = isGroupBased && round.groups && round.groups.length > 0;
     const hasTeams = !isGroupBased && round.teams && round.teams.length > 0;
     const hasRequiredStructure = isGroupBased ? hasGroups : hasTeams;
-    
-    const canStartRound = canStart && 
+
+    // For GROUP_BASED rounds, check if at least one group has matches
+    const hasGroupMatches = isGroupBased && hasGroups
+      ? round.groups!.some((group) => (group.totalMatches || 0) > 0)
+      : true; // Not applicable for DIRECT_KNOCKOUT or if no groups
+
+    // For DIRECT_KNOCKOUT rounds, check if round has matches
+    const hasRoundMatches = !isGroupBased
+      ? (round.totalMatches || 0) > 0
+      : true; // Not applicable for GROUP_BASED
+
+    const hasMatches = isGroupBased ? hasGroupMatches : hasRoundMatches;
+
+    const canStartRound = canStart &&
       (round.sequenceOrder === 1 || (previousRound?.status === RoundStatus.COMPLETED)) &&
-      hasRequiredStructure;
-    
+      hasRequiredStructure &&
+      hasMatches;
+
     const startRoundReason = !canStart
       ? `Round is already ${round.status}`
       : previousRound && previousRound.status !== RoundStatus.COMPLETED
       ? `Previous round "${previousRound.roundName}" must be completed first`
       : !hasRequiredStructure
-      ? isGroupBased 
+      ? isGroupBased
         ? "Round must have at least one group before it can be started"
         : "Round must have at least one team before it can be started"
+      : !hasMatches
+      ? isGroupBased
+        ? "You must generate matches for the groups in this round before starting it"
+        : "You must generate matches for this round before starting it"
       : null;
 
     return (
@@ -728,7 +754,7 @@ export default function InteractiveTournamentTab({
         <Divider />
 
         <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-          {canStart && (
+          {canManage && canStart && (
             <>
               <Tooltip title={startRoundReason || undefined}>
                 <Button
@@ -753,7 +779,7 @@ export default function InteractiveTournamentTab({
             </>
           )}
 
-          {canComplete && (
+          {canManage && canComplete && (
             <>
               <Button
                 type="primary"
@@ -778,7 +804,7 @@ export default function InteractiveTournamentTab({
           )}
 
           {/* Import Teams from Previous Round - Only show for GROUP_BASED rounds */}
-          {isGroupBased && round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status === RoundStatus.COMPLETED && (
+          {canManage && isGroupBased && round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status === RoundStatus.COMPLETED && (
             <Button
               type="default"
               icon={<UserAddOutlined />}
@@ -791,7 +817,7 @@ export default function InteractiveTournamentTab({
             </Button>
           )}
 
-          {isGroupBased && round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status !== RoundStatus.COMPLETED && (
+          {canManage && isGroupBased && round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status !== RoundStatus.COMPLETED && (
             <Alert
               message="Import Teams Unavailable"
               description={`Previous round "${previousRound.roundName}" must be completed first before importing teams.`}
@@ -801,33 +827,35 @@ export default function InteractiveTournamentTab({
           )}
 
 
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => handleEditRound(round.id)}
-            block
-          >
-            Edit Round
-          </Button>
-
-          {isGroupBased && (
-            <Button
-              icon={<PlusOutlined />}
-              onClick={() => handleCreateGroup(round.id)}
-              block
-            >
-              Add Group
-            </Button>
-          )}
-
-          {!isGroupBased && canStart && (
+          {canManage && (
             <>
               <Button
-                icon={<UserAddOutlined />}
-                onClick={() => {
-                  dispatch(setSelectedNode({ type: "round", id: round.id, data: round }));
-                  dispatch(setShowTeamAssignment(true));
-                }}
+                icon={<EditOutlined />}
+                onClick={() => handleEditRound(round.id)}
                 block
+              >
+                Edit Round
+              </Button>
+
+              {isGroupBased && (
+                <Button
+                  icon={<PlusOutlined />}
+                  onClick={() => handleCreateGroup(round.id)}
+                  block
+                >
+                  Add Group
+                </Button>
+              )}
+
+              {!isGroupBased && canStart && (
+                <>
+                  <Button
+                    icon={<UserAddOutlined />}
+                    onClick={() => {
+                      dispatch(setSelectedNode({ type: "round", id: round.id, data: round }));
+                      dispatch(setShowTeamAssignment(true));
+                    }}
+                    block
               >
                 {round.sequenceOrder && round.sequenceOrder > 1 && previousRound && previousRound.status === RoundStatus.COMPLETED
                   ? "Import/Assign Teams"
@@ -860,6 +888,8 @@ export default function InteractiveTournamentTab({
               Delete Round
             </Button>
           </Popconfirm>
+            </>
+          )}
         </Space>
 
         {/* Assigned Teams Section */}

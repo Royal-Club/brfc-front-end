@@ -224,7 +224,8 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
               display: "flex",
               alignItems: "center",
               justifyContent: "flex-end",
-              gap: 24,
+              gap: 40,
+              paddingRight: 24,
             }}
           >
             {/* Animated Background Glow for Home */}
@@ -435,7 +436,8 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
               display: "flex",
               alignItems: "center",
               justifyContent: "flex-start",
-              gap: 24,
+              gap: 40,
+              paddingLeft: 24,
             }}
           >
             {/* Animated Background Glow for Away */}
@@ -570,14 +572,6 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
             >
               {match.tournamentName}
             </div>
-            <Space size={12} style={{ marginTop: 4 }}>
-              <Space size={4}>
-                <EnvironmentOutlined style={{ color: "rgba(255,255,255,0.8)", fontSize: 11 }} />
-                <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 11 }}>
-                  {match.venueName}
-                </span>
-              </Space>
-            </Space>
           </div>
         </Space>
 
@@ -597,23 +591,6 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
             </div>
             <div style={{ color: "white", fontSize: 14, fontWeight: 700 }}>
               {match.matchOrder}
-            </div>
-          </div>
-
-          {/* Duration */}
-          <div
-            style={{
-              textAlign: "center",
-              padding: "6px 12px",
-              background: "rgba(255, 255, 255, 0.15)",
-              borderRadius: 6,
-            }}
-          >
-            <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, marginBottom: 2 }}>
-              Duration
-            </div>
-            <div style={{ color: "white", fontSize: 14, fontWeight: 700 }}>
-              {match.matchDurationMinutes}'
             </div>
           </div>
 

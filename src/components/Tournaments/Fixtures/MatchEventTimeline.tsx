@@ -409,22 +409,7 @@ export default function MatchEventTimeline({
                     >
                       {event.eventType === "MATCH_STARTED" ? "🚀 Match Started" : "🏁 Match Completed"}
                     </Text>
-                    {event.playerName && (
-                      <Text
-                        type="secondary"
-                        style={{
-                          fontSize: 13,
-                          display: "block",
-                          marginTop: 6,
-                          fontStyle: "italic",
-                          wordBreak: "normal",
-                          whiteSpace: "normal",
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        by {event.playerName}
-                      </Text>
-                    )}
+                    
                     {event.description && (
                       <Text
                         type="secondary"

@@ -20,12 +20,15 @@ import {
   InfoCircleOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
+import { useSelector } from "react-redux";
 import RoundNode from "./Components/RoundNode";
 import GroupNode from "./Components/GroupNode";
 import TeamNode from "./Components/TeamNode";
 import { TournamentStructureResponse } from "../../../../state/features/manualFixtures/manualFixtureTypes";
 import { IFixture } from "../../../../state/features/fixtures/fixtureTypes";
 import { isMatchOngoing } from "../../../../utils/matchTimeUtils";
+import { selectLoginInfo } from "../../../../state/slices/loginInfoSlice";
+import { hasAnyRole } from "../../../../utils/roleUtils";
 
 const { useToken } = theme;
 
@@ -66,9 +69,13 @@ export default function TournamentFlowVisualization({
   onRefresh,
 }: TournamentFlowVisualizationProps) {
   const { token } = useToken();
+  const loginInfo = useSelector(selectLoginInfo);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Check if user can manage tournaments (ADMIN, SUPERADMIN)
+  const canManage = hasAnyRole(loginInfo.roles, ["ADMIN", "SUPERADMIN"]);
   
   // Get background color from theme - use colorBgLayout for the main background
   // In dark mode it's #000000, in light mode it's #f0f2f5
@@ -296,8 +303,8 @@ export default function TournamentFlowVisualization({
     setIsFullscreen(!isFullscreen);
   };
 
-  const containerHeight = isFullscreen ? "100vh" : "100%";
-  const minHeight = isFullscreen ? "100vh" : 600;
+  const containerHeight = isFullscreen ? "100vh" : "400px";
+  const minHeight = isFullscreen ? "100vh" : 400;
 
   return (
     <div
@@ -344,7 +351,7 @@ export default function TournamentFlowVisualization({
         />
 
         {/* Custom Panel with Controls */}
-        <Panel position="top-right">
+     {canManage && (    <Panel position="top-right">
           <Card size="small" style={{ minWidth: 200 }}>
             <Space direction="vertical" size={8} style={{ width: "100%" }}>
               <Space size={8} wrap>
@@ -370,15 +377,17 @@ export default function TournamentFlowVisualization({
                 </Tooltip>
               </Space>
 
-              <div style={{ fontSize: 11, color: "#8c8c8c" }}>
-                <InfoCircleOutlined /> Hover nodes for controls • Click for details
-              </div>
+             
+                <div style={{ fontSize: 11, color: "#8c8c8c" }}>
+                  <InfoCircleOutlined /> Hover nodes for controls • Click for details
+                </div>
+          
             </Space>
           </Card>
         </Panel>
-
+    )}
         {/* Legend Panel */}
-        <Panel position="bottom-left">
+        {/* <Panel position="bottom-left">
           <Card size="small" title="Legend" style={{ minWidth: 180 }}>
             <Space direction="vertical" size={4}>
               <Space size={4}>
@@ -428,7 +437,7 @@ export default function TournamentFlowVisualization({
               </Space>
             </Space>
           </Card>
-        </Panel>
+        </Panel> */}
       </ReactFlow>
     </div>
   );

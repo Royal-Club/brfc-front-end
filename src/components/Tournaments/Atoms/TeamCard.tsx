@@ -18,6 +18,7 @@ import { MoreOutlined } from "@ant-design/icons";
 import DoubleClickTextInputField from "../../CommonAtoms/DoubleClickTextInputField";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
+import { canManageTeams } from "../../../utils/roleUtils";
 
 interface TeamCardProps {
     team: Team;
@@ -48,6 +49,8 @@ const TeamCard: React.FC<TeamCardProps> = ({
     const {
         token: { colorBgLayout },
       } = theme.useToken();
+
+    const canManage = canManageTeams(loginInfo.roles);
 
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -84,7 +87,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
                 <Dropdown
                     overlay={teamMenu}
                     trigger={
-                        loginInfo.roles.includes("ADMIN")
+                        canManage
                             ? ["click"]
                             : []
                     }
@@ -101,10 +104,10 @@ const TeamCard: React.FC<TeamCardProps> = ({
                             initialName={team.teamName}
                             onNameChange={handleRenameTeamClick}
                             isDiabled={
-                                !loginInfo.roles.includes("ADMIN")
+                                !canManage
                             }
                         />
-                        {loginInfo.roles.includes("ADMIN") && (
+                        {canManage && (
                             <Button
                                 onClick={(e) => e.preventDefault()}
                                 icon={<MoreOutlined />}
@@ -121,7 +124,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
         >
             <Droppable
                 droppableId={team.teamId.toString()}
-                isDropDisabled={!loginInfo.roles.includes("ADMIN")}
+                isDropDisabled={!canManage}
             >
                 {(provided) => (
                     <div

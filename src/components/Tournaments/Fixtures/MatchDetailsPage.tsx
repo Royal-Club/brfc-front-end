@@ -17,6 +17,7 @@ import { useSelector } from "react-redux";
 import { useGetMatchQuery } from "../../../state/features/fixtures/fixturesSlice";
 import { useGetTournamentSummaryQuery } from "../../../state/features/tournaments/tournamentsSlice";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
+import { canConductMatches } from "../../../utils/roleUtils";
 import MatchEventTimeline from "./MatchEventTimeline";
 import QuickEventRecorder from "./QuickEventRecorder";
 import ElectricTeamBanner from "./ElectricTeamBanner";
@@ -27,7 +28,7 @@ export default function MatchDetailsPage() {
   const navigate = useNavigate();
   const [refetchKey, setRefetchKey] = useState(0);
   const loginInfo = useSelector(selectLoginInfo);
-  const isAdmin = loginInfo.roles?.includes("ADMIN");
+  const canConduct = canConductMatches(loginInfo.roles);
   const { token } = useToken();
 
   const { data: matchResponse, isLoading, refetch } = useGetMatchQuery(
@@ -73,7 +74,7 @@ export default function MatchDetailsPage() {
       <ElectricTeamBanner
         match={match}
         colorBgContainer={token.colorBgContainer}
-        isAdmin={isAdmin}
+        isAdmin={canConduct}
         onRefresh={handleRefresh}
       />
 
@@ -108,8 +109,8 @@ export default function MatchDetailsPage() {
               ),
             },
 
-            // Second Tab: Live Control & Events (Admin Only)
-            ...(isAdmin
+            // Second Tab: Live Control & Events (Admin/Coordinator Only)
+            ...(canConduct
               ? [
                   {
                     key: "live",
@@ -143,8 +144,8 @@ export default function MatchDetailsPage() {
                     disabled: true,
                     children: (
                       <Alert
-                        message="Admin Access Required"
-                        description="Only administrators can access live match controls and event recording."
+                        message="Access Required"
+                        description="Only administrators and coordinators can access live match controls and event recording."
                         type="warning"
                         showIcon
                       />

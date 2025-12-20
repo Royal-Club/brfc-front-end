@@ -10,7 +10,7 @@ import {
   Popconfirm,
   message,
 } from "antd";
-import { EyeOutlined, EditOutlined, PlayCircleOutlined, PlusOutlined, MinusOutlined, DragOutlined } from "@ant-design/icons";
+import { EditOutlined, PlayCircleOutlined, PlusOutlined, MinusOutlined, DragOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { ColumnsType } from "antd/es/table";
 import { IFixture, MatchStatus } from "../../../state/features/fixtures/fixtureTypes";
@@ -20,6 +20,9 @@ import { useNavigate } from "react-router-dom";
 import { useDeleteMatchMutation, useUpdateMatchOrderMutation } from "../../../state/features/fixtures/fixturesSlice";
 import AddMatchModal from "./AddMatchModal";
 import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
+import { canManageFixtures } from "../../../utils/roleUtils";
 
 interface FixturesTableProps {
   fixtures: IFixture[];
@@ -51,6 +54,8 @@ export default function FixturesTable({
   enableDragDrop = false,
 }: FixturesTableProps) {
   const navigate = useNavigate();
+  const loginInfo = useSelector(selectLoginInfo);
+  const canManage = canManageFixtures(loginInfo.roles);
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [deleteMatch, { isLoading: isDeleting }] = useDeleteMatchMutation();
@@ -261,27 +266,19 @@ export default function FixturesTable({
       },
       sorter: (a, b) => a.matchStatus.localeCompare(b.matchStatus),
     },
-    {
+    ...(canManage ? [{
       title: "Action",
       key: "action",
-      width: enableAddRemove ? 180 : 120,
-      render: (_, record) => (
+      width: enableAddRemove ? 150 : 80,
+      render: (_: any, record: IFixture) => (
         <Space size="small">
           <Button
             type="link"
-            icon={<EyeOutlined />}
-            onClick={() => {
-              console.log('Navigating to:', `/fixtures/${record.id}`); // Debug log
-              navigate(`/fixtures/${record.id}`);
-            }}
-            size="small"
-          >
-            View
-          </Button>
-          <Button
-            type="link"
             icon={<EditOutlined />}
-            onClick={() => onEditFixture?.(record)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditFixture?.(record);
+            }}
             size="small"
           >
             Edit
@@ -299,6 +296,7 @@ export default function FixturesTable({
                 type="link"
                 danger
                 icon={<MinusOutlined />}
+                onClick={(e) => e.stopPropagation()}
                 size="small"
                 loading={isDeleting}
               >
@@ -308,7 +306,7 @@ export default function FixturesTable({
           )}
         </Space>
       ),
-    },
+    }] : []),
   ];
 
   const displayFixtures = enableDragDrop ? localFixtures : fixtures;
@@ -316,7 +314,7 @@ export default function FixturesTable({
   return (
     <>
       <Spin spinning={isLoading || isUpdatingOrder} tip="Loading fixtures...">
-        {enableAddRemove && (
+        {enableAddRemove && canManage && (
           <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
             <Button
               type="primary"
@@ -355,7 +353,7 @@ export default function FixturesTable({
                         row: (props: any) => {
                           const index = displayFixtures.findIndex((f) => f.id === props['data-row-key']);
                           if (index === -1) return <tr {...props} />;
-                          
+
                           return (
                             <Draggable draggableId={String(props['data-row-key'])} index={index}>
                               {(provided, snapshot) => (
@@ -367,6 +365,14 @@ export default function FixturesTable({
                                     ...props.style,
                                     ...provided.draggableProps.style,
                                     backgroundColor: snapshot.isDragging ? '#f0f0f0' : props.style?.backgroundColor || 'transparent',
+                                    cursor: 'pointer',
+                                  }}
+                                  onClick={(e: React.MouseEvent) => {
+                                    // Only navigate if not clicking on a button or drag handle
+                                    const target = e.target as HTMLElement;
+                                    if (!target.closest('button') && !target.closest('[data-no-click]')) {
+                                      navigate(`/fixtures/${props['data-row-key']}`);
+                                    }
                                   }}
                                 >
                                   {React.Children.map(props.children, (child: any, i) => {
@@ -374,10 +380,11 @@ export default function FixturesTable({
                                       return React.cloneElement(child, {
                                         ...child.props,
                                         children: (
-                                          <div 
-                                            {...provided.dragHandleProps} 
-                                            style={{ 
-                                              cursor: 'grab', 
+                                          <div
+                                            {...provided.dragHandleProps}
+                                            data-no-click="true"
+                                            style={{
+                                              cursor: 'grab',
                                               display: 'flex',
                                               alignItems: 'center',
                                               justifyContent: 'center',
@@ -394,10 +401,10 @@ export default function FixturesTable({
                                             }}
                                           >
                                             <Tooltip title="Drag to reorder">
-                                              <DragOutlined 
-                                                style={{ 
+                                              <DragOutlined
+                                                style={{
                                                   cursor: 'grab',
-                                                  color: '#8c8c8c', 
+                                                  color: '#8c8c8c',
                                                   fontSize: 18
                                                 }}
                                               />
@@ -417,12 +424,10 @@ export default function FixturesTable({
                     }}
                     onRow={(record) => ({
                       onClick: () => {
-                        if (isMatchOngoing(record.matchStatus)) {
-                          navigate(`/fixtures/${record.id}`);
-                        }
+                        navigate(`/fixtures/${record.id}`);
                       },
                       style: {
-                        cursor: isMatchOngoing(record.matchStatus) ? "pointer" : "default",
+                        cursor: "pointer",
                       },
                     })}
                   />
@@ -448,18 +453,16 @@ export default function FixturesTable({
             size="small"
             onRow={(record) => ({
               onClick: () => {
-                if (isMatchOngoing(record.matchStatus)) {
-                  navigate(`/fixtures/${record.id}`);
-                }
+                navigate(`/fixtures/${record.id}`);
               },
               style: {
-                cursor: isMatchOngoing(record.matchStatus) ? "pointer" : "default",
+                cursor: "pointer",
               },
             })}
           />
         )}
       </Spin>
-      {enableAddRemove && tournamentId && teams.length > 0 && (
+      {enableAddRemove && canManage && tournamentId && teams.length > 0 && (
         <AddMatchModal
           tournamentId={tournamentId}
           roundId={roundId}
