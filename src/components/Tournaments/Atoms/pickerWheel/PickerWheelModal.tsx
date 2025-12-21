@@ -1,11 +1,9 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Modal, Button, Input, List, Radio, Space } from "antd";
+import { Modal, Button, Input, List, Radio, Space, theme } from "antd";
 import PickerWheel from "./PickerWheel";
 import "./pickerWheelModal.css";
 import { CheckOutlined, DeleteOutlined, UnorderedListOutlined } from "@ant-design/icons";
 import LogoImage from "../../../../assets/logo.png";
-import colors from "../../../../utils/colors";
-import WinnerFrequencyChart from "./WinnerFrequencyChart";
 import { useMediaQuery } from 'react-responsive'
 import { Team } from "../../tournamentTypes";
 
@@ -30,6 +28,11 @@ const defaultColors = [
 
 const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
     const isMobile = useMediaQuery({ query: '(max-width: 767px)' })
+    const { token } = theme.useToken();
+
+    // Detect dark mode by checking if background is dark
+    const isDarkMode = token.colorBgContainer === '#141414' || token.colorBgContainer === '#1f1f1f';
+    const headerBgColor = isDarkMode ? '#001529' : token.colorPrimary;
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isWinnerModalVisible, setIsWinnerModalVisible] = useState(false);
@@ -141,7 +144,7 @@ const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
             <Modal
                 title={
                     <div style={{
-                        background: "#1e3a8a",
+                        background: headerBgColor,
                         padding: "12px 20px",
                         margin: "-20px -24px 20px -24px",
                         borderRadius: "8px 8px 0 0",
@@ -186,6 +189,7 @@ const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
                             fontSize={isMobile ? 15 : 20}
                             centerImageSrc={LogoImage}
                             fontFamily="Segoe UI"
+                            wheelBackground={headerBgColor}
                         />
                     </div>
 
@@ -236,8 +240,6 @@ const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
                                         type="primary"
                                         icon={<CheckOutlined />}
                                         style={{
-                                            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                                            border: "none",
                                             borderRadius: "8px",
                                         }}
                                     ></Button>
@@ -311,10 +313,7 @@ const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
                                         maxHeight: "400px",
                                         overflowY: "auto",
                                         height: "100%",
-                                        backgroundColor:
-                                            segments.length > 0
-                                                ? "transparent"
-                                                : colors.background,
+                                        backgroundColor: "transparent",
                                     }}
                                 />
                             </div>
@@ -339,7 +338,7 @@ const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
             <Modal
                 title={
                     <div style={{
-                        background: "#1e3a8a",
+                        background: headerBgColor,
                         padding: "12px 20px",
                         margin: "-20px -24px 20px -24px",
                         borderRadius: "8px 8px 0 0",
@@ -395,7 +394,7 @@ const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
             <Modal
                 title={
                     <div style={{
-                        background: "#1e3a8a",
+                        background: headerBgColor,
                         padding: "12px 20px",
                         margin: "-20px -24px 20px -24px",
                         borderRadius: "8px 8px 0 0",

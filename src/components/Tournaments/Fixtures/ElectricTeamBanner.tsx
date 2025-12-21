@@ -159,6 +159,46 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
     match.id,
   ]);
 
+  // Helper function to format event time as minutes only
+  const formatEventTime = (event: IMatchEvent): string => {
+    // Try to calculate seconds from timestamps if available
+    if (match.startedAt && event.createdDate) {
+      try {
+        const startTime = new Date(match.startedAt).getTime();
+        const eventTime = new Date(event.createdDate).getTime();
+        const diffSeconds = Math.floor((eventTime - startTime) / 1000);
+        if (diffSeconds >= 0) {
+          const minutes = Math.floor(diffSeconds / 60);
+          return `${minutes}'`;
+        }
+      } catch (e) {
+        // Fall through to fallback
+      }
+    }
+
+    // Fallback: eventTime is in minutes
+    const minutes = event.eventTime || 0;
+    return `${minutes}'`;
+  };
+
+  // Group goals by player and collect their formatted times
+  const groupGoalsByPlayer = (goals: IMatchEvent[]) => {
+    const grouped = goals.reduce((acc: { [key: string]: string[] }, goal: IMatchEvent) => {
+      const playerName = goal.playerName || "Unknown";
+      if (!acc[playerName]) {
+        acc[playerName] = [];
+      }
+      acc[playerName].push(formatEventTime(goal));
+      return acc;
+    }, {});
+
+    // Sort times chronologically within each player's goals
+    return Object.entries(grouped).map(([playerName, times]) => ({
+      playerName,
+      times, // Already formatted as strings
+    }));
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "SCHEDULED": return "blue";
@@ -210,6 +250,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
 
         {/* Score Layout */}
         <div
+          className="electric-banner-score-layout"
           style={{
             display: "flex",
             alignItems: "center",
@@ -219,6 +260,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
         >
           {/* Home Team Section */}
           <div
+            className="electric-banner-team-section home-team"
             style={{
               flex: 1,
               display: "flex",
@@ -256,6 +298,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
               }}
             >
               <div
+                className="electric-banner-team-name"
                 style={{
                   fontSize: 24,
                   fontWeight: 900,
@@ -269,6 +312,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
               </div>
               {homeGoals.length > 0 && (
                 <div
+                  className="electric-banner-goal-scorers"
                   style={{
                     display: "flex",
                     flexDirection: "row",
@@ -279,9 +323,9 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
                     justifyContent: "flex-end",
                   }}
                 >
-                  {homeGoals.map((goal: IMatchEvent, index: number) => (
+                  {groupGoalsByPlayer(homeGoals).map((player, index) => (
                     <Text
-                      key={goal.id || index}
+                      key={index}
                       style={{
                         fontSize: 11,
                         color: "rgba(255, 255, 255, 0.85)",
@@ -290,7 +334,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
                         whiteSpace: "nowrap",
                       }}
                     >
-                      ⚽ {goal.playerName || "Unknown"}
+                      ⚽ {player.playerName} ({player.times.join(", ")})
                     </Text>
                   ))}
                 </div>
@@ -300,6 +344,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
 
           {/* Center Score Box with Time */}
           <div
+            className="electric-banner-score-box"
             style={{
               display: "flex",
               alignItems: "center",
@@ -310,6 +355,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
           >
             {/* Home Score */}
             <div
+              className="electric-banner-score-digit-wrapper"
               style={{
                 background: "#00ff85",
                 padding: "12px 20px",
@@ -318,6 +364,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
             >
               <div
                 ref={homeScoreRef}
+                className="electric-banner-score-digit"
                 style={{
                   fontSize: 36,
                   fontWeight: 900,
@@ -334,6 +381,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
 
             {/* Time/Timer in Middle */}
             <div
+              className="electric-banner-time-display"
               style={{
                 background: "rgba(255, 255, 255, 0.95)",
                 padding: "8px 16px",
@@ -406,6 +454,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
 
             {/* Away Score */}
             <div
+              className="electric-banner-score-digit-wrapper"
               style={{
                 background: "#00ff85",
                 padding: "12px 20px",
@@ -414,6 +463,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
             >
               <div
                 ref={awayScoreRef}
+                className="electric-banner-score-digit"
                 style={{
                   fontSize: 36,
                   fontWeight: 900,
@@ -431,6 +481,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
 
           {/* Away Team Section */}
           <div
+            className="electric-banner-team-section away-team"
             style={{
               flex: 1,
               display: "flex",
@@ -468,6 +519,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
               }}
             >
               <div
+                className="electric-banner-team-name"
                 style={{
                   fontSize: 24,
                   fontWeight: 900,
@@ -481,6 +533,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
               </div>
               {awayGoals.length > 0 && (
                 <div
+                  className="electric-banner-goal-scorers"
                   style={{
                     display: "flex",
                     flexDirection: "row",
@@ -491,9 +544,9 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
                     justifyContent: "flex-start",
                   }}
                 >
-                  {awayGoals.map((goal: IMatchEvent, index: number) => (
+                  {groupGoalsByPlayer(awayGoals).map((player, index) => (
                     <Text
-                      key={goal.id || index}
+                      key={index}
                       style={{
                         fontSize: 11,
                         color: "rgba(255, 255, 255, 0.85)",
@@ -502,7 +555,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
                         whiteSpace: "nowrap",
                       }}
                     >
-                      ⚽ {goal.playerName || "Unknown"}
+                      ⚽ {player.playerName} ({player.times.join(", ")})
                     </Text>
                   ))}
                 </div>
@@ -514,6 +567,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
 
       {/* Tournament & Match Info Footer */}
       <div
+        className="electric-banner-footer"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -525,7 +579,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
         }}
       >
         {/* Left Section: Back Button & Tournament Info */}
-        <Space size={12} align="center">
+        <Space size={12} align="center" className="electric-banner-left-section">
           <Button
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate(-1)}
@@ -549,6 +603,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
             Back
           </Button>
           <div
+            className="electric-banner-trophy-icon"
             style={{
               width: 32,
               height: 32,
@@ -561,7 +616,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
           >
             <TrophyOutlined style={{ fontSize: 16, color: "white" }} />
           </div>
-          <div>
+          <div className="electric-banner-tournament-info">
             <div
               style={{
                 color: "white",
@@ -576,9 +631,10 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
         </Space>
 
         {/* Right Section: Match Details & Admin Controls */}
-        <Space size={12} align="center">
+        <Space size={12} align="center" className="electric-banner-right-section">
           {/* Match Number */}
           <div
+            className="electric-banner-match-number"
             style={{
               textAlign: "center",
               padding: "6px 12px",
@@ -621,11 +677,163 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
         </Space>
       </div>
 
-      {/* Global Animations */}
+      {/* Global Animations and Responsive Styles */}
       <style>{`
         @keyframes pulse {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .electric-banner-score-layout {
+            padding: 12px 16px !important;
+            flex-direction: column !important;
+            gap: 16px !important;
+          }
+
+          .electric-banner-team-section {
+            flex: none !important;
+            width: 100% !important;
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            gap: 12px !important;
+          }
+
+          .electric-banner-team-section.home-team {
+            order: 1;
+          }
+
+          .electric-banner-score-box {
+            order: 2;
+          }
+
+          .electric-banner-team-section.away-team {
+            order: 3;
+          }
+
+          .electric-banner-team-name {
+            font-size: 18px !important;
+            letter-spacing: 1px !important;
+            text-align: center;
+          }
+
+          .electric-banner-goal-scorers {
+            font-size: 10px !important;
+            justify-content: center !important;
+          }
+
+          .electric-banner-goal-scorers .ant-typography {
+            font-size: 10px !important;
+          }
+
+          .electric-banner-score-digit-wrapper {
+            padding: 10px 16px !important;
+          }
+
+          .electric-banner-score-digit {
+            font-size: 28px !important;
+            min-width: 24px !important;
+          }
+
+          .electric-banner-time-display {
+            padding: 6px 12px !important;
+            min-width: 60px !important;
+          }
+
+          .electric-banner-footer {
+            padding: 8px 12px !important;
+            gap: 8px !important;
+          }
+
+          .electric-banner-footer .ant-space {
+            flex-wrap: wrap;
+            justify-content: center;
+          }
+
+          .electric-banner-footer .ant-btn {
+            font-size: 12px !important;
+            height: 32px !important;
+            padding: 0 12px !important;
+          }
+
+          .electric-banner-footer .ant-space-item > div {
+            font-size: 12px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .electric-banner-score-layout {
+            padding: 8px 8px !important;
+            gap: 12px !important;
+          }
+
+          .electric-banner-team-name {
+            font-size: 14px !important;
+            letter-spacing: 0.5px !important;
+          }
+
+          .electric-banner-goal-scorers {
+            gap: 4px !important;
+          }
+
+          .electric-banner-goal-scorers .ant-typography {
+            font-size: 9px !important;
+          }
+
+          .electric-banner-score-digit-wrapper {
+            padding: 8px 12px !important;
+          }
+
+          .electric-banner-score-digit {
+            font-size: 24px !important;
+            min-width: 20px !important;
+          }
+
+          .electric-banner-time-display {
+            padding: 4px 8px !important;
+            min-width: 50px !important;
+          }
+
+          .electric-banner-time-display > div:first-child {
+            font-size: 16px !important;
+          }
+
+          .electric-banner-time-display > div:last-child {
+            font-size: 7px !important;
+          }
+
+          .electric-banner-footer {
+            flex-direction: column !important;
+            padding: 8px !important;
+            gap: 8px !important;
+          }
+
+          .electric-banner-footer .ant-space {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .electric-banner-footer .ant-btn {
+            font-size: 11px !important;
+            height: 28px !important;
+            padding: 0 8px !important;
+            min-width: 28px !important;
+          }
+
+          .electric-banner-footer .ant-btn .anticon {
+            font-size: 12px !important;
+          }
+
+          .electric-banner-footer .ant-space-item > div {
+            font-size: 10px !important;
+          }
+
+          .electric-banner-footer .ant-tag {
+            font-size: 9px !important;
+            padding: 2px 8px !important;
+          }
         }
       `}</style>
     </Card>

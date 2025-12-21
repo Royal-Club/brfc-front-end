@@ -1,4 +1,4 @@
-import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, SettingOutlined, LogoutOutlined, BulbOutlined, TrophyOutlined } from "@ant-design/icons";
+import { MenuFoldOutlined, MenuUnfoldOutlined, UserOutlined, SettingOutlined, LogoutOutlined, BulbOutlined, TrophyOutlined, BarChartOutlined, DashboardOutlined } from "@ant-design/icons";
 import {
     Avatar,
     Button,
@@ -19,7 +19,7 @@ import {
 } from "antd";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { useAuthHook } from "../../hooks/useAuthHook";
 import { useGetUserProfileQuery } from "../../state/features/auth/authSlice";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
@@ -37,6 +37,7 @@ import SettingsModal from "../CommonAtoms/SettingsModal";
 import Dashboard from "../Dashboard/DashboardComponent";
 import Player from "../Player/Player";
 import Players from "../Player/Players";
+import PlayerStatistics from "../Player/PlayerStatistics";
 import JoinTournament from "../Tournaments/JoinTournament";
 import SingleTournament from "../Tournaments/SingleTournament";
 import TournamentsPage from "../Tournaments/TournamentsPage";
@@ -74,6 +75,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
 
     const { user, logout } = useAuthHook();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { data: playerProfileData, refetch } = useGetUserProfileQuery({
         id: loginInfo?.userId || "",
@@ -121,6 +123,17 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     const handleGoalkeepingHistoryClose = () => {
         setGoalkeepingHistoryDrawerVisible(false);
     };
+
+    const handlePlayerStatisticsClick = () => {
+        navigate("/player-statistics");
+    };
+
+    const handleDashboardClick = () => {
+        navigate("/");
+    };
+
+    const isOnStatisticsPage = location.pathname === "/player-statistics";
+    const isOnDashboard = location.pathname === "/";
 
     const items: MenuProps['items'] = [
         {
@@ -277,6 +290,22 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                                         justifyContent: 'center',
                                     }}
                                 />
+                                {(isOnDashboard || isOnStatisticsPage) && (
+                                    <Button
+                                        type="text"
+                                        icon={isOnStatisticsPage ? <DashboardOutlined /> : <BarChartOutlined />}
+                                        onClick={isOnStatisticsPage ? handleDashboardClick : handlePlayerStatisticsClick}
+                                        style={{
+                                            fontSize: "16px",
+                                            width: 64,
+                                            height: 64,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}
+                                        title={isOnStatisticsPage ? "Dashboard" : "Player Statistics"}
+                                    />
+                                )}
                                 {isMobile && (
                                     <div style={{ 
                                         display: 'flex', 
@@ -372,6 +401,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                                 />
                             )}
                             <Route path="/players" element={<Players />} />
+                            <Route path="/player-statistics" element={<PlayerStatistics />} />
                             <Route
                                 path="/tournaments"
                                 element={<TournamentsPage />}

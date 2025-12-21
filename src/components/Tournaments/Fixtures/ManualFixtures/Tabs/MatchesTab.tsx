@@ -259,7 +259,7 @@ export default function MatchesTab({
   const shouldShowAllFixtures = finalFixtures.length > 0 && !hasMatchedFixtures && !fixturesByRoundAndGroup[-1];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="matches-tab-container" style={{ padding: 24 }}>
       {/* Refresh Button */}
       <div style={{ marginBottom: 16, display: "flex", justifyContent: "flex-end" }}>
         <Button
@@ -285,19 +285,21 @@ export default function MatchesTab({
             </Space>
           }
         >
-          <FixturesTable
-            fixtures={[...finalFixtures].sort((a, b) => a.matchOrder - b.matchOrder)}
-            isLoading={fixturesLoading || isLoading}
-            onEditFixture={handleEditFixture}
-            tournamentId={tournamentId}
-            teams={extractTeamsFromStructure(tournamentStructure)}
-            onRefresh={() => {
-              refetchFixtures();
-              onRefresh();
-            }}
-            enableAddRemove={true}
-            enableDragDrop={true}
-          />
+          <div className="fixtures-table-wrapper">
+            <FixturesTable
+              fixtures={[...finalFixtures].sort((a, b) => a.matchOrder - b.matchOrder)}
+              isLoading={fixturesLoading || isLoading}
+              onEditFixture={handleEditFixture}
+              tournamentId={tournamentId}
+              teams={extractTeamsFromStructure(tournamentStructure)}
+              onRefresh={() => {
+                refetchFixtures();
+                onRefresh();
+              }}
+              enableAddRemove={true}
+              enableDragDrop={true}
+            />
+          </div>
         </Card>
       )}
 
@@ -317,19 +319,21 @@ export default function MatchesTab({
                 </Space>
               }
             >
-              <FixturesTable
-                fixtures={fixturesByRoundAndGroup[-1]["Unmatched"] || []}
-                isLoading={fixturesLoading || isLoading}
-                onEditFixture={handleEditFixture}
-                tournamentId={tournamentId}
-                teams={extractTeamsFromStructure(tournamentStructure)}
-                onRefresh={() => {
-                  refetchFixtures();
-                  onRefresh();
-                }}
-                enableAddRemove={true}
-                enableDragDrop={true}
-              />
+              <div className="fixtures-table-wrapper">
+                <FixturesTable
+                  fixtures={fixturesByRoundAndGroup[-1]["Unmatched"] || []}
+                  isLoading={fixturesLoading || isLoading}
+                  onEditFixture={handleEditFixture}
+                  tournamentId={tournamentId}
+                  teams={extractTeamsFromStructure(tournamentStructure)}
+                  onRefresh={() => {
+                    refetchFixtures();
+                    onRefresh();
+                  }}
+                  enableAddRemove={true}
+                  enableDragDrop={true}
+                />
+              </div>
             </Card>
           )}
 
@@ -375,22 +379,24 @@ export default function MatchesTab({
                             </Text>
                           </Space>
                         </Divider>
-                        <FixturesTable
-                          fixtures={groupMatches}
-                          isLoading={fixturesLoading || isLoading}
-                          onEditFixture={handleEditFixture}
-                          tournamentId={tournamentId}
-                          roundId={round.id}
-                          groupId={group.id}
-                          groupName={group.groupName}
-                          teams={extractTeamsFromStructure(tournamentStructure)}
-                          onRefresh={() => {
-                            refetchFixtures();
-                            onRefresh();
-                          }}
-                          enableAddRemove={true}
-                          enableDragDrop={true}
-                        />
+                        <div className="fixtures-table-wrapper">
+                          <FixturesTable
+                            fixtures={groupMatches}
+                            isLoading={fixturesLoading || isLoading}
+                            onEditFixture={handleEditFixture}
+                            tournamentId={tournamentId}
+                            roundId={round.id}
+                            groupId={group.id}
+                            groupName={group.groupName}
+                            teams={extractTeamsFromStructure(tournamentStructure)}
+                            onRefresh={() => {
+                              refetchFixtures();
+                              onRefresh();
+                            }}
+                            enableAddRemove={true}
+                            enableDragDrop={true}
+                          />
+                        </div>
                       </div>
                     );
                   })
@@ -407,20 +413,22 @@ export default function MatchesTab({
                     if (sortedMatches.length === 0) return null;
 
                     return (
-                      <FixturesTable
-                        fixtures={sortedMatches}
-                        isLoading={fixturesLoading || isLoading}
-                        onEditFixture={handleEditFixture}
-                        tournamentId={tournamentId}
-                        roundId={round.id}
-                        teams={extractTeamsFromStructure(tournamentStructure)}
-                        onRefresh={() => {
-                          refetchFixtures();
-                          onRefresh();
-                        }}
-                        enableAddRemove={true}
-                        enableDragDrop={true}
-                      />
+                      <div className="fixtures-table-wrapper">
+                        <FixturesTable
+                          fixtures={sortedMatches}
+                          isLoading={fixturesLoading || isLoading}
+                          onEditFixture={handleEditFixture}
+                          tournamentId={tournamentId}
+                          roundId={round.id}
+                          teams={extractTeamsFromStructure(tournamentStructure)}
+                          onRefresh={() => {
+                            refetchFixtures();
+                            onRefresh();
+                          }}
+                          enableAddRemove={true}
+                          enableDragDrop={true}
+                        />
+                      </div>
                     );
                   })()
                 )}
@@ -441,20 +449,22 @@ export default function MatchesTab({
                             </Text>
                           </Space>
                         </Divider>
-                        <FixturesTable
-                          fixtures={noGroupMatches}
-                          isLoading={fixturesLoading || isLoading}
-                          onEditFixture={handleEditFixture}
-                          tournamentId={tournamentId}
-                          roundId={round.id}
-                          teams={extractTeamsFromStructure(tournamentStructure)}
-                          onRefresh={() => {
-                            refetchFixtures();
-                            onRefresh();
-                          }}
-                          enableAddRemove={true}
-                          enableDragDrop={true}
-                        />
+                        <div className="fixtures-table-wrapper">
+                          <FixturesTable
+                            fixtures={noGroupMatches}
+                            isLoading={fixturesLoading || isLoading}
+                            onEditFixture={handleEditFixture}
+                            tournamentId={tournamentId}
+                            roundId={round.id}
+                            teams={extractTeamsFromStructure(tournamentStructure)}
+                            onRefresh={() => {
+                              refetchFixtures();
+                              onRefresh();
+                            }}
+                            enableAddRemove={true}
+                            enableDragDrop={true}
+                          />
+                        </div>
                       </div>
                     );
                   }
@@ -479,6 +489,80 @@ export default function MatchesTab({
           }}
         />
       )}
+
+      <style>{`
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .matches-tab-container {
+            padding: 12px !important;
+          }
+
+          .fixtures-table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-left: -12px;
+            margin-right: -12px;
+            padding-left: 12px;
+            padding-right: 12px;
+          }
+
+          .fixtures-table-wrapper .ant-table {
+            min-width: 800px;
+          }
+
+          .ant-card {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+          }
+
+          .ant-card-body {
+            padding: 12px !important;
+          }
+
+          .ant-card-head-title {
+            font-size: 14px !important;
+          }
+
+          .ant-card-extra .ant-tag {
+            font-size: 11px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .matches-tab-container {
+            padding: 8px !important;
+          }
+
+          .fixtures-table-wrapper {
+            margin-left: -8px;
+            margin-right: -8px;
+            padding-left: 8px;
+            padding-right: 8px;
+          }
+
+          .ant-card-body {
+            padding: 8px !important;
+          }
+
+          .ant-card-head-title {
+            font-size: 13px !important;
+          }
+
+          .ant-card-extra .ant-tag {
+            font-size: 10px !important;
+            padding: 2px 6px !important;
+          }
+
+          .ant-divider-inner-text {
+            font-size: 12px !important;
+          }
+
+          .ant-btn {
+            font-size: 12px !important;
+            padding: 4px 8px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

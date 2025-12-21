@@ -212,76 +212,67 @@ export default function MatchEventTimeline({
 
   if (isLoading) {
     return (
-      <Card style={{ height: 500 }}>
-        <div style={{ textAlign: "center", paddingTop: 100 }}>
-          <Spin size="large" />
-        </div>
-      </Card>
+      <div style={{ height: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Spin size="large" />
+      </div>
     );
   }
 
   if (events.length === 0) {
     return (
-      <Card style={{ height: 500 }}>
+      <div style={{ height: 500, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <Empty
           description="No events recorded yet"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card
-      title={
-        <Space>
-          <span style={{ fontSize: 16, fontWeight: 600 }}>Match Events Timeline</span>
-          <Tag color="blue" style={{ fontSize: 11 }}>{events.length} events</Tag>
-        </Space>
-      }
-      style={{
-        borderRadius: 16,
-        border: `1px solid ${token.colorBorder}`,
-        height: 600,
+    <div style={{ position: "relative" }}>
+      {/* Header */}
+      <div className="timeline-header" style={{
+        marginBottom: 16,
+        paddingBottom: 12,
+        borderBottom: `1px solid ${token.colorBorder}`,
         display: "flex",
-        flexDirection: "column",
-        boxShadow: `0 2px 8px ${token.colorFillSecondary}`,
-      }}
-      bodyStyle={{
-        padding: "16px 0",
-        flex: 1,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div 
-        style={{ 
+        alignItems: "center",
+        gap: 8,
+      }}>
+        <span style={{ fontSize: 16, fontWeight: 600 }}>Match Events Timeline</span>
+        <Tag color="blue" style={{ fontSize: 11 }}>{events.length} events</Tag>
+      </div>
+
+      <div
+        className="timeline-container"
+        style={{
           position: "relative",
-          flex: 1,
           overflowY: "auto",
           overflowX: "hidden",
+          maxHeight: "540px",
           paddingBottom: 20,
         }}
       >
-        {/* Center Timeline Line */}
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: 0,
-            width: 3,
-            height: "100%",
-            minHeight: "100%",
-            background: `linear-gradient(180deg, ${token.colorBorder} 0%, ${token.colorBorderSecondary} 100%)`,
-            transform: "translateX(-50%)",
-            zIndex: 0,
-            pointerEvents: "none",
-          }}
-        />
+        <div style={{ position: "relative", minHeight: "100%" }}>
+          {/* Center Timeline Line - starts from bottom of Match Started, ends at top of Match Completed */}
+          <div
+            className="timeline-dotted-line"
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: "115px",
+              width: 0,
+              height: "calc(100% - 200px)",
+              borderLeft: `3px dotted ${token.colorBorder}`,
+              transform: "translateX(-50%)",
+              zIndex: 0,
+              pointerEvents: "none",
+            }}
+          />
 
-        {/* Events */}
-        {events.map((event: IMatchEvent, index: number) => {
+          {/* Events */}
+          {events.map((event: IMatchEvent, index: number) => {
           // System events (MATCH_STARTED, MATCH_COMPLETED) are centered
           const isSystemEvent = event.eventType === "MATCH_STARTED" || event.eventType === "MATCH_COMPLETED";
           const isHomeTeam = event.teamId != null && event.teamId === homeTeamId;
@@ -292,20 +283,22 @@ export default function MatchEventTimeline({
             return (
               <div
                 key={event.id}
+                className="timeline-system-event"
                 style={{
                   position: "relative",
-                  marginBottom: 40,
-                  marginTop: 20,
+                  marginBottom: 24,
+                  marginTop: 12,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  paddingLeft: 40,
-                  paddingRight: 40,
-                  minHeight: 100,
+                  paddingLeft: 24,
+                  paddingRight: 24,
+                  minHeight: 80,
                 }}
               >
                 {/* Timeline Circle */}
                 <div
+                  className="timeline-circle-wrapper"
                   style={{
                     position: "absolute",
                     left: "50%",
@@ -315,6 +308,7 @@ export default function MatchEventTimeline({
                   }}
                 >
                   <div
+                    className="timeline-circle timeline-circle-system"
                     style={{
                       width: 50,
                       height: 50,
@@ -343,6 +337,7 @@ export default function MatchEventTimeline({
                 <Card
                   size="small"
                   hoverable
+                  className="timeline-event-card timeline-system-card"
                   style={{
                     background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`,
                     border: `2px solid ${eventColor}50`,
@@ -354,9 +349,9 @@ export default function MatchEventTimeline({
                     width: "75%",
                     maxWidth: 500,
                     marginTop: 30,
-                    marginBottom: 30,
+                    marginBottom: 20,
                   }}
-                  bodyStyle={{ padding: "20px 24px" }}
+                  bodyStyle={{ padding: "16px 20px" }}
                 >
                   {isAdmin && (
                     <Tooltip title="Delete Event">
@@ -434,29 +429,32 @@ export default function MatchEventTimeline({
           return (
             <div
               key={event.id}
+              className={`timeline-event ${isHomeTeam ? 'timeline-event-home' : 'timeline-event-away'}`}
               style={{
                 position: "relative",
-                marginBottom: 24,
+                marginBottom: 16,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: isHomeTeam ? "flex-start" : "flex-end",
-                paddingLeft: 24,
-                paddingRight: 24,
+                paddingLeft: 16,
+                paddingRight: 16,
               }}
             >
               {/* Home Team Event (Left Side) */}
               {isHomeTeam && (
                 <>
                   <div
+                    className="timeline-event-card-wrapper"
                     style={{
                       flex: "0 0 45%",
                       textAlign: "right",
-                      paddingRight: 20,
+                      paddingRight: 12,
                     }}
                   >
                     <Card
                       size="small"
                       hoverable
+                      className="timeline-event-card"
                       style={{
                         background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`,
                         border: `2px solid ${eventColor}50`,
@@ -509,14 +507,16 @@ export default function MatchEventTimeline({
                         </Tooltip>
                       )}
                       <div
+                        className="timeline-card-content"
                         style={{
                           display: "flex",
                           alignItems: "stretch",
-                          minHeight: 80,
+                          minHeight: 70,
                         }}
                       >
                         {/* Text Content */}
                         <div
+                          className="timeline-card-text"
                           style={{
                             flex: 1,
                             padding: "12px 16px",
@@ -584,6 +584,7 @@ export default function MatchEventTimeline({
                         </div>
                         {/* Image taking full height */}
                         <div
+                          className="timeline-card-image"
                           style={{
                             width: 80,
                             background: `linear-gradient(135deg, ${eventColor}25 0%, ${eventColor}15 100%)`,
@@ -609,6 +610,7 @@ export default function MatchEventTimeline({
 
                   {/* Timeline Circle */}
                   <div
+                    className="timeline-circle-wrapper"
                     style={{
                       position: "absolute",
                       left: "50%",
@@ -617,6 +619,7 @@ export default function MatchEventTimeline({
                     }}
                   >
                     <div
+                      className="timeline-circle"
                       style={{
                         width: 40,
                         height: 40,
@@ -648,6 +651,7 @@ export default function MatchEventTimeline({
                 <>
                   {/* Timeline Circle */}
                   <div
+                    className="timeline-circle-wrapper"
                     style={{
                       position: "absolute",
                       left: "50%",
@@ -656,6 +660,7 @@ export default function MatchEventTimeline({
                     }}
                   >
                     <div
+                      className="timeline-circle"
                       style={{
                         width: 40,
                         height: 40,
@@ -681,15 +686,17 @@ export default function MatchEventTimeline({
                   </div>
 
                   <div
+                    className="timeline-event-card-wrapper"
                     style={{
                       flex: "0 0 45%",
                       textAlign: "left",
-                      paddingLeft: 20,
+                      paddingLeft: 12,
                     }}
                   >
                     <Card
                       size="small"
                       hoverable
+                      className="timeline-event-card"
                       style={{
                         background: `linear-gradient(135deg, ${eventColor}15 0%, ${eventColor}08 100%)`,
                         border: `2px solid ${eventColor}50`,
@@ -742,14 +749,16 @@ export default function MatchEventTimeline({
                         </Tooltip>
                       )}
                       <div
+                        className="timeline-card-content"
                         style={{
                           display: "flex",
                           alignItems: "stretch",
-                          minHeight: 80,
+                          minHeight: 70,
                         }}
                       >
                         {/* Image taking full height */}
                         <div
+                          className="timeline-card-image"
                           style={{
                             width: 80,
                             background: `linear-gradient(135deg, ${eventColor}25 0%, ${eventColor}15 100%)`,
@@ -771,6 +780,7 @@ export default function MatchEventTimeline({
                         </div>
                         {/* Text Content */}
                         <div
+                          className="timeline-card-text"
                           style={{
                             flex: 1,
                             padding: "12px 16px",
@@ -844,7 +854,196 @@ export default function MatchEventTimeline({
             </div>
           );
         })}
+        </div>
       </div>
-    </Card>
+
+      <style>{`
+        .timeline-container::-webkit-scrollbar {
+          width: 4px;
+        }
+        .timeline-container::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .timeline-container::-webkit-scrollbar-thumb {
+          background: ${token.colorBorder};
+          border-radius: 2px;
+        }
+        .timeline-container::-webkit-scrollbar-thumb:hover {
+          background: ${token.colorBorderSecondary};
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .timeline-dotted-line {
+            display: none !important;
+          }
+
+          .timeline-header {
+            flex-wrap: wrap;
+          }
+
+          .timeline-header span {
+            font-size: 14px !important;
+          }
+
+          .timeline-container {
+            max-height: 450px !important;
+          }
+
+          .timeline-event {
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+            margin-bottom: 12px !important;
+          }
+
+          .timeline-event-card-wrapper {
+            flex: 0 0 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            text-align: center !important;
+          }
+
+          .timeline-event-home .timeline-event-card-wrapper {
+            padding-right: 0 !important;
+          }
+
+          .timeline-event-away .timeline-event-card-wrapper {
+            padding-left: 0 !important;
+          }
+
+          .timeline-circle-wrapper {
+            display: none !important;
+          }
+
+          .timeline-card-content {
+            min-height: 60px !important;
+          }
+
+          .timeline-card-text {
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+          }
+
+          .timeline-card-text .ant-typography {
+            font-size: 12px !important;
+          }
+
+          .timeline-card-text strong {
+            font-size: 12px !important;
+          }
+
+          .timeline-card-image {
+            width: 60px !important;
+          }
+
+          .timeline-card-image img {
+            width: 36px !important;
+            height: 36px !important;
+          }
+
+          .timeline-system-event {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+            min-height: 60px !important;
+          }
+
+          .timeline-system-card {
+            width: 90% !important;
+            margin-top: 20px !important;
+            margin-bottom: 16px !important;
+          }
+
+          .timeline-system-card .ant-card-body {
+            padding: 12px 16px !important;
+          }
+
+          .timeline-circle-system {
+            width: 40px !important;
+            height: 40px !important;
+          }
+
+          .timeline-circle-system .ant-typography {
+            font-size: 10px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .timeline-header span {
+            font-size: 13px !important;
+          }
+
+          .timeline-header .ant-tag {
+            font-size: 10px !important;
+          }
+
+          .timeline-container {
+            max-height: 400px !important;
+          }
+
+          .timeline-event {
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+            margin-bottom: 10px !important;
+          }
+
+          .timeline-card-text {
+            padding: 6px 8px !important;
+            font-size: 11px !important;
+          }
+
+          .timeline-card-text .ant-typography {
+            font-size: 11px !important;
+          }
+
+          .timeline-card-text strong {
+            font-size: 11px !important;
+          }
+
+          .timeline-card-image {
+            width: 50px !important;
+          }
+
+          .timeline-card-image img {
+            width: 30px !important;
+            height: 30px !important;
+          }
+
+          .timeline-system-event {
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+            min-height: 50px !important;
+          }
+
+          .timeline-system-card {
+            width: 95% !important;
+            margin-top: 16px !important;
+            margin-bottom: 12px !important;
+          }
+
+          .timeline-system-card .ant-card-body {
+            padding: 10px 12px !important;
+          }
+
+          .timeline-system-card .ant-typography {
+            font-size: 14px !important;
+          }
+
+          .timeline-circle-system {
+            width: 36px !important;
+            height: 36px !important;
+          }
+
+          .timeline-circle-system .ant-typography {
+            font-size: 9px !important;
+          }
+
+          .timeline-event-card .ant-btn {
+            padding: 2px 6px !important;
+            min-width: 28px !important;
+            height: 28px !important;
+          }
+        }
+      `}</style>
+    </div>
   );
 }

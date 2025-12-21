@@ -1,4 +1,5 @@
 import {
+    BarChartOutlined,
     BookOutlined,
   DollarOutlined,
   PieChartOutlined,
@@ -66,6 +67,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         !isUserAdmin
       ),
       getItem("Player List", "/players"),
+      getItem("Player Statistics", "/player-statistics"),
     ]),
     getItem("Finance", "financeSubMenu", <DollarOutlined />, [
       getItem("Configuration", "ConfigurationSubMenu", null, [

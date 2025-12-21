@@ -69,7 +69,7 @@ export default function MatchDetailsPage() {
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+    <div style={{ padding: "16px", maxWidth: "1400px", margin: "0 auto" }}>
       {/* Electric Team Banner */}
       <ElectricTeamBanner
         match={match}
@@ -79,14 +79,7 @@ export default function MatchDetailsPage() {
       />
 
       {/* Tabs Section */}
-      <Card
-        style={{
-          borderRadius: 16,
-          boxShadow: token.colorBgContainer === '#ffffff'
-            ? "0 2px 8px rgba(0,0,0,0.08)"
-            : "0 2px 8px rgba(0,0,0,0.3)",
-        }}
-      >
+      <div style={{ marginTop: "16px" }}>
         <Tabs
           defaultActiveKey="information"
           onChange={handleRefresh}
@@ -154,7 +147,7 @@ export default function MatchDetailsPage() {
                 ]),
           ]}
         />
-      </Card>
+      </div>
     </div>
   );
 }

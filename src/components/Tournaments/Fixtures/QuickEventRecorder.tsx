@@ -11,6 +11,7 @@ import {
   Input,
   Modal,
   Divider,
+  theme,
 } from "antd";
 import {
   ThunderboltOutlined,
@@ -21,6 +22,7 @@ import { useRecordMatchEventMutation } from "../../../state/features/fixtures/fi
 import moment from "moment";
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface QuickEventRecorderProps {
   matchId: number;
@@ -45,6 +47,7 @@ export default function QuickEventRecorder({
   awayTeamPlayers = [],
   onSuccess,
 }: QuickEventRecorderProps) {
+  const { token } = useToken();
   const [recordEvent, { isLoading }] = useRecordMatchEventMutation();
   const [selectedEventType, setSelectedEventType] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
@@ -144,35 +147,36 @@ export default function QuickEventRecorder({
 
   if (!fixture) {
     return (
-      <Card>
+      <div style={{ padding: "20px 0" }}>
         <Text type="secondary">No fixture data available</Text>
-      </Card>
+      </div>
     );
   }
 
   return (
     <>
-      <Card
-        title={
+      <div style={{ position: "relative" }}>
+        {/* Header */}
+        <div style={{
+          marginBottom: 16,
+          paddingBottom: 12,
+          borderBottom: `1px solid ${token.colorBorder}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}>
           <Space>
             <ThunderboltOutlined />
-            <span>Quick Event Recording</span>
+            <span style={{ fontSize: 16, fontWeight: 600 }}>Quick Event Recording</span>
           </Space>
-        }
-        extra={
           <Text type="secondary" style={{ fontSize: 14, fontWeight: 600 }}>
             {calculateElapsedTime()}'
           </Text>
-        }
-        style={{
-          borderRadius: 12,
-          border: "none",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        }}
-      >
+        </div>
+
         <Text
           type="secondary"
-          style={{ display: "block", marginBottom: 16, fontSize: 13 }}
+          style={{ display: "block", marginBottom: 12, fontSize: 13 }}
         >
           Click on an event type to quickly record it
         </Text>
@@ -186,14 +190,14 @@ export default function QuickEventRecorder({
                 onClick={() => handleEventTypeClick(event.value)}
                 style={{
                   height: "auto",
-                  padding: "16px 12px",
+                  padding: "12px 8px",
                   borderRadius: 12,
                   border: `2px solid ${event.color}30`,
                   background: `${event.color}08`,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: 8,
+                  gap: 6,
                   transition: "all 0.3s ease",
                 }}
                 onMouseEnter={(e) => {
@@ -205,11 +209,11 @@ export default function QuickEventRecorder({
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                <span style={{ fontSize: 32 }}>{event.icon}</span>
+                <span style={{ fontSize: 28 }}>{event.icon}</span>
                 <Text
                   strong
                   style={{
-                    fontSize: 13,
+                    fontSize: 12,
                     color: event.color,
                     textAlign: "center",
                   }}
@@ -220,7 +224,7 @@ export default function QuickEventRecorder({
             </Col>
           ))}
         </Row>
-      </Card>
+      </div>
 
       {/* Event Recording Modal */}
       <Modal

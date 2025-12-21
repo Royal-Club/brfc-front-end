@@ -16,6 +16,7 @@ interface WheelComponentProps {
     maxWidth?: number;
     centerImageSrc?: string;
     fontSize?: number;
+    wheelBackground?: string;
 }
 
 const PickerWheel: React.FC<WheelComponentProps> = ({
@@ -34,6 +35,7 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
     maxWidth = 400,
     centerImageSrc,
     fontSize = 20,
+    wheelBackground = "linear-gradient(135deg, #4a5568 0%, #2d3748 100%)",
 }) => {
     const [isFinished, setFinished] = useState(false);
     const [currentSegment, setCurrentSegment] = useState<string>(segments[0]);
@@ -386,7 +388,7 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
             justifyContent: "center",
             alignItems: "center",
             padding: "20px",
-            background: "linear-gradient(135deg, #4a5568 0%, #2d3748 100%)",
+            background: wheelBackground,
             borderRadius: "20px",
             boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
         }}>

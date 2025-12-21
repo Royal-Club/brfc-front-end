@@ -6,6 +6,7 @@ import {
   IGetTopCardsResponse,
   IGetMatchStatisticsResponse,
   IGetPlayerTournamentStatisticsResponse,
+  IGetPlayerStatisticsResponse,
 } from "./statisticsTypes";
 
 const apiWithTags = apiSlice.enhanceEndpoints({
@@ -97,6 +98,37 @@ export const statisticsApi = apiWithTags.injectEndpoints({
       }),
       providesTags: ["statistics"],
     }),
+
+    /**
+     * Get player statistics with optional filters
+     */
+    getPlayerStatistics: builder.query<
+      IGetPlayerStatisticsResponse,
+      {
+        tournamentId?: number;
+        position?: string;
+        sortBy?: string;
+        sortOrder?: string;
+        limit?: number;
+        offset?: number;
+      }
+    >({
+      query: (params) => {
+        const queryParams = new URLSearchParams();
+        if (params.tournamentId) queryParams.append('tournamentId', params.tournamentId.toString());
+        if (params.position) queryParams.append('position', params.position);
+        if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+        if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+        if (params.limit) queryParams.append('limit', params.limit.toString());
+        if (params.offset) queryParams.append('offset', params.offset.toString());
+        
+        return {
+          url: `/player-statistics${queryParams.toString() ? '?' + queryParams.toString() : ''}`,
+          method: "GET",
+        };
+      },
+      providesTags: ["statistics"],
+    }),
   }),
 });
 
@@ -107,4 +139,5 @@ export const {
   useGetTopCardsQuery,
   useGetMatchStatisticsQuery,
   useGetPlayerTournamentStatisticsQuery,
+  useGetPlayerStatisticsQuery,
 } = statisticsApi;

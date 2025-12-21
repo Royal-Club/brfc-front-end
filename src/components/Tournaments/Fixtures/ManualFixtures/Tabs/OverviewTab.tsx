@@ -559,7 +559,7 @@ export default function OverviewTab({
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="overview-tab-container" style={{ padding: 24 }}>
       {/* Render group standings fetchers */}
       {allGroups.map((group) => (
         <GroupStandingsFetcher
@@ -796,23 +796,25 @@ export default function OverviewTab({
                                   </Text>
                                 </Space>
                               </Divider>
-                              <Table
-                                columns={standingsColumns}
-                                dataSource={groupStandings}
-                                rowKey={(record) => `${record.roundName}-${record.groupName}-${record.teamId}`}
-                                pagination={false}
-                                size="middle"
-                                style={{
-                                  backgroundColor: token.colorFillSecondary,
-                                  borderRadius: 8,
-                                }}
-                                rowClassName={(record, index) => {
-                                  if (index === 0) return "first-place-row";
-                                  if (index === 1) return "second-place-row";
-                                  if (index === 2) return "third-place-row";
-                                  return "";
-                                }}
-                              />
+                              <div className="standings-table-wrapper">
+                                <Table
+                                  columns={standingsColumns}
+                                  dataSource={groupStandings}
+                                  rowKey={(record) => `${record.roundName}-${record.groupName}-${record.teamId}`}
+                                  pagination={false}
+                                  size="middle"
+                                  style={{
+                                    backgroundColor: token.colorFillSecondary,
+                                    borderRadius: 8,
+                                  }}
+                                  rowClassName={(record, index) => {
+                                    if (index === 0) return "first-place-row";
+                                    if (index === 1) return "second-place-row";
+                                    if (index === 2) return "third-place-row";
+                                    return "";
+                                  }}
+                                />
+                              </div>
                             </div>
                           );
                         })
@@ -823,23 +825,25 @@ export default function OverviewTab({
                         if (knockoutStandings.length === 0) return null;
 
                         return (
-                          <Table
-                            columns={standingsColumns}
-                            dataSource={knockoutStandings}
-                            rowKey={(record) => `${record.roundName}-${record.teamId}`}
-                            pagination={false}
-                            size="middle"
-                            style={{
-                              backgroundColor: "#fafafa",
-                              borderRadius: 8,
-                            }}
-                            rowClassName={(record, index) => {
-                              if (index === 0) return "first-place-row";
-                              if (index === 1) return "second-place-row";
-                              if (index === 2) return "third-place-row";
-                              return "";
-                            }}
-                          />
+                          <div className="standings-table-wrapper">
+                            <Table
+                              columns={standingsColumns}
+                              dataSource={knockoutStandings}
+                              rowKey={(record) => `${record.roundName}-${record.teamId}`}
+                              pagination={false}
+                              size="middle"
+                              style={{
+                                backgroundColor: "#fafafa",
+                                borderRadius: 8,
+                              }}
+                              rowClassName={(record, index) => {
+                                if (index === 0) return "first-place-row";
+                                if (index === 1) return "second-place-row";
+                                if (index === 2) return "third-place-row";
+                                return "";
+                              }}
+                            />
+                          </div>
                         );
                       })()
                     )}
@@ -866,6 +870,80 @@ export default function OverviewTab({
         }
         .ant-table-tbody > tr:hover > td {
           background-color: ${token.colorPrimaryBg} !important;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .overview-tab-container {
+            padding: 12px !important;
+          }
+
+          .standings-table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-left: -12px;
+            margin-right: -12px;
+            padding-left: 12px;
+            padding-right: 12px;
+          }
+
+          .standings-table-wrapper .ant-table {
+            min-width: 600px;
+          }
+
+          .ant-card {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+          }
+
+          .ant-card-body {
+            padding: 12px !important;
+          }
+
+          .ant-statistic-title {
+            font-size: 12px !important;
+          }
+
+          .ant-statistic-content-value {
+            font-size: 18px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .overview-tab-container {
+            padding: 8px !important;
+          }
+
+          .standings-table-wrapper {
+            margin-left: -8px;
+            margin-right: -8px;
+            padding-left: 8px;
+            padding-right: 8px;
+          }
+
+          .ant-card-body {
+            padding: 8px !important;
+          }
+
+          .ant-card-head-title {
+            font-size: 14px !important;
+          }
+
+          .ant-card-extra {
+            font-size: 11px !important;
+          }
+
+          .ant-statistic-title {
+            font-size: 11px !important;
+          }
+
+          .ant-statistic-content-value {
+            font-size: 16px !important;
+          }
+
+          .ant-divider-inner-text {
+            font-size: 13px !important;
+          }
         }
       `}</style>
     </div>

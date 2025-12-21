@@ -65,3 +65,27 @@ export interface IGetPlayerTournamentStatisticsResponse {
   message: string;
   content: IMatchStatistics[];
 }
+
+export interface IPlayerStatistics {
+  matchesPlayed: number;
+  goalsScored: number;
+  assists: number;
+  goalsAndAssists: number;
+  yellowCards: number;
+  redCards: number;
+}
+
+export interface IPlayerStatisticsData {
+  playerId: number;
+  playerName: string;
+  position: string;
+  statistics: IPlayerStatistics;
+}
+
+export interface IGetPlayerStatisticsResponse {
+  timeStamp: number;
+  statusCode: number;
+  status: string;
+  message: string;
+  content: IPlayerStatisticsData[];
+}
