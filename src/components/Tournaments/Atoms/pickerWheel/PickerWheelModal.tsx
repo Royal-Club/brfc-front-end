@@ -42,6 +42,7 @@ const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
     const [newSegment, setNewSegment] = useState("");
     const [winner, setWinner] = useState("");
     const [winnersList, setWinnersList] = useState<string[]>([]);
+    const [multiplier, setMultiplier] = useState<number>(1);
 
     const getRandomColor = () => {
         const letters = "0123456789ABCDEF";
@@ -177,11 +178,49 @@ const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
                     }}
                 >
                     <div style={{ flex: 1 }}>
+                        <div style={{
+                            marginBottom: "16px",
+                            textAlign: "center",
+                            background: "transparent",
+                            borderRadius: "12px",
+                            padding: isMobile ? "8px" : "12px",
+                            border: "1px solid rgba(0, 0, 0, 0.1)",
+                        }}>
+                            <div style={{
+                                fontSize: "14px",
+                                fontWeight: "600",
+                                marginBottom: "8px",
+                                color: "#667eea"
+                            }}>
+                                Wheel Multiplier
+                            </div>
+                            <Radio.Group
+                                value={multiplier}
+                                onChange={(e) => setMultiplier(e.target.value)}
+                                buttonStyle="solid"
+                            >
+                                <Radio.Button value={1}>1x</Radio.Button>
+                                <Radio.Button value={2}>2x</Radio.Button>
+                                <Radio.Button value={3}>3x</Radio.Button>
+                            </Radio.Group>
+                        </div>
                         <PickerWheel
-                            segments={segments
-                                .filter((segment) => !segment.disabled)
-                                .map((segment) => segment.name)}
-                            segColors={segColors}
+                            segments={(() => {
+                                const activeSegments = segments.filter((segment) => !segment.disabled);
+                                const result: string[] = [];
+                                for (let i = 0; i < multiplier; i++) {
+                                    activeSegments.forEach((segment) => result.push(segment.name));
+                                }
+                                return result;
+                            })()}
+                            segColors={(() => {
+                                const activeColors = segColors.slice(0, segments.filter(s => !s.disabled).length);
+                                const result: string[] = [];
+                                for (let i = 0; i < multiplier; i++) {
+                                    activeColors.forEach((color) => result.push(color));
+                                }
+                                return result;
+                            })()}
                             onFinished={handleSpinFinished}
                             size={isMobile ? 170 : 250}
                             maxWidth={isMobile ?350 : 500}
