@@ -117,3 +117,17 @@ export interface LatestTournamentWithUserStatusType extends BasicResType {
         tournamentParticipantId?: number;
     };
 }
+
+export interface TournamentSessionsResType extends BasicResType {
+    content: string[];
+}
+
+export interface TournamentListItemType {
+    id: number;
+    name: string;
+    tournamentDate: string;
+}
+
+export interface TournamentListResType extends BasicResType {
+    content: TournamentListItemType[];
+}

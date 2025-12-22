@@ -1,6 +1,7 @@
 import { Table, Select, Button, Space, Typography, Card } from "antd";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGetPlayerStatisticsQuery } from "../../state/features/statistics/statisticsSlice";
+import { useGetTournamentSessionsQuery, useGetTournamentsByYearQuery } from "../../state/features/tournaments/tournamentsSlice";
 import type { ColumnsType } from "antd/es/table";
 import { IPlayerStatisticsData } from "../../state/features/statistics/statisticsTypes";
 
@@ -8,15 +9,38 @@ const { Option } = Select;
 const { Title } = Typography;
 
 const PlayerStatistics: React.FC = () => {
-    const [sortBy, setSortBy] = useState<string>("goalsAssists");
-    const [sortOrder, setSortOrder] = useState<string>("DESC");
+    const [selectedSeason, setSelectedSeason] = useState<string | undefined>(undefined);
+    const [selectedTournament, setSelectedTournament] = useState<number | undefined>(undefined);
     const [position, setPosition] = useState<string | undefined>(undefined);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(10);
 
+    // Fetch tournament sessions (years)
+    const { data: sessionsData, isLoading: sessionsLoading } = useGetTournamentSessionsQuery();
+
+    // Fetch tournaments for selected year
+    const { data: tournamentsData, isLoading: tournamentsLoading } = useGetTournamentsByYearQuery(
+        { year: selectedSeason || "" },
+        { skip: !selectedSeason }
+    );
+
+    // Set the latest season and tournament on initial load
+    useEffect(() => {
+        if (sessionsData?.content && sessionsData.content.length > 0 && !selectedSeason) {
+            const latestSeason = sessionsData.content[0];
+            setSelectedSeason(latestSeason);
+        }
+    }, [sessionsData, selectedSeason]);
+
+    useEffect(() => {
+        if (tournamentsData?.content && tournamentsData.content.length > 0 && !selectedTournament) {
+            const latestTournament = tournamentsData.content[0];
+            setSelectedTournament(latestTournament.id);
+        }
+    }, [tournamentsData, selectedTournament]);
+
     const { data, isLoading, refetch } = useGetPlayerStatisticsQuery({
-        sortBy,
-        sortOrder,
+        tournamentId: selectedTournament,
         position,
         limit: 100,
     });
@@ -155,11 +179,19 @@ const PlayerStatistics: React.FC = () => {
     ];
 
     const handleReset = () => {
-        setSortBy("goalsAssists");
-        setSortOrder("DESC");
+        // Reset to latest season and tournament
+        if (sessionsData?.content && sessionsData.content.length > 0) {
+            setSelectedSeason(sessionsData.content[0]);
+            setSelectedTournament(undefined);
+        }
         setPosition(undefined);
         setCurrentPage(1);
         refetch();
+    };
+
+    const handleSeasonChange = (value: string) => {
+        setSelectedSeason(value);
+        setSelectedTournament(undefined); // Reset tournament when season changes
     };
 
     return (
@@ -172,25 +204,32 @@ const PlayerStatistics: React.FC = () => {
                 <Space direction="vertical" style={{ width: "100%", marginBottom: 24 }}>
                     <Space wrap>
                         <Select
-                            style={{ width: 200 }}
-                            placeholder="Sort By"
-                            value={sortBy}
-                            onChange={setSortBy}
+                            style={{ width: 150 }}
+                            placeholder="Select Season"
+                            value={selectedSeason}
+                            onChange={handleSeasonChange}
+                            loading={sessionsLoading}
                         >
-                            <Option value="goals">Goals</Option>
-                            <Option value="assists">Assists</Option>
-                            <Option value="goalsAssists">Goals + Assists</Option>
-                            <Option value="matches">Matches Played</Option>
+                            {sessionsData?.content?.map((season) => (
+                                <Option key={season} value={season}>
+                                    {season}
+                                </Option>
+                            ))}
                         </Select>
 
                         <Select
-                            style={{ width: 150 }}
-                            placeholder="Order"
-                            value={sortOrder}
-                            onChange={setSortOrder}
+                            style={{ width: 200 }}
+                            placeholder="Select Tournament"
+                            value={selectedTournament}
+                            onChange={setSelectedTournament}
+                            loading={tournamentsLoading}
+                            disabled={!selectedSeason}
                         >
-                            <Option value="DESC">Highest First</Option>
-                            <Option value="ASC">Lowest First</Option>
+                            {tournamentsData?.content?.map((tournament) => (
+                                <Option key={tournament.id} value={tournament.id}>
+                                    {tournament.name}
+                                </Option>
+                            ))}
                         </Select>
 
                         <Select
