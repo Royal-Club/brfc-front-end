@@ -1550,6 +1550,7 @@ export default function InteractiveTournamentTab({
 
 
       <GroupMatchGenerationModal
+        tournamentId={tournamentId}
         groupId={selectedNode?.type === "group" ? selectedNode.id : null}
         groupName={selectedNode?.type === "group" ? selectedNode.data?.groupName : null}
         teamCount={selectedNode?.type === "group" ? selectedNode.data?.teamCount || 0 : 0}

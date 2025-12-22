@@ -654,6 +654,7 @@ export default function TournamentStructureView({
 
       {/* Group Match Generation Modal */}
       <GroupMatchGenerationModal
+        tournamentId={tournamentStructure.tournamentId}
         groupId={selectedGroupId}
         groupName={selectedGroupName}
         teamCount={selectedGroupTeamCount}

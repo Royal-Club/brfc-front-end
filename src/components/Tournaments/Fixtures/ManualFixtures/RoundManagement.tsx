@@ -21,6 +21,7 @@ import {
   SaveOutlined,
 } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
+import utc from "dayjs/plugin/utc";
 import {
   useCreateRoundMutation,
   useUpdateRoundMutation,
@@ -32,6 +33,8 @@ import {
   RoundType,
   TournamentRoundResponse,
 } from "../../../../state/features/manualFixtures/manualFixtureTypes";
+
+dayjs.extend(utc);
 
 const { TextArea } = Input;
 const { Text, Title } = Typography;
@@ -93,18 +96,18 @@ export default function RoundManagement({
         roundName: existingRound.roundName,
         roundType: existingRound.roundType,
         advancementRule: existingRound.advancementRule,
-        startDate: existingRound.startDate ? dayjs(existingRound.startDate) : null,
-        endDate: existingRound.endDate ? dayjs(existingRound.endDate) : null,
+        startDate: existingRound.startDate ? dayjs.utc(existingRound.startDate).local() : null,
+        endDate: existingRound.endDate ? dayjs.utc(existingRound.endDate).local() : null,
       });
     } else if (isModalVisible && !isEditing) {
       // Set default values for new round (roundNumber and sequenceOrder will be auto-calculated)
       // Set startDate to tournament date if available
       form.setFieldsValue({
         roundType: RoundType.GROUP_BASED,
-        startDate: tournamentDate ? dayjs(tournamentDate) : null,
+        startDate: tournamentDate ? dayjs.utc(tournamentDate).local() : null,
       });
     }
-    
+
     // Reset form when modal closes
     if (!isModalVisible) {
       form.resetFields();
@@ -143,10 +146,10 @@ export default function RoundManagement({
         sequenceOrder,
         advancementRule: values.advancementRule || undefined,
         startDate: values.startDate
-          ? values.startDate.format("YYYY-MM-DDTHH:mm:ss")
+          ? values.startDate.utc().format("YYYY-MM-DDTHH:mm:ss")
           : undefined,
         endDate: values.endDate
-          ? values.endDate.format("YYYY-MM-DDTHH:mm:ss")
+          ? values.endDate.utc().format("YYYY-MM-DDTHH:mm:ss")
           : undefined,
       };
 
@@ -301,6 +304,11 @@ export default function RoundManagement({
                 style={{ width: "100%" }}
                 placeholder="Select start date"
                 size="large"
+                disabledDate={(current) => {
+                  if (!tournamentDate) return false;
+                  // Disable dates before the tournament date
+                  return current && current.isBefore(dayjs.utc(tournamentDate).local().startOf('day'));
+                }}
               />
             </Form.Item>
           </Col>
@@ -312,6 +320,24 @@ export default function RoundManagement({
                 style={{ width: "100%" }}
                 placeholder="Select end date"
                 size="large"
+                disabledDate={(current) => {
+                  if (!tournamentDate) return false;
+                  // Get start date from form
+                  const startDate = form.getFieldValue('startDate');
+                  const tournamentStart = dayjs.utc(tournamentDate).local().startOf('day');
+
+                  // Disable dates before tournament date
+                  if (current && current.isBefore(tournamentStart)) {
+                    return true;
+                  }
+
+                  // Disable dates before start date if start date is selected
+                  if (startDate && current && current.isBefore(startDate.startOf('day'))) {
+                    return true;
+                  }
+
+                  return false;
+                }}
               />
             </Form.Item>
           </Col>

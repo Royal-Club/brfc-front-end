@@ -20,7 +20,11 @@ import {
 } from "@ant-design/icons";
 import { useGenerateGroupMatchesMutation } from "../../../../state/features/manualFixtures/manualFixturesSlice";
 import { GroupFormat, FixtureFormat } from "../../../../state/features/manualFixtures/manualFixtureTypes";
+import { useGetTournamentSummaryQuery } from "../../../../state/features/tournaments/tournamentsSlice";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -31,6 +35,7 @@ const FIXTURE_FORMAT_OPTIONS: Array<{ value: FixtureFormat; label: string; descr
 ];
 
 interface GroupMatchGenerationModalProps {
+  tournamentId: number;
   groupId: number | null;
   groupName: string | null;
   teamCount: number;
@@ -42,6 +47,7 @@ interface GroupMatchGenerationModalProps {
 }
 
 export default function GroupMatchGenerationModal({
+  tournamentId,
   groupId,
   groupName,
   teamCount,
@@ -52,6 +58,16 @@ export default function GroupMatchGenerationModal({
   venues = [],
 }: GroupMatchGenerationModalProps) {
   const [form] = Form.useForm();
+
+  // Fetch tournament summary to get tournament date
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery(
+    { tournamentId },
+    { skip: !tournamentId }
+  );
+
+  const tournamentDate = tournamentSummary?.content?.[0]?.tournamentDate;
+  const tournamentVenueName = tournamentSummary?.content?.[0]?.venueName;
+
   // Map group format to fixture format - use group format as match format
   const getFixtureFormatFromGroupFormat = (format?: GroupFormat): FixtureFormat => {
     if (!format) return "ROUND_ROBIN";
@@ -64,16 +80,28 @@ export default function GroupMatchGenerationModal({
         return "ROUND_ROBIN";
     }
   };
-  
+
   const fixtureFormat = getFixtureFormatFromGroupFormat(groupFormat);
-  
-  // Update form when groupFormat changes
+
+  // Update form when groupFormat, tournamentDate, or venue changes
   useEffect(() => {
-    if (isModalVisible && groupFormat) {
+    if (isModalVisible) {
       const format = getFixtureFormatFromGroupFormat(groupFormat);
-      form.setFieldsValue({ fixtureFormat: format });
+      const defaultStartDate = tournamentDate
+        ? dayjs.utc(tournamentDate).local()
+        : dayjs().add(1, "day").hour(15).minute(0);
+
+      // Find venue ID from tournament venue name
+      const tournamentVenue = venues.find(v => v.name === tournamentVenueName);
+      const defaultVenueId = tournamentVenue ? tournamentVenue.id : undefined;
+
+      form.setFieldsValue({
+        fixtureFormat: format,
+        startDate: defaultStartDate,
+        venueId: defaultVenueId
+      });
     }
-  }, [isModalVisible, groupFormat, form]);
+  }, [isModalVisible, groupFormat, tournamentDate, tournamentVenueName, venues, form]);
 
   const [generateMatches, { isLoading }] = useGenerateGroupMatchesMutation();
 
@@ -98,9 +126,8 @@ export default function GroupMatchGenerationModal({
     try {
       const values = await form.validateFields();
 
-      // Format startDate as ISO string for backend (Spring Boot LocalDateTime format)
-      // Convert dayjs to ISO string, removing timezone info for LocalDateTime compatibility
-      const startDateISO = values.startDate.format("YYYY-MM-DDTHH:mm:ss");
+      // Convert local time to UTC for backend
+      const startDateISO = values.startDate.utc().format("YYYY-MM-DDTHH:mm:ss");
 
       // Use fixtureFormat from form (which is set from groupFormat)
       const selectedFixtureFormat = values.fixtureFormat || fixtureFormat;
@@ -200,13 +227,17 @@ export default function GroupMatchGenerationModal({
             </Space>
           }
           rules={[{ required: true, message: "Please select start date" }]}
-          initialValue={dayjs().add(1, "day").hour(15).minute(0)}
         >
           <DatePicker
             showTime
             format="YYYY-MM-DD HH:mm"
             style={{ width: "100%" }}
             placeholder="Select start date and time"
+            disabledDate={(current) => {
+              if (!tournamentDate) return false;
+              // Disable dates before the tournament date
+              return current && current.isBefore(dayjs.utc(tournamentDate).local().startOf('day'));
+            }}
           />
         </Form.Item>
 
@@ -241,16 +272,6 @@ export default function GroupMatchGenerationModal({
             ))}
           </Select>
         </Form.Item>
-        {groupFormat && (
-          <Alert
-            message="Match Format"
-            description={`Match format is automatically set based on the group format: ${groupFormat === GroupFormat.ROUND_ROBIN_DOUBLE ? "Double Round Robin" : "Round Robin (Single)"}`}
-            type="info"
-            showIcon
-            style={{ marginBottom: 16 }}
-          />
-        )}
-
         <Form.Item
           name="matchTimeGapMinutes"
           label="Time Gap Between Matches (minutes)"

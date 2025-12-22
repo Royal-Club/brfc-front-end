@@ -233,7 +233,7 @@ export default function FixturesTable({
       title: "Date & Time",
       dataIndex: "matchDate",
       key: "matchDate",
-      render: (date: string) => moment.utc(date).local().format("DD MMM YYYY, HH:mm"),
+      render: (date: string) => moment.utc(date).local().format("DD/MM/YYYY, hh:mm a"),
       sorter: (a, b) => moment.utc(a.matchDate).valueOf() - moment.utc(b.matchDate).valueOf(),
     },
     {
