@@ -403,7 +403,7 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
                       lineHeight: 1.2,
                     }}
                   >
-                    {moment.utc(match.matchDate).local().format("hh A")}
+                    {moment.utc(match.matchDate).local().format("hh:mm A")}
                   </div>
                   <div
                     style={{

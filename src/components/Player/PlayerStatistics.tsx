@@ -1,5 +1,5 @@
 import { Table, Select, Button, Space, Typography, Card } from "antd";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useGetPlayerStatisticsQuery } from "../../state/features/statistics/statisticsSlice";
 import { useGetTournamentSessionsQuery, useGetTournamentsByYearQuery } from "../../state/features/tournaments/tournamentsSlice";
 import type { ColumnsType } from "antd/es/table";
@@ -24,20 +24,7 @@ const PlayerStatistics: React.FC = () => {
         { skip: !selectedSeason }
     );
 
-    // Set the latest season and tournament on initial load
-    useEffect(() => {
-        if (sessionsData?.content && sessionsData.content.length > 0 && !selectedSeason) {
-            const latestSeason = sessionsData.content[0];
-            setSelectedSeason(latestSeason);
-        }
-    }, [sessionsData, selectedSeason]);
-
-    useEffect(() => {
-        if (tournamentsData?.content && tournamentsData.content.length > 0 && !selectedTournament) {
-            const latestTournament = tournamentsData.content[0];
-            setSelectedTournament(latestTournament.id);
-        }
-    }, [tournamentsData, selectedTournament]);
+    // Removed auto-selection of season and tournament to allow "All" option to work
 
     const { data, isLoading, refetch } = useGetPlayerStatisticsQuery({
         tournamentId: selectedTournament,
@@ -179,11 +166,9 @@ const PlayerStatistics: React.FC = () => {
     ];
 
     const handleReset = () => {
-        // Reset to latest season and tournament
-        if (sessionsData?.content && sessionsData.content.length > 0) {
-            setSelectedSeason(sessionsData.content[0]);
-            setSelectedTournament(undefined);
-        }
+        // Reset all filters to "All"
+        setSelectedSeason(undefined);
+        setSelectedTournament(undefined);
         setPosition(undefined);
         setCurrentPage(1);
         refetch();
@@ -210,6 +195,7 @@ const PlayerStatistics: React.FC = () => {
                             onChange={handleSeasonChange}
                             loading={sessionsLoading}
                         >
+                            <Option value={undefined}>All</Option>
                             {sessionsData?.content?.map((season) => (
                                 <Option key={season} value={season}>
                                     {season}
@@ -225,6 +211,7 @@ const PlayerStatistics: React.FC = () => {
                             loading={tournamentsLoading}
                             disabled={!selectedSeason}
                         >
+                            <Option value={undefined}>All</Option>
                             {tournamentsData?.content?.map((tournament) => (
                                 <Option key={tournament.id} value={tournament.id}>
                                     {tournament.name}
@@ -237,8 +224,8 @@ const PlayerStatistics: React.FC = () => {
                             placeholder="Filter by Position"
                             value={position}
                             onChange={setPosition}
-                            allowClear
                         >
+                            <Option value={undefined}>All</Option>
                             <Option value="UNASSIGNED">Unassigned</Option>
                             <Option value="GOALKEEPER">Goalkeeper</Option>
                             <Option value="RIGHT_BACK">Right Back</Option>
