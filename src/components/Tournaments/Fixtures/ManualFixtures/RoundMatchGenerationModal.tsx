@@ -3,6 +3,7 @@ import {
   Modal,
   Form,
   DatePicker,
+  TimePicker,
   InputNumber,
   Switch,
   Button,
@@ -11,6 +12,8 @@ import {
   message,
   Typography,
   Select,
+  Row,
+  Col,
 } from "antd";
 import {
   ThunderboltOutlined,
@@ -58,12 +61,27 @@ export default function RoundMatchGenerationModal({
 
   const [generateMatches, { isLoading }] = useGenerateRoundMatchesMutation();
 
-  // Set tournament venue as default when modal opens
+  // Set tournament venue and start date/time as defaults when modal opens
   useEffect(() => {
-    if (isModalVisible && tournamentVenueId) {
-      form.setFieldsValue({ venueId: tournamentVenueId });
+    if (isModalVisible) {
+      const initialValues: any = {};
+
+      if (tournamentVenueId) {
+        initialValues.venueId = tournamentVenueId;
+      }
+
+      if (tournamentStartDate) {
+        // Parse tournament date as UTC and convert to local
+        const tournamentDateTime = dayjs.utc(tournamentStartDate).local();
+        initialValues.startDate = tournamentDateTime;
+        initialValues.startTime = tournamentDateTime;
+      }
+
+      if (Object.keys(initialValues).length > 0) {
+        form.setFieldsValue(initialValues);
+      }
     }
-  }, [isModalVisible, tournamentVenueId, form]);
+  }, [isModalVisible, tournamentVenueId, tournamentStartDate, form]);
 
   // Calculate match count based on format
   const calculateMatchCount = useMemo(() => {
@@ -99,8 +117,20 @@ export default function RoundMatchGenerationModal({
     try {
       const values = await form.validateFields();
 
+      if (!values.startDate || !values.startTime) {
+        message.error("Please select both start date and time");
+        return;
+      }
+
+      // Combine date and time as LOCAL time first
+      const localDateTime = values.startDate.clone()
+        .hour(values.startTime.hour())
+        .minute(values.startTime.minute())
+        .second(0)
+        .millisecond(0);
+
       // Convert local time to UTC before sending to backend (Spring Boot expects UTC)
-      const startDateISO = values.startDate.utc().format("YYYY-MM-DDTHH:mm:ss");
+      const startDateISO = localDateTime.utc().format("YYYY-MM-DDTHH:mm:ss");
 
       const payload = {
         roundId,
@@ -269,23 +299,45 @@ export default function RoundMatchGenerationModal({
           </Form.Item>
         )}
 
-        <Form.Item
-          name="startDate"
-          label={
-            <Space>
-              <CalendarOutlined />
-              Start Date & Time
-            </Space>
-          }
-          rules={[{ required: true, message: "Please select start date" }]}
-        >
-          <DatePicker
-            showTime
-            format="YYYY-MM-DD HH:mm"
-            style={{ width: "100%" }}
-            placeholder="Select start date and time"
-          />
-        </Form.Item>
+        <Row gutter={12}>
+          <Col span={12}>
+            <Form.Item
+              name="startDate"
+              label={
+                <Space>
+                  <CalendarOutlined />
+                  Start Date
+                </Space>
+              }
+              rules={[{ required: true, message: "Please select start date" }]}
+            >
+              <DatePicker
+                format="YYYY-MM-DD"
+                style={{ width: "100%" }}
+                placeholder="Select date"
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="startTime"
+              label={
+                <Space>
+                  <ClockCircleOutlined />
+                  Start Time
+                </Space>
+              }
+              rules={[{ required: true, message: "Please select start time" }]}
+            >
+              <TimePicker
+                format="h:mm A"
+                use12Hours
+                style={{ width: "100%" }}
+                placeholder="Select time"
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
               <Form.Item
           name="matchDurationMinutes"

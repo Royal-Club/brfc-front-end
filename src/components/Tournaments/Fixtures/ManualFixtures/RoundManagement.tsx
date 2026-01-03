@@ -8,6 +8,7 @@ import {
   Space,
   InputNumber,
   DatePicker,
+  TimePicker,
   message,
   Alert,
   Typography,
@@ -19,6 +20,8 @@ import {
   TrophyOutlined,
   DeleteOutlined,
   SaveOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -92,19 +95,27 @@ export default function RoundManagement({
 
   useEffect(() => {
     if (isModalVisible && existingRound) {
+      const startDateTime = existingRound.startDate ? dayjs.utc(existingRound.startDate).local() : null;
+      const endDateTime = existingRound.endDate ? dayjs.utc(existingRound.endDate).local() : null;
+
       form.setFieldsValue({
         roundName: existingRound.roundName,
         roundType: existingRound.roundType,
         advancementRule: existingRound.advancementRule,
-        startDate: existingRound.startDate ? dayjs.utc(existingRound.startDate).local() : null,
-        endDate: existingRound.endDate ? dayjs.utc(existingRound.endDate).local() : null,
+        startDate: startDateTime,
+        startTime: startDateTime,
+        endDate: endDateTime,
+        endTime: endDateTime,
       });
     } else if (isModalVisible && !isEditing) {
       // Set default values for new round (roundNumber and sequenceOrder will be auto-calculated)
       // Set startDate to tournament date if available
+      const tournamentDateTime = tournamentDate ? dayjs.utc(tournamentDate).local() : null;
+
       form.setFieldsValue({
         roundType: RoundType.GROUP_BASED,
-        startDate: tournamentDate ? dayjs.utc(tournamentDate).local() : null,
+        startDate: tournamentDateTime,
+        startTime: tournamentDateTime,
       });
     }
 
@@ -138,6 +149,28 @@ export default function RoundManagement({
         sequenceOrder = maxSequence + 1;
       }
 
+      // Combine date and time fields
+      let startDateUTC: string | undefined;
+      let endDateUTC: string | undefined;
+
+      if (values.startDate && values.startTime) {
+        const localStartDateTime = values.startDate.clone()
+          .hour(values.startTime.hour())
+          .minute(values.startTime.minute())
+          .second(0)
+          .millisecond(0);
+        startDateUTC = localStartDateTime.utc().format("YYYY-MM-DDTHH:mm:ss");
+      }
+
+      if (values.endDate && values.endTime) {
+        const localEndDateTime = values.endDate.clone()
+          .hour(values.endTime.hour())
+          .minute(values.endTime.minute())
+          .second(0)
+          .millisecond(0);
+        endDateUTC = localEndDateTime.utc().format("YYYY-MM-DDTHH:mm:ss");
+      }
+
       const payload = {
         tournamentId,
         roundNumber,
@@ -145,12 +178,8 @@ export default function RoundManagement({
         roundType: values.roundType,
         sequenceOrder,
         advancementRule: values.advancementRule || undefined,
-        startDate: values.startDate
-          ? values.startDate.utc().format("YYYY-MM-DDTHH:mm:ss")
-          : undefined,
-        endDate: values.endDate
-          ? values.endDate.utc().format("YYYY-MM-DDTHH:mm:ss")
-          : undefined,
+        startDate: startDateUTC,
+        endDate: endDateUTC,
       };
 
       if (isEditing) {
@@ -252,9 +281,12 @@ export default function RoundManagement({
           label="Round Name"
           rules={[{ required: true, message: "Please enter round name" }]}
         >
-          <Input 
-            placeholder="e.g., Group Stage, Quarter Finals, Semi Finals" 
+          <Input
+            placeholder="e.g., Group Stage, Quarter Finals, Semi Finals"
             size="large"
+            style={{
+              backgroundColor: 'transparent'
+            }}
           />
         </Form.Item>
 
@@ -295,14 +327,21 @@ export default function RoundManagement({
           <Text type="secondary" style={{ fontSize: 14 }}>Scheduling (Optional)</Text>
         </Divider>
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="startDate" label="Start Date">
+        <Row gutter={8}>
+          <Col span={14}>
+            <Form.Item
+              name="startDate"
+              label={
+                <Space>
+                  <CalendarOutlined />
+                  Start Date
+                </Space>
+              }
+            >
               <DatePicker
-                showTime
-                format="DD/MM/YYYY HH:mm"
+                format="YYYY-MM-DD"
                 style={{ width: "100%" }}
-                placeholder="Select start date"
+                placeholder="Select date"
                 size="large"
                 disabledDate={(current) => {
                   if (!tournamentDate) return false;
@@ -312,13 +351,42 @@ export default function RoundManagement({
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
-            <Form.Item name="endDate" label="End Date">
-              <DatePicker
-                showTime
-                format="DD/MM/YYYY HH:mm"
+          <Col span={10}>
+            <Form.Item
+              name="startTime"
+              label={
+                <Space>
+                  <ClockCircleOutlined />
+                  Start Time
+                </Space>
+              }
+            >
+              <TimePicker
+                format="h:mm A"
+                use12Hours
                 style={{ width: "100%" }}
-                placeholder="Select end date"
+                placeholder="Time"
+                size="large"
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={8}>
+          <Col span={14}>
+            <Form.Item
+              name="endDate"
+              label={
+                <Space>
+                  <CalendarOutlined />
+                  End Date
+                </Space>
+              }
+            >
+              <DatePicker
+                format="YYYY-MM-DD"
+                style={{ width: "100%" }}
+                placeholder="Select date"
                 size="large"
                 disabledDate={(current) => {
                   if (!tournamentDate) return false;
@@ -338,6 +406,25 @@ export default function RoundManagement({
 
                   return false;
                 }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={10}>
+            <Form.Item
+              name="endTime"
+              label={
+                <Space>
+                  <ClockCircleOutlined />
+                  End Time
+                </Space>
+              }
+            >
+              <TimePicker
+                format="h:mm A"
+                use12Hours
+                style={{ width: "100%" }}
+                placeholder="Time"
+                size="large"
               />
             </Form.Item>
           </Col>

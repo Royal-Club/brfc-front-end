@@ -5,6 +5,7 @@ import {
   Button,
   message,
   DatePicker,
+  TimePicker,
   Select,
   Spin,
   Divider,
@@ -13,11 +14,14 @@ import {
   Typography,
   Card,
 } from "antd";
-import { CalendarOutlined, ArrowRightOutlined } from "@ant-design/icons";
-import moment from "moment";
+import { CalendarOutlined, ArrowRightOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { useUpdateFixtureMutation } from "../../../state/features/fixtures/fixturesSlice";
 import { useGetVanuesQuery } from "../../../state/features/vanues/vanuesSlice";
 import { IFixture } from "../../../state/features/fixtures/fixtureTypes";
+
+dayjs.extend(utc);
 
 const { Text } = Typography;
 
@@ -37,22 +41,31 @@ export default function EditFixtureModal({
   const [form] = Form.useForm();
   const [updateFixture, { isLoading }] = useUpdateFixtureMutation();
   const { data: venuesData, isLoading: isVenuesLoading } = useGetVanuesQuery();
-  const [newDateTime, setNewDateTime] = useState<moment.Moment | null>(null);
+  const [newDate, setNewDate] = useState<dayjs.Dayjs | null>(null);
+  const [newTime, setNewTime] = useState<dayjs.Dayjs | null>(null);
   const [newVenueId, setNewVenueId] = useState<number | null>(null);
 
   const venues = venuesData?.content || [];
 
   // Parse current match date from server (UTC to local)
   const currentDateTime = fixture?.matchDate
-    ? moment.utc(fixture.matchDate).local()
+    ? dayjs.utc(fixture.matchDate).local()
     : null;
 
   useEffect(() => {
     if (fixture && isModalVisible) {
-      // Set venue as initial value only
+      // Set current date/time and venue as initial values
+      // Parse the fixture date fresh in the effect to avoid dependency issues
+      const currentLocal = fixture.matchDate
+        ? dayjs.utc(fixture.matchDate).local()
+        : null;
+
       form.setFieldsValue({
         venueId: fixture.venueId,
       });
+
+      setNewDate(currentLocal);
+      setNewTime(currentLocal);
       setNewVenueId(fixture.venueId);
     }
   }, [fixture, isModalVisible, form]);
@@ -66,25 +79,30 @@ export default function EditFixtureModal({
         return;
       }
 
-      // Use new date/time if provided, otherwise keep current
-      const dateTimeToSend = newDateTime || currentDateTime;
-
-      if (!dateTimeToSend) {
-        message.error("Please select a valid date and time");
+      if (!newDate || !newTime) {
+        message.error("Please select both date and time");
         return;
       }
+
+      // Combine date and time as LOCAL time first
+      const localDateTime = newDate.clone()
+        .hour(newTime.hour())
+        .minute(newTime.minute())
+        .second(0)
+        .millisecond(0);
 
       // Convert local time to UTC for API
       await updateFixture({
         matchId: fixture.id,
-        matchDate: dateTimeToSend.utc().format("YYYY-MM-DDTHH:mm:ss"),
+        matchDate: localDateTime.utc().format("YYYY-MM-DDTHH:mm:ss"),
         venueId: values.venueId,
       }).unwrap();
 
       message.success("Fixture updated successfully");
       handleSetIsModalVisible(false);
       form.resetFields();
-      setNewDateTime(null);
+      setNewDate(null);
+      setNewTime(null);
       setNewVenueId(null);
       onSuccess?.();
     } catch (error) {
@@ -95,7 +113,8 @@ export default function EditFixtureModal({
 
   const handleCancel = () => {
     form.resetFields();
-    setNewDateTime(null);
+    setNewDate(null);
+    setNewTime(null);
     setNewVenueId(null);
     handleSetIsModalVisible(false);
   };
@@ -108,7 +127,12 @@ export default function EditFixtureModal({
   };
 
   // Check if there are any changes
-  const hasChanges = newDateTime !== null || (newVenueId !== null && newVenueId !== fixture?.venueId);
+  const hasDateTimeChanges = newDate && newTime && currentDateTime && (
+    newDate.format("YYYY-MM-DD") !== currentDateTime.format("YYYY-MM-DD") ||
+    newTime.format("HH:mm") !== currentDateTime.format("HH:mm")
+  );
+  const hasVenueChanges = newVenueId !== null && newVenueId !== fixture?.venueId;
+  const hasChanges = hasDateTimeChanges || hasVenueChanges;
 
   if (!fixture) return null;
 
@@ -149,7 +173,7 @@ export default function EditFixtureModal({
                 <div style={{ marginTop: 4 }}>
                   <Text strong>
                     {currentDateTime
-                      ? currentDateTime.format("YYYY-MM-DD HH:mm")
+                      ? currentDateTime.format("YYYY-MM-DD h:mm A")
                       : "Not set"}
                   </Text>
                 </div>
@@ -166,16 +190,43 @@ export default function EditFixtureModal({
           <Divider>Update Match Details</Divider>
 
           {/* New Values Input Section */}
-          <Form.Item label="New Match Date & Time (Optional - leave empty to keep current)">
-            <DatePicker
-              showTime
-              format="YYYY-MM-DD HH:mm"
-              style={{ width: "100%" }}
-              placeholder="Select new date and time"
-              value={newDateTime}
-              onChange={(value) => setNewDateTime(value)}
-            />
-          </Form.Item>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <span>
+                    <CalendarOutlined /> Match Date
+                  </span>
+                }
+              >
+                <DatePicker
+                  format="YYYY-MM-DD"
+                  style={{ width: "100%" }}
+                  placeholder="Select date"
+                  value={newDate}
+                  onChange={(value) => setNewDate(value)}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                label={
+                  <span>
+                    <ClockCircleOutlined /> Match Time
+                  </span>
+                }
+              >
+                <TimePicker
+                  format="h:mm A"
+                  use12Hours
+                  style={{ width: "100%" }}
+                  placeholder="Select time"
+                  value={newTime}
+                  onChange={(value) => setNewTime(value)}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item
             label="Venue"
@@ -209,19 +260,19 @@ export default function EditFixtureModal({
                 size="small"
                 type="inner"
               >
-                {newDateTime && (
+                {hasDateTimeChanges && newDate && newTime && (
                   <Row gutter={16} style={{ marginBottom: 8 }}>
                     <Col span={24}>
                       <Text type="secondary">Date & Time:</Text>
                       <div style={{ marginTop: 4 }}>
                         <Text delete>
-                          {currentDateTime?.format("YYYY-MM-DD HH:mm")}
+                          {currentDateTime?.format("YYYY-MM-DD h:mm A")}
                         </Text>
                         <ArrowRightOutlined
                           style={{ margin: "0 8px" }}
                         />
                         <Text strong type="success">
-                          {newDateTime.format("YYYY-MM-DD HH:mm")}
+                          {newDate.format("YYYY-MM-DD")} {newTime.format("h:mm A")}
                         </Text>
                       </div>
                     </Col>

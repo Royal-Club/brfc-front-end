@@ -8,6 +8,7 @@ import {
   TimePicker,
   Select,
   Spin,
+  InputNumber,
 } from "antd";
 import moment from "moment";
 import { useCreateMatchMutation } from "../../../state/features/fixtures/fixturesSlice";
@@ -61,15 +62,18 @@ export default function AddMatchModal({
         return;
       }
 
-      // Combine date and time
-      const matchDate = moment(values.matchDate)
-        .set({
-          hour: values.matchTime.hour(),
-          minute: values.matchTime.minute(),
-          second: 0,
-        })
-        .utc()
-        .format("YYYY-MM-DDTHH:mm:ss");
+      // Combine date and time as LOCAL time first
+      const localDateTime = moment({
+        year: values.matchDate.year(),
+        month: values.matchDate.month(),
+        date: values.matchDate.date(),
+        hour: values.matchTime.hour(),
+        minute: values.matchTime.minute(),
+        second: 0,
+      });
+
+      // Convert local time to UTC for API
+      const matchDate = localDateTime.utc().format("YYYY-MM-DDTHH:mm:ss");
 
       const request: ICreateMatchRequest = {
         tournamentId,
@@ -174,7 +178,7 @@ export default function AddMatchModal({
             name="matchTime"
             rules={[{ required: true, message: "Please select match time" }]}
           >
-            <TimePicker style={{ width: "100%" }} format="HH:mm" />
+            <TimePicker style={{ width: "100%" }} format="h:mm A" use12Hours />
           </Form.Item>
 
           <Form.Item
@@ -203,12 +207,19 @@ export default function AddMatchModal({
           <Form.Item
             label="Match Duration (minutes)"
             name="matchDurationMinutes"
+            initialValue={90}
+            rules={[
+              { required: true, message: "Please enter match duration" },
+              { type: "number", min: 10, max: 180, message: "Duration must be between 10 and 180 minutes" },
+            ]}
           >
-            <Select placeholder="Select duration" allowClear>
-              <Select.Option value={60}>60 minutes</Select.Option>
-              <Select.Option value={90}>90 minutes</Select.Option>
-              <Select.Option value={120}>120 minutes</Select.Option>
-            </Select>
+            <InputNumber
+              style={{ width: "100%" }}
+              min={10}
+              max={180}
+              placeholder="Enter duration (e.g., 90)"
+              addonAfter="minutes"
+            />
           </Form.Item>
         </Form>
       </Spin>

@@ -137,9 +137,9 @@ export default function StartMatchModal({
           />
         </Form.Item>
 
-        <div style={{ 
-          padding: "12px 16px", 
-          background: token.colorFillSecondary, 
+        <div style={{
+          padding: "12px 16px",
+          background: token.colorFillSecondary,
           borderRadius: 8,
           marginTop: 8,
           border: `1px solid ${token.colorBorder}`,
@@ -147,7 +147,9 @@ export default function StartMatchModal({
           <Text type="secondary" style={{ fontSize: 12, color: token.colorTextSecondary }}>
             <strong>Match:</strong> {fixture.homeTeamName} vs {fixture.awayTeamName}
             <br />
-            <strong>Note:</strong> The match will start immediately after confirmation. 
+            <strong>Venue:</strong> {venues.find((v: IVenue) => v.id === fixture.venueId)?.name || "Not set, Please set venue in matchs list"}
+            <br />
+            <strong>Note:</strong> The match will start immediately after confirmation.
             The start time will be recorded automatically.
           </Text>
         </div>

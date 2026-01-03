@@ -3,6 +3,7 @@ import {
   Modal,
   Form,
   DatePicker,
+  TimePicker,
   InputNumber,
   Switch,
   Button,
@@ -12,6 +13,8 @@ import {
   Typography,
   Divider,
   Select,
+  Row,
+  Col,
 } from "antd";
 import {
   ThunderboltOutlined,
@@ -87,7 +90,7 @@ export default function GroupMatchGenerationModal({
   useEffect(() => {
     if (isModalVisible) {
       const format = getFixtureFormatFromGroupFormat(groupFormat);
-      const defaultStartDate = tournamentDate
+      const defaultStartDateTime = tournamentDate
         ? dayjs.utc(tournamentDate).local()
         : dayjs().add(1, "day").hour(15).minute(0);
 
@@ -97,7 +100,8 @@ export default function GroupMatchGenerationModal({
 
       form.setFieldsValue({
         fixtureFormat: format,
-        startDate: defaultStartDate,
+        startDate: defaultStartDateTime,
+        startTime: defaultStartDateTime,
         venueId: defaultVenueId
       });
     }
@@ -126,8 +130,20 @@ export default function GroupMatchGenerationModal({
     try {
       const values = await form.validateFields();
 
+      if (!values.startDate || !values.startTime) {
+        message.error("Please select both start date and time");
+        return;
+      }
+
+      // Combine date and time as LOCAL time first
+      const localDateTime = values.startDate.clone()
+        .hour(values.startTime.hour())
+        .minute(values.startTime.minute())
+        .second(0)
+        .millisecond(0);
+
       // Convert local time to UTC for backend
-      const startDateISO = values.startDate.utc().format("YYYY-MM-DDTHH:mm:ss");
+      const startDateISO = localDateTime.utc().format("YYYY-MM-DDTHH:mm:ss");
 
       // Use fixtureFormat from form (which is set from groupFormat)
       const selectedFixtureFormat = values.fixtureFormat || fixtureFormat;
@@ -201,6 +217,9 @@ export default function GroupMatchGenerationModal({
                 Matches to be created: <strong>{matchCount}</strong> (
                 {fixtureFormat === "DOUBLE_ROUND_ROBIN" ? "Double Round-Robin" : "Single Round-Robin"})
               </div>
+              <div>
+                Default venue: <strong>{tournamentVenueName || "Not set"}</strong>
+              </div>
             </div>
           }
           type="info"
@@ -218,28 +237,50 @@ export default function GroupMatchGenerationModal({
           />
         )}
 
-        <Form.Item
-          name="startDate"
-          label={
-            <Space>
-              <CalendarOutlined />
-              Start Date & Time
-            </Space>
-          }
-          rules={[{ required: true, message: "Please select start date" }]}
-        >
-          <DatePicker
-            showTime
-            format="YYYY-MM-DD HH:mm"
-            style={{ width: "100%" }}
-            placeholder="Select start date and time"
-            disabledDate={(current) => {
-              if (!tournamentDate) return false;
-              // Disable dates before the tournament date
-              return current && current.isBefore(dayjs.utc(tournamentDate).local().startOf('day'));
-            }}
-          />
-        </Form.Item>
+        <Row gutter={12}>
+          <Col span={12}>
+            <Form.Item
+              name="startDate"
+              label={
+                <Space>
+                  <CalendarOutlined />
+                  Start Date
+                </Space>
+              }
+              rules={[{ required: true, message: "Please select start date" }]}
+            >
+              <DatePicker
+                format="YYYY-MM-DD"
+                style={{ width: "100%" }}
+                placeholder="Select date"
+                disabledDate={(current) => {
+                  if (!tournamentDate) return false;
+                  // Disable dates before the tournament date
+                  return current && current.isBefore(dayjs.utc(tournamentDate).local().startOf('day'));
+                }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="startTime"
+              label={
+                <Space>
+                  <ClockCircleOutlined />
+                  Start Time
+                </Space>
+              }
+              rules={[{ required: true, message: "Please select start time" }]}
+            >
+              <TimePicker
+                format="h:mm A"
+                use12Hours
+                style={{ width: "100%" }}
+                placeholder="Select time"
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
         <Form.Item
           name="fixtureFormat"
