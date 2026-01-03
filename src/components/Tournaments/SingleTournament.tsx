@@ -6,7 +6,7 @@ import {
   DropResult,
 } from "react-beautiful-dnd";
 import { useParams } from "react-router-dom";
-import { Button, Card, Col, Grid, Row, Space, theme, Typography, Tabs, Tooltip } from "antd";
+import { Button, Card, Col, Grid, Row, Space, theme, Typography, Tabs, Tooltip, Input } from "antd";
 import useTournamentTeams from "../../hooks/useTournamentTeams";
 import "./tournament.css";
 import CreateTeamComponent from "./Atoms/CreateTeamComponent";
@@ -18,7 +18,7 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { RootState } from "../../state/store";
 import { setActiveMainTab } from "../../state/features/tournaments/tournamentUISlice";
 import PickerWheelModal from "./Atoms/pickerWheel/PickerWheelModal";
-import { FileExcelOutlined, RightSquareOutlined, TrophyOutlined } from "@ant-design/icons";
+import { FileExcelOutlined, RightSquareOutlined, TrophyOutlined, SearchOutlined } from "@ant-design/icons";
 import { exportToExcel, showBdLocalTime } from "../../utils/utils";
 import FixturesPanel from "./Fixtures/FixturesPanel";
 
@@ -47,8 +47,16 @@ function SingleTournament() {
     refetchPlayer,
   } = useTournamentTeams(tournamentId);
 
+  // Player search state
+  const [playerSearch, setPlayerSearch] = useState("");
+
   // Check if teams are added - disable fixtures tab if no teams
   const hasTeams = Array.isArray(teams) && teams.length > 0;
+
+  // Filter players based on search query
+  const filteredPlayers = players.filter((player) =>
+    player.playerName.toLowerCase().includes(playerSearch.toLowerCase())
+  );
 
   const handleTabChange = (key: string) => {
     // Prevent switching to fixtures tab if no teams are added
@@ -259,7 +267,19 @@ function SingleTournament() {
                   </div>
 
                   <Card
-                    title={`Players (${players.length})`}
+                    title={
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                        <span>Players ({filteredPlayers.length})</span>
+                        <Input
+                          placeholder="Search players..."
+                          prefix={<SearchOutlined />}
+                          value={playerSearch}
+                          onChange={(e) => setPlayerSearch(e.target.value)}
+                          allowClear
+                          style={{ width: 250 }}
+                        />
+                      </div>
+                    }
                     bordered={true}
                     style={{
                       marginTop: "16px",
@@ -283,8 +303,8 @@ function SingleTournament() {
                           }}
                           className="team-player-container"
                         >
-                          {players.length > 0 ? (
-                            players.map((player, index) => (
+                          {filteredPlayers.length > 0 ? (
+                            filteredPlayers.map((player, index) => (
                               <Draggable
                                 key={player.playerId.toString()}
                                 draggableId={player.playerId.toString()}
@@ -309,7 +329,9 @@ function SingleTournament() {
                               </Draggable>
                             ))
                           ) : (
-                            <Text type="secondary">No Player Found</Text>
+                            <Text type="secondary">
+                              {playerSearch ? "No players match your search" : "No Player Found"}
+                            </Text>
                           )}
                           {provided.placeholder}
                         </div>

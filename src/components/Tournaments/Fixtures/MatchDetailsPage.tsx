@@ -1,15 +1,12 @@
 import React, { useState } from "react";
 import {
-  Card,
   Spin,
   Tabs,
-  Button,
   Badge,
   Alert,
   theme,
 } from "antd";
 import {
-  ArrowLeftOutlined,
   LockOutlined,
 } from "@ant-design/icons";
 import { useParams, useNavigate } from "react-router-dom";

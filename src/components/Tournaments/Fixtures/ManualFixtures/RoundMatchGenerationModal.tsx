@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -10,16 +10,19 @@ import {
   Alert,
   message,
   Typography,
-  Divider,
   Select,
 } from "antd";
 import {
   ThunderboltOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
 import { useGenerateRoundMatchesMutation } from "../../../../state/features/manualFixtures/manualFixturesSlice";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -35,6 +38,7 @@ interface RoundMatchGenerationModalProps {
   onSuccess: () => void;
   venues?: Array<{ id: number; name: string }>;
   tournamentVenueId?: number | null;
+  tournamentStartDate?: string | null;
 }
 
 export default function RoundMatchGenerationModal({
@@ -46,6 +50,7 @@ export default function RoundMatchGenerationModal({
   onSuccess,
   venues = [],
   tournamentVenueId,
+  tournamentStartDate,
 }: RoundMatchGenerationModalProps) {
   const [form] = Form.useForm();
   const [fixtureFormat, setFixtureFormat] = useState<FixtureFormat>("SINGLE_ELIMINATION");
@@ -66,8 +71,8 @@ export default function RoundMatchGenerationModal({
 
     switch (fixtureFormat) {
       case "SINGLE_ELIMINATION":
-        // For single elimination: teams - 1 matches (e.g., 8 teams = 7 matches)
-        return teamCount - 1;
+        // For single elimination: first round only (e.g., 4 teams = 2 matches, 8 teams = 4 matches)
+        return Math.floor(teamCount / 2);
       case "ROUND_ROBIN":
         // Round robin: n*(n-1)/2 matches
         const singleRoundMatches = (teamCount * (teamCount - 1)) / 2;
@@ -94,15 +99,15 @@ export default function RoundMatchGenerationModal({
     try {
       const values = await form.validateFields();
 
-      // Format startDate as ISO string for backend (Spring Boot LocalDateTime format)
-      const startDateISO = values.startDate.format("YYYY-MM-DDTHH:mm:ss");
+      // Convert local time to UTC before sending to backend (Spring Boot expects UTC)
+      const startDateISO = values.startDate.utc().format("YYYY-MM-DDTHH:mm:ss");
 
       const payload = {
         roundId,
         fixtureFormat: fixtureFormat,
         startDate: startDateISO,
-        matchTimeGapMinutes: values.matchTimeGapMinutes || 180,
-        matchDurationMinutes: values.matchDurationMinutes || 90,
+        matchTimeGapMinutes: values.matchTimeGapMinutes || 30,
+        matchDurationMinutes: values.matchDurationMinutes || 20,
         venueId: values.venueId || undefined,
         doubleRoundRobin: fixtureFormat === "ROUND_ROBIN" ? (doubleRoundRobin || false) : undefined,
       };
@@ -226,7 +231,6 @@ export default function RoundMatchGenerationModal({
           >
             <Option value="SINGLE_ELIMINATION">Single Elimination (Bracket)</Option>
             <Option value="ROUND_ROBIN">Round Robin</Option>
-            <Option value="DOUBLE_ROUND_ROBIN">Double Round Robin</Option>
           </Select>
         </Form.Item>
 
@@ -274,7 +278,6 @@ export default function RoundMatchGenerationModal({
             </Space>
           }
           rules={[{ required: true, message: "Please select start date" }]}
-          initialValue={dayjs().add(1, "day").hour(15).minute(0)}
         >
           <DatePicker
             showTime
@@ -284,78 +287,65 @@ export default function RoundMatchGenerationModal({
           />
         </Form.Item>
 
-        <Form.Item
-          name="matchTimeGapMinutes"
-          label="Time Gap Between Matches (minutes)"
-          tooltip="Time interval between the end of one match and the start of the next match"
-          initialValue={180}
-        >
-          <InputNumber
-            min={5}
-            max={1440}
-            step={5}
-            style={{ width: "100%" }}
-            placeholder="180"
-            addonAfter="minutes"
-          />
-        </Form.Item>
-
-        <Form.Item
+              <Form.Item
           name="matchDurationMinutes"
           label="Match Duration (minutes)"
           tooltip="Duration of each match"
-          initialValue={90}
+          initialValue={20}
         >
           <InputNumber
             min={10}
             max={180}
             step={5}
             style={{ width: "100%" }}
-            placeholder="90"
+            placeholder="20"
             addonAfter="minutes"
           />
         </Form.Item>
 
-        {venues && venues.length > 0 && (
-          <>
-            <Divider>Optional</Divider>
-            <Form.Item
-              name="venueId"
-              label="Venue (Optional)"
-              tooltip="Assign all matches to the same venue"
-            >
-              <Select
-                placeholder="Select venue (optional)"
-                allowClear
-                showSearch
-                optionFilterProp="children"
-              >
-                {venues.map((venue) => (
-                  <Option key={venue.id} value={venue.id}>
-                    {venue.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </>
-        )}
+        <Form.Item
+          name="matchTimeGapMinutes"
+          label="Time Gap Between Matches (minutes)"
+          tooltip="Time interval between the end of one match and the start of the next match"
+          initialValue={30}
+        >
+          <InputNumber
+            min={5}
+            max={1440}
+            step={5}
+            style={{ width: "100%" }}
+            placeholder="30"
+            addonAfter="minutes"
+          />
+        </Form.Item>
 
-        <Alert
-          message="Match Generation Info"
-          description={
-            <ul style={{ margin: 0, paddingLeft: 20 }}>
-              <li>Matches will be created based on selected format</li>
-              <li>All matches will start with status: SCHEDULED</li>
-              <li>You can edit individual matches after generation</li>
-              {fixtureFormat === "SINGLE_ELIMINATION" && (
-                <li>Bracket structure will be created (winners advance automatically)</li>
-              )}
-            </ul>
-          }
-          type="success"
-          showIcon
-          style={{ marginTop: 16 }}
-        />
+  
+
+        {venues && venues.length > 0 && (
+          <Form.Item
+            name="venueId"
+            label={
+              <Space>
+                <EnvironmentOutlined />
+                Venue
+              </Space>
+            }
+            tooltip="All matches will be assigned to this venue"
+            rules={[{ required: true, message: "Please select a venue" }]}
+          >
+            <Select
+              placeholder="Select venue"
+              showSearch
+              optionFilterProp="children"
+            >
+              {venues.map((venue) => (
+                <Option key={venue.id} value={venue.id}>
+                  {venue.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
       </Form>
     </Modal>
   );

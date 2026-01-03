@@ -153,6 +153,8 @@ export default function QuickEventRecorder({
     );
   }
 
+  const isScheduled = fixture.matchStatus === "SCHEDULED";
+
   return (
     <>
       <div style={{ position: "relative" }}>
@@ -174,6 +176,22 @@ export default function QuickEventRecorder({
           </Text>
         </div>
 
+        {isScheduled && (
+          <div
+            style={{
+              padding: "12px 16px",
+              marginBottom: 16,
+              background: token.colorWarningBg,
+              border: `1px solid ${token.colorWarningBorder}`,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ fontSize: 13, color: token.colorWarningText }}>
+              Event recording is disabled. Events can only be recorded during or after the match.
+            </Text>
+          </div>
+        )}
+
         <Text
           type="secondary"
           style={{ display: "block", marginBottom: 12, fontSize: 13 }}
@@ -188,25 +206,32 @@ export default function QuickEventRecorder({
                 size="large"
                 block
                 onClick={() => handleEventTypeClick(event.value)}
+                disabled={isScheduled}
                 style={{
                   height: "auto",
                   padding: "12px 8px",
                   borderRadius: 12,
                   border: `2px solid ${event.color}30`,
-                  background: `${event.color}08`,
+                  background: isScheduled ? token.colorBgContainerDisabled : `${event.color}08`,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   gap: 6,
                   transition: "all 0.3s ease",
+                  cursor: isScheduled ? "not-allowed" : "pointer",
+                  opacity: isScheduled ? 0.5 : 1,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = `0 4px 12px ${event.color}30`;
+                  if (!isScheduled) {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${event.color}30`;
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "none";
+                  if (!isScheduled) {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }
                 }}
               >
                 <span style={{ fontSize: 28 }}>{event.icon}</span>
@@ -214,7 +239,7 @@ export default function QuickEventRecorder({
                   strong
                   style={{
                     fontSize: 12,
-                    color: event.color,
+                    color: isScheduled ? token.colorTextDisabled : event.color,
                     textAlign: "center",
                   }}
                 >

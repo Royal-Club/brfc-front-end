@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { Card, Tag, Space, Button, Typography } from "antd";
 import { gsap } from "gsap";
 import { IFixture, IMatchEvent } from "../../../state/features/fixtures/fixtureTypes";
-import { TrophyOutlined, EnvironmentOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { TrophyOutlined, ArrowLeftOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import moment from "moment";
 import MatchLivePanel from "./MatchLivePanel";
 import { useNavigate } from "react-router-dom";
@@ -627,6 +627,22 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
             >
               {match.tournamentName}
             </div>
+            {match.venueName && (
+              <div
+                style={{
+                  color: "rgba(255, 255, 255, 0.75)",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  marginTop: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <EnvironmentOutlined style={{ fontSize: 11 }} />
+                {match.venueName}
+              </div>
+            )}
           </div>
         </Space>
 

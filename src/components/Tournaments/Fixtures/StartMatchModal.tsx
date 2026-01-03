@@ -99,6 +99,7 @@ export default function StartMatchModal({
           <Select
             placeholder="Select venue"
             loading={venuesLoading}
+            disabled
             size="large"
             showSearch
             filterOption={(input, option) =>

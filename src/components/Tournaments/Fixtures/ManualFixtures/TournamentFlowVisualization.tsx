@@ -9,15 +9,13 @@ import ReactFlow, {
   useEdgesState,
   BackgroundVariant,
   ConnectionMode,
-  Panel,
+  Panel, 
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Card, Space, Typography, Button, Tooltip, theme } from "antd";
+import { Card, Space,Button, Tooltip, theme } from "antd";
 import {
   ExpandOutlined,
   CompressOutlined,
-  ReloadOutlined,
-  InfoCircleOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
@@ -32,7 +30,6 @@ import { hasAnyRole } from "../../../../utils/roleUtils";
 
 const { useToken } = theme;
 
-const { Text } = Typography;
 
 interface TournamentFlowVisualizationProps {
   tournamentStructure: TournamentStructureResponse;
@@ -73,33 +70,35 @@ export default function TournamentFlowVisualization({
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  
+
   // Check if user can manage tournaments (ADMIN, SUPERADMIN)
   const canManage = hasAnyRole(loginInfo.roles, ["ADMIN", "SUPERADMIN"]);
-  
+
   // Get background color from theme - use colorBgLayout for the main background
   // In dark mode it's #000000, in light mode it's #f0f2f5
   const backgroundColor = token.colorBgLayout || "#f5f5f5";
   // Determine if dark mode based on background color
-  const isDarkMode = token.colorBgLayout === "#000000" || token.colorBgContainer === "#141414";
+  const isDarkMode =
+    token.colorBgLayout === "#000000" || token.colorBgContainer === "#141414";
 
   // Generate nodes and edges from tournament structure (only when structure changes)
   // Use useMemo to create a stable structure identifier to prevent unnecessary re-renders
   // This prevents the visualization from blinking/resetting when data updates
   const structureKey = useMemo(() => {
-    if (!tournamentStructure?.rounds) return '';
+    if (!tournamentStructure?.rounds) return "";
     return JSON.stringify({
-      rounds: tournamentStructure.rounds.map(r => ({
+      rounds: tournamentStructure.rounds.map((r) => ({
         id: r.id,
         roundName: r.roundName,
         roundType: r.roundType,
-        groups: r.groups?.map(g => ({ 
-          id: g.id, 
-          groupName: g.groupName,
-          teamCount: g.teams?.length || 0,
-          totalMatches: g.totalMatches || 0
-        })) || []
-      }))
+        groups:
+          r.groups?.map((g) => ({
+            id: g.id,
+            groupName: g.groupName,
+            teamCount: g.teams?.length || 0,
+            totalMatches: g.totalMatches || 0,
+          })) || [],
+      })),
     });
   }, [tournamentStructure]);
 
@@ -120,24 +119,26 @@ export default function TournamentFlowVisualization({
       // Match by tournamentId, roundNumber (fixture.round or fixture.roundNumber), or round ID
       const roundOngoingMatches = fixtures.filter((f) => {
         // Ensure tournamentId matches
-        const matchesTournament = f.tournamentId === tournamentStructure.tournamentId;
+        const matchesTournament =
+          f.tournamentId === tournamentStructure.tournamentId;
         if (!matchesTournament) return false;
-        
+
         // Try multiple matching strategies for round
         const fixtureRoundNumber = f.roundNumber ?? f.round; // Use roundNumber if available, fallback to round
         const matchesByRoundNumber = fixtureRoundNumber === round.roundNumber;
         const matchesByRoundId = f.round === round.id;
         const matches = matchesByRoundNumber || matchesByRoundId;
-        
+
         // Check if match is ongoing
         const isOngoing = isMatchOngoing(f.matchStatus);
-        
+
         return matches && isOngoing;
       });
 
       // Get all matches for this round (for standings calculation in DIRECT_KNOCKOUT rounds)
       const roundAllMatches = fixtures.filter((f) => {
-        const matchesTournament = f.tournamentId === tournamentStructure.tournamentId;
+        const matchesTournament =
+          f.tournamentId === tournamentStructure.tournamentId;
         if (!matchesTournament) return false;
         const fixtureRoundNumber = f.roundNumber ?? f.round;
         const matchesByRoundNumber = fixtureRoundNumber === round.roundNumber;
@@ -178,22 +179,24 @@ export default function TournamentFlowVisualization({
           // Match by tournamentId, groupName, and roundNumber
           const groupOngoingMatches = fixtures.filter((f) => {
             // Ensure tournamentId matches
-            const matchesTournament = f.tournamentId === tournamentStructure.tournamentId;
+            const matchesTournament =
+              f.tournamentId === tournamentStructure.tournamentId;
             if (!matchesTournament) return false;
-            
+
             // Match by groupName
             const matchesGroup = f.groupName === group.groupName;
             if (!matchesGroup) return false;
-            
+
             // Try multiple matching strategies for round
             const fixtureRoundNumber = f.roundNumber ?? f.round; // Use roundNumber if available, fallback to round
-            const matchesByRoundNumber = fixtureRoundNumber === round.roundNumber;
+            const matchesByRoundNumber =
+              fixtureRoundNumber === round.roundNumber;
             const matchesByRoundId = f.round === round.id;
             const matchesRound = matchesByRoundNumber || matchesByRoundId;
-            
+
             // Check if match is ongoing
             const isOngoing = isMatchOngoing(f.matchStatus);
-            
+
             return matchesRound && isOngoing;
           });
 
@@ -227,38 +230,12 @@ export default function TournamentFlowVisualization({
             targetHandle: "right", // Connect to right side of group
             type: "smoothstep",
             animated: group.status === "ONGOING",
-            style: { 
+            style: {
               stroke: group.status === "COMPLETED" ? "#52c41a" : "#d9d9d9",
               strokeWidth: 3, // Make edges larger
             },
           });
 
-          // Optionally create team nodes (can be toggled for performance)
-          // Commented out by default to avoid clutter
-          /*
-          group.teams.slice(0, 3).forEach((team, teamIndex) => {
-            const teamX = groupX + 250;
-            const teamY = groupY + teamIndex * 60;
-
-            generatedNodes.push({
-              id: `team-${team.id || `${group.id}-${teamIndex}`}`,
-              type: "teamNode",
-              position: { x: teamX, y: teamY },
-              data: {
-                teamName: team.teamName,
-                isPlaceholder: team.isPlaceholder,
-                placeholderName: team.placeholderName,
-              },
-            });
-
-            generatedEdges.push({
-              id: `edge-group-${group.id}-team-${team.id || teamIndex}`,
-              source: `group-${group.id}`,
-              target: `team-${team.id || `${group.id}-${teamIndex}`}`,
-              type: "smoothstep",
-            });
-          });
-          */
         });
       }
 
@@ -282,7 +259,17 @@ export default function TournamentFlowVisualization({
 
     setNodes(generatedNodes);
     setEdges(generatedEdges);
-  }, [structureKey, fixtures, onCreateRound, onCreateGroup, onAssignTeams, onGenerateMatches, setNodes, setEdges, tournamentStructure]);
+  }, [
+    structureKey,
+    fixtures,
+    onCreateRound,
+    onCreateGroup,
+    onAssignTeams,
+    onGenerateMatches,
+    setNodes,
+    setEdges,
+    tournamentStructure,
+  ]);
 
   const handleNodeClick = useCallback(
     (_event: any, node: Node) => {
@@ -333,9 +320,9 @@ export default function TournamentFlowVisualization({
         }}
         style={{ backgroundColor }}
       >
-        <Background 
-          variant={BackgroundVariant.Dots} 
-          gap={16} 
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={16}
           size={1}
           color={isDarkMode ? "#434343" : "#d9d9d9"}
         />
@@ -345,99 +332,46 @@ export default function TournamentFlowVisualization({
           zoomable
           pannable
           style={{
-            backgroundColor: token.colorBgElevated || (isDarkMode ? "#1f1f1f" : "#ffffff"),
-            border: `1px solid ${token.colorBorder || (isDarkMode ? "#303030" : "#d9d9d9")}`,
+            backgroundColor:
+              token.colorBgElevated || (isDarkMode ? "#1f1f1f" : "#ffffff"),
+            border: `1px solid ${
+              token.colorBorder || (isDarkMode ? "#303030" : "#d9d9d9")
+            }`,
           }}
         />
 
         {/* Custom Panel with Controls */}
-     {canManage && (    <Panel position="top-right">
-          <Card size="small" style={{ minWidth: 200 }}>
-            <Space direction="vertical" size={8} style={{ width: "100%" }}>
-              <Space size={8} wrap>
-                {onCreateRound && (
-                  <Tooltip title="Add Round">
-                    <Button size="small" type="primary" icon={<PlusOutlined />} onClick={onCreateRound} />
+        {canManage && (
+          <Panel position="top-right">
+            <Card size="small">
+              <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                <Space size={8} wrap>
+                  {onCreateRound && (
+                    <Tooltip title="Add Round">
+                      <Button
+                        size="small"
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={onCreateRound}
+                      />
+                    </Tooltip>
+                  )}
+                  <Tooltip
+                    title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                  >
+                    <Button
+                      size="small"
+                      icon={
+                        isFullscreen ? <CompressOutlined /> : <ExpandOutlined />
+                      }
+                      onClick={toggleFullscreen}
+                    />
                   </Tooltip>
-                )}
-                {onRefresh && (
-                  <Tooltip title="Refresh">
-                    <Button size="small" icon={<ReloadOutlined />} onClick={onRefresh} />
-                  </Tooltip>
-                )}
-                <Tooltip title="Reset view">
-                  <Button size="small" icon={<ReloadOutlined />} onClick={handleResetView} />
-                </Tooltip>
-                <Tooltip title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
-                  <Button
-                    size="small"
-                    icon={isFullscreen ? <CompressOutlined /> : <ExpandOutlined />}
-                    onClick={toggleFullscreen}
-                  />
-                </Tooltip>
+                </Space>
               </Space>
-
-             
-                <div style={{ fontSize: 11, color: "#8c8c8c" }}>
-                  <InfoCircleOutlined /> Hover nodes for controls • Click for details
-                </div>
-          
-            </Space>
-          </Card>
-        </Panel>
-    )}
-        {/* Legend Panel */}
-        {/* <Panel position="bottom-left">
-          <Card size="small" title="Legend" style={{ minWidth: 180 }}>
-            <Space direction="vertical" size={4}>
-              <Space size={4}>
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    backgroundColor: "#52c41a",
-                    borderRadius: 2,
-                  }}
-                />
-                <Text style={{ fontSize: 11 }}>Completed</Text>
-              </Space>
-              <Space size={4}>
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    backgroundColor: "#1890ff",
-                    borderRadius: 2,
-                  }}
-                />
-                <Text style={{ fontSize: 11 }}>Ongoing</Text>
-              </Space>
-              <Space size={4}>
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    backgroundColor: "#d9d9d9",
-                    borderRadius: 2,
-                  }}
-                />
-                <Text style={{ fontSize: 11 }}>Not Started</Text>
-              </Space>
-              <Space size={4}>
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    border: "1px dashed #faad14",
-                    borderRadius: 2,
-                    backgroundColor: "#fffbe6",
-                  }}
-                />
-                <Text style={{ fontSize: 11 }}>Placeholder</Text>
-              </Space>
-            </Space>
-          </Card>
-        </Panel> */}
+            </Card>
+          </Panel>
+        )}
       </ReactFlow>
     </div>
   );

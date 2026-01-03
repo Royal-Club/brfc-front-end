@@ -1591,7 +1591,9 @@ export default function InteractiveTournamentTab({
           dispatch(setShowRoundMatchGeneration(false));
           dispatch(setSelectedNode(null));
         }}
+        venues={venues}
         tournamentVenueId={tournamentVenueId}
+        tournamentStartDate={tournamentSummary?.content?.[0]?.tournamentDate || null}
       />
     </div>
   );

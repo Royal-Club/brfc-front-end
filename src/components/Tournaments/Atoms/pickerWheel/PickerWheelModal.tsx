@@ -85,6 +85,7 @@ const PickerWheelModal: React.FC<PickerWheelModalProps> = ({ teams = [] }) => {
 
     const handleCancel = () => {
         setIsModalVisible(false);
+        setWinnersList([]); // Reset winners history when modal closes
     };
 
     const handleAddSegment = useCallback(() => {
