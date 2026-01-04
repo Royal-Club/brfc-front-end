@@ -7,6 +7,9 @@ export interface Player {
     playerName: string;
     playingPosition?: string;
     teamId?: number;
+    isCaptain?: boolean;
+    teamPlayerRole?: string;
+    jerseyNumber?: number;
 }
 
 // Team Type

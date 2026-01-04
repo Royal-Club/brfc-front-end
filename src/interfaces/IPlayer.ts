@@ -10,6 +10,10 @@ interface IPlayer {
     playingPosition?: string;
     createdDate: Date;
     updatedDate: Date;
+    roles?: Array<{
+        id: number;
+        name: string;
+    }>;
 }
 
 export default IPlayer;

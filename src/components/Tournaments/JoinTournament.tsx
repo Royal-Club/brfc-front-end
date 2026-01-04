@@ -19,7 +19,7 @@ import {
   Avatar,
   Tooltip,
 } from "antd";
-import type { ColumnsType, TablePaginationConfig } from "antd/es/table/interface";
+import type { ColumnsType } from "antd/es/table/interface";
 import useJoinTournament from "../../hooks/useJoinTournament";
 import { TournamentPlayerInfoType } from "../../state/features/tournaments/tournamentTypes";
 import DebouncedInput from "./Atoms/DebouncedInput";
@@ -32,7 +32,6 @@ import {
   SearchOutlined,
   ClockCircleOutlined,
   TeamOutlined,
-  SortAscendingOutlined,
   FilterOutlined,
   CaretRightOutlined,
   StarFilled,
@@ -513,7 +512,6 @@ export default function JoinTournament() {
                       onChange={setSortBy}
                       style={{ width: "100%" }}
                       size="middle"
-                      prefix={<SortAscendingOutlined />}
                     >
                       <Option value="name">Sort by Name</Option>
                       <Option value="employeeId">Sort by ID</Option>

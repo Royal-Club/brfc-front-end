@@ -6,6 +6,28 @@ import reportWebVitals from "./reportWebVitals";
 import { Provider } from "react-redux";
 import store from "./state/store";
 
+// Suppress harmless ResizeObserver error from ReactFlow
+// This is a known issue: https://github.com/xyflow/xyflow/issues/3457
+const resizeObserverLoopErrRe = /^ResizeObserver loop (completed with undelivered notifications|limit exceeded)/;
+
+// Override console.error to filter out ResizeObserver errors
+const originalConsoleError = console.error;
+console.error = (...args: any[]) => {
+  const firstArg = args[0];
+  if (typeof firstArg === 'string' && resizeObserverLoopErrRe.test(firstArg)) {
+    return;
+  }
+  originalConsoleError.apply(console, args);
+};
+
+// Also handle window error events
+window.addEventListener('error', (event: ErrorEvent) => {
+  if (resizeObserverLoopErrRe.test(event.message)) {
+    event.stopImmediatePropagation();
+    event.preventDefault();
+  }
+});
+
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );

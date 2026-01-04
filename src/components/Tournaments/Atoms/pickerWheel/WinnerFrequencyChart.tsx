@@ -45,7 +45,7 @@ const WinnerFrequencyChart: React.FC<WinnerFrequencyChartProps> = ({
             label: "Number of Wins",
             data: Object.values(winnerFrequency),  // Frequency counts
             backgroundColor: "rgba(75, 192, 192, 0.2)",
-            borderColor: "rgba(75, 192, 192, 1)",
+            borderColor: "rgba(255, 255, 255, 1)",
             borderWidth: 1,
         },
     ],
@@ -72,7 +72,7 @@ const WinnerFrequencyChart: React.FC<WinnerFrequencyChartProps> = ({
 
   return (
     <div className="slimScroll" style={{ overflowX: "auto" }}>
-      <div style={{ width: "100%", minWidth: Object.keys(winnerFrequency).length * 70 , height: "300px" }}>
+      <div style={{ width: "100%", minWidth: Object.keys(winnerFrequency).length * 70 , height: "250px" }}>
         <Bar data={chartData} options={options} />
       </div>
     </div>

@@ -8,16 +8,17 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   SkypeOutlined,
-  PhoneOutlined
+  PhoneOutlined,
+  SafetyCertificateTwoTone
 } from "@ant-design/icons";
-import { 
-  Button, 
-  Col, 
-  Modal, 
-  Row, 
-  Space, 
-  Table, 
-  Input, 
+import {
+  Button,
+  Col,
+  Modal,
+  Row,
+  Space,
+  Table,
+  Input,
   message,
   Card,
   Tabs,
@@ -25,7 +26,8 @@ import {
   Tag,
   Badge,
   Avatar,
-  Form
+  Form,
+  Select
 } from "antd";
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
@@ -36,6 +38,7 @@ import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { ColumnsType } from "antd/es/table";
 import { useResetPlayerPasswordMutation } from "../../state/features/auth/authSlice";
+import { useGetRolesQuery, useAssignRolesMutation, useGetPlayerRolesQuery } from "../../state/features/roles/rolesSlice";
 import "./Players.css";
 
 const { Title, Text } = Typography;
@@ -45,6 +48,8 @@ function Players() {
   const navigate = useNavigate();
   const { data: playersData, isLoading, refetch } = useGetPlayersQuery();
   const [resetPlayerPassword] = useResetPlayerPasswordMutation();
+  const { data: rolesData } = useGetRolesQuery();
+  const [assignRoles] = useAssignRolesMutation();
   const loginInfo = useSelector(selectLoginInfo);
 
   // State for handling the password change modal
@@ -59,6 +64,10 @@ function Players() {
   // Add these new states for password form validation
   const [passwordError, setPasswordError] = useState("");
   const [passwordStrength, setPasswordStrength] = useState<"weak" | "medium" | "strong" | "">("");
+
+  // State for handling the roles modal
+  const [isRolesModalVisible, setIsRolesModalVisible] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
   
   useEffect(() => {
     if (playersData?.content) {
@@ -129,6 +138,48 @@ function Players() {
   const showPasswordModal = (player: IPlayer) => {
     setSelectedPlayer(player);
     setIsPasswordModalVisible(true);
+  };
+
+  // Function to handle opening the roles modal
+  const showRolesModal = (player: IPlayer) => {
+    setSelectedPlayer(player);
+    setIsRolesModalVisible(true);
+    // Pre-select current player roles
+    const currentRoleIds = player.roles?.map(role => role.id) || [];
+    setSelectedRoles(currentRoleIds);
+  };
+
+  // Function to close the roles modal
+  const handleRolesCancel = () => {
+    setIsRolesModalVisible(false);
+    setSelectedRoles([]);
+    setSelectedPlayer(null);
+  };
+
+  // Function to handle roles assignment
+  const handleRolesUpdate = () => {
+    if (!selectedPlayer) return;
+
+    Modal.confirm({
+      title: "Are you sure?",
+      content: `Do you really want to update roles for ${selectedPlayer.name}?`,
+      onOk: () => {
+        assignRoles({
+          playerRoleMappings: {
+            [selectedPlayer.id.toString()]: selectedRoles,
+          },
+        })
+          .unwrap()
+          .then(() => {
+            message.success("Roles updated successfully");
+            handleRolesCancel();
+            refetch();
+          })
+          .catch((err) => {
+            message.error(err?.data?.message || "Failed to update roles");
+          });
+      },
+    });
   };
 
   // Function to check password strength
@@ -303,6 +354,24 @@ function Players() {
         </Tag>
       ),
     },
+    {
+      title: "Roles",
+      dataIndex: "roles",
+      key: "roles",
+      render: (roles: Array<{ id: number; name: string }>) => (
+        <Space size={[0, 4]} wrap>
+          {roles && roles.length > 0 ? (
+            roles.map((role) => (
+              <Tag key={role.id} color="geekblue" style={{ margin: 0 }}>
+                {role.name}
+              </Tag>
+            ))
+          ) : (
+            <Tag color="default">No Roles</Tag>
+          )}
+        </Space>
+      ),
+    },
   ];
 
   const playersColumn: ColumnsType<IPlayer> = loginInfo.roles.includes("ADMIN")
@@ -312,10 +381,10 @@ function Players() {
           title: "Action",
           key: "action",
           render: (_: any, record: IPlayer) => (
-            <Space size="small" className="mobile-action-buttons">
-              <Button 
-                type="primary" 
-                ghost 
+            <Space size="small" className="mobile-action-buttons" wrap>
+              <Button
+                type="primary"
+                ghost
                 size="small"
                 icon={<EditTwoTone />}
                 onClick={() => navigate(`/players/${record.id}`)}
@@ -323,13 +392,23 @@ function Players() {
                 Edit
               </Button>
               <Button
-                type="dashed" 
+                type="dashed"
                 size="small"
                 icon={<LockTwoTone />}
                 onClick={() => showPasswordModal(record)}
               >
                 Reset
               </Button>
+              {loginInfo.roles.includes("SUPERADMIN") && (
+                <Button
+                  type="default"
+                  size="small"
+                  icon={<SafetyCertificateTwoTone twoToneColor="#52c41a" />}
+                  onClick={() => showRolesModal(record)}
+                >
+                  Set Roles
+                </Button>
+              )}
             </Space>
           ),
         },
@@ -342,7 +421,7 @@ function Players() {
   const inactiveCount = playersData?.content?.filter(player => !player.active).length || 0;
 
   return (
-    <Card 
+    <Card
       bordered={false}
       className="player-list-card"
     >
@@ -364,11 +443,11 @@ function Players() {
               allowClear
               size="middle"
             />
-            
+
             {loginInfo.roles.includes("ADMIN") && (
               <Link to={"/player"}>
-                <Button 
-                  type="primary" 
+                <Button
+                  type="primary"
                   icon={<PlusOutlined />}
                   size="middle"
                   style={{ whiteSpace: 'nowrap' }}
@@ -383,41 +462,41 @@ function Players() {
 
       <Row align="middle" style={{ marginBottom: 12 }}>
         <Col flex="auto">
-          <Tabs 
-            defaultActiveKey="all" 
+          <Tabs
+            defaultActiveKey="all"
             onChange={handleTabChange}
             type="card"
             size="small"
             style={{ marginBottom: 0 }}
           >
-            <TabPane 
+            <TabPane
               tab={
                 <span>
-                  <UserOutlined /> 
+                  <UserOutlined />
                   All
                   <Badge count={allCount} size="small" style={{ marginLeft: 4, backgroundColor: '#1890ff', fontSize: '9px' }} />
                 </span>
-              } 
+              }
               key="all"
             />
-            <TabPane 
+            <TabPane
               tab={
                 <span>
-                  <CheckCircleOutlined /> 
-                  Active 
+                  <CheckCircleOutlined />
+                  Active
                   <Badge count={activeCount} size="small" style={{ marginLeft: 4, backgroundColor: '#52c41a', fontSize: '9px' }} />
                 </span>
-              } 
+              }
               key="active"
             />
-            <TabPane 
+            <TabPane
               tab={
                 <span>
-                  <CloseCircleOutlined /> 
-                  Inactive 
+                  <CloseCircleOutlined />
+                  Inactive
                   <Badge count={inactiveCount} size="small" style={{ marginLeft: 4, backgroundColor: '#ff4d4f', fontSize: '9px' }} />
                 </span>
-              } 
+              }
               key="inactive"
             />
           </Tabs>
@@ -439,7 +518,7 @@ function Players() {
         }}
         rowKey="id"
         scroll={{ x: "max-content" }}
-        style={{ 
+        style={{
           borderRadius: 4,
           overflow: 'hidden'
         }}
@@ -532,6 +611,87 @@ function Players() {
             />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Set Roles Modal */}
+      <Modal
+        title={
+          <Space align="center">
+            <SafetyCertificateTwoTone twoToneColor="#52c41a" style={{ fontSize: 20 }} />
+            <span style={{ fontSize: 16 }}>Set Roles for <strong>{selectedPlayer?.name}</strong></span>
+          </Space>
+        }
+        visible={isRolesModalVisible}
+        onCancel={handleRolesCancel}
+        footer={[
+          <Button key="cancel" onClick={handleRolesCancel}>
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleRolesUpdate}
+            disabled={selectedRoles.length === 0}
+          >
+            Update Roles
+          </Button>
+        ]}
+        width={500}
+        maskClosable={false}
+        destroyOnClose={true}
+        className="roles-modal"
+      >
+        {selectedPlayer?.roles && selectedPlayer.roles.length > 0 && (
+          <div className="current-roles-section">
+            <Text strong style={{ fontSize: '13px' }}>Current Roles:</Text>
+            <div style={{ marginTop: 8 }}>
+              {selectedPlayer.roles.map((role) => (
+                <Tag key={role.id} color="geekblue" style={{ marginBottom: 4 }}>
+                  {role.name}
+                </Tag>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: '14px' }}>Select the roles you want to assign to this user:</Text>
+        </div>
+
+        <Form layout="vertical">
+          <Form.Item label="Roles" style={{ marginBottom: 16 }}>
+            <Select
+              mode="multiple"
+              placeholder="Select roles"
+              value={selectedRoles}
+              onChange={(values) => setSelectedRoles(values)}
+              style={{ width: "100%" }}
+              optionFilterProp="children"
+            >
+              {rolesData?.content?.map((role) => (
+                <Select.Option key={role.id} value={role.id}>
+                  {role.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+
+        {selectedRoles.length > 0 && (
+          <div className="selected-roles-section">
+            <Text strong style={{ fontSize: '13px' }}>Selected Roles:</Text>
+            <div style={{ marginTop: 8 }}>
+              {selectedRoles.map((roleId) => {
+                const role = rolesData?.content?.find((r) => r.id === roleId);
+                return role ? (
+                  <Tag key={roleId} color="blue" style={{ marginBottom: 4, marginRight: 4 }}>
+                    {role.name}
+                  </Tag>
+                ) : null;
+              })}
+            </div>
+          </div>
+        )}
       </Modal>
     </Card>
   );

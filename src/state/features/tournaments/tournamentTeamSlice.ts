@@ -63,14 +63,65 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
                 playingPosition: string;
                 teamId: number;
                 playerId: number;
-                id?: number;
+                isCaptain?: boolean;
+                teamPlayerRole?: string;
+                jerseyNumber?: number;
             }
         >({
-            query: ({ playingPosition, teamId, playerId, id }) => ({
-                url: `teams/players`,
-                method: "POST",
-                body: { playingPosition, teamId, playerId, id },
-            }),
+            query: ({ playingPosition, teamId, playerId, isCaptain = false, teamPlayerRole = "PLAYER", jerseyNumber }) => {
+                const body: any = {
+                    playerId,
+                    teamId,
+                    playingPosition,
+                    isCaptain,
+                    teamPlayerRole,
+                };
+
+                // Only include jerseyNumber if it's provided
+                if (jerseyNumber !== undefined && jerseyNumber !== null) {
+                    body.jerseyNumber = jerseyNumber;
+                }
+
+                return {
+                    url: `teams/players`,
+                    method: "POST",
+                    body,
+                };
+            },
+            invalidatesTags: ["tournamentTeam"],
+        }),
+
+        updatePlayerInTeam: builder.mutation<
+            BasicResType,
+            {
+                playingPosition: string;
+                teamId: number;
+                playerId: number;
+                isCaptain?: boolean;
+                teamPlayerRole?: string;
+                jerseyNumber?: number;
+            }
+        >({
+            query: ({ playingPosition, teamId, playerId, isCaptain = false, teamPlayerRole = "PLAYER", jerseyNumber }) => {
+                const body: any = {
+                    playerId,
+                    teamId,
+                    playingPosition,
+                    isCaptain,
+                    teamPlayerRole,
+                };
+
+                // Only include jerseyNumber if it's provided
+                if (jerseyNumber !== undefined && jerseyNumber !== null) {
+                    body.jerseyNumber = jerseyNumber;
+                }
+
+                return {
+                    url: `teams/players`,
+                    method: "PUT",
+                    body,
+                };
+            },
             invalidatesTags: ["tournamentTeam"],
         }),
         removePlayerFromTeam: builder.mutation<
@@ -93,5 +144,6 @@ export const {
     usePlayerListToAddToTeamQuery,
     useDeleteTournamentTeamMutation,
     useAddPlayerToTeamMutation,
+    useUpdatePlayerInTeamMutation,
     useRemovePlayerFromTeamMutation,
 } = tournamentTeamApi;

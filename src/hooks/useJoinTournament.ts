@@ -58,12 +58,6 @@ export default function useJoinTournament(tournamentId: number) {
                             content: "Player information updated!",
                             key: playerId,
                         });
-                    })
-                    .catch(() => {
-                        message.error({
-                            content: "Failed to update player information.",
-                            key: playerId,
-                        });
                     });
             }
         },

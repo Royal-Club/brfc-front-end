@@ -16,6 +16,7 @@ interface WheelComponentProps {
     maxWidth?: number;
     centerImageSrc?: string;
     fontSize?: number;
+    wheelBackground?: string;
 }
 
 const PickerWheel: React.FC<WheelComponentProps> = ({
@@ -34,6 +35,7 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
     maxWidth = 400,
     centerImageSrc,
     fontSize = 20,
+    wheelBackground = "linear-gradient(135deg, #4a5568 0%, #2d3748 100%)",
 }) => {
     const [isFinished, setFinished] = useState(false);
     const [currentSegment, setCurrentSegment] = useState<string>(segments[0]);
@@ -97,25 +99,33 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
         framesRef.current++;
         draw();
         const duration = new Date().getTime() - spinStartRef.current;
-        let progress = 0;
+        const totalTime = upTime + downTime;
+        let progress = Math.min(duration / totalTime, 1);
         let finished = false;
 
-        if (duration < upTime) {
-            progress = duration / upTime;
-            angleDeltaRef.current =
-                maxSpeed * Math.sin((progress * Math.PI) / 2);
+        // Smooth ease-in-out velocity calculation
+        // This creates a realistic wheel spin: slow start -> fast middle -> slow end
+        let velocity: number;
+        if (progress < 0.5) {
+            // Acceleration phase - starts slow, gets faster
+            velocity = 32 * progress * progress * progress;
         } else {
-            progress = duration / downTime;
-            angleDeltaRef.current =
-                maxSpeed * Math.sin((progress * Math.PI) / 2 + Math.PI / 2);
-            if (progress >= 1) finished = true;
+            // Deceleration phase - slows down smoothly
+            const p = 1 - progress;
+            velocity = 32 * p * p * p;
         }
 
+        // Apply velocity to rotation speed
+        angleDeltaRef.current = maxSpeed * velocity;
         angleCurrentRef.current += angleDeltaRef.current;
 
         const segmentIndex = getSegmentIndex();
         const winningSegment = segments[segmentIndex];
         setCurrentSegment(winningSegment);
+
+        if (progress >= 1) {
+            finished = true;
+        }
 
         if (finished) {
             setFinished(true);
@@ -162,21 +172,69 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
         ctx.arc(centerX, centerY, size, lastAngle, angle, false);
         ctx.lineTo(centerX, centerY);
         ctx.closePath();
-        ctx.fillStyle = segColors[key];
+
+        // Create gradient for each segment
+        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, size);
+        gradient.addColorStop(0, segColors[key]);
+        gradient.addColorStop(1, adjustColorBrightness(segColors[key], -20));
+        ctx.fillStyle = gradient;
         ctx.fill();
+
+        // Add subtle border between segments
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
         ctx.save();
         ctx.translate(centerX, centerY);
         ctx.rotate((lastAngle + angle) / 2);
 
-        ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
-        ctx.shadowBlur = 5;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
+        // Enhanced text shadow for better readability
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
 
         ctx.fillStyle = contrastColor;
         ctx.font = `bold ${fontSize}px ${fontFamily}`;
-        ctx.fillText(value.substr(0, 21), size / 2 + 10, 0);
+
+        // Split text into multiple lines if too long
+        const maxCharsPerLine = 10;
+        const words = value.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
+
+        words.forEach(word => {
+            if ((currentLine + word).length > maxCharsPerLine && currentLine.length > 0) {
+                lines.push(currentLine.trim());
+                currentLine = word + ' ';
+            } else {
+                currentLine += word + ' ';
+            }
+        });
+        if (currentLine.length > 0) {
+            lines.push(currentLine.trim());
+        }
+
+        // Limit to 2 lines
+        const displayLines = lines.slice(0, 2);
+        const lineHeight = fontSize + 4;
+        const startY = displayLines.length === 1 ? 0 : -(lineHeight / 2);
+
+        displayLines.forEach((line, index) => {
+            ctx.fillText(line.substr(0, 12), size / 2 + 20, startY + (index * lineHeight));
+        });
+
         ctx.restore();
+    };
+
+    // Helper function to adjust color brightness
+    const adjustColorBrightness = (color: string, amount: number): string => {
+        const num = parseInt(color.replace("#", ""), 16);
+        const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+        const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+        const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+        return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
     };
 
     const drawWheel = () => {
@@ -198,42 +256,85 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
             lastAngle = angle;
         }
 
-        // Draw center circle with image or text
+        // Draw center circle with image or text - enhanced design
         if (centerImageSrc) {
             const img = new Image();
             img.src = centerImageSrc;
+
+            // Outer circle with gradient
+            const centerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 60);
+            centerGradient.addColorStop(0, "#ffffff");
+            centerGradient.addColorStop(1, "#f0f0f0");
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 60, 0, PI2, false);
+            ctx.closePath();
+            ctx.fillStyle = centerGradient;
+            ctx.fill();
+
+            // Border for center circle
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = "#333";
+            ctx.stroke();
+
+            // Inner shadow effect
+            ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            ctx.font = `bold 1em ${fontFamily}`;
+            ctx.fillStyle = contrastColor;
+            ctx.textAlign = "center";
+            ctx.drawImage(img, centerX - 45, centerY - 45, 90, 90);
+        } else {
+            // Gradient background for center button
+            const centerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 50);
+            centerGradient.addColorStop(0, "#4CAF50");
+            centerGradient.addColorStop(1, "#2E7D32");
+
             ctx.beginPath();
             ctx.arc(centerX, centerY, 50, 0, PI2, false);
             ctx.closePath();
+            ctx.fillStyle = centerGradient;
+            ctx.fill();
+
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = "#fff";
+            ctx.stroke();
+
+            // Text with shadow
+            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+            ctx.shadowBlur = 5;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+
+            ctx.font = `bold 1.2em ${fontFamily}`;
             ctx.fillStyle = "#fff";
-            ctx.lineWidth = 0;
-            ctx.strokeStyle = contrastColor;
-            ctx.fill();
-            ctx.font = `bold 1em ${fontFamily}`;
-            ctx.fillStyle = contrastColor;
             ctx.textAlign = "center";
-            ctx.drawImage(img, centerX - 40, centerY - 40, 80, 80); // Adjust size and position
-            ctx.stroke();
-        } else {
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 40, 0, PI2, false);
-            ctx.closePath();
-            ctx.fillStyle = primaryColor;
-            ctx.lineWidth = 10;
-            ctx.strokeStyle = contrastColor;
-            ctx.fill();
-            ctx.font = `bold 1em ${fontFamily}`;
-            ctx.fillStyle = contrastColor;
-            ctx.textAlign = "center";
-            ctx.fillText(buttonText, centerX, centerY + 3);
-            ctx.stroke();
+            ctx.fillText(buttonText, centerX, centerY + 5);
         }
+
+        // Enhanced outer border with shadow
+        ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 5;
 
         ctx.beginPath();
         ctx.arc(centerX, centerY, size, 0, PI2, false);
         ctx.closePath();
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = primaryColor;
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = "#333";
+        ctx.stroke();
+
+        // Inner border for depth
+        ctx.shadowColor = "transparent";
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, size - 4, 0, PI2, false);
+        ctx.closePath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
         ctx.stroke();
     };
 
@@ -241,15 +342,37 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
         const ctx = canvasContextRef.current;
         if (!ctx) return;
 
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = contrastColor;
-        ctx.fillStyle = contrastColor;
+        ctx.save();
+
+        // Position indicator at the top of the wheel (12 o'clock position)
+        const needleBaseY = centerY - size - 30; // Base above the wheel
+        const needlePointY = centerY - size + 10; // Point touching the wheel rim
+        const needleWidth = 25; // Width of the indicator
+        const needleOffsetX = 0; // Horizontal offset
+        const needleOffsetY = 25; // Vertical offset
+
+        // Draw a large, highly visible red arrow/triangle
+        ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 5;
+
+        // Main triangle body pointing down to the wheel
+        ctx.fillStyle = "#FF0000";
         ctx.beginPath();
-        ctx.moveTo(centerX + 15, centerY - 48);
-        ctx.lineTo(centerX - 15, centerY - 48);
-        ctx.lineTo(centerX, centerY - 65);
+        ctx.moveTo(centerX + needleOffsetX - needleWidth, needleBaseY + needleOffsetY); // Left top corner
+        ctx.lineTo(centerX + needleOffsetX + needleWidth, needleBaseY + needleOffsetY); // Right top corner
+        ctx.lineTo(centerX + needleOffsetX, needlePointY + needleOffsetY); // Sharp point touching wheel
         ctx.closePath();
         ctx.fill();
+
+        // Thick white border for maximum contrast
+        ctx.shadowColor = "transparent";
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.restore();
     };
 
     const clear = () => {
@@ -260,7 +383,15 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
     };
 
     return (
-        <div id="wheel">
+        <div id="wheel" style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "20px",
+            background: wheelBackground,
+            borderRadius: "20px",
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
+        }}>
             <canvas
                 ref={canvasRef}
                 onClick={spin}
@@ -268,6 +399,8 @@ const PickerWheel: React.FC<WheelComponentProps> = ({
                     pointerEvents: isFinished && isOnlyOnce ? "none" : "auto",
                     opacity: isFinished && isOnlyOnce ? 0.5 : 1,
                     cursor: isFinished && isOnlyOnce ? "default" : "pointer",
+                    borderRadius: "50%",
+                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
                 }}
             />
         </div>

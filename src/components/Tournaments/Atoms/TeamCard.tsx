@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     Button,
     Card,
@@ -12,11 +12,13 @@ import {
 } from "antd";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import PlayerCard from "./PlayerCard";
-import { Team } from "../tournamentTypes";
+import EditPlayerDetailsModal from "./EditPlayerDetailsModal";
+import { Team, Player } from "../tournamentTypes";
 import { MoreOutlined } from "@ant-design/icons";
 import DoubleClickTextInputField from "../../CommonAtoms/DoubleClickTextInputField";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
+import { canManageTeams } from "../../../utils/roleUtils";
 
 interface TeamCardProps {
     team: Team;
@@ -28,7 +30,10 @@ interface TeamCardProps {
         playingPosition: string,
         teamId: number,
         playerId: number,
-        id?: number
+        id?: number,
+        isCaptain?: boolean,
+        teamPlayerRole?: string,
+        jerseyNumber?: number
     ) => void;
 }
 
@@ -44,6 +49,11 @@ const TeamCard: React.FC<TeamCardProps> = ({
     const {
         token: { colorBgLayout },
       } = theme.useToken();
+
+    const canManage = canManageTeams(loginInfo.roles);
+
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
 
     const handleRenameTeamClick = (newName: string) => {
@@ -71,133 +81,168 @@ const TeamCard: React.FC<TeamCardProps> = ({
     );
 
     return (
-        <Droppable
-            droppableId={team.teamId.toString()}
-            isDropDisabled={!loginInfo.roles.includes("ADMIN")}
-        >
-            {(provided) => (
-                <Card
-                    hoverable
-                    title={
-                        <Dropdown
-                            overlay={teamMenu}
-                            trigger={
-                                loginInfo.roles.includes("ADMIN")
-                                    ? ["click"]
-                                    : []
-                            }
-                        >
-                            <Space
-                                style={{
-                                    width: "100%",
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                }}
-                            >
-                                <DoubleClickTextInputField
-                                    initialName={team.teamName}
-                                    onNameChange={handleRenameTeamClick}
-                                    isDiabled={
-                                        !loginInfo.roles.includes("ADMIN")
-                                    }
-                                />
-                                {loginInfo.roles.includes("ADMIN") && (
-                                    <Button
-                                        onClick={(e) => e.preventDefault()}
-                                        icon={<MoreOutlined />}
-                                    />
-                                )}
-                            </Space>
-                        </Dropdown>
+        <Card
+            hoverable
+            title={
+                <Dropdown
+                    overlay={teamMenu}
+                    trigger={
+                        canManage
+                            ? ["click"]
+                            : []
                     }
-                    bordered={true}
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    style={{
-                        minWidth: "300px",
-                        maxWidth: "400px",
-                    }}
                 >
-                    {isLoading ? (
-                        <div
-                            style={{ height: 300, overflow: "auto" }}
-                            className="noscrollbar"
-                        >
+                    <Space
+                        style={{
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                        }}
+                    >
+                        <DoubleClickTextInputField
+                            initialName={team.teamName}
+                            onNameChange={handleRenameTeamClick}
+                            isDiabled={
+                                !canManage
+                            }
+                        />
+                        {canManage && (
+                            <Button
+                                onClick={(e) => e.preventDefault()}
+                                icon={<MoreOutlined />}
+                            />
+                        )}
+                    </Space>
+                </Dropdown>
+            }
+            bordered={true}
+            style={{
+                minWidth: "300px",
+                maxWidth: "400px",
+            }}
+        >
+            <Droppable
+                droppableId={team.teamId.toString()}
+                isDropDisabled={!canManage}
+            >
+                {(provided) => (
+                    <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        style={{ 
+                            height: 300, 
+                            overflow: "auto",
+                            minHeight: 0
+                        }}
+                        className="noscrollbar"
+                    >
+                        {isLoading ? (
                             <Skeleton
                                 active
                                 paragraph={{ rows: team.players.length }}
                             />
-                        </div>
-                    ) : (
-                        <div
-                            style={{ height: 300, overflow: "auto" }}
-                            className="noscrollbar"
-                        >
-                            {team.players.map((player, index) => (
-                                <Draggable
-                                    key={player.playerId.toString()}
-                                    draggableId={
-                                        player.id && player?.teamId
-                                            ? player?.playerId.toString() +
-                                              "-" +
-                                              player?.id.toString() +
-                                              "-" +
-                                              player?.teamId.toString()
-                                            : player.playerId.toString()
-                                    }
-                                    index={index}
-                                >
-                                    {(provided) => (
-                                        <div
-                                            ref={provided.innerRef}
-                                            {...provided.draggableProps}
-                                            {...provided.dragHandleProps}
-                                            style={{
-                                                padding: "4px",
-                                                margin: "4px 0",
-                                                background : colorBgLayout,
-                                                borderRadius: "4px",
-                                                ...provided.draggableProps
-                                                    .style,
-                                            }}
-                                        >
-                                            <PlayerCard
-                                                showOptions
-                                                player={player}
-                                                handleRemovePlayer={() =>
-                                                    handleRemovePlayer(
-                                                        team.teamId,
-                                                        player.playerId
-                                                    )
-                                                }
-                                                handleAddPosition={() => {
-                                                    handleAddPlayerToTeam(
-                                                        "GOALKEEPER",
-                                                        team.teamId,
-                                                        player.playerId,
-                                                        player.id
-                                                    );
+                        ) : (
+                            <>
+                                {team.players.map((player, index) => (
+                                    <Draggable
+                                        key={`${team.teamId}-${player.playerId}`}
+                                        draggableId={`${team.teamId}-${player.playerId}`}
+                                        index={index}
+                                    >
+                                        {(provided) => (
+                                            <div
+                                                ref={provided.innerRef}
+                                                {...provided.draggableProps}
+                                                {...provided.dragHandleProps}
+                                                style={{
+                                                    padding: "4px",
+                                                    margin: "4px 0",
+                                                    background : colorBgLayout,
+                                                    borderRadius: "4px",
+                                                    ...provided.draggableProps
+                                                        .style,
                                                 }}
-                                                handleRemovePosition={() => {
-                                                    handleAddPlayerToTeam(
-                                                        "UNASSIGNED",
-                                                        team.teamId,
-                                                        player.playerId,
-                                                        player.id
-                                                    );
-                                                }}
-                                            />
-                                        </div>
-                                    )}
-                                </Draggable>
-                            ))}
-                            {provided.placeholder}
-                        </div>
-                    )}
-                </Card>
-            )}
-        </Droppable>
+                                            >
+                                                <PlayerCard
+                                                    showOptions
+                                                    player={player}
+                                                    handleAddPosition={() => {
+                                                        handleAddPlayerToTeam(
+                                                            "GOALKEEPER",
+                                                            team.teamId,
+                                                            player.playerId,
+                                                            player.id,
+                                                            player.isCaptain,
+                                                            player.teamPlayerRole,
+                                                            player.jerseyNumber
+                                                        );
+                                                    }}
+                                                    handleRemovePosition={() => {
+                                                        handleAddPlayerToTeam(
+                                                            "UNASSIGNED",
+                                                            team.teamId,
+                                                            player.playerId,
+                                                            player.id,
+                                                            player.isCaptain,
+                                                            player.teamPlayerRole,
+                                                            player.jerseyNumber
+                                                        );
+                                                    }}
+                                                    handleToggleCaptain={() => {
+                                                        handleAddPlayerToTeam(
+                                                            player.playingPosition || "UNASSIGNED",
+                                                            team.teamId,
+                                                            player.playerId,
+                                                            player.id,
+                                                            !player.isCaptain,
+                                                            !player.isCaptain ? "CAPTAIN" : "PLAYER",
+                                                            player.jerseyNumber
+                                                        );
+                                                    }}
+                                                    handleEditDetails={() => {
+                                                        setSelectedPlayer(player);
+                                                        setEditModalVisible(true);
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
+                                    </Draggable>
+                                ))}
+                                {provided.placeholder}
+                            </>
+                        )}
+                    </div>
+                )}
+            </Droppable>
+            <EditPlayerDetailsModal
+                visible={editModalVisible}
+                player={selectedPlayer}
+                onClose={() => {
+                    setEditModalVisible(false);
+                    setSelectedPlayer(null);
+                }}
+                onSave={(
+                    playerId,
+                    teamId,
+                    playingPosition,
+                    id,
+                    isCaptain,
+                    teamPlayerRole,
+                    jerseyNumber
+                ) => {
+                    handleAddPlayerToTeam(
+                        playingPosition,
+                        teamId,
+                        playerId,
+                        id,
+                        isCaptain,
+                        teamPlayerRole,
+                        jerseyNumber
+                    );
+                }}
+            />
+        </Card>
     );
 };
 

@@ -68,8 +68,18 @@ const LoginPage: React.FC = () => {
                 email,
                 password,
             }).unwrap();
-            
+
             const content = response.content;
+
+            // Check if user needs to reset password
+            if (content.resetPassword === true) {
+                dispatch(setAllData(content));
+                localStorage.setItem("tokenContent", JSON.stringify(content));
+                setLoading(false);
+                navigate("/reset-password", { replace: true });
+                return;
+            }
+
             dispatch(setAllData(content));
             dispatch(
                 setImage(
@@ -143,6 +153,18 @@ const LoginPage: React.FC = () => {
                 password: loginData.password,
             }).unwrap();
             const content = response.content;
+
+            // Check if user needs to reset password
+            if (content.resetPassword === true) {
+                dispatch(setAllData(content));
+                localStorage.setItem("tokenContent", JSON.stringify(content));
+                // Clear stored credentials when password reset is required
+                clearStoredCredentials();
+                setLoading(false);
+                navigate("/reset-password", { replace: true });
+                return;
+            }
+
             dispatch(setAllData(content));
             dispatch(
                 setImage(
@@ -301,4 +323,3 @@ const LoginPage: React.FC = () => {
 
 
 export default LoginPage;
-                             

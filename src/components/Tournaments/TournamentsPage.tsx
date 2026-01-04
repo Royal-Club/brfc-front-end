@@ -9,12 +9,14 @@ import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { showBdLocalTime } from "../../utils/utils";
 import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import { canManageTournaments } from "../../utils/roleUtils";
 
 const { Header } = Layout;
 const { Title, Text } = Typography;
 
 const TournamentsPage: React.FC = () => {
   const loginInfo = useSelector(selectLoginInfo);
+  const canManage = canManageTournaments(loginInfo.roles);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isMobile, setIsMobile] = useState(false);
@@ -58,6 +60,9 @@ const TournamentsPage: React.FC = () => {
     if (e.key === "join") {
       navigate(`/tournaments/join-tournament/${record.id}`);
     } else if (e.key === "team-building") {
+    } else if (e.key === "fixtures") {
+      navigate(`/tournaments/team-building/${record.id}`);
+
       navigate(`/tournaments/team-building/${record.id}`);
     } else if (e.type === "click" && record.activeStatus) {
       navigate(`/tournaments/join-tournament/${record.id}`);
@@ -362,7 +367,7 @@ const TournamentsPage: React.FC = () => {
               }}
             >
               <Skeleton.Input active style={{ width: 120, height: 28 }} />
-              {loginInfo.roles.includes("ADMIN") && (
+              {canManage && (
                 <Skeleton.Button active style={{ width: 100, height: 28 }} />
               )}
             </Space>
@@ -389,7 +394,7 @@ const TournamentsPage: React.FC = () => {
           }}
         >
           <Skeleton.Input active style={{ width: 150, height: 32 }} />
-          {loginInfo.roles.includes("ADMIN") && (
+          {canManage && (
             <Skeleton.Button active style={{ width: 120, height: 32 }} />
           )}
         </Space>
@@ -427,7 +432,7 @@ const TournamentsPage: React.FC = () => {
               <Title style={{ margin: 0, fontSize: "18px" }}>Tournaments</Title>
             </Col>
             <Col>
-              {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
+              {canManage && <CreateTournament />}
             </Col>
           </Row>
         </div>
@@ -488,7 +493,7 @@ const TournamentsPage: React.FC = () => {
         }}
       >
         <Title style={{ margin: 0 }}>Tournaments</Title>
-        {loginInfo.roles.includes("ADMIN") && <CreateTournament />}
+        {canManage && <CreateTournament />}
       </Space>
 
       <div className="tournament-table">

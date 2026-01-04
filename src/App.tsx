@@ -1,17 +1,24 @@
 import { Layout, ConfigProvider, theme } from "antd";
 import { useLayoutEffect, useState } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
+import "./styles/toastStyles.css";
 import ContentComponent from "./components/Content/ContentComponent";
 import LeftSidebarComponent from "./components/Sidebar/LeftSidebarComponent";
 import { useAuthHook } from "./hooks/useAuthHook";
 import { checkTockenValidity } from "./utils/utils";
 import LoginPage from "./components/authPages/LoginPage";
+import PasswordResetPage from "./components/authPages/PasswordResetPage";
+import { useSelector } from "react-redux";
+import { selectResetPassword } from "./state/slices/loginInfoSlice";
 
 function App() {
     const [collapsed, setCollapsed] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(true);
 
     const { login, user } = useAuthHook();
+    const needsPasswordReset = useSelector(selectResetPassword);
 
     const handleToggleCollapse = (value: boolean) => {
         setCollapsed(value);
@@ -30,8 +37,36 @@ function App() {
 
     if (!user?.token) {
         return (
-            <Layout>
+            <Layout className={isDarkMode ? "dark-mode" : "light-mode"}>
+                <ToastContainer
+                    theme={isDarkMode ? "dark" : "light"}
+                    position="top-right"
+                    autoClose={3000}
+                    hideProgressBar={false}
+                    newestOnTop={true}
+                    closeOnClick={true}
+                    pauseOnHover={true}
+                    draggable={true}
+                />
                 <LoginPage />
+            </Layout>
+        );
+    }
+
+    if (needsPasswordReset) {
+        return (
+            <Layout className={isDarkMode ? "dark-mode" : "light-mode"}>
+                <ToastContainer
+                    theme={isDarkMode ? "dark" : "light"}
+                    position="top-right"
+                    autoClose={3000}
+                    hideProgressBar={false}
+                    newestOnTop={true}
+                    closeOnClick={true}
+                    pauseOnHover={true}
+                    draggable={true}
+                />
+                <PasswordResetPage />
             </Layout>
         );
     }
@@ -95,7 +130,17 @@ function App() {
                 },
             }}
         >
-            <Layout>
+            <Layout className={isDarkMode ? "dark-mode" : "light-mode"}>
+                <ToastContainer
+                    theme={isDarkMode ? "dark" : "light"}
+                    position="top-right"
+                    autoClose={3000}
+                    hideProgressBar={false}
+                    newestOnTop={true}
+                    closeOnClick={true}
+                    pauseOnHover={true}
+                    draggable={true}
+                />
                 {user?.token && (
                     <LeftSidebarComponent
                         collapsed={collapsed}

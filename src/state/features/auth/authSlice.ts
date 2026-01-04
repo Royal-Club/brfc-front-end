@@ -13,6 +13,7 @@ export interface LoginResType extends BasicResType {
         email: string;
         userId: string;
         roles: string[];
+        resetPassword?: boolean;
     };
 }
 

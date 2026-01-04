@@ -23,6 +23,9 @@ export interface TournamentPlayerInfoType {
     tournamentParticipantId: number;
     playingPosition?: string;
     tournamentStatus?: string;
+    isCaptain?: boolean;
+    teamPlayerRole?: string;
+    jerseyNumber?: number;
 }
 
 export interface IoTournamentSummaryResType extends BasicResType {
@@ -113,4 +116,18 @@ export interface LatestTournamentWithUserStatusType extends BasicResType {
         isUserParticipated: boolean | null;
         tournamentParticipantId?: number;
     };
+}
+
+export interface TournamentSessionsResType extends BasicResType {
+    content: string[];
+}
+
+export interface TournamentListItemType {
+    id: number;
+    name: string;
+    tournamentDate: string;
+}
+
+export interface TournamentListResType extends BasicResType {
+    content: TournamentListItemType[];
 }

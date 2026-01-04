@@ -24,9 +24,6 @@ export default function CreateTeamComponent({
             .then(() => {
                 message.success("Team created successfully");
                 refetchSummary();
-            })
-            .catch(() => {
-                message.error("Failed to create team");
             });
     };
 
