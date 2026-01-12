@@ -21,6 +21,7 @@ import PickerWheelModal from "./Atoms/pickerWheel/PickerWheelModal";
 import { FileExcelOutlined, RightSquareOutlined, TrophyOutlined, SearchOutlined } from "@ant-design/icons";
 import { exportToExcel, showBdLocalTime } from "../../utils/utils";
 import FixturesPanel from "./Fixtures/FixturesPanel";
+import PrizesPanel from "./Prizes/PrizesPanel";
 
 const { Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -52,6 +53,9 @@ function SingleTournament() {
 
   // Check if teams are added - disable fixtures tab if no teams
   const hasTeams = Array.isArray(teams) && teams.length > 0;
+
+  // Check if user is admin
+  const isAdmin = loginInfo.roles.includes("ADMIN");
 
   // Filter players based on search query
   const filteredPlayers = players.filter((player) =>
@@ -351,6 +355,15 @@ function SingleTournament() {
             ),
             disabled: !hasTeams,
             children: <FixturesPanel tournamentId={tournamentId} teams={teams} />,
+          },
+          {
+            key: "prizes",
+            label: (
+              <span>
+                <TrophyOutlined /> Prizes & Awards
+              </span>
+            ),
+            children: <PrizesPanel tournamentId={tournamentId} />,
           },
         ]}
       />
