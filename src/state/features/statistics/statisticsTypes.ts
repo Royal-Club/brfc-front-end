@@ -39,7 +39,7 @@ export interface IGetTournamentStandingsResponse {
 export interface IGetTopScorersResponse {
   status: string;
   message: string;
-  content: IMatchStatistics[];
+  content: IPlayerStatisticsData[];
 }
 
 export interface IGetTopAssistsResponse {

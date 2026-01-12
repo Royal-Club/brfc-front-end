@@ -34,12 +34,20 @@ export const statisticsApi = apiWithTags.injectEndpoints({
      */
     getTopScorers: builder.query<
       IGetTopScorersResponse,
-      { tournamentId: number }
+      { tournamentId: number; limit?: number }
     >({
-      query: ({ tournamentId }) => ({
-        url: `/statistics/tournaments/${tournamentId}/top-scorers`,
-        method: "GET",
-      }),
+      query: ({ tournamentId, limit }) => {
+        const queryParams = new URLSearchParams();
+        queryParams.append('tournamentId', tournamentId.toString());
+        queryParams.append('sortBy', 'goalsScored');
+        queryParams.append('sortOrder', 'desc');
+        if (limit) queryParams.append('limit', limit.toString());
+
+        return {
+          url: `/player-statistics?${queryParams.toString()}`,
+          method: "GET",
+        };
+      },
       providesTags: ["statistics"],
     }),
 

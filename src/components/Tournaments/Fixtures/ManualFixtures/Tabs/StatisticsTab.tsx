@@ -6,7 +6,7 @@ import {
   useGetTopScorersQuery,
   useGetTopAssistsQuery,
 } from "../../../../../state/features/statistics/statisticsSlice";
-import type { IMatchStatistics, ITournamentStanding } from "../../../../../state/features/statistics/statisticsTypes";
+import type { IMatchStatistics, ITournamentStanding, IPlayerStatisticsData } from "../../../../../state/features/statistics/statisticsTypes";
 import type { ColumnsType } from "antd/es/table";
 
 const { Title, Text } = Typography;
@@ -16,8 +16,115 @@ interface StatisticsTabProps {
   isActive: boolean;
 }
 
-// Player Card Component with first letter display
-const PlayerCard: React.FC<{
+// Player Card Component with first letter display for top scorers
+const PlayerCardForScorers: React.FC<{
+  player: IPlayerStatisticsData;
+  rank: number;
+  statValue: number;
+  statLabel: string;
+  icon: React.ReactNode;
+}> = ({ player, rank, statValue, statLabel, icon }) => {
+  // Get first letter of player name
+  const firstLetter = player.playerName?.charAt(0).toUpperCase() || "?";
+
+  // Different colors for top 3
+  const getRankColor = (rank: number) => {
+    if (rank === 1) return "#FFD700"; // Gold
+    if (rank === 2) return "#C0C0C0"; // Silver
+    if (rank === 3) return "#CD7F32"; // Bronze
+    return "#1890ff"; // Default blue
+  };
+
+  return (
+    <Card
+      hoverable
+      style={{
+        borderRadius: 12,
+        background: `linear-gradient(135deg, rgba(24, 144, 255, 0.05) 0%, rgba(24, 144, 255, 0.02) 100%)`,
+        border: rank <= 3 ? `2px solid ${getRankColor(rank)}` : undefined,
+        position: "relative",
+      }}
+    >
+      {/* Rank Badge */}
+      <div
+        style={{
+          position: "absolute",
+          top: -10,
+          left: -10,
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          background: getRankColor(rank),
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: "bold",
+          fontSize: 14,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+        }}
+      >
+        {rank}
+      </div>
+
+      <Row gutter={16} align="middle">
+        {/* Player Avatar with First Letter */}
+        <Col>
+          <div
+            style={{
+              position: "relative",
+              width: 80,
+              height: 100,
+              backgroundImage: `url('/playerCard.png')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              borderRadius: 8,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 48,
+                fontWeight: "bold",
+                color: "#fff",
+                textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+              }}
+            >
+              {firstLetter}
+            </Text>
+          </div>
+        </Col>
+
+        {/* Player Info */}
+        <Col flex={1}>
+          <Title level={5} style={{ margin: 0, marginBottom: 4 }}>
+            {player.playerName}
+          </Title>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {player.position.replace(/_/g, " ")}
+          </Text>
+          <div style={{ marginTop: 12 }}>
+            <Row align="middle" gutter={8}>
+              <Col>{icon}</Col>
+              <Col>
+                <Statistic
+                  value={statValue}
+                  suffix={statLabel}
+                  valueStyle={{ fontSize: 20, fontWeight: "bold" }}
+                />
+              </Col>
+            </Row>
+          </div>
+        </Col>
+      </Row>
+    </Card>
+  );
+};
+
+// Player Card Component for assists (uses IMatchStatistics)
+const PlayerCardForAssists: React.FC<{
   player: IMatchStatistics;
   rank: number;
   statValue: number;
@@ -298,11 +405,11 @@ export default function StatisticsTab({ tournamentId, isActive }: StatisticsTabP
         >
           <Row gutter={[16, 16]}>
             {topScorersData?.content?.slice(0, 10).map((player, index) => (
-              <Col xs={24} sm={12} md={12} lg={8} key={player.id}>
-                <PlayerCard
+              <Col xs={24} sm={12} md={12} lg={8} key={player.playerId}>
+                <PlayerCardForScorers
                   player={player}
                   rank={index + 1}
-                  statValue={player.goalsScored}
+                  statValue={player.statistics.goalsScored}
                   statLabel="Goals"
                   icon={<FireOutlined style={{ fontSize: 20, color: "#ff4d4f" }} />}
                 />
@@ -331,7 +438,7 @@ export default function StatisticsTab({ tournamentId, isActive }: StatisticsTabP
           <Row gutter={[16, 16]}>
             {topAssistsData?.content?.slice(0, 10).map((player, index) => (
               <Col xs={24} sm={12} md={12} lg={8} key={player.id}>
-                <PlayerCard
+                <PlayerCardForAssists
                   player={player}
                   rank={index + 1}
                   statValue={player.assists}
