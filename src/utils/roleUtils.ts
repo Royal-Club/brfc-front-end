@@ -48,7 +48,7 @@ export const canManageTeams = (userRoles: string[]): boolean => {
 };
 
 export const canManageTournaments = (userRoles: string[]): boolean => {
-  return isAdmin(userRoles);
+  return hasAnyRole(userRoles, ["ADMIN", "SUPERADMIN", "COORDINATOR"]);
 };
 
 export const canManageFixtures = (userRoles: string[]): boolean => {

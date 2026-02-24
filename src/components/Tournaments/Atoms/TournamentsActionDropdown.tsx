@@ -66,10 +66,10 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
       ) : null}
       <Menu.Item key="team-building">Team Building</Menu.Item>
       <Menu.Item key="fixtures">Teams and Fixtures</Menu.Item>
-      {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
+      {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") || loginInfo.roles.includes("COORDINATOR")) && (
         <Menu.Item key="update">Update Tournament</Menu.Item>
       )}
-      {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
+      {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") || loginInfo.roles.includes("COORDINATOR")) && (
         <Menu.Item key="active-status">Update Active Status</Menu.Item>
       )}
     </Menu>

@@ -55,7 +55,7 @@ function SingleTournament() {
   const hasTeams = Array.isArray(teams) && teams.length > 0;
 
   // Check if user is admin
-  const isAdmin = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
+  const isAdmin = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") || loginInfo.roles.includes("COORDINATOR");
 
   // Filter players based on search query
   const filteredPlayers = players.filter((player) =>
