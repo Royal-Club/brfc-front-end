@@ -394,7 +394,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             <Route index element={<Dashboard isDarkMode={isDarkMode} />} />
                             <Route path="/profile" element={<UserProfile />} />
                             <Route path="/player" element={<Player />} />
-                            {loginInfo.roles.includes("ADMIN") && (
+                            {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
                                 <Route
                                     path="/players/:id"
                                     element={<Player />}

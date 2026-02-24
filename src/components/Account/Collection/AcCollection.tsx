@@ -450,7 +450,7 @@ function AcCollection() {
                                 <Title level={3}>Payment Collections</Title>
                             </Col>
                             <Col>
-                                {loginInfo.roles.includes("ADMIN") && (
+                                {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
                                     <Space>
                                         <Button
                                             type="primary"

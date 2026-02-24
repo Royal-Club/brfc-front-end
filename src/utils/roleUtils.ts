@@ -23,7 +23,7 @@ export const hasAllRoles = (userRoles: string[], requiredRoles: string[]): boole
 
 // Specific role checks
 export const isAdmin = (userRoles: string[]): boolean => {
-  return userRoles.includes("ADMIN");
+  return userRoles.includes("ADMIN") || userRoles.includes("SUPERADMIN");
 };
 
 export const isSuperAdmin = (userRoles: string[]): boolean => {
@@ -40,11 +40,11 @@ export const isPlayer = (userRoles: string[]): boolean => {
 
 // Permission-based checks (combining multiple roles)
 export const canConductMatches = (userRoles: string[]): boolean => {
-  return hasAnyRole(userRoles, ["ADMIN", "COORDINATOR"]);
+  return hasAnyRole(userRoles, ["ADMIN", "SUPERADMIN", "COORDINATOR"]);
 };
 
 export const canManageTeams = (userRoles: string[]): boolean => {
-  return hasAnyRole(userRoles, ["ADMIN", "COORDINATOR"]);
+  return hasAnyRole(userRoles, ["ADMIN", "SUPERADMIN", "COORDINATOR"]);
 };
 
 export const canManageTournaments = (userRoles: string[]): boolean => {

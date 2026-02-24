@@ -226,7 +226,7 @@ export default function JoinTournament() {
           }}
           disabled={
             isUpdating ||
-            (!loginInfo.roles.includes("ADMIN") &&
+            (!loginInfo.roles.includes("ADMIN") && !loginInfo.roles.includes("SUPERADMIN") &&
               record.playerId !== Number(loginInfo.userId))
           }
           style={{ width: "100%" }}
@@ -253,7 +253,7 @@ export default function JoinTournament() {
       render: (_, record) => (
         <DebouncedInput
           isDisabled={
-            !loginInfo.roles.includes("ADMIN") &&
+            !loginInfo.roles.includes("ADMIN") && !loginInfo.roles.includes("SUPERADMIN") &&
             record.playerId !== Number(loginInfo.userId)
           }
           placeholder="Add your comments here..."

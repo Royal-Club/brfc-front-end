@@ -338,7 +338,7 @@ function Player() {
                                                 </Select>
                                             </Form.Item>
                                         </Col>
-                                        {loginInfo.roles.includes("ADMIN") &&
+                                        {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) &&
                                             formState === "UPDATE" && (
                                                 <Col md={12} lg={8}>
                                                     <Form.Item
@@ -375,7 +375,7 @@ function Player() {
                                             )}
                                     </Row>
                                     
-                                    {loginInfo.roles.includes("ADMIN") && (
+                                    {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
                                         <>
                                             <Divider />
                                             <Row>

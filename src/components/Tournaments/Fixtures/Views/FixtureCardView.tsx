@@ -117,7 +117,7 @@ export default function FixtureCardView({ fixtures, onEdit, onDataChange }: Fixt
   const navigate = useNavigate();
   const { token } = useToken();
   const loginInfo = useSelector(selectLoginInfo);
-  const isAdmin = loginInfo.roles?.includes("ADMIN");
+  const isAdmin = loginInfo.roles?.includes("ADMIN") || loginInfo.roles?.includes("SUPERADMIN");
 
   const handleViewDetails = (fixtureId: number) => {
     navigate(`/fixtures/${fixtureId}`);

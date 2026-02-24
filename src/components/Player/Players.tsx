@@ -374,7 +374,7 @@ function Players() {
     },
   ];
 
-  const playersColumn: ColumnsType<IPlayer> = loginInfo.roles.includes("ADMIN")
+  const playersColumn: ColumnsType<IPlayer> = (loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN"))
     ? [
         ...CommonColumns,
         {
@@ -444,7 +444,7 @@ function Players() {
               size="middle"
             />
 
-            {loginInfo.roles.includes("ADMIN") && (
+            {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
               <Link to={"/player"}>
                 <Button
                   type="primary"

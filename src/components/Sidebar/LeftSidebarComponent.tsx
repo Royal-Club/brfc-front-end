@@ -53,7 +53,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   const loginInfo = useSelector(selectLoginInfo);
   const [isMobile, setIsMobile] = useState(false);
 
-  const isUserAdmin = loginInfo.roles.includes("ADMIN");
+  const isUserAdmin = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
 
   const items: MenuProps["items"] = [
     getItem("Dashboard", "/", <PieChartOutlined />),

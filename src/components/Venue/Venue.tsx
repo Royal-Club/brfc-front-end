@@ -97,7 +97,7 @@ function Venue() {
         },
     ];
 
-    const venueColumns: ColumnsType<IVenue> = loginInfo.roles.includes("ADMIN")
+    const venueColumns: ColumnsType<IVenue> = (loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN"))
         ? [
               ...CommonColumns,
               {
@@ -192,7 +192,7 @@ function Venue() {
                             }}
                         >
                             <Title level={4}>Venue</Title>
-                            {loginInfo.roles.includes("ADMIN") && (
+                            {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
                                 <Button type="primary" onClick={showModal}>
                                     Create
                                 </Button>

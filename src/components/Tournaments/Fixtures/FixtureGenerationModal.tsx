@@ -83,7 +83,7 @@ export default function FixtureGenerationModal({
   const [generateFixtures, { isLoading }] = useGenerateFixturesMutation();
   const { data: venuesData, isLoading: isVenuesLoading } = useGetVanuesQuery();
 
-  const isAdmin = loginInfo.roles?.includes("ADMIN");
+  const isAdmin = loginInfo.roles?.includes("ADMIN") || loginInfo.roles?.includes("SUPERADMIN");
 
   // Calculate estimated match count based on tournament type
   const estimatedMatchCount = useMemo(() => {

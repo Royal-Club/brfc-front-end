@@ -86,7 +86,7 @@ export default function ClubRules() {
                 className="club-rules-cover"
             />
 
-            {loginInfo.roles.includes("ADMIN") && (
+            {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
                 <Button
                     type="primary"
                     className="club-rules-fab"
@@ -105,7 +105,7 @@ export default function ClubRules() {
                             <FileTextOutlined className="club-rules-icon" />
                             <Text className="club-rules-text">{rule.description}</Text>
                         </div>
-                        {loginInfo.roles.includes("ADMIN") && (
+                        {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
                             <div className="club-rules-actions">
                                 <Button
                                     type="link"

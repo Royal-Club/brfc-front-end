@@ -55,7 +55,7 @@ function SingleTournament() {
   const hasTeams = Array.isArray(teams) && teams.length > 0;
 
   // Check if user is admin
-  const isAdmin = loginInfo.roles.includes("ADMIN");
+  const isAdmin = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
 
   // Filter players based on search query
   const filteredPlayers = players.filter((player) =>
@@ -219,14 +219,14 @@ function SingleTournament() {
                 flexWrap: screens.xs ? "wrap" : "nowrap",
               }}
             >
-              {loginInfo.roles.includes("ADMIN") && (
+              {isAdmin && (
                 <CreateTeamComponent
                   tournamentId={tournamentId}
                   existingTeams={teams.map((team) => team.teamName)}
                   refetchSummary={refetchTournament}
                 />
               )}
-              {loginInfo.roles.includes("ADMIN") && <PickerWheelModal teams={teams} />}
+              {isAdmin && <PickerWheelModal teams={teams} />}
               <GoalKeeperDrawer tournamentId={tournamentId} />
               <Button onClick={handleExportTeams}>
                 <FileExcelOutlined />

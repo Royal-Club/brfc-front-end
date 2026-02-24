@@ -391,7 +391,7 @@ function AcBillPayment() {
                     <div>
                         <Row align="middle" justify="space-between">
                             <Title level={3}>Bill Payment</Title>
-                            {loginInfo.roles.includes("ADMIN") && (
+                            {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
                                 <Button type="primary" onClick={showModal}>
                                     Create
                                 </Button>
