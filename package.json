@@ -19,7 +19,8 @@
     "@types/react-redux": "^7.1.33",
     "antd": "^5.21.5",
     "axios": "^1.7.4",
-    "brfc-front-end": "file:",
+    "chart.js": "^4.4.4",
+    "dayjs": "^1.11.13",
     "file-saver": "^2.0.5",
     "gsap": "^3.13.0",
     "moment": "^2.30.1",
@@ -30,12 +31,12 @@
     "react-dom": "^18.3.1",
     "react-redux": "^9.1.2",
     "react-responsive": "^10.0.0",
+    "react-router-dom": "^6.26.1",
     "react-scripts": "5.0.1",
     "react-toastify": "^11.0.5",
     "react-youtube": "^10.1.0",
     "reactflow": "^11.11.4",
     "redux-persist": "^6.0.0",
-    "redux-toolkit": "^1.1.2",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
@@ -68,6 +69,6 @@
     "@types/file-saver": "^2.0.7",
     "@types/lodash": "^4.17.7",
     "@types/react-beautiful-dnd": "^13.1.8",
-    "react-router-dom": "^6.26.1"
+    "ajv": "^8.17.1"
   }
 }
