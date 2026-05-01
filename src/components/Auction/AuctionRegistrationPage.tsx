@@ -1,0 +1,173 @@
+import React, { useState } from "react";
+import { Card, Form, Input, Button, Typography, Result, Select, message, Alert, Divider, Space } from "antd";
+import { useParams } from "react-router-dom";
+import { CheckCircleOutlined, UserOutlined } from "@ant-design/icons";
+import { useSelector } from "react-redux";
+import { useRegisterForAuctionMutation, useQuickRegisterForAuctionMutation } from "../../state/features/auction/auctionSlice";
+import { AuctionRegistrationRequest } from "../../state/features/auction/auctionTypes";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+
+const { Title, Text, Paragraph } = Typography;
+
+const AuctionRegistrationPage: React.FC = () => {
+  const { tournamentId } = useParams<{ tournamentId: string }>();
+  const [form] = Form.useForm();
+  const [registered, setRegistered] = useState(false);
+  const [register, { isLoading }] = useRegisterForAuctionMutation();
+  const [quickRegister, { isLoading: isQuickLoading }] = useQuickRegisterForAuctionMutation();
+  const loginInfo = useSelector(selectLoginInfo);
+  const isLoggedIn = !!loginInfo?.token;
+
+  const onFinish = async (values: any) => {
+    try {
+      const request: AuctionRegistrationRequest = {
+        ...values,
+        tournamentId: Number(tournamentId),
+      };
+      await register(request).unwrap();
+      setRegistered(true);
+      message.success("Registration submitted successfully!");
+    } catch (err: any) {
+      message.error(err?.data?.message || "Registration failed");
+    }
+  };
+
+  const handleQuickRegister = async () => {
+    try {
+      await quickRegister(Number(tournamentId)).unwrap();
+      setRegistered(true);
+      message.success("You have been registered for the auction!");
+    } catch (err: any) {
+      message.error(err?.data?.message || "Registration failed");
+    }
+  };
+
+  if (registered) {
+    return (
+      <Card style={{ maxWidth: 600, margin: "40px auto" }}>
+        <Result
+          status="success"
+          title="You're In!"
+          subTitle={isLoggedIn
+            ? "You have been successfully registered for this auction. You'll be added to the player pool and teams will bid for you during the live auction!"
+            : "Your registration is pending admin approval. Once approved, you will receive a player account and can participate in the auction."
+          }
+          extra={
+            !isLoggedIn && (
+              <Alert
+                type="info"
+                message="What happens next?"
+                description={
+                  <ul style={{ paddingLeft: 16, margin: 0 }}>
+                    <li>Admin will review and approve your registration</li>
+                    <li>Upon approval, a player account is created for you automatically</li>
+                    <li>You can log in with your email and default password: <Text code>Bjit@123</Text></li>
+                    <li>You'll be added to the auction player pool</li>
+                    <li>Teams will bid for you during the live auction!</li>
+                  </ul>
+                }
+              />
+            )
+          }
+        />
+      </Card>
+    );
+  }
+
+  // === LOGGED IN USER: Simple one-click registration ===
+  if (isLoggedIn) {
+    return (
+      <Card style={{ maxWidth: 500, margin: "40px auto", textAlign: "center" }}>
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <UserOutlined style={{ fontSize: 48, color: "#1890ff" }} />
+          <Title level={3}>Join Auction</Title>
+          <Paragraph>
+            Hi <Text strong>{loginInfo.username || loginInfo.email}</Text>! Ready to be part of the player auction for this tournament?
+          </Paragraph>
+          <Alert
+            type="success"
+            showIcon
+            icon={<CheckCircleOutlined />}
+            message="Your profile data will be used automatically"
+            description="No need to fill any form — your name, email, employee ID and position are already on file."
+            style={{ textAlign: "left" }}
+          />
+          <Button
+            type="primary"
+            size="large"
+            block
+            loading={isQuickLoading}
+            onClick={handleQuickRegister}
+            style={{ height: 50, fontSize: 16 }}
+          >
+            ⚡ Register Me for This Auction
+          </Button>
+          <Text type="secondary">You will be instantly approved and added to the auction pool.</Text>
+        </Space>
+      </Card>
+    );
+  }
+
+  // === NOT LOGGED IN: Full form for outside players ===
+  return (
+    <Card style={{ maxWidth: 600, margin: "40px auto" }}>
+      <Title level={3}>🏏 Player Auction Registration</Title>
+      <Paragraph type="secondary">
+        Register yourself to be part of the player auction for Tournament #{tournamentId}.
+        After admin approval, teams will bid for you during the live auction.
+      </Paragraph>
+      
+      <Alert
+        type="info"
+        showIcon
+        style={{ marginBottom: 16 }}
+        message="How it works"
+        description="Fill out this form → Admin approves → You get a player account → Teams bid for you in the live auction"
+      />
+
+      <Divider />
+
+      <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Form.Item name="playerName" label="Full Name" rules={[{ required: true, message: "Please enter your full name" }]}>
+          <Input placeholder="e.g. Md. Rakib Hasan" />
+        </Form.Item>
+        <Form.Item name="email" label="Email" rules={[{ required: true, type: "email", message: "Please enter a valid email" }]}>
+          <Input placeholder="your.email@example.com" />
+        </Form.Item>
+        <Form.Item name="employeeId" label="Employee ID" rules={[{ required: true, message: "Please enter your employee ID" }]}>
+          <Input placeholder="e.g. BJIT-1234" />
+        </Form.Item>
+        <Form.Item name="skypeId" label="Skype ID" rules={[{ required: true, message: "Please enter your Skype ID" }]}>
+          <Input placeholder="e.g. live:rakib.hasan" />
+        </Form.Item>
+        <Form.Item name="phone" label="Phone (Optional)">
+          <Input placeholder="e.g. +880 1XXXXXXXXX" />
+        </Form.Item>
+        <Form.Item name="preferredPosition" label="Preferred Playing Position">
+          <Select placeholder="Select your preferred position">
+            <Select.Option value="GK">🧤 Goalkeeper</Select.Option>
+            <Select.Option value="DEF">🛡️ Defender</Select.Option>
+            <Select.Option value="MID">⚡ Midfielder</Select.Option>
+            <Select.Option value="FWD">⚽ Forward</Select.Option>
+          </Select>
+        </Form.Item>
+        <Form.Item name="availability" label="Availability">
+          <Select placeholder="Are you fully available?">
+            <Select.Option value="AVAILABLE">✅ Fully Available</Select.Option>
+            <Select.Option value="PARTIALLY_AVAILABLE">⚠️ Partially Available</Select.Option>
+          </Select>
+        </Form.Item>
+        <Form.Item name="notes" label="Additional Notes (Optional)">
+          <Input.TextArea rows={3} placeholder="Any additional information you'd like to share..." />
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary" htmlType="submit" loading={isLoading} block size="large">
+            Submit Registration
+          </Button>
+        </Form.Item>
+      </Form>
+    </Card>
+  );
+};
+
+export default AuctionRegistrationPage;
