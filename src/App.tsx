@@ -12,6 +12,8 @@ import LoginPage from "./components/authPages/LoginPage";
 import PasswordResetPage from "./components/authPages/PasswordResetPage";
 import { useSelector } from "react-redux";
 import { selectResetPassword } from "./state/slices/loginInfoSlice";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { AuctionRegistrationPage } from "./components/Auction";
 
 function App() {
     const [collapsed, setCollapsed] = useState(false);
@@ -19,6 +21,7 @@ function App() {
 
     const { login, user } = useAuthHook();
     const needsPasswordReset = useSelector(selectResetPassword);
+    const location = useLocation();
 
     const handleToggleCollapse = (value: boolean) => {
         setCollapsed(value);
@@ -34,6 +37,26 @@ function App() {
             ? setIsDarkMode(false)
             : setIsDarkMode(true);
     }, []);
+
+    // Public route: Auction Registration (no login required)
+    const isPublicAuctionRoute = location.pathname.startsWith("/auction/register/");
+
+    if (!user?.token && isPublicAuctionRoute) {
+        return (
+            <ConfigProvider
+                theme={{
+                    algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+                    token: { colorPrimary: "#1890ff" },
+                }}
+            >
+                <Layout className={isDarkMode ? "dark-mode" : "light-mode"} style={{ minHeight: "100vh" }}>
+                    <Routes>
+                        <Route path="auction/register/:tournamentId" element={<AuctionRegistrationPage />} />
+                    </Routes>
+                </Layout>
+            </ConfigProvider>
+        );
+    }
 
     if (!user?.token) {
         return (

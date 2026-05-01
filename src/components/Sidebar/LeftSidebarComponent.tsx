@@ -2,6 +2,7 @@ import {
     BarChartOutlined,
     BookOutlined,
   DollarOutlined,
+  FireOutlined,
   PieChartOutlined,
   ProjectOutlined,
   RadarChartOutlined,
@@ -93,6 +94,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
       getItem("Tourtnaments", "/tournaments"),
     ]),
     getItem("Club Rules", "/club-rules", <BookOutlined />),
+    getItem("Auction", "/auction", <FireOutlined />),
   ];
 
   useEffect(() => {
