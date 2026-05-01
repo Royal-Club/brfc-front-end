@@ -7,6 +7,7 @@ export interface IoTournamentSingleSummaryType {
     venueName: string;
     activeStatus: boolean;
     tournamentStatus?: string;
+    auctionMode?: boolean;
 }
 
 export interface getSingleTournamentInfoType extends BasicResType {

@@ -64,6 +64,12 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
       {record.activeStatus ? (
         <Menu.Item key="join">Join Tournament</Menu.Item>
       ) : null}
+      {record.auctionMode ? (
+        <Menu.Item key="auction-register">Register for Auction</Menu.Item>
+      ) : null}
+      {record.auctionMode ? (
+        <Menu.Item key="auction-live">Live Auction</Menu.Item>
+      ) : null}
       <Menu.Item key="team-building">Team Building</Menu.Item>
       <Menu.Item key="fixtures">Teams and Fixtures</Menu.Item>
       {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") || loginInfo.roles.includes("COORDINATOR")) && (

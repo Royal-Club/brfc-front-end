@@ -12,6 +12,7 @@ import {
     Row,
     Col,
     Space,
+    Switch,
 } from "antd";
 import { CalendarOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { useGetVanuesQuery } from "../../../state/features/vanues/vanuesSlice";
@@ -35,6 +36,14 @@ interface CreateTournamentProps {
     tournamentData?: IoTournamentSingleSummaryType;
 }
 
+interface FormValues {
+    tournamentName: string;
+    tournamentDate: any;
+    tournamentTime: any;
+    venueId: number;
+    auctionMode: boolean; // Added auctionMode to the form values
+}
+
 export default function CreateTournament({
     tournamentId,
     isUpdateModalVisible,
@@ -50,12 +59,7 @@ export default function CreateTournament({
     const [open, setOpen] = useState(false);
     const [form] = Form.useForm();
 
-    const handleCreateOrUpdateTournament = async (values: {
-        tournamentName: string;
-        tournamentDate: any;
-        tournamentTime: any;
-        venueId: number;
-    }) => {
+    const handleCreateOrUpdateTournament = async (values: FormValues) => {
         if (!values.tournamentDate || !values.tournamentTime) {
             message.error("Please select both date and time");
             return;
@@ -75,6 +79,7 @@ export default function CreateTournament({
             tournamentName: values.tournamentName,
             tournamentDate: tournamentDateUTC,
             venueId: values.venueId,
+            auctionMode: values.auctionMode || false,
         };
 
         if (tournamentId) {
@@ -124,6 +129,7 @@ export default function CreateTournament({
                 venueId: venuesData.content.find(
                     (venue: any) => venue.name === tournamentData.venueName
                 )?.id,
+                auctionMode: tournamentData.auctionMode || false,
             });
         }
     }, [tournamentData, venuesData, form]);
@@ -239,6 +245,14 @@ export default function CreateTournament({
                                     </Option>
                                 ))}
                             </Select>
+                        </Form.Item>
+                        <Form.Item
+                            name="auctionMode"
+                            label="Auction Mode"
+                            valuePropName="checked"
+                            extra="Enable if teams will be formed by bidding auction instead of manual selection"
+                        >
+                            <Switch checkedChildren="Auction" unCheckedChildren="Normal" />
                         </Form.Item>
                         <Form.Item>
                             <Button

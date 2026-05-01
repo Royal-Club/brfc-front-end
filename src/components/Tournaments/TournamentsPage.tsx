@@ -8,7 +8,7 @@ import CreateTournament from "./Atoms/CreateTournamentModal";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { showBdLocalTime } from "../../utils/utils";
-import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import { CalendarOutlined, EnvironmentOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { canManageTournaments } from "../../utils/roleUtils";
 
 const { Header } = Layout;
@@ -59,6 +59,10 @@ const TournamentsPage: React.FC = () => {
   const handleMenuClick = (e: any, record: IoTournamentSingleSummaryType) => {
     if (e.key === "join") {
       navigate(`/tournaments/join-tournament/${record.id}`);
+    } else if (e.key === "auction-register") {
+      navigate(`/auction/register/${record.id}`);
+    } else if (e.key === "auction-live") {
+      navigate(`/auction/live/${record.id}`);
     } else if (e.key === "team-building") {
     } else if (e.key === "fixtures") {
       navigate(`/tournaments/team-building/${record.id}`);
@@ -173,6 +177,17 @@ const TournamentsPage: React.FC = () => {
               {getStatusText(tournament.tournamentStatus)}
             </Tag>
             
+            {tournament.auctionMode && (
+              <Button
+                size="small"
+                type="primary"
+                icon={<ThunderboltOutlined />}
+                style={{ fontSize: '10px', padding: '0 6px', height: '22px', marginBottom: 2 }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/auction/register/${tournament.id}`); }}
+              >
+                Auction
+              </Button>
+            )}
             {tournament.tournamentDate && (
               <div onClick={(e) => e.stopPropagation()}>
                 <TournamentsActionDropdown
