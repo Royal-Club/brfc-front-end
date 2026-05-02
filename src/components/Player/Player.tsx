@@ -3,12 +3,14 @@ import {
     Card,
     Col,
     Form,
+    Image,
     Input,
     InputNumber,
     Row,
     Select,
     Space,
     Spin,
+    Upload,
     message,
     Breadcrumb,
     Divider,
@@ -36,6 +38,7 @@ import { checkTockenValidity } from "../../utils/utils";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import axiosApi from "../../state/api/axiosBase";
+import { uploadImageToStorage } from "../../utils/fileStorage";
 
 const { Title } = Typography;
 
@@ -50,6 +53,8 @@ function Player() {
     var [formState, setFormState] = useState("CREATE");
     const [formSubmitButtonText, setFormSubmitButtonText] = useState("Create");
     const [playerLoading, setPlayerLoading] = React.useState<boolean>(false);
+    const [photoUploading, setPhotoUploading] = useState(false);
+    const [photoPreview, setPhotoPreview] = useState<string>();
     const [playerForm] = Form.useForm();
 
     const tokenContent = localStorage.getItem("tokenContent");
@@ -80,6 +85,7 @@ function Player() {
             employeeId: playerForm.getFieldValue("employeeId"),
             skypeId: playerForm.getFieldValue("skypeId"),
             mobileNo: playerForm.getFieldValue("mobileNo"),
+            profilePhoto: playerForm.getFieldValue("profilePhoto"),
             password: COMMON_PLAYER_PASSWORD,
             playingPosition:
                 playerForm.getFieldValue("playingPosition") || "UNASSIGNED", // Default to avoid undefined
@@ -155,9 +161,14 @@ function Player() {
                     skypeId: response.data.content.skypeId,
                     mobileNo: response.data.content.mobileNo,
                     employeeId: response.data.content.employeeId,
+                    profilePhoto: response.data.content.profilePhoto,
                     active: response.data.content.active,
                     playingPosition: response.data.content.playingPosition,
                 });
+
+                if (response.data.content.profilePhoto) {
+                    setPhotoPreview(undefined);
+                }
                 setPlayerLoading(false);
                 setFormSubmitButtonText("Change");
             })
@@ -197,6 +208,21 @@ function Player() {
         required: true,
         message: `Please input your ${label}!`,
     });
+
+    const handleProfilePhotoUpload = async (file: File) => {
+        try {
+            setPhotoUploading(true);
+            const key = await uploadImageToStorage(file, "player-profiles");
+            playerForm.setFieldValue("profilePhoto", key);
+            setPhotoPreview(URL.createObjectURL(file));
+            message.success("Profile photo uploaded");
+        } catch (error: any) {
+            message.error(error?.message || "Profile photo upload failed");
+        } finally {
+            setPhotoUploading(false);
+        }
+        return false;
+    };
 
     return (
         <>
@@ -336,6 +362,37 @@ function Player() {
                                                         )
                                                     )}
                                                 </Select>
+                                            </Form.Item>
+                                        </Col>
+                                        <Col md={12} lg={8}>
+                                            <Form.Item label="Profile Photo">
+                                                <Space direction="vertical" style={{ width: "100%" }}>
+                                                    <Upload
+                                                        accept="image/*"
+                                                        showUploadList={false}
+                                                        beforeUpload={handleProfilePhotoUpload}
+                                                        disabled={photoUploading}
+                                                    >
+                                                        <Button loading={photoUploading}>Upload Profile Photo</Button>
+                                                    </Upload>
+                                                    {photoPreview && (
+                                                        <Image
+                                                            src={photoPreview}
+                                                            alt="Profile preview"
+                                                            width={96}
+                                                            height={96}
+                                                            style={{ objectFit: "cover", borderRadius: 8 }}
+                                                        />
+                                                    )}
+                                                    {!photoPreview && playerForm.getFieldValue("profilePhoto") && (
+                                                        <div style={{ fontSize: 12, color: "#666" }}>
+                                                            Stored key: {playerForm.getFieldValue("profilePhoto")}
+                                                        </div>
+                                                    )}
+                                                </Space>
+                                            </Form.Item>
+                                            <Form.Item name="profilePhoto" hidden>
+                                                <Input />
                                             </Form.Item>
                                         </Col>
                                         {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) &&

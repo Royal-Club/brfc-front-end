@@ -6,6 +6,7 @@ interface IPlayer {
     fullName: string;
     skypeId: string;
     mobileNo: string;
+    profilePhoto?: string;
     active: Boolean;
     playingPosition?: string;
     createdDate: Date;

@@ -30,6 +30,7 @@ export interface AuctionRegistrationRequest {
   playingPosition?: string;
   availabilityStatus?: string;
   previousExperience?: string;
+  profilePhoto?: string;
 }
 
 export interface AuctionPlayerRequest {

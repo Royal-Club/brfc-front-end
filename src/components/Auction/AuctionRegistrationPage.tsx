@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Card, Form, Input, Button, Typography, Result, Select, message, Alert, Divider, Space } from "antd";
+import { Card, Form, Input, Button, Typography, Result, Select, message, Alert, Divider, Space, Upload, Image } from "antd";
 import { useParams } from "react-router-dom";
 import { CheckCircleOutlined, UserOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useGetAuctionSessionQuery, useRegisterForAuctionMutation, useQuickRegisterForAuctionMutation } from "../../state/features/auction/auctionSlice";
 import { AuctionRegistrationRequest } from "../../state/features/auction/auctionTypes";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import { uploadImageToStorage } from "../../utils/fileStorage";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -13,6 +14,8 @@ const AuctionRegistrationPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const [form] = Form.useForm();
   const [registered, setRegistered] = useState(false);
+  const [profileUploading, setProfileUploading] = useState(false);
+  const [profilePreview, setProfilePreview] = useState<string>();
   const [register, { isLoading }] = useRegisterForAuctionMutation();
   const [quickRegister, { isLoading: isQuickLoading }] = useQuickRegisterForAuctionMutation();
   const loginInfo = useSelector(selectLoginInfo);
@@ -42,6 +45,22 @@ const AuctionRegistrationPage: React.FC = () => {
     } catch (err: any) {
       message.error(err?.data?.message || "Registration failed");
     }
+  };
+
+  const handleProfilePhotoUpload = async (file: File) => {
+    try {
+      setProfileUploading(true);
+      const key = await uploadImageToStorage(file, "auction-outside-profiles");
+      form.setFieldValue("profilePhoto", key);
+      setProfilePreview(URL.createObjectURL(file));
+      message.success("Profile photo uploaded");
+    } catch (error: any) {
+      message.error(error?.message || "Profile photo upload failed");
+    } finally {
+      setProfileUploading(false);
+    }
+
+    return false;
   };
 
   if (registered) {
@@ -187,6 +206,35 @@ const AuctionRegistrationPage: React.FC = () => {
         </Form.Item>
         <Form.Item name="previousExperience" label="Previous Experience (Optional)">
           <Input.TextArea rows={3} placeholder="Any previous cricket/football experience..." />
+        </Form.Item>
+        <Form.Item label="Profile Photo (Optional)">
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <Upload
+              accept="image/*"
+              showUploadList={false}
+              beforeUpload={handleProfilePhotoUpload}
+              disabled={profileUploading}
+            >
+              <Button loading={profileUploading}>Upload Profile Photo</Button>
+            </Upload>
+            {profilePreview && (
+              <Image
+                src={profilePreview}
+                alt="Profile preview"
+                width={96}
+                height={96}
+                style={{ objectFit: "cover", borderRadius: 8 }}
+              />
+            )}
+            {!profilePreview && form.getFieldValue("profilePhoto") && (
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Stored key: {form.getFieldValue("profilePhoto")}
+              </Text>
+            )}
+          </Space>
+        </Form.Item>
+        <Form.Item name="profilePhoto" hidden>
+          <Input />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={isLoading} block size="large" disabled={isRegistrationClosed}>
