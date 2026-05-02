@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { Card, Table, Tag, Button, Space, Typography, message, Select, InputNumber, Row, Col, Empty, Alert, Divider } from "antd";
-import { PlusOutlined, DeleteOutlined, UserOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import { Card, Table, Tag, Button, Space, Typography, message, Select, InputNumber, Empty, Tooltip, Popconfirm } from "antd";
+import { PlusOutlined, DeleteOutlined, UserOutlined, CheckCircleOutlined, UndoOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import {
   useGetAuctionPlayersQuery,
-  useAddExistingPlayerMutation,
   useAddFromRegistrationMutation,
   useRemoveAuctionPlayerMutation,
+  useRestoreAuctionPlayerMutation,
   useGetAuctionRegistrationsQuery,
 } from "../../state/features/auction/auctionSlice";
 import { AuctionPlayerResponse, AuctionPlayerCategory, AuctionPlayerStatus, AuctionRegistrationResponse } from "../../state/features/auction/auctionTypes";
@@ -52,12 +52,15 @@ const AuctionPlayerPoolPage: React.FC = () => {
   const { data: players, isLoading } = useGetAuctionPlayersQuery(tid);
   const { data: registrations } = useGetAuctionRegistrationsQuery({ tournamentId: tid, status: "APPROVED" });
   const [addFromReg, { isLoading: addingReg }] = useAddFromRegistrationMutation();
-  const [addExisting, { isLoading: addingExisting }] = useAddExistingPlayerMutation();
   const [removePlayer] = useRemoveAuctionPlayerMutation();
+  const [restorePlayer] = useRestoreAuctionPlayerMutation();
+
+  const activePoolPlayers = (players || []).filter(p => p.status !== "WITHDRAWN");
+  const withdrawnCount = (players || []).filter(p => p.status === "WITHDRAWN").length;
 
   // Filter out registrations already in the pool:
-  // A registration is in pool if inAuctionPool is true, OR its createdPlayerId is already in poolPlayerIds
-  const poolPlayerIds = new Set(players?.map(p => p.playerId) || []);
+  // A registration is considered in pool only if player exists in active (non-withdrawn) pool.
+  const poolPlayerIds = new Set(activePoolPlayers.map(p => p.playerId));
   const availableRegistrations = (registrations || []).filter(
     (r: AuctionRegistrationResponse) => !r.inAuctionPool && (!r.createdPlayerId || !poolPlayerIds.has(r.createdPlayerId))
   );
@@ -112,9 +115,18 @@ const AuctionPlayerPoolPage: React.FC = () => {
   const handleRemove = async (auctionPlayerId: number) => {
     try {
       await removePlayer({ tournamentId: tid, auctionPlayerId }).unwrap();
-      message.success("Player removed from pool");
+      message.success("Player withdrawn from pool");
     } catch (err: any) {
       message.error(err?.data?.message || "Failed to remove");
+    }
+  };
+
+  const handleRestore = async (auctionPlayerId: number) => {
+    try {
+      await restorePlayer({ tournamentId: tid, auctionPlayerId }).unwrap();
+      message.success("Player restored to pool");
+    } catch (err: any) {
+      message.error(err?.data?.message || "Failed to restore");
     }
   };
 
@@ -133,19 +145,43 @@ const AuctionPlayerPoolPage: React.FC = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (s: AuctionPlayerStatus) => <Tag color={statusColors[s]}>{s}</Tag>,
+      render: (s: AuctionPlayerStatus) => <Tag color={statusColors[s]}>{s.replace("_", " ")}</Tag>,
     },
     { title: "Sold For", dataIndex: "finalPrice", key: "finalPrice", render: (v?: number) => v ? `৳${v.toLocaleString()}` : "-" },
     { title: "Sold To", dataIndex: "soldToTeamName", key: "soldToTeamName", render: (v?: string) => v || "-" },
     {
       title: "Action",
       key: "action",
-      render: (_: any, record: AuctionPlayerResponse) =>
-        record.status === "AVAILABLE" ? (
-          <Button danger size="small" icon={<DeleteOutlined />} onClick={() => handleRemove(record.id)}>
-            Remove
-          </Button>
-        ) : null,
+      render: (_: any, record: AuctionPlayerResponse) => {
+        if (record.status === "AVAILABLE") {
+          return (
+            <Popconfirm
+              title="Withdraw this player from pool?"
+              description="The player can be restored later."
+              okText="Withdraw"
+              okButtonProps={{ danger: true }}
+              cancelText="Cancel"
+              onConfirm={() => handleRemove(record.id)}
+            >
+              <Button danger size="small" icon={<DeleteOutlined />}>
+                Withdraw
+              </Button>
+            </Popconfirm>
+          );
+        }
+
+        if (record.status === "WITHDRAWN") {
+          return (
+            <Tooltip title="Bring this player back to active pool">
+              <Button size="small" icon={<UndoOutlined />} onClick={() => handleRestore(record.id)}>
+                Restore
+              </Button>
+            </Tooltip>
+          );
+        }
+
+        return null;
+      },
     },
   ];
 
@@ -250,7 +286,8 @@ const AuctionPlayerPoolPage: React.FC = () => {
         title={
           <Space>
             <Text strong>Current Pool</Text>
-            <Tag color="green">{players?.length || 0} players</Tag>
+            <Tag color="green">{activePoolPlayers.length} active</Tag>
+            {withdrawnCount > 0 && <Tag color="default">{withdrawnCount} withdrawn</Tag>}
           </Space>
         }
       >

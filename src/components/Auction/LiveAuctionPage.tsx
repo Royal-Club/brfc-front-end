@@ -40,13 +40,15 @@ const CATEGORY_COLOR: Record<AuctionPlayerCategory, string> = {
 };
 
 const fmt = (n?: number) => n != null ? `৳${n.toLocaleString()}` : "—";
+const hasRole = (roles: string[] | undefined, role: string) =>
+  !!roles?.some(r => r === role || r === `ROLE_${role}`);
 
 const LiveAuctionPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const tid = Number(tournamentId);
   const loginInfo = useSelector(selectLoginInfo);
-  const isAdmin = loginInfo.roles?.includes("ADMIN") || loginInfo.roles?.includes("SUPERADMIN");
-  const isTeamOwner = loginInfo.roles?.includes("TEAM_OWNER") || isAdmin;
+  const isAdmin = hasRole(loginInfo.roles, "ADMIN") || hasRole(loginInfo.roles, "SUPERADMIN");
+  const isTeamOwner = hasRole(loginInfo.roles, "TEAM_OWNER") || isAdmin;
   const myUserId = Number(loginInfo.userId);
 
   // --- Countdown timer state ---
@@ -81,7 +83,8 @@ const LiveAuctionPage: React.FC = () => {
     [allAuctionPlayers]
   );
 
-  const myTeam = teamBudgets.find(tb => tb.ownerId === myUserId);
+  const myTeam = teamBudgets.find(tb => Number(tb.ownerId) === myUserId);
+  const canParticipateInBidding = isTeamOwner || !!myTeam;
 
   // --- Live countdown ---
   useEffect(() => {
@@ -440,7 +443,7 @@ const LiveAuctionPage: React.FC = () => {
               )}
 
               {/* Bid section — shown to all TEAM_OWNERs */}
-              {isTeamOwner && (
+              {canParticipateInBidding && (
                 <>
                   {myTeam ? (
                     <>

@@ -136,6 +136,13 @@ export const auctionApi = apiWithTags.injectEndpoints({
       }),
       invalidatesTags: ["auctionPlayers"],
     }),
+    restoreAuctionPlayer: builder.mutation<AuctionPlayerResponse, { tournamentId: number; auctionPlayerId: number }>({
+      query: ({ tournamentId, auctionPlayerId }) => ({
+        url: `tournaments/${tournamentId}/auction/players/${auctionPlayerId}/restore`,
+        method: "POST",
+      }),
+      invalidatesTags: ["auctionPlayers", "auctionRegistrations"],
+    }),
 
     // === Team Budgets ===
     getTeamBudgets: builder.query<TeamBudgetResponse[], number>({
@@ -311,6 +318,7 @@ export const {
   useAddFromRegistrationMutation,
   useUpdateAuctionPlayerMutation,
   useRemoveAuctionPlayerMutation,
+  useRestoreAuctionPlayerMutation,
   useGetTeamBudgetsQuery,
   useGetAvailableTeamsQuery,
   useCreateTeamForAuctionMutation,

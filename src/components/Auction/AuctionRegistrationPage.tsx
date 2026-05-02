@@ -150,7 +150,7 @@ const AuctionRegistrationPage: React.FC = () => {
       <Divider />
 
       <Form form={form} layout="vertical" onFinish={onFinish}>
-        <Form.Item name="playerName" label="Full Name" rules={[{ required: true, message: "Please enter your full name" }]}>
+        <Form.Item name="name" label="Full Name" rules={[{ required: true, message: "Please enter your full name" }]}>
           <Input placeholder="e.g. Md. Rakib Hasan" />
         </Form.Item>
         <Form.Item name="email" label="Email" rules={[{ required: true, type: "email", message: "Please enter a valid email" }]}>
@@ -162,25 +162,31 @@ const AuctionRegistrationPage: React.FC = () => {
         <Form.Item name="skypeId" label="Skype ID" rules={[{ required: true, message: "Please enter your Skype ID" }]}>
           <Input placeholder="e.g. live:rakib.hasan" />
         </Form.Item>
-        <Form.Item name="phone" label="Phone (Optional)">
+        <Form.Item name="mobileNo" label="Phone (Optional)">
           <Input placeholder="e.g. +880 1XXXXXXXXX" />
         </Form.Item>
-        <Form.Item name="preferredPosition" label="Preferred Playing Position">
+        <Form.Item name="playingPosition" label="Preferred Playing Position" rules={[{ required: true, message: "Please select your position" }]}>
           <Select placeholder="Select your preferred position">
-            <Select.Option value="GK">🧤 Goalkeeper</Select.Option>
-            <Select.Option value="DEF">🛡️ Defender</Select.Option>
-            <Select.Option value="MID">⚡ Midfielder</Select.Option>
-            <Select.Option value="FWD">⚽ Forward</Select.Option>
+            <Select.Option value="GOALKEEPER">🧤 Goalkeeper</Select.Option>
+            <Select.Option value="RIGHT_BACK">🛡️ Right Back</Select.Option>
+            <Select.Option value="LEFT_BACK">🛡️ Left Back</Select.Option>
+            <Select.Option value="CENTER_BACK_1">🛡️ Center Back</Select.Option>
+            <Select.Option value="DEFENSIVE_MIDFIELD">⚡ Defensive Midfield</Select.Option>
+            <Select.Option value="CENTRAL_MIDFIELD">⚡ Central Midfield</Select.Option>
+            <Select.Option value="ATTACKING_MIDFIELD">⚡ Attacking Midfield</Select.Option>
+            <Select.Option value="RIGHT_WING_FORWARD">⚽ Right Wing/Forward</Select.Option>
+            <Select.Option value="LEFT_WING_FORWARD">⚽ Left Wing/Forward</Select.Option>
+            <Select.Option value="STRIKER">⚽ Striker</Select.Option>
           </Select>
         </Form.Item>
-        <Form.Item name="availability" label="Availability">
-          <Select placeholder="Are you fully available?">
+        <Form.Item name="availabilityStatus" label="Availability">
+          <Select placeholder="Are you fully available?" defaultValue="AVAILABLE">
             <Select.Option value="AVAILABLE">✅ Fully Available</Select.Option>
             <Select.Option value="PARTIALLY_AVAILABLE">⚠️ Partially Available</Select.Option>
           </Select>
         </Form.Item>
-        <Form.Item name="notes" label="Additional Notes (Optional)">
-          <Input.TextArea rows={3} placeholder="Any additional information you'd like to share..." />
+        <Form.Item name="previousExperience" label="Previous Experience (Optional)">
+          <Input.TextArea rows={3} placeholder="Any previous cricket/football experience..." />
         </Form.Item>
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={isLoading} block size="large" disabled={isRegistrationClosed}>
