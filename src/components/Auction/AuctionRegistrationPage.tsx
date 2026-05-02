@@ -3,7 +3,7 @@ import { Card, Form, Input, Button, Typography, Result, Select, message, Alert, 
 import { useParams } from "react-router-dom";
 import { CheckCircleOutlined, UserOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
-import { useRegisterForAuctionMutation, useQuickRegisterForAuctionMutation } from "../../state/features/auction/auctionSlice";
+import { useGetAuctionSessionQuery, useRegisterForAuctionMutation, useQuickRegisterForAuctionMutation } from "../../state/features/auction/auctionSlice";
 import { AuctionRegistrationRequest } from "../../state/features/auction/auctionTypes";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 
@@ -17,6 +17,8 @@ const AuctionRegistrationPage: React.FC = () => {
   const [quickRegister, { isLoading: isQuickLoading }] = useQuickRegisterForAuctionMutation();
   const loginInfo = useSelector(selectLoginInfo);
   const isLoggedIn = !!loginInfo?.token;
+  const { data: session } = useGetAuctionSessionQuery(Number(tournamentId), { skip: !tournamentId });
+  const isRegistrationClosed = session?.status === "COMPLETED";
 
   const onFinish = async (values: any) => {
     try {
@@ -92,12 +94,22 @@ const AuctionRegistrationPage: React.FC = () => {
             description="No need to fill any form — your name, email, employee ID and position are already on file."
             style={{ textAlign: "left" }}
           />
+          {isRegistrationClosed && (
+            <Alert
+              type="warning"
+              showIcon
+              message="Auction registration is closed"
+              description="This tournament auction is already completed, so new registrations are not accepted."
+              style={{ textAlign: "left" }}
+            />
+          )}
           <Button
             type="primary"
             size="large"
             block
             loading={isQuickLoading}
             onClick={handleQuickRegister}
+            disabled={isRegistrationClosed}
             style={{ height: 50, fontSize: 16 }}
           >
             ⚡ Register Me for This Auction
@@ -124,6 +136,16 @@ const AuctionRegistrationPage: React.FC = () => {
         message="How it works"
         description="Fill out this form → Admin approves → You get a player account → Teams bid for you in the live auction"
       />
+
+      {isRegistrationClosed && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="Auction registration is closed"
+          description="This tournament auction is already completed, so new registrations are not accepted."
+        />
+      )}
 
       <Divider />
 
@@ -161,7 +183,7 @@ const AuctionRegistrationPage: React.FC = () => {
           <Input.TextArea rows={3} placeholder="Any additional information you'd like to share..." />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={isLoading} block size="large">
+          <Button type="primary" htmlType="submit" loading={isLoading} block size="large" disabled={isRegistrationClosed}>
             Submit Registration
           </Button>
         </Form.Item>

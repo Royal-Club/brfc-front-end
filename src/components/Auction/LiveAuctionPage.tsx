@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Card, Row, Col, Button, Space, Typography, Tag, Table,
   message, Alert, Empty, Badge, Divider, Progress, Statistic, Modal, Tooltip
@@ -7,11 +7,12 @@ import {
   PlayCircleOutlined, PauseCircleOutlined, StepForwardOutlined,
   DollarOutlined, CloseCircleOutlined, UndoOutlined, TeamOutlined,
   TrophyOutlined, ThunderboltOutlined, ClockCircleOutlined, EyeOutlined,
-  WifiOutlined, DisconnectOutlined, ReloadOutlined
+  WifiOutlined, DisconnectOutlined, ReloadOutlined, UnorderedListOutlined
 } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import {
   useGetAuctionDashboardQuery,
+  useGetAuctionPlayersQuery,
   useGetAuctionSettingsQuery,
   useStartAuctionMutation,
   usePauseAuctionMutation,
@@ -54,12 +55,16 @@ const LiveAuctionPage: React.FC = () => {
 
   // --- Modal state ---
   const [unsoldModal, setUnsoldModal] = useState(false);
+  const [remainingModal, setRemainingModal] = useState(false);
   const [squadModal, setSquadModal] = useState<{ open: boolean; team: TeamBudgetResponse | null }>({
     open: false, team: null,
   });
 
   const [pollingActive, setPollingActive] = useState(true);
   const { data: dashboard, refetch, isLoading } = useGetAuctionDashboardQuery(tid, {
+    pollingInterval: pollingActive ? 5000 : 0,
+  });
+  const { data: allAuctionPlayers = [] } = useGetAuctionPlayersQuery(tid, {
     pollingInterval: pollingActive ? 5000 : 0,
   });
   const { data: auctionSettings } = useGetAuctionSettingsQuery(tid);
@@ -69,6 +74,12 @@ const LiveAuctionPage: React.FC = () => {
   const bids = dashboard?.currentPlayerBids || [];
   const teamBudgets = dashboard?.teamBudgets || [];
   const soldPlayers = dashboard?.soldPlayers || [];
+  const remainingPlayers = useMemo(
+    () => allAuctionPlayers
+      .filter((p: AuctionPlayerResponse) => p.status === "AVAILABLE" || p.status === "ON_AUCTION")
+      .sort((a: AuctionPlayerResponse, b: AuctionPlayerResponse) => (a.sequenceOrder ?? 0) - (b.sequenceOrder ?? 0)),
+    [allAuctionPlayers]
+  );
 
   const myTeam = teamBudgets.find(tb => tb.ownerId === myUserId);
 
@@ -192,6 +203,13 @@ const LiveAuctionPage: React.FC = () => {
             >
               Unsold ({dashboard?.unsoldPlayers?.length ?? 0})
             </Button>
+            <Button
+              size="small"
+              icon={<UnorderedListOutlined />}
+              onClick={() => setRemainingModal(true)}
+            >
+              Remaining ({remainingPlayers.length})
+            </Button>
           </Space>
         </Col>
 
@@ -200,9 +218,17 @@ const LiveAuctionPage: React.FC = () => {
           <Col>
             <Space wrap>
               {(!session || session.status === "COMPLETED") && (
-                <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => run(() => startAuction(tid).unwrap(), "Auction started!")} loading={starting}>
-                  Start Auction
-                </Button>
+                <Tooltip title={teamBudgets.length === 0 ? "Add at least one team budget before starting the auction" : undefined}>
+                  <Button
+                    type="primary"
+                    icon={<PlayCircleOutlined />}
+                    onClick={() => run(() => startAuction(tid).unwrap(), "Auction started!")}
+                    loading={starting}
+                    disabled={teamBudgets.length === 0}
+                  >
+                    Start Auction
+                  </Button>
+                </Tooltip>
               )}
               {session?.status === "RUNNING" && (
                 <>
@@ -315,7 +341,13 @@ const LiveAuctionPage: React.FC = () => {
               <Empty description={
                 <Space direction="vertical">
                   <Text>Auction not started yet.</Text>
-                  {isAdmin && <Text type="secondary">Ensure the player pool and teams are set up, then click "Start Auction".</Text>}
+                  {isAdmin && (
+                    <Text type="secondary">
+                      {teamBudgets.length === 0
+                        ? "Go to Team Budgets to add teams before starting the auction."
+                        : `Ensure the player pool and teams are set up (${teamBudgets.length} team${teamBudgets.length !== 1 ? "s" : ""} ready), then click "Start Auction".`}
+                    </Text>
+                  )}
                 </Space>
               } />
             </Card>
@@ -525,6 +557,49 @@ const LiveAuctionPage: React.FC = () => {
       )}
 
       {/* ── Unsold Players Modal ─────────────────── */}
+      <Modal
+        title={<Space><UnorderedListOutlined style={{ color: "#1677ff" }} /><span>Remaining Players ({remainingPlayers.length})</span></Space>}
+        open={remainingModal}
+        onCancel={() => setRemainingModal(false)}
+        footer={null}
+        width={760}
+      >
+        {remainingPlayers.length === 0 ? (
+          <Empty description="No remaining players" />
+        ) : (
+          <Table
+            dataSource={remainingPlayers}
+            rowKey="id"
+            size="small"
+            scroll={{ x: 700, y: 420 }}
+            pagination={{ pageSize: 12, showSizeChanger: false }}
+            columns={[
+              {
+                title: "Seq",
+                key: "seq",
+                width: 64,
+                render: (_: any, r: AuctionPlayerResponse) => r.sequenceOrder ?? "—",
+              },
+              { title: "Player", dataIndex: "playerName", render: (v: string) => <Text strong>{v}</Text> },
+              {
+                title: "Grade",
+                dataIndex: "category",
+                width: 130,
+                render: (c: AuctionPlayerCategory) => <Tag color={CATEGORY_COLOR[c]}>{c.replace("_", " ")}</Tag>,
+              },
+              {
+                title: "Status",
+                dataIndex: "status",
+                width: 120,
+                render: (s: string) => <Tag color={s === "ON_AUCTION" ? "orange" : "blue"}>{s.replace("_", " ")}</Tag>,
+              },
+              { title: "Position", dataIndex: "playingPosition", render: (v?: string) => v || "—" },
+              { title: "Base Price", dataIndex: "basePrice", width: 130, render: fmt },
+            ]}
+          />
+        )}
+      </Modal>
+
       <Modal
         title={<Space><CloseCircleOutlined style={{ color: "#ff4d4f" }} /><span>Unsold Players ({dashboard?.unsoldPlayers?.length ?? 0})</span></Space>}
         open={unsoldModal}

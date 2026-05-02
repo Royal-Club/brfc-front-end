@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Typography, List, Tag, Button, Space, Empty, Spin, Steps, Badge } from "antd";
+import { Card, Typography, List, Tag, Button, Space, Empty, Spin, Steps, Badge, Tooltip } from "antd";
 import { FireOutlined, TeamOutlined, SettingOutlined, UserAddOutlined, TrophyOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
@@ -23,6 +23,7 @@ const TournamentAuctionCard: React.FC<{ tournament: IoTournamentSingleSummaryTyp
     // Skip if we can't get session — just show nothing for status
   });
   const sessionBadge = session?.status ? SESSION_STATUS_BADGE[session.status] : null;
+  const registrationClosed = session?.status === "COMPLETED";
 
   return (
     <Card style={{ width: "100%" }} size="small">
@@ -39,12 +40,15 @@ const TournamentAuctionCard: React.FC<{ tournament: IoTournamentSingleSummaryTyp
         </Space>
 
         <Space wrap>
-          <Button
-            icon={<UserAddOutlined />}
-            onClick={() => navigate(`/auction/register/${tournament.id}`)}
-          >
-            Register for Auction
-          </Button>
+          <Tooltip title={registrationClosed ? "Auction is completed. Registration is closed." : undefined}>
+            <Button
+              icon={<UserAddOutlined />}
+              onClick={() => navigate(`/auction/register/${tournament.id}`)}
+              disabled={registrationClosed}
+            >
+              Register for Auction
+            </Button>
+          </Tooltip>
           <Button
             icon={<PlayCircleOutlined />}
             type="primary"
