@@ -10,7 +10,11 @@ import {
     CloseCircleOutlined,
     QuestionCircleOutlined
 } from '@ant-design/icons';
-import { useGetLatestTournamentWithUserStatusQuery, useAddParticipationToTournamentMutation } from '../../state/features/tournaments/tournamentsSlice';
+import {
+    useGetLatestTournamentWithUserStatusQuery,
+    useAddParticipationToTournamentMutation,
+    useGetTournamentParticipantsListQuery,
+} from '../../state/features/tournaments/tournamentsSlice';
 import { showBdLocalTime } from '../../utils/utils';
 import { useSelector } from 'react-redux';
 import { selectLoginInfo } from '../../state/slices/loginInfoSlice';
@@ -28,6 +32,12 @@ const LatestTournamentCard: React.FC = () => {
         isLoading, 
         refetch 
     } = useGetLatestTournamentWithUserStatusQuery();
+
+    const latestTournamentId = latestTournamentData?.content?.tournament?.id;
+    const { data: tournamentParticipantsData } = useGetTournamentParticipantsListQuery(
+        { tournamentId: latestTournamentId ?? 0 },
+        { skip: !latestTournamentId }
+    );
     
     const [addParticipationToTournament] = useAddParticipationToTournamentMutation();
 
@@ -87,6 +97,21 @@ const LatestTournamentCard: React.FC = () => {
     }
 
     const { tournament, totalParticipant, remainParticipant, totalPlayer, isUserParticipated } = latestTournamentData.content;
+
+    const tournamentPlayers = tournamentParticipantsData?.content?.players || [];
+    const hasPlayerStatusData = tournamentPlayers.length > 0;
+
+    const confirmedCount = hasPlayerStatusData
+        ? tournamentPlayers.filter((p) => p.participationStatus === true).length
+        : totalParticipant;
+
+    const notJoiningCount = hasPlayerStatusData
+        ? tournamentPlayers.filter((p) => p.participationStatus === false).length
+        : 0;
+
+    const pendingCount = hasPlayerStatusData
+        ? tournamentPlayers.filter((p) => p.participationStatus === null).length
+        : remainParticipant;
 
     console.log('Latest Tournament Data:', latestTournamentData);
     console.log('User Participation Status:', isUserParticipated);
@@ -183,7 +208,7 @@ const LatestTournamentCard: React.FC = () => {
                     
                     <Col xs={24} md={10}>
                         <Row gutter={[8, 8]}>
-                            <Col xs={8} sm={8}>
+                            <Col xs={12} sm={6}>
                                 <div style={{ 
                                     textAlign: 'center', 
                                     padding: '12px 6px', 
@@ -205,7 +230,7 @@ const LatestTournamentCard: React.FC = () => {
                                     </Text>
                                 </div>
                             </Col>
-                            <Col xs={8} sm={8}>
+                            <Col xs={12} sm={6}>
                                 <div style={{ 
                                     textAlign: 'center', 
                                     padding: '12px 6px', 
@@ -220,14 +245,14 @@ const LatestTournamentCard: React.FC = () => {
                                         color: token.colorSuccess,
                                         marginBottom: 2
                                     }}>
-                                        {totalParticipant}
+                                        {confirmedCount}
                                     </div>
                                     <Text type="secondary" style={{ fontSize: 10, fontWeight: '500' }}>
                                         Confirmed
                                     </Text>
                                 </div>
                             </Col>
-                            <Col xs={8} sm={8}>
+                            <Col xs={12} sm={6}>
                                 <div style={{ 
                                     textAlign: 'center', 
                                     padding: '12px 6px', 
@@ -242,10 +267,32 @@ const LatestTournamentCard: React.FC = () => {
                                         color: token.colorWarning,
                                         marginBottom: 2
                                     }}>
-                                        {remainParticipant}
+                                        {pendingCount}
                                     </div>
                                     <Text type="secondary" style={{ fontSize: 10, fontWeight: '500' }}>
                                         Pending
+                                    </Text>
+                                </div>
+                            </Col>
+                            <Col xs={12} sm={6}>
+                                <div style={{ 
+                                    textAlign: 'center', 
+                                    padding: '12px 6px', 
+                                    background: `linear-gradient(135deg, ${token.colorError}15 0%, ${token.colorError}08 100%)`,
+                                    border: `1px solid ${token.colorError}30`,
+                                    borderRadius: 8,
+                                    transition: 'all 0.3s ease'
+                                }}>
+                                    <div style={{ 
+                                        fontSize: 16, 
+                                        fontWeight: 'bold', 
+                                        color: token.colorError,
+                                        marginBottom: 2
+                                    }}>
+                                        {notJoiningCount}
+                                    </div>
+                                    <Text type="secondary" style={{ fontSize: 10, fontWeight: '500' }}>
+                                        Not Joining
                                     </Text>
                                 </div>
                             </Col>
