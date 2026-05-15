@@ -26,6 +26,7 @@ import {
   useUndoLastSaleMutation,
   useStartUnsoldRoundMutation,
   useRestartBiddingMutation,
+  useSelectPlayerForAuctionMutation,
   usePlaceBidMutation,
 } from "../../state/features/auction/auctionSlice";
 import { AuctionPlayerCategory, AuctionPlayerResponse, AuctionWebSocketMessage, BidResponse, TeamBudgetResponse } from "../../state/features/auction/auctionTypes";
@@ -138,6 +139,7 @@ const LiveAuctionPage: React.FC = () => {
   const [startUnsoldRound] = useStartUnsoldRoundMutation();
   const [restartBidding] = useRestartBiddingMutation();
   const [placeBid, { isLoading: bidding }] = usePlaceBidMutation();
+  const [selectPlayerForAuction] = useSelectPlayerForAuctionMutation();
 
   const run = async (fn: () => Promise<any>, successMsg?: string) => {
     try {
@@ -578,10 +580,10 @@ const LiveAuctionPage: React.FC = () => {
             pagination={{ pageSize: 12, showSizeChanger: false }}
             columns={[
               {
-                title: "Seq",
+                title: "#",
                 key: "seq",
                 width: 64,
-                render: (_: any, r: AuctionPlayerResponse) => r.sequenceOrder ?? "—",
+                render: (_: any, r: AuctionPlayerResponse, index: number) => r.sequenceOrder ?? index + 1,
               },
               { title: "Player", dataIndex: "playerName", render: (v: string) => <Text strong>{v}</Text> },
               {
@@ -598,6 +600,26 @@ const LiveAuctionPage: React.FC = () => {
               },
               { title: "Position", dataIndex: "playingPosition", render: (v?: string) => v || "—" },
               { title: "Base Price", dataIndex: "basePrice", width: 130, render: fmt },
+              ...(isAdmin ? [{
+                title: "Action",
+                key: "action",
+                width: 100,
+                render: (_: any, record: AuctionPlayerResponse) => (
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={async () => {
+                      await run(
+                        () => selectPlayerForAuction({ tournamentId: tid, playerId: record.id }).unwrap(),
+                        `${record.playerName} selected for auction!`
+                      );
+                      setRemainingModal(false);
+                    }}
+                  >
+                    Select
+                  </Button>
+                ),
+              }] : []),
             ]}
           />
         )}
@@ -608,7 +630,7 @@ const LiveAuctionPage: React.FC = () => {
         open={unsoldModal}
         onCancel={() => setUnsoldModal(false)}
         footer={null}
-        width={640}
+        width={700}
       >
         {(dashboard?.unsoldPlayers?.length ?? 0) === 0 ? (
           <Empty description="No unsold players" />
@@ -627,6 +649,26 @@ const LiveAuctionPage: React.FC = () => {
               },
               { title: "Base Price", dataIndex: "basePrice", render: fmt },
               { title: "Position", dataIndex: "playingPosition", render: (v?: string) => v || "—" },
+              ...(isAdmin ? [{
+                title: "Action",
+                key: "action",
+                width: 100,
+                render: (_: any, record: AuctionPlayerResponse) => (
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={async () => {
+                      await run(
+                        () => selectPlayerForAuction({ tournamentId: tid, playerId: record.id }).unwrap(),
+                        `${record.playerName} selected for auction!`
+                      );
+                      setUnsoldModal(false);
+                    }}
+                  >
+                    Select
+                  </Button>
+                ),
+              }] : []),
             ]}
           />
         )}

@@ -275,6 +275,13 @@ export const auctionApi = apiWithTags.injectEndpoints({
       }),
       invalidatesTags: ["auctionSession", "auctionDashboard"],
     }),
+    selectPlayerForAuction: builder.mutation<AuctionSessionResponse, { tournamentId: number; playerId: number }>({
+      query: ({ tournamentId, playerId }) => ({
+        url: `tournaments/${tournamentId}/auction/session/select-player/${playerId}`,
+        method: "POST",
+      }),
+      invalidatesTags: ["auctionSession", "auctionDashboard", "auctionPlayers"],
+    }),
 
     // === Bidding ===
     placeBid: builder.mutation<BidResponse, { tournamentId: number; body: BidRequest }>({
@@ -338,6 +345,7 @@ export const {
   useUndoLastSaleMutation,
   useStartUnsoldRoundMutation,
   useRestartBiddingMutation,
+  useSelectPlayerForAuctionMutation,
   usePlaceBidMutation,
   useGetBidsForPlayerQuery,
   useGetAuctionDashboardQuery,
