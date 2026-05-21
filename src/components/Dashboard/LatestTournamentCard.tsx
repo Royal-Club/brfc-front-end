@@ -37,9 +37,10 @@ const LatestTournamentCard: React.FC = () => {
     } = useGetLatestTournamentWithUserStatusQuery();
 
     const latestTournamentId = latestTournamentData?.content?.tournament?.id;
+    const tournamentStatus = latestTournamentData?.content?.tournament?.tournamentStatus;
     const { data: tournamentParticipantsData } = useGetTournamentParticipantsListQuery(
         { tournamentId: latestTournamentId ?? 0 },
-        { skip: !latestTournamentId }
+        { skip: !latestTournamentId || tournamentStatus === 'CONCLUDED' }
     );
     
     const [addParticipationToTournament] = useAddParticipationToTournamentMutation();
