@@ -3,7 +3,7 @@ import { Button, Dropdown, Menu, Modal, Select, message } from "antd";
 import { MoreOutlined } from "@ant-design/icons";
 import { IoTournamentSingleSummaryType } from "../../../state/features/tournaments/tournamentTypes";
 import CreateTournament from "./CreateTournamentModal";
-import { useUpdateTournamentActiveStatusMutation } from "../../../state/features/tournaments/tournamentsSlice";
+import { useUpdateTournamentActiveStatusMutation, useConcludeTournamentMutation } from "../../../state/features/tournaments/tournamentsSlice";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 
@@ -22,9 +22,11 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
 }) => {
   const [updateTournamentActiveStatus] =
     useUpdateTournamentActiveStatusMutation();
+  const [concludeTournament] = useConcludeTournamentMutation();
   const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
   const [isActiveStatusModalVisible, setIsActiveStatusModalVisible] =
     useState(false);
+  const [isConcludeModalVisible, setIsConcludeModalVisible] = useState(false);
   const [activeStatus, setActiveStatus] = useState(record.activeStatus);
 
   const loginInfo = useSelector(selectLoginInfo);
@@ -37,7 +39,9 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
     if (e?.key === "update") {
       handleSetIsUpdateModalVisible(true);
     } else if (e?.key === "active-status") {
-      setIsActiveStatusModalVisible(true); // Open the active status modal
+      setIsActiveStatusModalVisible(true);
+    } else if (e?.key === "conclude") {
+      setIsConcludeModalVisible(true);
     }
 
     onMenuClick(e, record);
@@ -59,6 +63,18 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
       });
   };
 
+  const handleConclude = () => {
+    concludeTournament({ id: record.id })
+      .unwrap()
+      .then(() => {
+        message.success("Tournament concluded successfully");
+        setIsConcludeModalVisible(false);
+      })
+      .catch(() => {
+        message.error("Failed to conclude tournament");
+      });
+  };
+
   const menu = (
     <Menu onClick={handleMenuClick}>
       {record.activeStatus ? (
@@ -71,6 +87,9 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
       )}
       {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") || loginInfo.roles.includes("COORDINATOR")) && (
         <Menu.Item key="active-status">Update Active Status</Menu.Item>
+      )}
+      {loginInfo.roles.includes("SUPERADMIN") && (
+        <Menu.Item key="conclude" danger>Conclude Tournament</Menu.Item>
       )}
     </Menu>
   );
@@ -103,6 +122,17 @@ const TournamentsActionDropdown: React.FC<TournamentsActionDropdownProps> = ({
           <Option value={true}>Active</Option>
           <Option value={false}>Inactive</Option>
         </Select>
+      </Modal>
+
+      <Modal
+        title="Conclude Tournament"
+        visible={isConcludeModalVisible}
+        onCancel={() => setIsConcludeModalVisible(false)}
+        onOk={handleConclude}
+        okText="Yes, Conclude"
+        okButtonProps={{ danger: true }}
+      >
+        <p>Are you sure you want to conclude <strong>{record.name}</strong>? This will mark all unfinished matches as completed and cannot be undone.</p>
       </Modal>
     </>
   );

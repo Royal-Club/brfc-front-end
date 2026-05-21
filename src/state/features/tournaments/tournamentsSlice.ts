@@ -68,6 +68,14 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
       invalidatesTags: ["tournaments"],
     }),
 
+    concludeTournament: builder.mutation<BasicResType, { id: number }>({
+      query: ({ id }) => ({
+        url: `tournaments/${id}/conclude`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["tournaments"],
+    }),
+
     getTournaments: builder.query<
       IoTournamentSummaryResType,
       {
@@ -184,6 +192,7 @@ export const {
   useUpdateTournamentMutation,
   useGetTournamentsQuery,
   useUpdateTournamentActiveStatusMutation,
+  useConcludeTournamentMutation,
   useGetTournamentParticipantsListQuery,
   useAddParticipationToTournamentMutation,
   useGetTournamentSummaryQuery,
