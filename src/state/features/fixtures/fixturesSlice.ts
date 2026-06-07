@@ -28,7 +28,7 @@ import {
 } from "./fixtureTypes";
 
 const apiWithTags = apiSlice.enhanceEndpoints({
-  addTagTypes: ["fixtures", "matches"],
+  addTagTypes: ["fixtures", "matches", "statistics"],
 });
 
 export const fixturesApi = apiWithTags.injectEndpoints({
@@ -222,6 +222,7 @@ export const fixturesApi = apiWithTags.injectEndpoints({
       }),
       invalidatesTags: (result, error, arg) => [
         { type: "matches", id: arg.matchId },
+        "statistics",
       ],
     }),
 
@@ -287,6 +288,7 @@ export const fixturesApi = apiWithTags.injectEndpoints({
       invalidatesTags: (result, error, { matchId }) => [
         "fixtures",
         { type: "matches", id: matchId },
+        "statistics",
       ],
     }),
 

@@ -36,7 +36,7 @@ import {
     isMatchOngoing,
 } from "../../../../../utils/matchTimeUtils";
 import { useGetTopScorersQuery } from "../../../../../state/features/statistics/statisticsSlice";
-import { IPlayerStatisticsData } from "../../../../../state/features/statistics/statisticsTypes";
+import { ITournamentTopScorer } from "../../../../../state/features/statistics/statisticsTypes";
 
 const { Text, Title } = Typography;
 
@@ -771,7 +771,7 @@ export default function OverviewTab({
                         <Row gutter={[16, 16]}>
                             {topScorers.map(
                                 (
-                                    player: IPlayerStatisticsData,
+                                    player: ITournamentTopScorer,
                                     index: number
                                 ) => {
                                     const getRankColor = (rank: number) => {
@@ -951,10 +951,7 @@ export default function OverviewTab({
                                                                         "ellipsis",
                                                                 }}
                                                             >
-                                                                {player.position.replace(
-                                                                    /_/g,
-                                                                    " "
-                                                                )}
+                                                                {player.teamName}
                                                             </Text>
                                                         </div>
 
@@ -1008,9 +1005,7 @@ export default function OverviewTab({
                                                                     }}
                                                                 >
                                                                     {
-                                                                        player
-                                                                            .statistics
-                                                                            .goalsScored
+                                                                        player.goalsScored
                                                                     }
                                                                 </Text>
                                                             </div>
@@ -1054,9 +1049,7 @@ export default function OverviewTab({
                                                                     }}
                                                                 >
                                                                     {
-                                                                        player
-                                                                            .statistics
-                                                                            .assists
+                                                                        player.assists
                                                                     }
                                                                 </Text>
                                                             </div>
@@ -1100,9 +1093,7 @@ export default function OverviewTab({
                                                                     }}
                                                                 >
                                                                     {
-                                                                        player
-                                                                            .statistics
-                                                                            .matchesPlayed
+                                                                        player.matchesPlayed
                                                                     }
                                                                 </Text>
                                                             </div>
