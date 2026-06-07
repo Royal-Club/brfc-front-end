@@ -2,6 +2,7 @@ import {
     BarChartOutlined,
     BookOutlined,
   DollarOutlined,
+  EyeOutlined,
   PieChartOutlined,
   ProjectOutlined,
   RadarChartOutlined,
@@ -53,47 +54,46 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   const loginInfo = useSelector(selectLoginInfo);
   const [isMobile, setIsMobile] = useState(false);
 
-  const isUserAdmin = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
+  const hasFullAccess =
+    loginInfo.roles.includes("ADMIN") ||
+    loginInfo.roles.includes("SUPERADMIN") ||
+    loginInfo.roles.includes("COORDINATOR");
 
-  const items: MenuProps["items"] = [
-    getItem("Dashboard", "/", <PieChartOutlined />),
-    getItem("Player", "setupSubMenu", <RadarChartOutlined />, [
-      getItem(
-        "Player Registration",
-        "/player",
-        null,
-        undefined,
-        undefined,
-        !isUserAdmin
-      ),
-      getItem("Player List", "/players"),
-      getItem("Player Statistics", "/player-statistics"),
-    ]),
-    getItem("Finance", "financeSubMenu", <DollarOutlined />, [
-      getItem("Configuration", "ConfigurationSubMenu", null, [
-        getItem("Voucher Types", "/ac/voucher-types"),
-        getItem("AC Natures", "/ac/natures"),
-        getItem("Chart of Account", "/ac/charts"),
-      ]),
-        getItem("Collections (+)", "/ac/collections"),
-        getItem("Bill Payment (-)", "/ac/bill-payments"),
-      getItem("Voucher", "VoucherSubMenu", null, [
-          getItem("Voucher Register", "/ac/vouchers"),
-      ]),
-      getItem("Accounts Reports", "acReportsSubMenu", null, [
-          getItem("Accounts Report", "/ac/reports/accounts-summary"),
-          getItem("Balances Summary", "/ac/reports/balance-summary"),
-          getItem("Balances Sheet", "/ac/reports/balance-sheet"),
-      ]),
-    ]),
-    getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
-      getItem("Venues", "/venues"),
-    ]),
-    getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
-      getItem("Tourtnaments", "/tournaments"),
-    ]),
-    getItem("Club Rules", "/club-rules", <BookOutlined />),
-  ];
+  const items: MenuProps["items"] = hasFullAccess
+    ? [
+        getItem("Dashboard", "/dashboard", <PieChartOutlined />),
+        getItem("Tournament Viewer", "/", <EyeOutlined />),
+        getItem("Player", "setupSubMenu", <RadarChartOutlined />, [
+          getItem("Player Registration", "/player"),
+          getItem("Player List", "/players"),
+          getItem("Player Statistics", "/player-statistics"),
+        ]),
+        getItem("Finance", "financeSubMenu", <DollarOutlined />, [
+          getItem("Configuration", "ConfigurationSubMenu", null, [
+            getItem("Voucher Types", "/ac/voucher-types"),
+            getItem("AC Natures", "/ac/natures"),
+            getItem("Chart of Account", "/ac/charts"),
+          ]),
+          getItem("Collections (+)", "/ac/collections"),
+          getItem("Bill Payment (-)", "/ac/bill-payments"),
+          getItem("Voucher", "VoucherSubMenu", null, [
+            getItem("Voucher Register", "/ac/vouchers"),
+          ]),
+          getItem("Accounts Reports", "acReportsSubMenu", null, [
+            getItem("Accounts Report", "/ac/reports/accounts-summary"),
+            getItem("Balances Summary", "/ac/reports/balance-summary"),
+            getItem("Balances Sheet", "/ac/reports/balance-sheet"),
+          ]),
+        ]),
+        getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
+          getItem("Venues", "/venues"),
+        ]),
+        getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
+          getItem("Tourtnaments", "/tournaments"),
+        ]),
+        getItem("Club Rules", "/club-rules", <BookOutlined />),
+      ]
+    : [getItem("Tournament Viewer", "/", <EyeOutlined />)];
 
   useEffect(() => {
     const checkMobile = () => {

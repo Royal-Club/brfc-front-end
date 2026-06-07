@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
-import { Alert, Avatar, Button, Card, List, Space, Spin, Table, Tabs, Tag, Tooltip, Typography } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { Alert, Avatar, Button, Card, List, Space, Spin, Tabs, Tag, Tooltip, Typography } from "antd";
 import {
   EditOutlined,
   FireOutlined,
@@ -41,50 +40,6 @@ const rankAvatarColor = (rank: number) => {
   if (rank === 3) return "#b87333";
   return "#1677ff";
 };
-
-const leaderboardColumns = (valueTitle: string, accentColor: string): ColumnsType<LeaderboardRow> => [
-  {
-    title: "#",
-    key: "rank",
-    width: 72,
-    align: "center",
-    render: (_, __, index) => (
-      <Avatar
-        size="small"
-        style={{
-          backgroundColor: rankAvatarColor(index + 1),
-          fontWeight: 700,
-        }}
-      >
-        {index + 1}
-      </Avatar>
-    ),
-  },
-  {
-    title: "Player",
-    dataIndex: "playerName",
-    key: "playerName",
-    render: (playerName: string) => <Text strong>{playerName}</Text>,
-  },
-  {
-    title: "Team",
-    dataIndex: "teamName",
-    key: "teamName",
-    render: (teamName: string) => <Text>{teamName || "-"}</Text>,
-  },
-  {
-    title: valueTitle,
-    dataIndex: "value",
-    key: "value",
-    width: 120,
-    align: "center",
-    render: (value: number) => (
-      <Text strong style={{ color: accentColor, fontSize: 16 }}>
-        {value}
-      </Text>
-    ),
-  },
-];
 
 const buildScorerRows = (
   players: IPlayerStatisticsData[] = [],
@@ -196,15 +151,52 @@ function LeaderboardSection({
 
   return (
     <Spin spinning={loading}>
-      <Card>
+      <Card
+        bordered={false}
+        style={{
+          borderRadius: 34,
+          background: "linear-gradient(135deg, rgba(14,18,34,0.96) 0%, rgba(19,27,46,0.92) 100%)",
+          boxShadow: "0 22px 44px rgba(0,0,0,0.28)",
+          border: "1px solid rgba(255,255,255,0.08)",
+        }}
+        bodyStyle={{ padding: "22px 22px 18px" }}
+      >
         <Space direction="vertical" size={16} style={{ width: "100%" }}>
-          <Space align="center" style={{ justifyContent: "space-between", width: "100%" }}>
-            <Space align="center">
-              {icon}
-              <Title level={4} style={{ margin: 0 }}>
-                {title}
-              </Title>
-            </Space>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              paddingBottom: 16,
+              marginBottom: 6,
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+              <Avatar
+                size={56}
+                style={{
+                  background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)",
+                  color: accentColor,
+                  fontWeight: 900,
+                  fontSize: 22,
+                  border: "3px solid rgba(255,255,255,0.75)",
+                  boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
+                }}
+              >
+                {icon}
+              </Avatar>
+              <div style={{ minWidth: 0 }}>
+                <Title level={4} style={{ margin: 0, color: "#ffffff" }}>
+                  {title}
+                </Title>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Ranked by {valueTitle.toLowerCase()}
+                </Text>
+              </div>
+            </div>
             {isAdmin && onSync && (
               <Tooltip title="Re-sync statistics from recorded match events">
                 <Button
@@ -217,14 +209,49 @@ function LeaderboardSection({
                 </Button>
               </Tooltip>
             )}
-          </Space>
+          </div>
           {rows.length > 0 ? (
-            <Table
+            <List
               dataSource={rows}
-              columns={leaderboardColumns(valueTitle, accentColor)}
-              pagination={false}
-              rowKey="key"
-              size="middle"
+              renderItem={(row, index) => (
+                <List.Item style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, width: "100%" }}>
+                    <Avatar
+                      size={30}
+                      style={{
+                        backgroundColor: rankAvatarColor(index + 1),
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {index + 1}
+                    </Avatar>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Text strong style={{ display: "block", color: "rgba(255,255,255,0.94)" }}>
+                        {row.playerName}
+                      </Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        {row.teamName || "-"}
+                      </Text>
+                    </div>
+                    <Tag
+                      style={{
+                        margin: 0,
+                        minWidth: 52,
+                        textAlign: "center",
+                        borderRadius: 999,
+                        border: "none",
+                        background: "rgba(255,255,255,0.06)",
+                        color: accentColor,
+                        fontWeight: 800,
+                        padding: "4px 12px",
+                      }}
+                    >
+                      {row.value}
+                    </Tag>
+                  </div>
+                </List.Item>
+              )}
             />
           ) : (
             <Space direction="vertical" size={12} style={{ width: "100%" }}>
@@ -382,6 +409,7 @@ export default function StatsLeaderboardPanel({
   return (
     <Tabs
       defaultActiveKey="top-scorers"
+      className="tournament-subtabs"
       items={[
         {
           key: "top-scorers",

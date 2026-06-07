@@ -45,6 +45,7 @@ import Venue from "../Venue/Venue";
 import ContentOutlet from "./ContentOutlet";
 import ClubRules from "../ClubRules/ClubRules";
 import MatchDetailsPage from "../Tournaments/Fixtures/MatchDetailsPage";
+import TournamentViewerPage from "../TournamentViewer/TournamentViewerPage";
 import companyLogo from "../../assets/logo.png";
 import type { MenuProps } from "antd";
 import { useGetMyGoalkeepingHistoryQuery } from "../../state/features/player/playerSlice";
@@ -69,6 +70,10 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
         token: { colorBgContainer },
     } = theme.useToken();
     const loginInfo = useSelector(selectLoginInfo);
+    const hasFullAccess =
+        loginInfo.roles.includes("ADMIN") ||
+        loginInfo.roles.includes("SUPERADMIN") ||
+        loginInfo.roles.includes("COORDINATOR");
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [goalkeepingHistoryDrawerVisible, setGoalkeepingHistoryDrawerVisible] = useState(false);
@@ -129,11 +134,11 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     };
 
     const handleDashboardClick = () => {
-        navigate("/");
+        navigate("/dashboard");
     };
 
     const isOnStatisticsPage = location.pathname === "/player-statistics";
-    const isOnDashboard = location.pathname === "/";
+    const isOnDashboard = location.pathname === "/" || location.pathname === "/dashboard";
 
     const items: MenuProps['items'] = [
         {
@@ -391,68 +396,74 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 >
                     <Routes>
                         <Route path="/" element={<ContentOutlet />}>
-                            <Route index element={<Dashboard isDarkMode={isDarkMode} />} />
+                            <Route index element={<TournamentViewerPage />} />
+                            <Route
+                                path="/dashboard"
+                                element={hasFullAccess ? <Dashboard isDarkMode={isDarkMode} /> : <Navigate to="/" />}
+                            />
                             <Route path="/profile" element={<UserProfile />} />
-                            <Route path="/player" element={<Player />} />
-                            {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
-                                <Route
-                                    path="/players/:id"
-                                    element={<Player />}
-                                />
-                            )}
-                            <Route path="/players" element={<Players />} />
-                            <Route path="/player-statistics" element={<PlayerStatistics />} />
-                            <Route
-                                path="/tournaments"
-                                element={<TournamentsPage />}
-                            />
-                            <Route
-                                path="/tournaments/team-building/:id"
-                                element={<SingleTournament />}
-                            />
-                            <Route
-                                path="/tournaments/join-tournament/:id"
-                                element={<JoinTournament />}
-                            />
-                            <Route
-                                path="/fixtures/:matchId"
-                                element={<MatchDetailsPage />}
-                            />
-                            <Route path="venues" element={<Venue />} />
-                            <Route
-                                path="ac/voucher-types"
-                                element={<AcVoucherType />}
-                            />
-                            <Route path="/ac/natures" element={<AcNature />} />
-                            <Route
-                                path="ac/collections"
-                                element={<AcCollection />}
-                            />
-                            <Route
-                                path="ac/bill-payments"
-                                element={<AcBillPayment />}
-                            />
-                            <Route path="ac/charts" element={<AcChart />} />
-                            <Route
-                                path="ac/reports/accounts-summary"
-                                element={<AccountsReport />}
-                            />
-                            <Route
-                                path="ac/reports/balance-summary"
-                                element={<AccountBalanceSummary />}
-                            />
-                            <Route
-                                path="/ac/reports/balance-sheet"
-                                element={<AccountBalanceSheet />}
-                            />
-                            {/* <Route path="ac/voucher" element={<AcVoucher />} /> */}
-                            <Route
-                                path="ac/vouchers"
-                                element={<AcVouchers />}
-                            />
-                            {/* <Route path="ac/vouchers/:id" element={<AcVoucher />} /> */}
+                            {hasFullAccess && (
+                                <>
+                                    <Route path="/player" element={<Player />} />
+                                    <Route
+                                        path="/players/:id"
+                                        element={<Player />}
+                                    />
+                                    <Route path="/players" element={<Players />} />
+                                    <Route path="/player-statistics" element={<PlayerStatistics />} />
+                                    <Route
+                                        path="/tournaments"
+                                        element={<TournamentsPage />}
+                                    />
+                                    <Route
+                                        path="/tournaments/team-building/:id"
+                                        element={<SingleTournament />}
+                                    />
+                                    <Route
+                                        path="/tournaments/join-tournament/:id"
+                                        element={<JoinTournament />}
+                                    />
+                                    <Route
+                                        path="/fixtures/:matchId"
+                                        element={<MatchDetailsPage />}
+                                    />
+                                    <Route path="venues" element={<Venue />} />
+                                    <Route
+                                        path="ac/voucher-types"
+                                        element={<AcVoucherType />}
+                                    />
+                                    <Route path="/ac/natures" element={<AcNature />} />
+                                    <Route
+                                        path="ac/collections"
+                                        element={<AcCollection />}
+                                    />
+                                    <Route
+                                        path="ac/bill-payments"
+                                        element={<AcBillPayment />}
+                                    />
+                                    <Route path="ac/charts" element={<AcChart />} />
+                                    <Route
+                                        path="ac/reports/accounts-summary"
+                                        element={<AccountsReport />}
+                                    />
+                                    <Route
+                                        path="ac/reports/balance-summary"
+                                        element={<AccountBalanceSummary />}
+                                    />
+                                    <Route
+                                        path="/ac/reports/balance-sheet"
+                                        element={<AccountBalanceSheet />}
+                                    />
+                                    {/* <Route path="ac/voucher" element={<AcVoucher />} /> */}
+                                    <Route
+                                        path="ac/vouchers"
+                                        element={<AcVouchers />}
+                                    />
+                                    {/* <Route path="ac/vouchers/:id" element={<AcVoucher />} /> */}
 
-                            <Route path="club-rules" element={<ClubRules />} />
+                                    <Route path="club-rules" element={<ClubRules />} />
+                                </>
+                            )}
                         </Route>
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
