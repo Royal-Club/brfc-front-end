@@ -6,7 +6,7 @@ import {
   useGetTopScorersQuery,
   useGetTopAssistsQuery,
 } from "../../../../../state/features/statistics/statisticsSlice";
-import type { IMatchStatistics, ITournamentStanding, IPlayerStatisticsData } from "../../../../../state/features/statistics/statisticsTypes";
+import type { IMatchStatistics, ITournamentStanding, ITournamentTopScorer } from "../../../../../state/features/statistics/statisticsTypes";
 import type { ColumnsType } from "antd/es/table";
 
 const { Title, Text } = Typography;
@@ -18,7 +18,7 @@ interface StatisticsTabProps {
 
 // Player Card Component with first letter display for top scorers
 const PlayerCardForScorers: React.FC<{
-  player: IPlayerStatisticsData;
+  player: ITournamentTopScorer;
   rank: number;
   statValue: number;
   statLabel: string;
@@ -103,7 +103,7 @@ const PlayerCardForScorers: React.FC<{
             {player.playerName}
           </Title>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {player.position.replace(/_/g, " ")}
+            {player.teamName}
           </Text>
           <div style={{ marginTop: 12 }}>
             <Row align="middle" gutter={8}>
@@ -409,7 +409,7 @@ export default function StatisticsTab({ tournamentId, isActive }: StatisticsTabP
                 <PlayerCardForScorers
                   player={player}
                   rank={index + 1}
-                  statValue={player.statistics.goalsScored}
+                  statValue={player.goalsScored}
                   statLabel="Goals"
                   icon={<FireOutlined style={{ fontSize: 20, color: "#ff4d4f" }} />}
                 />

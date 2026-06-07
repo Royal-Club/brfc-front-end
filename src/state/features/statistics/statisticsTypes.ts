@@ -36,10 +36,21 @@ export interface IGetTournamentStandingsResponse {
   content: ITournamentStanding[];
 }
 
+export interface ITournamentTopScorer {
+  playerId: number;
+  playerName: string;
+  teamId: number;
+  teamName: string;
+  position: string;
+  goalsScored: number;
+  assists: number;
+  matchesPlayed: number;
+}
+
 export interface IGetTopScorersResponse {
   status: string;
   message: string;
-  content: IPlayerStatisticsData[];
+  content: ITournamentTopScorer[];
 }
 
 export interface IGetTopAssistsResponse {
