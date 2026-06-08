@@ -61,7 +61,7 @@ function App() {
                     {location.pathname !== "/login" && (
                         <div style={{ position: "fixed", top: 12, right: 12, zIndex: 1200 }}>
                             <Link to="/login">
-                                <Button type="primary">Login</Button>
+                                {/* <Button type="primary">Login</Button> */}
                             </Link>
                         </div>
                     )}

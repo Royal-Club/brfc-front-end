@@ -26,6 +26,7 @@ import ViewerTableTab from "./ViewerTableTab";
 import ViewerPlayersTab from "./ViewerPlayersTab";
 import StatsLeaderboardPanel from "../Tournaments/Statistics/StatsLeaderboardPanel";
 import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
+import { Link } from "react-router-dom";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -52,25 +53,26 @@ export default function TournamentViewerPage({
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("fixtures");
 
-  const { data: tournamentsData, isLoading: tournamentsLoading } = useGetTournamentsQuery({
-    offSet: 0,
-    pageSize: 200,
-    sortedBy: "tournamentDate",
-    sortDirection: "DESC",
-  });
+  const { data: tournamentsData, isLoading: tournamentsLoading } =
+    useGetTournamentsQuery({
+      offSet: 0,
+      pageSize: 200,
+      sortedBy: "tournamentDate",
+      sortDirection: "DESC",
+    });
 
   const tournaments = useMemo(() => {
     const list = tournamentsData?.content?.tournaments || [];
     return [...list].sort(
       (a, b) =>
         (statusOrder[a.tournamentStatus?.toUpperCase() ?? ""] ?? 5) -
-        (statusOrder[b.tournamentStatus?.toUpperCase() ?? ""] ?? 5)
+        (statusOrder[b.tournamentStatus?.toUpperCase() ?? ""] ?? 5),
     );
   }, [tournamentsData]);
 
   const selectedTournament = useMemo(
     () => tournaments.find((t) => t.id === selectedId) || null,
-    [selectedId, tournaments]
+    [selectedId, tournaments],
   );
 
   const isSelectedTournamentLive =
@@ -93,7 +95,7 @@ export default function TournamentViewerPage({
       key: "fixtures",
       label: (
         <span>
-          <CalendarOutlined />
+          <CalendarOutlined style={{ marginRight: 6 }} />
           Fixtures
         </span>
       ),
@@ -105,7 +107,7 @@ export default function TournamentViewerPage({
       key: "results",
       label: (
         <span>
-          <CheckCircleOutlined />
+          <CheckCircleOutlined style={{ marginRight: 6 }} />
           Results
         </span>
       ),
@@ -117,7 +119,7 @@ export default function TournamentViewerPage({
       key: "table",
       label: (
         <span>
-          <UnorderedListOutlined />
+          <UnorderedListOutlined style={{ marginRight: 6 }} />
           Table
         </span>
       ),
@@ -129,7 +131,7 @@ export default function TournamentViewerPage({
       key: "stats",
       label: (
         <span>
-          <BarChartOutlined />
+          <BarChartOutlined style={{ marginRight: 6 }} />
           Stats
         </span>
       ),
@@ -144,7 +146,7 @@ export default function TournamentViewerPage({
       key: "players",
       label: (
         <span>
-          <TeamOutlined />
+          <TeamOutlined style={{ marginRight: 6 }} />
           Players
         </span>
       ),
@@ -155,85 +157,92 @@ export default function TournamentViewerPage({
   ];
 
   return (
-    <Layout style={{ height: "100%", minHeight: hasHeader ? "calc(100vh - 64px)" : "100vh" }}>
+    <Layout
+      style={{
+        height: "100%",
+        minHeight: hasHeader ? "calc(100vh - 64px)" : "100vh",
+      }}
+    >
       {/* Content */}
-      <Content style={{ overflow: "auto", display: "flex", flexDirection: "column" }}>
+      <Content
+        style={{ overflow: "auto", display: "flex", flexDirection: "column" }}
+      >
         <div
           style={{
-            padding: "12px 20px 8px",
-            borderBottom: `1px solid ${token.colorBorder}`,
-            background: "rgba(255,255,255,0.02)",
+            padding: isMobile ? "12px 16px" : "16px 24px",
+            background: "#0a0a0a",
+            borderBottom: "1px solid #1f1f1f",
+            color: "#ffffff",
           }}
         >
           <div
             style={{
-              width: "100%",
-              maxWidth: VIEWER_CONTENT_MAX_WIDTH,
+              maxWidth: 1300,
               margin: "0 auto",
-              position: "relative",
-              minHeight: isMobile ? undefined : 48,
+              display: "flex",
+              flexDirection: isMobile ? "column" : "row",
+              alignItems: isMobile ? "flex-start" : "center",
+              justifyContent: "space-between",
+              gap: isMobile ? "12px" : "16px",
             }}
           >
-            <div style={{ textAlign: "center" }}>
-              <Title level={4} style={{ margin: 0, color: "#ffffff" }}>
+            {/* Left: Branding */}
+            {!isMobile && (
+              <div
+                style={{
+                  fontWeight: "bold",
+                  fontSize: "1.25rem",
+                  letterSpacing: "1px",
+                  flex: "1",
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {selectedTournament?.name || "Select Tournament"}
-              </Title>
-              {selectedTournament && (
-                <Space
-                  size={8}
-                  wrap
-                  style={{ marginTop: 4, justifyContent: "center", display: "flex" }}
-                >
-                  {selectedTournament.tournamentStatus && (
-                    <Tag color={isSelectedTournamentLive ? "success" : "default"} style={{ margin: 0 }}>
-                      {selectedTournament.tournamentStatus.toUpperCase()}
-                    </Tag>
-                  )}
-                  {selectedTournament.tournamentDate && (
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      <CalendarOutlined style={{ marginRight: 4 }} />
-                      {new Date(selectedTournament.tournamentDate).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </Text>
-                  )}
-                  {selectedTournament.venueName && (
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      @ {selectedTournament.venueName}
-                    </Text>
-                  )}
-                </Space>
-              )}
-            </div>
+              </div>
+            )}
 
+            {/* Right: Select & Login */}
             <div
               style={{
-                position: isMobile ? "static" : "absolute",
-                right: 0,
-                top: isMobile ? undefined : "50%",
-                transform: isMobile ? undefined : "translateY(-50%)",
                 display: "flex",
-                justifyContent: isMobile ? "center" : "flex-end",
-                marginTop: isMobile ? 12 : 0,
+                gap: "12px",
+                alignItems: "center",
+                width: isMobile ? "100%" : "auto",
               }}
             >
               <Select
-                className="tournament-portal-select"
+                className="tournament-portal-select-custom"
                 showSearch
                 loading={tournamentsLoading}
                 placeholder="Select tournament"
                 value={selectedId ?? undefined}
                 onChange={handleSelect}
-                suffixIcon={<DownOutlined style={{ color: "#08341f" }} />}
-                style={{ width: isMobile ? "100%" : 250 }}
+                suffixIcon={<DownOutlined />}
+                style={{
+                  width: isMobile ? "100%" : 250,
+                  flex: isMobile ? 1 : "none",
+                }}
                 optionFilterProp="label"
                 options={tournaments.map((t) => ({
                   value: t.id,
+
                   label: `${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`,
                 }))}
               />
+              <Link to="/login">
+                <button
+                  className="tournament-login-button"
+                  style={{
+                    whiteSpace: "nowrap",
+                    minWidth: isMobile ? "80px" : "auto",
+                  }}
+                >
+                  LOGIN
+                </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -270,13 +279,15 @@ export default function TournamentViewerPage({
             }}
           >
             <Empty
-              image={<TrophyOutlined style={{ fontSize: 64, color: "#d4af37" }} />}
+              image={
+                <TrophyOutlined style={{ fontSize: 64, color: "#d4af37" }} />
+              }
               imageStyle={{ height: 64 }}
               description={
                 <span>
                   <Text type="secondary">
-                    Select a tournament from the dropdown to view fixtures, results,
-                    standings and stats
+                    Select a tournament from the dropdown to view fixtures,
+                    results, standings and stats
                   </Text>
                 </span>
               }
