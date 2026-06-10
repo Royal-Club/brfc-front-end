@@ -122,6 +122,7 @@ function LeaderboardSection({
   isAdmin,
   completedMatches,
   onNavigate,
+  showCompletedMatchesHelp = true,
 }: {
   title: string;
   icon: React.ReactNode;
@@ -136,6 +137,7 @@ function LeaderboardSection({
   isAdmin?: boolean;
   completedMatches?: CompletedMatch[];
   onNavigate?: (matchId: number) => void;
+  showCompletedMatchesHelp?: boolean;
 }) {
   if (error) {
     return (
@@ -255,7 +257,7 @@ function LeaderboardSection({
           ) : (
             <Space direction="vertical" size={12} style={{ width: "100%" }}>
               <Text type="secondary">{emptyMessage}</Text>
-              {completedMatches && completedMatches.length > 0 && (
+              {showCompletedMatchesHelp && completedMatches && completedMatches.length > 0 && (
                 <Card
                   size="small"
                   title={
@@ -464,7 +466,7 @@ export default function StatsLeaderboardPanel({
               rows={redCardLeaders}
               loading={playerStatisticsQuery.isLoading || playerStatisticsQuery.isFetching}
               error={playerStatisticsQuery.error}
-              emptyMessage="No red cards found for this tournament."
+              emptyMessage="No red cards found for this tournament"
               valueTitle="Cards"
               accentColor="#cf1322"
               onSync={() => aggregateStats({ tournamentId })}
@@ -472,6 +474,7 @@ export default function StatsLeaderboardPanel({
               isAdmin={isAdmin}
               completedMatches={completedMatches}
               onNavigate={handleNavigateToMatch}
+              showCompletedMatchesHelp={false}
             />
           ),
         },
