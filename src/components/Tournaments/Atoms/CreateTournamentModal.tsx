@@ -12,6 +12,7 @@ import {
     Row,
     Col,
     Space,
+    Switch,
 } from "antd";
 import { CalendarOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { useGetVanuesQuery } from "../../../state/features/vanues/vanuesSlice";
@@ -55,6 +56,7 @@ export default function CreateTournament({
         tournamentDate: any;
         tournamentTime: any;
         venueId: number;
+        defaultTournament?: boolean;
     }) => {
         if (!values.tournamentDate || !values.tournamentTime) {
             message.error("Please select both date and time");
@@ -75,6 +77,7 @@ export default function CreateTournament({
             tournamentName: values.tournamentName,
             tournamentDate: tournamentDateUTC,
             venueId: values.venueId,
+            defaultTournament: Boolean(values.defaultTournament),
         };
 
         if (tournamentId) {
@@ -121,6 +124,7 @@ export default function CreateTournament({
                 tournamentName: tournamentData.name,
                 tournamentDate: tournamentDateTime,
                 tournamentTime: tournamentDateTime,
+                defaultTournament: Boolean(tournamentData.defaultTournament),
                 venueId: venuesData.content.find(
                     (venue: any) => venue.name === tournamentData.venueName
                 )?.id,
@@ -240,6 +244,15 @@ export default function CreateTournament({
                                 ))}
                             </Select>
                         </Form.Item>
+
+                        <Form.Item
+                            name="defaultTournament"
+                            label="Default Tournament"
+                            valuePropName="checked"
+                        >
+                            <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                        </Form.Item>
+
                         <Form.Item>
                             <Button
                                 type="primary"

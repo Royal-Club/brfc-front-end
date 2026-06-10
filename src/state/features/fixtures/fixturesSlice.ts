@@ -221,6 +221,7 @@ export const fixturesApi = apiWithTags.injectEndpoints({
         body,
       }),
       invalidatesTags: (result, error, arg) => [
+        "fixtures",
         { type: "matches", id: arg.matchId },
         "statistics",
       ],

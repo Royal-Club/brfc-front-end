@@ -25,12 +25,13 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         tournamentName: string;
         tournamentDate: string | Date;
         venueId: number;
+        defaultTournament?: boolean;
       }
     >({
-      query: ({ tournamentName, tournamentDate, venueId }) => ({
+      query: ({ tournamentName, tournamentDate, venueId, defaultTournament }) => ({
         url: "tournaments",
         method: "POST",
-        body: { tournamentName, tournamentDate, venueId },
+        body: { tournamentName, tournamentDate, venueId, defaultTournament },
       }),
       invalidatesTags: ["tournaments"],
     }),
@@ -48,12 +49,13 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         tournamentName: string;
         tournamentDate: string | Date;
         venueId: number;
+        defaultTournament?: boolean;
       }
     >({
-      query: ({ id, tournamentName, tournamentDate, venueId }) => ({
+      query: ({ id, tournamentName, tournamentDate, venueId, defaultTournament }) => ({
         url: `tournaments/${id}`,
         method: "PUT",
-        body: { tournamentName, tournamentDate, venueId },
+        body: { tournamentName, tournamentDate, venueId, defaultTournament },
       }),
       invalidatesTags: ["tournaments"],
     }),
