@@ -20,6 +20,15 @@ const formatTeamBadge = (name: string) =>
     .map((part) => part[0]?.toUpperCase())
     .join("") || "T";
 
+const getMobileScorerNameFontSize = (name: string) => {
+  const length = (name || "").trim().length;
+  if (length > 28) return 10;
+  if (length > 24) return 10.5;
+  if (length > 20) return 11;
+  if (length > 16) return 11.5;
+  return 12;
+};
+
 const parseTimestampMs = (value?: string | null) => {
   if (!value) return null;
   const ms = new Date(value).getTime();
@@ -407,13 +416,60 @@ function ResultCard({ fixture }: { fixture: IFixture }) {
                     style={{ width: "100%", alignItems: "flex-start", minHeight: scorerColumnMinHeight }}
                   >
                     {homeScorers.map((scorer) => (
-                      <Space key={scorer.key} size={6} align="center" wrap style={{ width: "100%" }}>
-                        <Text style={{ fontSize: 14, fontWeight: 600, wordBreak: "break-word" }}>{scorer.playerName}</Text>
-                        <Tag color="green" style={{ margin: 0, fontWeight: 700, minWidth: 40, textAlign: "center" }}>
+                      <div
+                        key={scorer.key}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          minWidth: 0,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            fontSize: getMobileScorerNameFontSize(scorer.playerName),
+                            fontWeight: 600,
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {scorer.playerName}
+                        </Text>
+                        <Tag
+                          color="green"
+                          style={{
+                            margin: 0,
+                            fontWeight: 700,
+                            minWidth: 46,
+                            height: 22,
+                            lineHeight: "20px",
+                            padding: "0 6px",
+                            fontSize: 13,
+                            textAlign: "center",
+                            flexShrink: 0,
+                            borderRadius: 6,
+                          }}
+                        >
                           {scorer.minute}
                         </Tag>
-                        <span style={{ color: "#fadb14", fontSize: 14, lineHeight: 1 }}>⚽</span>
-                      </Space>
+                        <span
+                          style={{
+                            color: "#fadb14",
+                            fontSize: 13,
+                            lineHeight: "22px",
+                            width: 22,
+                            textAlign: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          ⚽
+                        </span>
+                      </div>
                     ))}
                   </Space>
                 </Col>
@@ -424,15 +480,62 @@ function ResultCard({ fixture }: { fixture: IFixture }) {
                     style={{ width: "100%", alignItems: "flex-end", minHeight: scorerColumnMinHeight }}
                   >
                     {awayScorers.map((scorer) => (
-                      <Space key={scorer.key} size={6} align="center" wrap style={{ justifyContent: "flex-end", width: "100%" }}>
-                        <span style={{ color: "#fadb14", fontSize: 14, lineHeight: 1 }}>⚽</span>
-                        <Tag color="green" style={{ margin: 0, fontWeight: 700, minWidth: 40, textAlign: "center" }}>
+                      <div
+                        key={scorer.key}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          gap: 6,
+                          minWidth: 0,
+                        }}
+                      >
+                        <span
+                          style={{
+                            color: "#fadb14",
+                            fontSize: 13,
+                            lineHeight: "22px",
+                            width: 22,
+                            textAlign: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          ⚽
+                        </span>
+                        <Tag
+                          color="green"
+                          style={{
+                            margin: 0,
+                            fontWeight: 700,
+                            minWidth: 46,
+                            height: 22,
+                            lineHeight: "20px",
+                            padding: "0 6px",
+                            fontSize: 13,
+                            textAlign: "center",
+                            flexShrink: 0,
+                            borderRadius: 6,
+                          }}
+                        >
                           {scorer.minute}
                         </Tag>
-                        <Text style={{ fontSize: 14, fontWeight: 600, wordBreak: "break-word", textAlign: "right" }}>
+                        <Text
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            fontSize: getMobileScorerNameFontSize(scorer.playerName),
+                            fontWeight: 600,
+                            lineHeight: 1.2,
+                            textAlign: "right",
+                          }}
+                        >
                           {scorer.playerName}
                         </Text>
-                      </Space>
+                      </div>
                     ))}
                   </Space>
                 </Col>
