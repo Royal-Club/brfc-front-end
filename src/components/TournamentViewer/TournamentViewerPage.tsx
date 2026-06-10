@@ -16,6 +16,7 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   DownOutlined,
+  EnvironmentOutlined,
   TeamOutlined,
   TrophyOutlined,
   UnorderedListOutlined,
@@ -27,6 +28,9 @@ import ViewerPlayersTab from "./ViewerPlayersTab";
 import StatsLeaderboardPanel from "../Tournaments/Statistics/StatsLeaderboardPanel";
 import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { Link } from "react-router-dom";
+import { showBdLocalTime } from "../../utils/utils";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -49,6 +53,8 @@ export default function TournamentViewerPage({
   const { token } = theme.useToken();
   const screens = useBreakpoint();
   const isMobile = !screens.md;
+  const loginInfo = useSelector(selectLoginInfo);
+  const isLoggedIn = Boolean(loginInfo.token);
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState("fixtures");
@@ -79,10 +85,27 @@ export default function TournamentViewerPage({
     selectedTournament?.tournamentStatus?.toUpperCase() === "ONGOING" ||
     selectedTournament?.tournamentStatus?.toUpperCase() === "ACTIVE";
 
+  const selectedTournamentDateTime = selectedTournament?.tournamentDate
+    ? showBdLocalTime(selectedTournament.tournamentDate)
+    : "Date/time not set";
+
   useEffect(() => {
-    if (!selectedId && tournaments.length > 0) {
-      setSelectedId(tournaments[0].id);
+    if (tournaments.length === 0) {
+      if (selectedId !== null) {
+        setSelectedId(null);
+      }
+      return;
     }
+
+    const selectedTournamentStillAvailable =
+      selectedId != null && tournaments.some((t) => t.id === selectedId);
+
+    if (selectedTournamentStillAvailable) {
+      return;
+    }
+
+    const defaultTournament = tournaments.find((t) => t.defaultTournament);
+    setSelectedId((defaultTournament ?? tournaments[0]).id);
   }, [selectedId, tournaments]);
 
   const handleSelect = (id: number) => {
@@ -186,23 +209,51 @@ export default function TournamentViewerPage({
               gap: isMobile ? "12px" : "16px",
             }}
           >
-            {/* Left: Branding */}
-            {!isMobile && (
+            {/* Left: Tournament Info */}
+            <div
+              style={{
+                flex: "1",
+                minWidth: 0,
+                width: isMobile ? "100%" : "auto",
+              }}
+            >
               <div
                 style={{
                   fontWeight: "bold",
-                  fontSize: "1.25rem",
+                  fontSize: isMobile ? "1rem" : "1.25rem",
                   letterSpacing: "1px",
-                  flex: "1",
-                  minWidth: 0,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
+                  marginBottom: selectedTournament ? 6 : 0,
                 }}
               >
                 {selectedTournament?.name || "Select Tournament"}
               </div>
-            )}
+
+              {selectedTournament && (
+                <Space size={16} wrap>
+                  <Text
+                    style={{
+                      color: "rgba(255,255,255,0.72)",
+                      fontSize: isMobile ? 12 : 13,
+                    }}
+                  >
+                    <CalendarOutlined style={{ marginRight: 6 }} />
+                    {selectedTournamentDateTime}
+                  </Text>
+                  <Text
+                    style={{
+                      color: "rgba(255,255,255,0.72)",
+                      fontSize: isMobile ? 12 : 13,
+                    }}
+                  >
+                    <EnvironmentOutlined style={{ marginRight: 6 }} />
+                    {selectedTournament.venueName || "Venue not set"}
+                  </Text>
+                </Space>
+              )}
+            </div>
 
             {/* Right: Select & Login */}
             <div
@@ -232,17 +283,19 @@ export default function TournamentViewerPage({
                   label: `${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`,
                 }))}
               />
-              <Link to="/login">
-                <button
-                  className="tournament-login-button"
-                  style={{
-                    whiteSpace: "nowrap",
-                    minWidth: isMobile ? "80px" : "auto",
-                  }}
-                >
-                  LOGIN
-                </button>
-              </Link>
+              {!isLoggedIn && (
+                <Link to="/login">
+                  <button
+                    className="tournament-login-button"
+                    style={{
+                      whiteSpace: "nowrap",
+                      minWidth: isMobile ? "80px" : "auto",
+                    }}
+                  >
+                    LOGIN
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ export interface IoTournamentSingleSummaryType {
     tournamentDate: string;
     venueName: string;
     activeStatus: boolean;
+    defaultTournament?: boolean;
     tournamentStatus?: string;
 }
 

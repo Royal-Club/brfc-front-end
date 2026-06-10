@@ -3,7 +3,6 @@ import { Alert, Avatar, Button, Card, List, Space, Spin, Tabs, Tag, Tooltip, Typ
 import {
   EditOutlined,
   FireOutlined,
-  InfoCircleOutlined,
   ReloadOutlined,
   RiseOutlined,
   StopOutlined,
@@ -255,26 +254,7 @@ function LeaderboardSection({
             />
           ) : (
             <Space direction="vertical" size={12} style={{ width: "100%" }}>
-              <Alert
-                type="warning"
-                showIcon
-                icon={<InfoCircleOutlined />}
-                message="No player statistics recorded yet"
-                description={
-                  <Space direction="vertical" size={4}>
-                    <span>
-                      The score was set manually via <strong>Edit Fixture</strong>.
-                      That only updates the scoreline — it does <strong>not</strong> create
-                      per-player goal or assist records.
-                    </span>
-                    <span>
-                      To populate this leaderboard, open each completed match below and
-                      record the individual goals, assists, and cards using the{" "}
-                      <strong>Live Control &amp; Record Events</strong> tab.
-                    </span>
-                  </Space>
-                }
-              />
+              <Text type="secondary">{emptyMessage}</Text>
               {completedMatches && completedMatches.length > 0 && (
                 <Card
                   size="small"
