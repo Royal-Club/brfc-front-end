@@ -20,24 +20,64 @@ const formatTeamBadge = (name: string) =>
     .map((part) => part[0]?.toUpperCase())
     .join("") || "T";
 
-const formatGoalMinute = (eventTime: number) => {
-  const minutes = Math.floor((eventTime || 0) / 60);
-  return `${minutes}'`;
+const parseTimestampMs = (value?: string | null) => {
+  if (!value) return null;
+  const ms = new Date(value).getTime();
+  return Number.isNaN(ms) ? null : ms;
+};
+
+const getGoalMinute = (event: IMatchEvent, referenceStartMs: number | null) => {
+  const formatSeconds = (totalSeconds: number) => {
+    const safe = Math.max(0, Math.floor(totalSeconds));
+    const minutes = Math.floor(safe / 60);
+    const seconds = safe % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const eventMs = parseTimestampMs(event.createdDate);
+
+  // Prefer timeline-based time when timestamps are available.
+  if (referenceStartMs != null && eventMs != null && eventMs >= referenceStartMs) {
+    const elapsedSeconds = (eventMs - referenceStartMs) / 1000;
+    return formatSeconds(elapsedSeconds);
+  }
+
+  // Fallback for mixed historical storage styles.
+  const raw = Number(event.eventTime ?? 0);
+  if (!Number.isFinite(raw) || raw <= 0) return "0:00";
+
+  // If value is too large for minutes, treat as seconds.
+  if (raw > 180) {
+    return formatSeconds(raw);
+  }
+
+  return `${Math.floor(raw)}:00`;
 };
 
 const buildGoalEvents = (
   events: IMatchEvent[] = [],
-  teamId: number
+  teamId: number,
+  startedAt?: string | null
 
 ): Array<{ key: string; playerName: string; minute: string }> => {
+  const startedEvent = events.find((event) => event.eventType === MatchEventType.MATCH_STARTED);
+  const referenceStartMs = parseTimestampMs(startedEvent?.createdDate) ?? parseTimestampMs(startedAt);
+
   const goalEvents = events
     .filter((event) => event.eventType === MatchEventType.GOAL && event.teamId === teamId && event.playerId)
-    .sort((left, right) => (left.eventTime || 0) - (right.eventTime || 0));
+    .sort((left, right) => {
+      const leftMs = parseTimestampMs(left.createdDate);
+      const rightMs = parseTimestampMs(right.createdDate);
+      if (leftMs != null && rightMs != null) {
+        return leftMs - rightMs;
+      }
+      return Number(left.eventTime ?? 0) - Number(right.eventTime ?? 0);
+    });
 
   return goalEvents.map((event, index) => ({
     key: `${teamId}-${event.playerId}-${event.eventTime}-${index}`,
     playerName: event.playerName || "Unknown",
-    minute: formatGoalMinute(event.eventTime),
+    minute: getGoalMinute(event, referenceStartMs),
   }));
 };
 
@@ -54,12 +94,12 @@ function ResultCard({ fixture }: { fixture: IFixture }) {
   );
 
   const homeScorers = useMemo(
-    () => buildGoalEvents(eventsResponse?.content, fixture.homeTeamId),
-    [eventsResponse?.content, fixture.homeTeamId]
+    () => buildGoalEvents(eventsResponse?.content, fixture.homeTeamId, fixture.startedAt),
+    [eventsResponse?.content, fixture.homeTeamId, fixture.startedAt]
   );
   const awayScorers = useMemo(
-    () => buildGoalEvents(eventsResponse?.content, fixture.awayTeamId),
-    [eventsResponse?.content, fixture.awayTeamId]
+    () => buildGoalEvents(eventsResponse?.content, fixture.awayTeamId, fixture.startedAt),
+    [eventsResponse?.content, fixture.awayTeamId, fixture.startedAt]
   );
   const homeRecordedGoals = useMemo(
     () => homeScorers.length,
