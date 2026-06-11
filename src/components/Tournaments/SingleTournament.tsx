@@ -44,6 +44,7 @@ function SingleTournament() {
     handleAddPlayerToTeam,
     handleRemovePlayer,
     handleRenameTeam,
+    handleUploadTeamLogo,
     handleRemoveTeam,
     refetchTournament,
     refetchPlayer,
@@ -257,6 +258,7 @@ function SingleTournament() {
                           team={team}
                           handleRemovePlayer={handleRemovePlayer}
                           handleRenameTeam={handleRenameTeam}
+                          handleUploadTeamLogo={handleUploadTeamLogo}
                           handleRemoveTeam={handleRemoveTeam}
                           handleAddPlayerToTeam={handleAddPlayerToTeam}
                         />

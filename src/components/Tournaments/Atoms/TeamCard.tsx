@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+    Avatar,
     Button,
     Card,
     Dropdown,
@@ -14,17 +15,19 @@ import { Droppable, Draggable } from "react-beautiful-dnd";
 import PlayerCard from "./PlayerCard";
 import EditPlayerDetailsModal from "./EditPlayerDetailsModal";
 import { Team, Player } from "../tournamentTypes";
-import { MoreOutlined } from "@ant-design/icons";
+import { MoreOutlined, UploadOutlined } from "@ant-design/icons";
 import DoubleClickTextInputField from "../../CommonAtoms/DoubleClickTextInputField";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 import { canManageTeams } from "../../../utils/roleUtils";
+import { API_URL } from "../../../settings";
 
 interface TeamCardProps {
     team: Team;
     isLoading: boolean;
     handleRemovePlayer: (teamId: number, playerId: number) => void;
     handleRenameTeam: (teamId: number, newName: string) => void;
+    handleUploadTeamLogo: (teamId: number, file: File) => void;
     handleRemoveTeam: (teamId: number, teamName: string) => void;
     handleAddPlayerToTeam: (
         playingPosition: string,
@@ -42,6 +45,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
     isLoading,
     handleRemovePlayer,
     handleRenameTeam,
+    handleUploadTeamLogo,
     handleRemoveTeam,
     handleAddPlayerToTeam,
 }) => {
@@ -54,6 +58,13 @@ const TeamCard: React.FC<TeamCardProps> = ({
 
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+
+    const logoInputId = `team-logo-input-${team.teamId}`;
+    const logoSrc = team.logoUrl
+        ? team.logoUrl.startsWith("http")
+            ? team.logoUrl
+            : `${API_URL}${team.logoUrl}`
+        : undefined;
 
 
     const handleRenameTeamClick = (newName: string) => {
@@ -100,18 +111,46 @@ const TeamCard: React.FC<TeamCardProps> = ({
                             alignItems: "center",
                         }}
                     >
-                        <DoubleClickTextInputField
-                            initialName={team.teamName}
-                            onNameChange={handleRenameTeamClick}
-                            isDiabled={
-                                !canManage
-                            }
-                        />
-                        {canManage && (
-                            <Button
-                                onClick={(e) => e.preventDefault()}
-                                icon={<MoreOutlined />}
+                        <Space align="center" size={8}>
+                            <Avatar src={logoSrc} style={{ backgroundColor: "#1f1f1f" }}>
+                                {team.teamName?.charAt(0)?.toUpperCase()}
+                            </Avatar>
+                            <DoubleClickTextInputField
+                                initialName={team.teamName}
+                                onNameChange={handleRenameTeamClick}
+                                isDiabled={
+                                    !canManage
+                                }
                             />
+                        </Space>
+                        {canManage && (
+                            <Space>
+                                <Button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        const fileInput = document.getElementById(logoInputId) as HTMLInputElement | null;
+                                        fileInput?.click();
+                                    }}
+                                    icon={<UploadOutlined />}
+                                />
+                                <input
+                                    id={logoInputId}
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: "none" }}
+                                    onChange={(event) => {
+                                        const file = event.target.files?.[0];
+                                        if (file) {
+                                            handleUploadTeamLogo(team.teamId, file);
+                                        }
+                                        event.target.value = "";
+                                    }}
+                                />
+                                <Button
+                                    onClick={(e) => e.preventDefault()}
+                                    icon={<MoreOutlined />}
+                                />
+                            </Space>
                         )}
                     </Space>
                 </Dropdown>

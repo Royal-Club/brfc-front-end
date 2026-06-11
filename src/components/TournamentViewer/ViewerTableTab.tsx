@@ -2,8 +2,10 @@ import React, { useMemo } from "react";
 import { Avatar, Card, Empty, Grid, List, Spin, Tag, Typography } from "antd";
 import { useGetFixturesQuery } from "../../state/features/fixtures/fixturesSlice";
 import { useGetTournamentStandingsQuery } from "../../state/features/statistics/statisticsSlice";
+import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
 import type { ITournamentStanding } from "../../state/features/statistics/statisticsTypes";
 import type { IFixture } from "../../state/features/fixtures/fixtureTypes";
+import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
 
 const { Text } = Typography;
 
@@ -21,6 +23,7 @@ const rankColor = (rank: number) => {
 export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
   const { data, isLoading } = useGetTournamentStandingsQuery({ tournamentId });
   const { data: fixturesResponse, isLoading: fixturesLoading } = useGetFixturesQuery({ tournamentId });
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery({ tournamentId });
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
@@ -188,13 +191,27 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
           >
             {row.rank}
           </Avatar>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <Text strong style={{ display: "block", color: "rgba(255,255,255,0.94)" }}>
-              {row.teamName}
-            </Text>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              P {row.matches}  W {row.wins}  D {row.draws}  L {row.losses}
-            </Text>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10 }}>
+            <Avatar
+              size={30}
+              src={getTeamLogoUrlFromSummary(tournamentSummary, row.teamId)}
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.85)",
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {getTeamInitials(row.teamName, "T")}
+            </Avatar>
+            <div style={{ minWidth: 0 }}>
+              <Text strong style={{ display: "block", color: "rgba(255,255,255,0.94)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {row.teamName}
+              </Text>
+              <Text type="secondary" style={{ fontSize: 12, display: "block" }}>
+                P {row.matches}  W {row.wins}  D {row.draws}  L {row.losses}
+              </Text>
+            </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
             <Tag style={{ margin: 0, borderRadius: 999, background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.78)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -232,9 +249,23 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
               {row.rank}
             </Avatar>
           </div>
-          <Text strong style={{ color: "rgba(255,255,255,0.94)" }}>
-            {row.teamName}
-          </Text>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <Avatar
+              size={28}
+              src={getTeamLogoUrlFromSummary(tournamentSummary, row.teamId)}
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.85)",
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {getTeamInitials(row.teamName, "T")}
+            </Avatar>
+            <Text strong style={{ color: "rgba(255,255,255,0.94)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {row.teamName}
+            </Text>
+          </div>
           <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center" }}>{row.matches}</Text>
           <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center" }}>{row.wins}</Text>
           <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center" }}>{row.draws}</Text>

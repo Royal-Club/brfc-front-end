@@ -3,7 +3,9 @@ import { Badge, Button, Card, Empty, Space, Spin, Tag, Typography } from "antd";
 import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { useGetFixturesQuery } from "../../state/features/fixtures/fixturesSlice";
+import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
 import type { IFixture } from "../../state/features/fixtures/fixtureTypes";
+import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
 
 const { Text, Title } = Typography;
 
@@ -38,20 +40,11 @@ const formatMatchDate = (matchDate?: string) => {
   return moment.utc(matchDate).local().format("DD MMM YYYY, HH:mm");
 };
 
-const buildTeamBadge = (teamName?: string | null) => {
-  if (!teamName) return "?";
-
-  return teamName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "?";
-};
-
-function MatchCard({ fixture }: { fixture: IFixture }) {
+function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tournamentSummary?: any }) {
   const groupLabel = buildGroupLabel(fixture);
   const isAnnounced = Boolean(fixture.matchDate);
+  const homeTeamLogoUrl = getTeamLogoUrlFromSummary(tournamentSummary, fixture.homeTeamId);
+  const awayTeamLogoUrl = getTeamLogoUrlFromSummary(tournamentSummary, fixture.awayTeamId);
 
   return (
     <Card
@@ -157,9 +150,18 @@ function MatchCard({ fixture }: { fixture: IFixture }) {
               fontWeight: 900,
               fontSize: 22,
               boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
+              overflow: "hidden",
             }}
           >
-            {buildTeamBadge(fixture.homeTeamName)}
+            {homeTeamLogoUrl ? (
+              <img
+                src={homeTeamLogoUrl}
+                alt={fixture.homeTeamName || "Home Team Logo"}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              getTeamInitials(fixture.homeTeamName)
+            )}
           </div>
         </div>
 
@@ -205,9 +207,18 @@ function MatchCard({ fixture }: { fixture: IFixture }) {
               fontWeight: 900,
               fontSize: 22,
               boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
+              overflow: "hidden",
             }}
           >
-            {buildTeamBadge(fixture.awayTeamName)}
+            {awayTeamLogoUrl ? (
+              <img
+                src={awayTeamLogoUrl}
+                alt={fixture.awayTeamName || "Away Team Logo"}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              getTeamInitials(fixture.awayTeamName)
+            )}
           </div>
           <div style={{ textAlign: "left", minWidth: 0 }}>
             <Text
@@ -259,6 +270,7 @@ function MatchCard({ fixture }: { fixture: IFixture }) {
 
 export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabProps) {
   const { data, isLoading, isFetching } = useGetFixturesQuery({ tournamentId });
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery({ tournamentId });
   const [activeFilter, setActiveFilter] = useState("ALL");
 
   const fixtures = useMemo(
@@ -413,7 +425,7 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
             </Tag>
           </div>
           {fixtures.map((f) => (
-            <MatchCard key={f.id} fixture={f} />
+            <MatchCard key={f.id} fixture={f} tournamentSummary={tournamentSummary} />
           ))}
             </div>
           ))}

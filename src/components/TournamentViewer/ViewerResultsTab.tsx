@@ -2,22 +2,16 @@ import React, { useMemo } from "react";
 import { Alert, Avatar, Card, Col, Divider, Empty, Row, Space, Spin, Tag, Typography } from "antd";
 import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import { useGetFixturesQuery, useGetMatchEventsQuery } from "../../state/features/fixtures/fixturesSlice";
+import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { MatchEventType } from "../../state/features/fixtures/fixtureTypes";
 import type { IFixture, IMatchEvent } from "../../state/features/fixtures/fixtureTypes";
+import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
 
 const { Text, Title } = Typography;
 
 interface ViewerResultsTabProps {
   tournamentId: number;
 }
-
-const formatTeamBadge = (name: string) =>
-  name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "T";
 
 const formatGoalMinute = (eventTime: number) => {
   const minutes = Math.floor((eventTime || 0) / 60);
@@ -40,7 +34,7 @@ const buildGoalEvents = (
   }));
 };
 
-function ResultCard({ fixture }: { fixture: IFixture }) {
+function ResultCard({ fixture, tournamentSummary }: { fixture: IFixture; tournamentSummary?: any }) {
   const homeWin = fixture.homeTeamScore > fixture.awayTeamScore;
   const awayWin = fixture.awayTeamScore > fixture.homeTeamScore;
   const isLive = fixture.matchStatus === "ONGOING" || fixture.matchStatus === "PAUSED";
@@ -76,6 +70,8 @@ function ResultCard({ fixture }: { fixture: IFixture }) {
     ? `ROUND ${fixture.round}`
     : "RESULT";
   const playedDate = fixture.completedAt || fixture.matchDate;
+  const homeTeamLogoUrl = getTeamLogoUrlFromSummary(tournamentSummary, fixture.homeTeamId);
+  const awayTeamLogoUrl = getTeamLogoUrlFromSummary(tournamentSummary, fixture.awayTeamId);
 
   return (
     <Card
@@ -151,6 +147,7 @@ function ResultCard({ fixture }: { fixture: IFixture }) {
               </Text>
               <Avatar
                 size={82}
+                src={homeTeamLogoUrl}
                 style={{
                   background: "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
                   color: "#1890ff",
@@ -159,7 +156,7 @@ function ResultCard({ fixture }: { fixture: IFixture }) {
                   boxShadow: "0 10px 24px rgba(0,0,0,0.22)",
                 }}
               >
-                {formatTeamBadge(fixture.homeTeamName)}
+                {getTeamInitials(fixture.homeTeamName, "T")}
               </Avatar>
             </div>
           </Col>
@@ -200,6 +197,7 @@ function ResultCard({ fixture }: { fixture: IFixture }) {
             >
               <Avatar
                 size={82}
+                src={awayTeamLogoUrl}
                 style={{
                   background: "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
                   color: "#1890ff",
@@ -208,7 +206,7 @@ function ResultCard({ fixture }: { fixture: IFixture }) {
                   boxShadow: "0 10px 24px rgba(0,0,0,0.22)",
                 }}
               >
-                {formatTeamBadge(fixture.awayTeamName)}
+                {getTeamInitials(fixture.awayTeamName, "T")}
               </Avatar>
               <Text
                 strong
@@ -282,6 +280,7 @@ function ResultCard({ fixture }: { fixture: IFixture }) {
 
 export default function ViewerResultsTab({ tournamentId }: ViewerResultsTabProps) {
   const { data, isLoading, isFetching } = useGetFixturesQuery({ tournamentId });
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery({ tournamentId });
 
   const sections = useMemo(() => {
     const fixtures = data?.content || [];
@@ -331,7 +330,7 @@ export default function ViewerResultsTab({ tournamentId }: ViewerResultsTabProps
             <Tag color={section.tagColor}>{section.fixtures.length} {section.tagLabel}{section.fixtures.length !== 1 ? "s" : ""}</Tag>
           </div>
           {section.fixtures.map((f) => (
-            <ResultCard key={f.id} fixture={f} />
+            <ResultCard key={f.id} fixture={f} tournamentSummary={tournamentSummary} />
           ))}
         </div>
       ))}

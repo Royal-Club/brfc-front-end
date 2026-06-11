@@ -2,6 +2,7 @@ import React from "react";
 import { Avatar, Card, Col, Empty, List, Row, Spin, Tag, Typography } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
+import { getTeamInitials, toAbsoluteLogoUrl } from "./teamLogoUtils";
 
 const { Text, Title } = Typography;
 
@@ -22,17 +23,6 @@ const resolveDisplayPosition = (player: any): string | null => {
   }
 
   return null;
-};
-
-const buildTeamBadge = (teamName?: string | null) => {
-  if (!teamName) return "?";
-
-  return teamName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "?";
 };
 
 export default function ViewerPlayersTab({ tournamentId }: ViewerPlayersTabProps) {
@@ -80,6 +70,7 @@ export default function ViewerPlayersTab({ tournamentId }: ViewerPlayersTabProps
             >
               <Avatar
                 size={64}
+                src={toAbsoluteLogoUrl(team.logoUrl)}
                 style={{
                   background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)",
                   color: "#18ff98",
@@ -89,7 +80,7 @@ export default function ViewerPlayersTab({ tournamentId }: ViewerPlayersTabProps
                   boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
                 }}
               >
-                {buildTeamBadge(team.teamName)}
+                {getTeamInitials(team.teamName)}
               </Avatar>
               <div style={{ minWidth: 0, textAlign: "left" }}>
                 <Title level={4} style={{ margin: 0, color: "#ffffff" }}>
