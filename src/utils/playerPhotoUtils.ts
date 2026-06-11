@@ -1,9 +1,10 @@
 import { message } from "antd";
+import { API_URL as SETTINGS_API_URL } from "../settings";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_MB = 5;
 const MAX_DIMENSION = 512;
-const API_URL = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
+const API_URL = (process.env.REACT_APP_API_URL || SETTINGS_API_URL || "").replace(/\/$/, "");
 
 export function validatePlayerPhoto(file: File): string | null {
     if (!ALLOWED_TYPES.includes(file.type)) {
