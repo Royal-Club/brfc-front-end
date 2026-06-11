@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Badge, Button, Card, Empty, Space, Spin, Tag, Typography } from "antd";
+import { Badge, Button, Card, Empty, Grid, Space, Spin, Tag, Typography } from "antd";
 import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { useGetFixturesQuery } from "../../state/features/fixtures/fixturesSlice";
@@ -40,7 +40,7 @@ const formatMatchDate = (matchDate?: string) => {
   return moment.utc(matchDate).local().format("DD MMM YYYY, HH:mm");
 };
 
-function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tournamentSummary?: any }) {
+function MatchCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixture; tournamentSummary?: any; isMobile: boolean }) {
   const groupLabel = buildGroupLabel(fixture);
   const isAnnounced = Boolean(fixture.matchDate);
   const homeTeamLogoUrl = getTeamLogoUrlFromSummary(tournamentSummary, fixture.homeTeamId);
@@ -58,7 +58,7 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
         boxShadow: "0 22px 44px rgba(0,0,0,0.28)",
         border: "1px solid rgba(255,255,255,0.08)",
       }}
-      bodyStyle={{ padding: "26px 28px 30px" }}
+      bodyStyle={{ padding: isMobile ? "14px 10px 16px" : "26px 28px 30px" }}
     >
       <div
         style={{
@@ -66,8 +66,8 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
           justifyContent: "space-between",
           alignItems: "center",
           gap: 12,
-          paddingBottom: 14,
-          marginBottom: 24,
+          paddingBottom: isMobile ? 10 : 14,
+          marginBottom: isMobile ? 14 : 24,
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           flexWrap: "wrap",
         }}
@@ -77,23 +77,24 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
             margin: 0,
             border: "none",
             borderRadius: 999,
-            padding: "7px 14px",
+            padding: isMobile ? "6px 10px" : "7px 14px",
             background: "rgba(0,255,148,0.12)",
             color: "#18ff98",
             fontWeight: 800,
-            letterSpacing: 0.7,
+            letterSpacing: isMobile ? 0.4 : 0.7,
+            fontSize: isMobile ? 11 : 13,
           }}
         >
           {buildStageLabel(groupLabel)}
         </Tag>
-        <Space size={10} wrap>
+        <Space size={isMobile ? 6 : 10} wrap>
           {matchStatusTag(fixture.matchStatus)}
           <Text
             type="secondary"
             style={{
-              fontSize: 12,
+              fontSize: isMobile ? 10 : 12,
               fontWeight: 700,
-              letterSpacing: 0.8,
+              letterSpacing: isMobile ? 0.5 : 0.8,
               color: "rgba(255,255,255,0.42)",
             }}
           >
@@ -105,9 +106,11 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+          gridTemplateColumns: isMobile
+            ? "minmax(0, 1fr) auto minmax(0, 1fr)"
+            : "minmax(0, 1fr) auto minmax(0, 1fr)",
           alignItems: "center",
-          gap: 22,
+          gap: isMobile ? 6 : 22,
         }}
       >
         <div
@@ -115,7 +118,7 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
-            gap: 18,
+            gap: isMobile ? 6 : 18,
             minWidth: 0,
           }}
         >
@@ -124,31 +127,34 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
               strong
               style={{
                 display: "block",
-                fontSize: 22,
+                fontSize: isMobile ? 13 : 22,
                 color: "#ffffff",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
+                lineHeight: 1.15,
               }}
             >
               {fixture.homeTeamName || "TBA"}
             </Text>
-            <Text type="secondary" style={{ fontSize: 18, color: "rgba(255,255,255,0.2)" }}>
-              -
-            </Text>
+            {!isMobile && (
+              <Text type="secondary" style={{ fontSize: 18, color: "rgba(255,255,255,0.2)" }}>
+                -
+              </Text>
+            )}
           </div>
           <div
             style={{
-              width: 64,
-              height: 64,
-              borderRadius: 22,
-              border: "3px solid rgba(255,255,255,0.75)",
+              width: isMobile ? 40 : 64,
+              height: isMobile ? 40 : 64,
+              borderRadius: "50%",
+              border: isMobile ? "2px solid rgba(255,255,255,0.75)" : "3px solid rgba(255,255,255,0.75)",
               background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)",
               display: "grid",
               placeItems: "center",
               color: "#18ff98",
               fontWeight: 900,
-              fontSize: 22,
+              fontSize: isMobile ? 13 : 22,
               boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
               overflow: "hidden",
             }}
@@ -168,8 +174,8 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
         <div style={{ textAlign: "center" }}>
           <div
             style={{
-              width: 70,
-              height: 70,
+              width: isMobile ? 32 : 70,
+              height: isMobile ? 32 : 70,
               borderRadius: "50%",
               display: "grid",
               placeItems: "center",
@@ -177,8 +183,8 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
               border: "1px solid rgba(255,255,255,0.08)",
               color: "rgba(255,255,255,0.35)",
               fontWeight: 900,
-              fontSize: 24,
-              letterSpacing: 1.2,
+              fontSize: isMobile ? 16 : 24,
+              letterSpacing: isMobile ? 0.8 : 1.2,
             }}
           >
             VS
@@ -190,22 +196,22 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
             display: "flex",
             justifyContent: "flex-start",
             alignItems: "center",
-            gap: 18,
+            gap: isMobile ? 6 : 18,
             minWidth: 0,
           }}
         >
           <div
             style={{
-              width: 64,
-              height: 64,
-              borderRadius: 22,
-              border: "3px solid rgba(255,255,255,0.75)",
+              width: isMobile ? 40 : 64,
+              height: isMobile ? 40 : 64,
+              borderRadius: "50%",
+              border: isMobile ? "2px solid rgba(255,255,255,0.75)" : "3px solid rgba(255,255,255,0.75)",
               background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)",
               display: "grid",
               placeItems: "center",
               color: "#18ff98",
               fontWeight: 900,
-              fontSize: 22,
+              fontSize: isMobile ? 13 : 22,
               boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
               overflow: "hidden",
             }}
@@ -225,18 +231,21 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
               strong
               style={{
                 display: "block",
-                fontSize: 22,
+                fontSize: isMobile ? 13 : 22,
                 color: "#ffffff",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
+                lineHeight: 1.15,
               }}
             >
               {fixture.awayTeamName || "TBA"}
             </Text>
-            <Text type="secondary" style={{ fontSize: 18, color: "rgba(255,255,255,0.2)" }}>
-              -
-            </Text>
+            {!isMobile && (
+              <Text type="secondary" style={{ fontSize: 18, color: "rgba(255,255,255,0.2)" }}>
+                -
+              </Text>
+            )}
           </div>
         </div>
       </div>
@@ -244,31 +253,35 @@ function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tourname
       <div
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: isMobile ? "center" : "space-between",
           alignItems: "center",
           gap: 12,
           flexWrap: "wrap",
-          marginTop: 24,
+          marginTop: isMobile ? 14 : 24,
         }}
       >
-        <Space size={14} wrap>
-          <Text type="secondary" style={{ fontSize: 12, color: "rgba(255,255,255,0.58)" }}>
-            <CalendarOutlined style={{ marginRight: 6 }} />
-            {formatMatchDate(fixture.matchDate)}
-          </Text>
-          {fixture.venueName && (
-            <Text type="secondary" style={{ fontSize: 12, color: "rgba(255,255,255,0.58)" }}>
-              <EnvironmentOutlined style={{ marginRight: 6 }} />
-              {fixture.venueName}
+        <div style={{ display: "flex", width: "100%", justifyContent: isMobile ? "center" : "flex-start" }}>
+          <Space size={isMobile ? 10 : 14} wrap>
+            <Text type="secondary" style={{ fontSize: isMobile ? 11 : 12, color: "rgba(255,255,255,0.58)" }}>
+              <CalendarOutlined style={{ marginRight: 6 }} />
+              {formatMatchDate(fixture.matchDate)}
             </Text>
-          )}
-        </Space>
+            {fixture.venueName && (
+              <Text type="secondary" style={{ fontSize: isMobile ? 11 : 12, color: "rgba(255,255,255,0.58)" }}>
+                <EnvironmentOutlined style={{ marginRight: 6 }} />
+                {fixture.venueName}
+              </Text>
+            )}
+          </Space>
+        </div>
       </div>
     </Card>
   );
 }
 
 export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabProps) {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.sm;
   const { data, isLoading, isFetching } = useGetFixturesQuery({ tournamentId });
   const { data: tournamentSummary } = useGetTournamentSummaryQuery({ tournamentId });
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -325,7 +338,7 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
           level={2}
           style={{
             margin: 0,
-            fontSize: 42,
+            fontSize: isMobile ? 30 : 42,
             lineHeight: 1,
             letterSpacing: -1.2,
             color: "#ffffff",
@@ -338,9 +351,9 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
           style={{
             display: "block",
             marginTop: 10,
-            fontSize: 15,
+            fontSize: isMobile ? 12 : 15,
             textTransform: "uppercase",
-            letterSpacing: 2.4,
+            letterSpacing: isMobile ? 1.2 : 2.4,
             color: "rgba(255,255,255,0.38)",
             fontWeight: 700,
           }}
@@ -354,9 +367,9 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
             style={{
               display: "flex",
               justifyContent: "center",
-              gap: 12,
+              gap: isMobile ? 8 : 12,
               flexWrap: "wrap",
-              marginBottom: 32,
+              marginBottom: isMobile ? 18 : 32,
             }}
           >
             {filters.map((filter) => {
@@ -367,14 +380,15 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
                   type="text"
                   onClick={() => setActiveFilter(filter)}
                   style={{
-                    height: 40,
-                    padding: "0 18px",
+                    height: isMobile ? 34 : 40,
+                    padding: isMobile ? "0 12px" : "0 18px",
                     borderRadius: 999,
                     border: isActive ? "none" : "1px solid rgba(255,255,255,0.06)",
                     background: isActive ? "linear-gradient(135deg, #10ff87 0%, #00d66b 100%)" : "rgba(255,255,255,0.04)",
                     color: isActive ? "#04160e" : "rgba(255,255,255,0.62)",
                     fontWeight: 800,
-                    letterSpacing: 0.7,
+                    letterSpacing: isMobile ? 0.4 : 0.7,
+                    fontSize: isMobile ? 12 : 13,
                     boxShadow: isActive ? "0 12px 28px rgba(16,255,135,0.2)" : "none",
                   }}
                 >
@@ -391,8 +405,8 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: 16,
-              marginBottom: 18,
+              gap: isMobile ? 10 : 16,
+              marginBottom: isMobile ? 12 : 18,
               paddingBottom: 10,
             }}
           >
@@ -402,13 +416,13 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
                 style={{
                   margin: 0,
                   color: "#ffffff",
-                  fontSize: 22,
+                  fontSize: isMobile ? 16 : 22,
                   textTransform: "uppercase",
                 }}
               >
                 {groupName}
               </Title>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+              {!isMobile && <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />}
             </div>
             <Tag
               style={{
@@ -417,15 +431,16 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
                 background: "rgba(255,255,255,0.04)",
                 color: "rgba(255,255,255,0.46)",
                 borderRadius: 999,
-                padding: "6px 14px",
+                padding: isMobile ? "4px 10px" : "6px 14px",
                 fontWeight: 800,
+                fontSize: isMobile ? 11 : 13,
               }}
             >
               {fixtures.length} MATCH{fixtures.length !== 1 ? "ES" : ""}
             </Tag>
           </div>
           {fixtures.map((f) => (
-            <MatchCard key={f.id} fixture={f} tournamentSummary={tournamentSummary} />
+            <MatchCard key={f.id} fixture={f} tournamentSummary={tournamentSummary} isMobile={isMobile} />
           ))}
             </div>
           ))}
