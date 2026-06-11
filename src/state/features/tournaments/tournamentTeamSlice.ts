@@ -13,24 +13,36 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
     endpoints: (builder) => ({
         createTournamentTeam: builder.mutation<
             TournamentPlayerInfoType,
-            { tournamentId: number; teamName: string }
+            { tournamentId: number; teamName: string; logoKey?: string }
         >({
-            query: ({ tournamentId, teamName }) => ({
+            query: ({ tournamentId, teamName, logoKey }) => ({
                 url: `teams`,
                 method: "POST",
-                body: { tournamentId, teamName },
+                body: { tournamentId, teamName, logoKey },
             }),
             invalidatesTags: ["tournamentTeam"],
         }),
 
         renameTeam: builder.mutation<
             BasicResType,
-            { teamId: number; teamName: string; tournamentId: number }
+            { teamId: number; teamName: string; tournamentId: number; logoKey?: string }
         >({
-            query: ({ teamId, teamName, tournamentId }) => ({
+            query: ({ teamId, teamName, tournamentId, logoKey }) => ({
                 url: `teams`,
                 method: "POST",
-                body: { id: teamId, teamName, tournamentId },
+                body: { id: teamId, teamName, tournamentId, logoKey },
+            }),
+            invalidatesTags: ["tournamentTeam"],
+        }),
+
+        presignTeamLogoUpload: builder.mutation<
+            BasicResType & { content: { key: string; url: string; uploadUrl: string; expiresInSeconds: number } },
+            { fileName: string; contentType: string }
+        >({
+            query: ({ fileName, contentType }) => ({
+                url: `files/team-logos/presign`,
+                method: "POST",
+                params: { fileName, contentType },
             }),
             invalidatesTags: ["tournamentTeam"],
         }),
@@ -141,6 +153,7 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
 export const {
     useCreateTournamentTeamMutation,
     useRenameTeamMutation,
+    usePresignTeamLogoUploadMutation,
     usePlayerListToAddToTeamQuery,
     useDeleteTournamentTeamMutation,
     useAddPlayerToTeamMutation,

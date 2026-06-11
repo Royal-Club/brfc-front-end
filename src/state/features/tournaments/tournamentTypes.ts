@@ -67,6 +67,8 @@ export interface TournamentSummeryResType {
                 {
                     teamId: number;
                     teamName: string;
+                    logoKey?: string;
+                    logoUrl?: string;
                     players: TournamentPlayerInfoType[];
                 }
             ];

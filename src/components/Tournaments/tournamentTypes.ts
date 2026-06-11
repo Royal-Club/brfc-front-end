@@ -16,6 +16,8 @@ export interface Player {
 export interface Team {
     teamId: number;
     teamName: string;
+    logoKey?: string;
+    logoUrl?: string;
     players: Player[];
 }
 

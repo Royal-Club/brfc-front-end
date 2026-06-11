@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { Badge, Button, Card, Empty, Grid, Space, Spin, Tag, Typography } from "antd";
+import { Badge, Button, Card, Empty, Space, Spin, Tag, Typography } from "antd";
 import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { useGetFixturesQuery } from "../../state/features/fixtures/fixturesSlice";
+import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
 import type { IFixture } from "../../state/features/fixtures/fixtureTypes";
+import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
 
 const { Text, Title } = Typography;
-const { useBreakpoint } = Grid;
 
 interface ViewerFixturesTabProps {
   tournamentId: number;
@@ -39,22 +40,11 @@ const formatMatchDate = (matchDate?: string) => {
   return moment.utc(matchDate).local().format("DD MMM YYYY, HH:mm");
 };
 
-const buildTeamBadge = (teamName?: string | null) => {
-  if (!teamName) return "?";
-
-  return teamName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "?";
-};
-
-function MatchCard({ fixture }: { fixture: IFixture }) {
-  const screens = useBreakpoint();
-  const isMobile = !screens.md;
+function MatchCard({ fixture, tournamentSummary }: { fixture: IFixture; tournamentSummary?: any }) {
   const groupLabel = buildGroupLabel(fixture);
   const isAnnounced = Boolean(fixture.matchDate);
+  const homeTeamLogoUrl = getTeamLogoUrlFromSummary(tournamentSummary, fixture.homeTeamId);
+  const awayTeamLogoUrl = getTeamLogoUrlFromSummary(tournamentSummary, fixture.awayTeamId);
 
   return (
     <Card
@@ -68,7 +58,7 @@ function MatchCard({ fixture }: { fixture: IFixture }) {
         boxShadow: "0 22px 44px rgba(0,0,0,0.28)",
         border: "1px solid rgba(255,255,255,0.08)",
       }}
-      bodyStyle={{ padding: isMobile ? "18px 14px 18px" : "26px 28px 30px" }}
+      bodyStyle={{ padding: "26px 28px 30px" }}
     >
       <div
         style={{
@@ -112,61 +102,144 @@ function MatchCard({ fixture }: { fixture: IFixture }) {
         </Space>
       </div>
 
-      {isMobile ? (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 8, minWidth: 0, width: "100%" }}>
-            <div style={{ width: 54, height: 54, borderRadius: 18, border: "2px solid rgba(255,255,255,0.75)", background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)", display: "grid", placeItems: "center", color: "#18ff98", fontWeight: 900, fontSize: 20, boxShadow: "0 12px 24px rgba(0,0,0,0.18)" }}>
-              {buildTeamBadge(fixture.homeTeamName)}
-            </div>
-            <div style={{ textAlign: "center", minWidth: 0, width: "100%" }}>
-              <Text strong style={{ fontSize: 14, color: "#ffffff", lineHeight: 1.25, whiteSpace: "normal", textOverflow: "ellipsis", wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", minHeight: 35, maxWidth: "100%", overflow: "hidden" }}>
-                {fixture.homeTeamName || "TBA"}
-              </Text>
-            </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)",
+          alignItems: "center",
+          gap: 22,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            gap: 18,
+            minWidth: 0,
+          }}
+        >
+          <div style={{ textAlign: "right", minWidth: 0 }}>
+            <Text
+              strong
+              style={{
+                display: "block",
+                fontSize: 22,
+                color: "#ffffff",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {fixture.homeTeamName || "TBA"}
+            </Text>
+            <Text type="secondary" style={{ fontSize: 18, color: "rgba(255,255,255,0.2)" }}>
+              -
+            </Text>
           </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ width: 56, height: 56, borderRadius: "50%", display: "grid", placeItems: "center", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.35)", fontWeight: 900, fontSize: 18, letterSpacing: 1 }}>VS</div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 8, minWidth: 0, width: "100%" }}>
-            <div style={{ width: 54, height: 54, borderRadius: 18, border: "2px solid rgba(255,255,255,0.75)", background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)", display: "grid", placeItems: "center", color: "#18ff98", fontWeight: 900, fontSize: 20, boxShadow: "0 12px 24px rgba(0,0,0,0.18)" }}>
-              {buildTeamBadge(fixture.awayTeamName)}
-            </div>
-            <div style={{ textAlign: "center", minWidth: 0, width: "100%" }}>
-              <Text strong style={{ fontSize: 14, color: "#ffffff", lineHeight: 1.25, whiteSpace: "normal", textOverflow: "ellipsis", wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", minHeight: 35, maxWidth: "100%", overflow: "hidden" }}>
-                {fixture.awayTeamName || "TBA"}
-              </Text>
-            </div>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 22,
+              border: "3px solid rgba(255,255,255,0.75)",
+              background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)",
+              display: "grid",
+              placeItems: "center",
+              color: "#18ff98",
+              fontWeight: 900,
+              fontSize: 22,
+              boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
+              overflow: "hidden",
+            }}
+          >
+            {homeTeamLogoUrl ? (
+              <img
+                src={homeTeamLogoUrl}
+                alt={fixture.homeTeamName || "Home Team Logo"}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              getTeamInitials(fixture.homeTeamName)
+            )}
           </div>
         </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)", alignItems: "center", gap: 22 }}>
-          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 18, minWidth: 0 }}>
-            <div style={{ textAlign: "right", minWidth: 0 }}>
-              <Text strong style={{ display: "block", fontSize: 22, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {fixture.homeTeamName || "TBA"}
-              </Text>
-              <Text type="secondary" style={{ fontSize: 18, color: "rgba(255,255,255,0.2)" }}>-</Text>
-            </div>
-            <div style={{ width: 64, height: 64, borderRadius: 22, border: "3px solid rgba(255,255,255,0.75)", background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)", display: "grid", placeItems: "center", color: "#18ff98", fontWeight: 900, fontSize: 22, boxShadow: "0 12px 24px rgba(0,0,0,0.18)" }}>
-              {buildTeamBadge(fixture.homeTeamName)}
-            </div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ width: 70, height: 70, borderRadius: "50%", display: "grid", placeItems: "center", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.35)", fontWeight: 900, fontSize: 24, letterSpacing: 1.2 }}>VS</div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: 18, minWidth: 0 }}>
-            <div style={{ width: 64, height: 64, borderRadius: 22, border: "3px solid rgba(255,255,255,0.75)", background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)", display: "grid", placeItems: "center", color: "#18ff98", fontWeight: 900, fontSize: 22, boxShadow: "0 12px 24px rgba(0,0,0,0.18)" }}>
-              {buildTeamBadge(fixture.awayTeamName)}
-            </div>
-            <div style={{ textAlign: "left", minWidth: 0 }}>
-              <Text strong style={{ display: "block", fontSize: 22, color: "#ffffff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {fixture.awayTeamName || "TBA"}
-              </Text>
-              <Text type="secondary" style={{ fontSize: 18, color: "rgba(255,255,255,0.2)" }}>-</Text>
-            </div>
+
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: 70,
+              height: 70,
+              borderRadius: "50%",
+              display: "grid",
+              placeItems: "center",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "rgba(255,255,255,0.35)",
+              fontWeight: 900,
+              fontSize: 24,
+              letterSpacing: 1.2,
+            }}
+          >
+            VS
           </div>
         </div>
-      )}
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            gap: 18,
+            minWidth: 0,
+          }}
+        >
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 22,
+              border: "3px solid rgba(255,255,255,0.75)",
+              background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)",
+              display: "grid",
+              placeItems: "center",
+              color: "#18ff98",
+              fontWeight: 900,
+              fontSize: 22,
+              boxShadow: "0 12px 24px rgba(0,0,0,0.18)",
+              overflow: "hidden",
+            }}
+          >
+            {awayTeamLogoUrl ? (
+              <img
+                src={awayTeamLogoUrl}
+                alt={fixture.awayTeamName || "Away Team Logo"}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              getTeamInitials(fixture.awayTeamName)
+            )}
+          </div>
+          <div style={{ textAlign: "left", minWidth: 0 }}>
+            <Text
+              strong
+              style={{
+                display: "block",
+                fontSize: 22,
+                color: "#ffffff",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {fixture.awayTeamName || "TBA"}
+            </Text>
+            <Text type="secondary" style={{ fontSize: 18, color: "rgba(255,255,255,0.2)" }}>
+              -
+            </Text>
+          </div>
+        </div>
+      </div>
 
       <div
         style={{
@@ -197,6 +270,7 @@ function MatchCard({ fixture }: { fixture: IFixture }) {
 
 export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabProps) {
   const { data, isLoading, isFetching } = useGetFixturesQuery({ tournamentId });
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery({ tournamentId });
   const [activeFilter, setActiveFilter] = useState("ALL");
 
   const fixtures = useMemo(
@@ -351,7 +425,7 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
             </Tag>
           </div>
           {fixtures.map((f) => (
-            <MatchCard key={f.id} fixture={f} />
+            <MatchCard key={f.id} fixture={f} tournamentSummary={tournamentSummary} />
           ))}
             </div>
           ))}

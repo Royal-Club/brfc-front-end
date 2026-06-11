@@ -2,8 +2,10 @@ import React, { useMemo } from "react";
 import { Avatar, Card, Empty, Grid, List, Spin, Tag, Typography } from "antd";
 import { useGetFixturesQuery } from "../../state/features/fixtures/fixturesSlice";
 import { useGetTournamentStandingsQuery } from "../../state/features/statistics/statisticsSlice";
+import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
 import type { ITournamentStanding } from "../../state/features/statistics/statisticsTypes";
 import type { IFixture } from "../../state/features/fixtures/fixtureTypes";
+import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
 
 const { Text } = Typography;
 
@@ -21,6 +23,7 @@ const rankColor = (rank: number) => {
 export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
   const { data, isLoading } = useGetTournamentStandingsQuery({ tournamentId });
   const { data: fixturesResponse, isLoading: fixturesLoading } = useGetFixturesQuery({ tournamentId });
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery({ tournamentId });
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
@@ -144,22 +147,16 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
     return <Empty description="No standings data available" style={{ padding: 48 }} />;
   }
 
-  const tableGridTemplate = isMobile
-    ? "28px minmax(88px, 1.8fr) repeat(8, minmax(22px, 0.52fr))"
-    : "64px minmax(200px, 2.3fr) repeat(8, minmax(52px, 0.7fr))";
-  const tableMinWidth = undefined;
-
   const renderHeaderRow = () => (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: tableGridTemplate,
-        gap: isMobile ? 4 : 10,
+        gridTemplateColumns: "64px minmax(200px, 2.3fr) repeat(8, minmax(52px, 0.7fr))",
+        gap: 10,
         alignItems: "center",
-        padding: isMobile ? "0 0 10px" : "0 4px 14px",
+        padding: "0 4px 14px",
         marginBottom: 4,
         borderBottom: "1px solid rgba(255,255,255,0.08)",
-        minWidth: tableMinWidth,
       }}
     >
       {["#", "Team", "P", "W", "D", "L", "GF", "GA", "GD", "PTS"].map((label) => (
@@ -168,8 +165,8 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
           strong
           style={{
             color: "rgba(255,255,255,0.72)",
-            fontSize: isMobile ? 9 : 12,
-            letterSpacing: isMobile ? 0.2 : 0.6,
+            fontSize: 12,
+            letterSpacing: 0.6,
             textTransform: "uppercase",
             textAlign: label === "Team" ? "left" : "center",
           }}
@@ -181,47 +178,100 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
   );
 
   const renderRow = (row: ITournamentStanding & { rank: number; key: string }) => (
-    <List.Item style={{ padding: isMobile ? "8px 0" : "11px 4px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: tableGridTemplate,
-          gap: isMobile ? 4 : 10,
-          alignItems: "center",
-          width: "100%",
-          minWidth: tableMinWidth,
-        }}
-      >
+    <List.Item style={{ padding: isMobile ? "12px 0" : "11px 4px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      {isMobile ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 12, width: "100%" }}>
+          <Avatar
+            size={30}
+            style={{
+              backgroundColor: rankColor(row.rank),
+              fontWeight: 700,
+              flexShrink: 0,
+            }}
+          >
+            {row.rank}
+          </Avatar>
+          <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10 }}>
+            <Avatar
+              size={30}
+              src={getTeamLogoUrlFromSummary(tournamentSummary, row.teamId)}
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.85)",
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {getTeamInitials(row.teamName, "T")}
+            </Avatar>
+            <div style={{ minWidth: 0 }}>
+              <Text strong style={{ display: "block", color: "rgba(255,255,255,0.94)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {row.teamName}
+              </Text>
+              <Text type="secondary" style={{ fontSize: 12, display: "block" }}>
+                P {row.matches}  W {row.wins}  D {row.draws}  L {row.losses}
+              </Text>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <Tag style={{ margin: 0, borderRadius: 999, background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.78)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              GF {row.goalsFor}
+            </Tag>
+            <Tag style={{ margin: 0, borderRadius: 999, background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.78)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              GA {row.goalsAgainst}
+            </Tag>
+            <Tag style={{ margin: 0, borderRadius: 999, background: "rgba(255,255,255,0.04)", color: row.goalDifference > 0 ? "#52c41a" : row.goalDifference < 0 ? "#ff4d4f" : "rgba(255,255,255,0.78)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              GD {row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}
+            </Tag>
+            <Tag color="blue" style={{ margin: 0, fontWeight: 700, borderRadius: 999, padding: "4px 12px" }}>
+              {row.points} PTS
+            </Tag>
+          </div>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "64px minmax(200px, 2.3fr) repeat(8, minmax(52px, 0.7fr))",
+            gap: 10,
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
           <div style={{ display: "flex", justifyContent: "center" }}>
             <Avatar
-              size={isMobile ? 22 : 30}
+              size={30}
               style={{
                 backgroundColor: rankColor(row.rank),
                 fontWeight: 700,
-                fontSize: isMobile ? 13 : undefined,
               }}
             >
               {row.rank}
             </Avatar>
           </div>
-          <Text
-            strong
-            style={{
-              color: "rgba(255,255,255,0.94)",
-              fontSize: isMobile ? 11 : undefined,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {row.teamName}
-          </Text>
-          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center", fontSize: isMobile ? 11 : undefined }}>{row.matches}</Text>
-          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center", fontSize: isMobile ? 11 : undefined }}>{row.wins}</Text>
-          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center", fontSize: isMobile ? 11 : undefined }}>{row.draws}</Text>
-          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center", fontSize: isMobile ? 11 : undefined }}>{row.losses}</Text>
-          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center", fontSize: isMobile ? 11 : undefined }}>{row.goalsFor}</Text>
-          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center", fontSize: isMobile ? 11 : undefined }}>{row.goalsAgainst}</Text>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <Avatar
+              size={28}
+              src={getTeamLogoUrlFromSummary(tournamentSummary, row.teamId)}
+              style={{
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.85)",
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {getTeamInitials(row.teamName, "T")}
+            </Avatar>
+            <Text strong style={{ color: "rgba(255,255,255,0.94)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {row.teamName}
+            </Text>
+          </div>
+          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center" }}>{row.matches}</Text>
+          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center" }}>{row.wins}</Text>
+          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center" }}>{row.draws}</Text>
+          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center" }}>{row.losses}</Text>
+          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center" }}>{row.goalsFor}</Text>
+          <Text style={{ color: "rgba(255,255,255,0.82)", textAlign: "center" }}>{row.goalsAgainst}</Text>
           <Text
             style={{
               color:
@@ -232,15 +282,15 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
                     : "rgba(255,255,255,0.82)",
               textAlign: "center",
               fontWeight: 700,
-              fontSize: isMobile ? 11 : undefined,
             }}
           >
             {row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}
           </Text>
-          <Text style={{ color: "#69b1ff", textAlign: "center", fontWeight: 800, fontSize: isMobile ? 11 : undefined }}>
+          <Text style={{ color: "#69b1ff", textAlign: "center", fontWeight: 800 }}>
             {row.points}
           </Text>
-      </div>
+        </div>
+      )}
     </List.Item>
   );
 
@@ -257,7 +307,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
             border: "1px solid rgba(255,255,255,0.08)",
             marginBottom: 22,
           }}
-          bodyStyle={{ padding: isMobile ? "16px 14px 14px" : "18px 22px 18px" }}
+          bodyStyle={{ padding: "18px 22px 18px" }}
         >
           <div
             style={{
@@ -272,7 +322,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Text strong style={{ fontSize: isMobile ? 22 : 28, color: "#ffffff", lineHeight: 1 }}>
+              <Text strong style={{ fontSize: 28, color: "#ffffff", lineHeight: 1 }}>
                 {section.title}
               </Text>
               <Tag
@@ -293,7 +343,8 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
             </Text>
           </div>
 
-          {renderHeaderRow()}
+          {!isMobile ? renderHeaderRow() : null}
+
           <List
             dataSource={section.rows}
             renderItem={renderRow}
