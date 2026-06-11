@@ -14,6 +14,8 @@ interface IPlayer {
         id: number;
         name: string;
     }>;
+    photoKey?: string;
+    photoUrl?: string;
 }
 
 export default IPlayer;

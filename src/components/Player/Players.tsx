@@ -303,8 +303,9 @@ function Players() {
       key: "name",
       render: (_, record: IPlayer) => (
         <Space>
-          <Avatar 
-            style={{ 
+          <Avatar
+            src={record.photoUrl || undefined}
+            style={{
               backgroundColor: record.active ? '#1890ff' : '#ccc',
               color: '#fff'
             }}

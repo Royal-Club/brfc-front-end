@@ -3,6 +3,7 @@ import { Avatar, Card, Col, Empty, List, Row, Spin, Tag, Typography } from "antd
 import { UserOutlined } from "@ant-design/icons";
 import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { getTeamInitials, toAbsoluteLogoUrl } from "./teamLogoUtils";
+import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 
 const { Text, Title } = Typography;
 
@@ -101,7 +102,12 @@ export default function ViewerPlayersTab({ tournamentId }: ViewerPlayersTabProps
                   return (
                 <List.Item style={{ padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
-                    <Avatar size={28} icon={<UserOutlined />} style={{ backgroundColor: "rgba(255,255,255,0.1)" }} />
+                    <Avatar
+                      size={28}
+                      src={player.photoUrl ? toAbsolutePlayerPhotoUrl(player.photoUrl) : undefined}
+                      icon={!player.photoUrl ? <UserOutlined /> : undefined}
+                      style={{ backgroundColor: "rgba(255,255,255,0.1)", flexShrink: 0 }}
+                    />
                     <Text style={{ flex: 1, fontSize: 13, color: "rgba(255,255,255,0.92)" }}>{player.playerName}</Text>
                     {displayPosition && (
                       <Tag style={{ fontSize: 10, margin: 0, borderRadius: 999, background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.72)", border: "1px solid rgba(255,255,255,0.08)" }}>

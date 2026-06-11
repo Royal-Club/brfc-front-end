@@ -6,6 +6,7 @@ import {
   ReloadOutlined,
   RiseOutlined,
   StopOutlined,
+  UserOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
 import {
@@ -18,6 +19,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 import type { IPlayerStatisticsData } from "../../../state/features/statistics/statisticsTypes";
+import { toAbsolutePlayerPhotoUrl } from "../../../utils/playerPhotoUtils";
 
 const { Text, Title } = Typography;
 
@@ -31,7 +33,11 @@ interface LeaderboardRow {
   playerName: string;
   teamName: string;
   value: number;
+  photoUrl?: string;
 }
+
+const playerKey = (playerId: string | number | undefined | null): string =>
+  String(playerId ?? "");
 
 const rankAvatarColor = (rank: number) => {
   if (rank === 1) return "#d4af37";
@@ -42,7 +48,8 @@ const rankAvatarColor = (rank: number) => {
 
 const buildScorerRows = (
   players: IPlayerStatisticsData[] = [],
-  teamLookup: Map<number, string>
+  teamLookup: Map<string, string>,
+  playerPhotoLookup: Map<string, string>
 ): LeaderboardRow[] =>
   players
     .filter((player) => player.statistics.goalsScored > 0)
@@ -50,13 +57,15 @@ const buildScorerRows = (
     .map((player) => ({
       key: `scorer-${player.playerId}`,
       playerName: player.playerName,
-      teamName: teamLookup.get(player.playerId) || "-",
+      teamName: teamLookup.get(playerKey(player.playerId)) || "-",
       value: player.statistics.goalsScored,
+      photoUrl: playerPhotoLookup.get(playerKey(player.playerId)),
     }));
 
 const buildAssistRows = (
   players: IPlayerStatisticsData[] = [],
-  teamLookup: Map<number, string>
+  teamLookup: Map<string, string>,
+  playerPhotoLookup: Map<string, string>
 ): LeaderboardRow[] =>
   players
     .filter((player) => player.statistics.assists > 0)
@@ -64,13 +73,15 @@ const buildAssistRows = (
     .map((player) => ({
       key: `assist-${player.playerId}`,
       playerName: player.playerName,
-      teamName: teamLookup.get(player.playerId) || "-",
+      teamName: teamLookup.get(playerKey(player.playerId)) || "-",
       value: player.statistics.assists,
+      photoUrl: playerPhotoLookup.get(playerKey(player.playerId)),
     }));
 
 const buildCardRows = (
   players: IPlayerStatisticsData[] = [],
-  teamLookup: Map<number, string>,
+  teamLookup: Map<string, string>,
+  playerPhotoLookup: Map<string, string>,
   cardType: "yellow" | "red"
 ): LeaderboardRow[] => {
   const readValue = (player: IPlayerStatisticsData) =>
@@ -95,8 +106,9 @@ const buildCardRows = (
     .map((player) => ({
       key: `${cardType}-${player.playerId}`,
       playerName: player.playerName,
-      teamName: teamLookup.get(player.playerId) || "-",
+      teamName: teamLookup.get(playerKey(player.playerId)) || "-",
       value: readValue(player),
+      photoUrl: playerPhotoLookup.get(playerKey(player.playerId)),
     }));
 };
 
@@ -228,9 +240,17 @@ function LeaderboardSection({
                       {index + 1}
                     </Avatar>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <Text strong style={{ display: "block", color: "rgba(255,255,255,0.94)" }}>
-                        {row.playerName}
-                      </Text>
+                      <Space size={8} style={{ width: "100%", alignItems: "center" }}>
+                        <Avatar
+                          size={28}
+                          src={row.photoUrl ? toAbsolutePlayerPhotoUrl(row.photoUrl) : undefined}
+                          icon={!row.photoUrl ? <UserOutlined /> : undefined}
+                          style={{ flexShrink: 0 }}
+                        />
+                        <Text strong style={{ display: "block", color: "rgba(255,255,255,0.94)" }}>
+                          {row.playerName}
+                        </Text>
+                      </Space>
                       <Text type="secondary" style={{ fontSize: 12 }}>
                         {row.teamName || "-"}
                       </Text>
@@ -347,13 +367,30 @@ export default function StatsLeaderboardPanel({
   };
 
   const playerTeamLookup = useMemo(() => {
-    const map = new Map<number, string>();
+    const map = new Map<string, string>();
     const tournament = tournamentSummaryQuery.data?.content?.[0];
 
     (tournament?.teams || []).forEach((team) => {
       (team.players || []).forEach((player) => {
-        if (!map.has(player.playerId)) {
-          map.set(player.playerId, team.teamName);
+        const key = playerKey(player.playerId);
+        if (!map.has(key)) {
+          map.set(key, team.teamName);
+        }
+      });
+    });
+
+    return map;
+  }, [tournamentSummaryQuery.data]);
+
+  const playerPhotoLookup = useMemo(() => {
+    const map = new Map<string, string>();
+    const tournament = tournamentSummaryQuery.data?.content?.[0];
+
+    (tournament?.teams || []).forEach((team) => {
+      (team.players || []).forEach((player) => {
+        const key = playerKey(player.playerId);
+        if (!map.has(key) && player.photoUrl) {
+          map.set(key, player.photoUrl);
         }
       });
     });
@@ -362,30 +399,42 @@ export default function StatsLeaderboardPanel({
   }, [tournamentSummaryQuery.data]);
 
   const topScorers = useMemo(
-    () => buildScorerRows(playerStatisticsQuery.data?.content, playerTeamLookup),
-    [playerStatisticsQuery.data, playerTeamLookup]
+    () =>
+      buildScorerRows(
+        playerStatisticsQuery.data?.content,
+        playerTeamLookup,
+        playerPhotoLookup
+      ),
+    [playerStatisticsQuery.data, playerTeamLookup, playerPhotoLookup]
   );
   const topAssists = useMemo(
-    () => buildAssistRows(playerStatisticsQuery.data?.content, playerTeamLookup),
-    [playerStatisticsQuery.data, playerTeamLookup]
+    () =>
+      buildAssistRows(
+        playerStatisticsQuery.data?.content,
+        playerTeamLookup,
+        playerPhotoLookup
+      ),
+    [playerStatisticsQuery.data, playerTeamLookup, playerPhotoLookup]
   );
   const yellowCardLeaders = useMemo(
     () =>
       buildCardRows(
         playerStatisticsQuery.data?.content,
         playerTeamLookup,
+        playerPhotoLookup,
         "yellow"
       ),
-    [playerStatisticsQuery.data, playerTeamLookup]
+    [playerStatisticsQuery.data, playerTeamLookup, playerPhotoLookup]
   );
   const redCardLeaders = useMemo(
     () =>
       buildCardRows(
         playerStatisticsQuery.data?.content,
         playerTeamLookup,
+        playerPhotoLookup,
         "red"
       ),
-    [playerStatisticsQuery.data, playerTeamLookup]
+    [playerStatisticsQuery.data, playerTeamLookup, playerPhotoLookup]
   );
 
   return (

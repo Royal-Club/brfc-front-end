@@ -12,23 +12,27 @@ import {
     message,
     Breadcrumb,
     Divider,
-    Typography
+    Typography,
+    Upload,
+    Avatar
 } from "antd";
 
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { 
-    MailOutlined, 
-    UserOutlined, 
-    IdcardOutlined, 
-    SkypeOutlined, 
-    PhoneOutlined, 
+import {
+    MailOutlined,
+    UserOutlined,
+    IdcardOutlined,
+    SkypeOutlined,
+    PhoneOutlined,
     EnvironmentOutlined,
     HomeFilled,
     TeamOutlined,
     CheckCircleOutlined,
-    CloseCircleOutlined
+    CloseCircleOutlined,
+    CameraOutlined,
+    LoadingOutlined
 } from "@ant-design/icons";
 import IFootballPosition from "../../interfaces/IFootballPosition";
 import { API_URL, COMMON_PLAYER_PASSWORD } from "../../settings";
@@ -36,6 +40,8 @@ import { checkTockenValidity } from "../../utils/utils";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import axiosApi from "../../state/api/axiosBase";
+import { usePresignPlayerPhotoUploadMutation } from "../../state/features/player/playerSlice";
+import { validatePlayerPhoto, compressPlayerPhoto, toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 
 const { Title } = Typography;
 
@@ -51,6 +57,10 @@ function Player() {
     const [formSubmitButtonText, setFormSubmitButtonText] = useState("Create");
     const [playerLoading, setPlayerLoading] = React.useState<boolean>(false);
     const [playerForm] = Form.useForm();
+    const [presignPlayerPhoto] = usePresignPlayerPhotoUploadMutation();
+    const [photoKey, setPhotoKey] = useState<string | null>(null);
+    const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+    const [photoUploading, setPhotoUploading] = useState(false);
 
     const tokenContent = localStorage.getItem("tokenContent");
 
@@ -82,7 +92,8 @@ function Player() {
             mobileNo: playerForm.getFieldValue("mobileNo"),
             password: COMMON_PLAYER_PASSWORD,
             playingPosition:
-                playerForm.getFieldValue("playingPosition") || "UNASSIGNED", // Default to avoid undefined
+                playerForm.getFieldValue("playingPosition") || "UNASSIGNED",
+            photoKey: photoKey || undefined,
         };
 
         if (!id) {
@@ -158,6 +169,10 @@ function Player() {
                     active: response.data.content.active,
                     playingPosition: response.data.content.playingPosition,
                 });
+                if (response.data.content.photoKey) {
+                    setPhotoKey(response.data.content.photoKey);
+                    setPhotoPreviewUrl(toAbsolutePlayerPhotoUrl(response.data.content.photoUrl) || null);
+                }
                 setPlayerLoading(false);
                 setFormSubmitButtonText("Change");
             })
@@ -242,6 +257,64 @@ function Player() {
                             >
                                 <Spin spinning={playerLoading}>
                                     <Row gutter={[16, 16]}>
+                                        {/* Photo upload section */}
+                                        <Col xs={24} style={{ marginBottom: 8 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                                                <Avatar
+                                                    size={80}
+                                                    src={photoPreviewUrl || undefined}
+                                                    icon={!photoPreviewUrl ? <UserOutlined /> : undefined}
+                                                    style={{ border: "2px solid #d9d9d9", flexShrink: 0 }}
+                                                />
+                                                <Upload
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    showUploadList={false}
+                                                    beforeUpload={async (file) => {
+                                                        const error = validatePlayerPhoto(file);
+                                                        if (error) { message.error(error); return false; }
+                                                        setPhotoUploading(true);
+                                                        try {
+                                                            const compressed = await compressPlayerPhoto(file);
+                                                            const contentType = file.type === "image/png" ? "image/png" : "image/jpeg";
+                                                            const ext = contentType === "image/png" ? ".png" : ".jpg";
+                                                            const fileName = file.name.replace(/\.[^.]+$/, ext);
+                                                            const res = await presignPlayerPhoto({ fileName, contentType }).unwrap();
+                                                            const { key, uploadUrl } = res.content;
+                                                            const uploadResp = await fetch(uploadUrl, {
+                                                                method: "PUT",
+                                                                headers: { "Content-Type": contentType },
+                                                                body: compressed,
+                                                            });
+                                                            if (!uploadResp.ok) throw new Error("Upload failed");
+                                                            setPhotoKey(key);
+                                                            setPhotoPreviewUrl(URL.createObjectURL(compressed));
+                                                            message.success("Photo uploaded");
+                                                        } catch (err: any) {
+                                                            message.error(err?.message || "Photo upload failed");
+                                                        } finally {
+                                                            setPhotoUploading(false);
+                                                        }
+                                                        return false;
+                                                    }}
+                                                >
+                                                    <Button
+                                                        icon={photoUploading ? <LoadingOutlined /> : <CameraOutlined />}
+                                                        disabled={photoUploading}
+                                                    >
+                                                        {photoPreviewUrl ? "Change Photo" : "Upload Photo"}
+                                                    </Button>
+                                                </Upload>
+                                                {photoPreviewUrl && (
+                                                    <Button
+                                                        size="small"
+                                                        danger
+                                                        onClick={() => { setPhotoKey(null); setPhotoPreviewUrl(null); }}
+                                                    >
+                                                        Remove
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </Col>
                                         <Col md={12} lg={8}>
                                             <Form.Item
                                                 name="name"

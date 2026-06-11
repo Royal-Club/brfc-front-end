@@ -27,6 +27,8 @@ export interface TournamentPlayerInfoType {
     isCaptain?: boolean;
     teamPlayerRole?: string;
     jerseyNumber?: number;
+    photoUrl?: string;
+    photoKey?: string;
 }
 
 export interface IoTournamentSummaryResType extends BasicResType {
