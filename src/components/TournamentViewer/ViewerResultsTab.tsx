@@ -349,8 +349,8 @@ function ResultCard({
                   minWidth: 160,
                   maxWidth: 200,
                   textAlign: "center",
-                  padding: "16px 22px",
-                  borderRadius: 28,
+                  padding: "4px 16px",
+                  borderRadius: 16,
                   background:
                     "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)",
                   border: "1px solid rgba(255,255,255,0.1)",
