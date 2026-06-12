@@ -14,6 +14,14 @@ export default function CreateTeamComponent({
     const [createTeam, { isLoading: isCreating }] =
         useCreateTournamentTeamMutation();
 
+    const getErrorMessage = (error: any) => {
+        if (typeof error === "string") return error;
+        if (error?.data?.message) return error.data.message;
+        if (error?.error) return error.error;
+        if (error?.message) return error.message;
+        return "Failed to create team";
+    };
+
     const handleCreateTeam = () => {
         const teamName = `Team ${String.fromCharCode(
             65 + existingTeams.length
@@ -24,6 +32,9 @@ export default function CreateTeamComponent({
             .then(() => {
                 message.success("Team created successfully");
                 refetchSummary();
+            })
+            .catch((error: any) => {
+                message.error(getErrorMessage(error));
             });
     };
 

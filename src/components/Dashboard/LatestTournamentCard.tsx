@@ -23,6 +23,14 @@ import { TournamentPlayerInfoType } from '../../state/features/tournaments/tourn
 
 const { Title, Text } = Typography;
 
+const getErrorMessage = (error: any) => {
+    if (typeof error === 'string') return error;
+    if (error?.data?.message) return error.data.message;
+    if (error?.error) return error.error;
+    if (error?.message) return error.message;
+    return 'Failed to update participation status';
+};
+
 const LatestTournamentCard: React.FC = () => {
     const loginInfo = useSelector(selectLoginInfo);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -78,6 +86,8 @@ const LatestTournamentCard: React.FC = () => {
             
             message.success(statusMessage);
             refetch();
+        } catch (error: any) {
+            message.error(getErrorMessage(error));
         } finally {
             setIsUpdating(false);
         }

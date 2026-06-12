@@ -86,6 +86,12 @@ interface InteractiveTournamentTabProps {
   isActive?: boolean;
 }
 
+interface TeamAssignmentContext {
+  groupId: number | null;
+  roundId: number | null;
+  roundType?: "GROUP_BASED" | "DIRECT_KNOCKOUT";
+}
+
 export default function InteractiveTournamentTab({
   tournamentId,
   teams,
@@ -97,6 +103,11 @@ export default function InteractiveTournamentTab({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [teamAssignmentContext, setTeamAssignmentContext] = useState<TeamAssignmentContext>({
+    groupId: null,
+    roundId: null,
+    roundType: undefined,
+  });
   const { token } = theme.useToken();
   const loginInfo = useSelector(selectLoginInfo);
   
@@ -411,6 +422,11 @@ export default function InteractiveTournamentTab({
       }
       
       dispatch(setSelectedNode({ type: "group", id: groupId, data: { ...group, roundId: round.id } }));
+      setTeamAssignmentContext({
+        groupId,
+        roundId: round.id,
+        roundType: "GROUP_BASED",
+      });
       dispatch(setShowTeamAssignment(true));
     }
   };
@@ -853,6 +869,11 @@ export default function InteractiveTournamentTab({
                     icon={<UserAddOutlined />}
                     onClick={() => {
                       dispatch(setSelectedNode({ type: "round", id: round.id, data: round }));
+                      setTeamAssignmentContext({
+                        groupId: null,
+                        roundId: round.id,
+                        roundType: round.roundType as "GROUP_BASED" | "DIRECT_KNOCKOUT",
+                      });
                       dispatch(setShowTeamAssignment(true));
                     }}
                     block
@@ -1530,19 +1551,21 @@ export default function InteractiveTournamentTab({
       />
 
       <TeamAssignment
-        groupId={selectedNode?.type === "group" ? selectedNode.id : null}
-        roundId={selectedNode?.type === "round" ? selectedNode.id : (selectedNode?.data?.roundId || null)}
-        roundType={selectedNode?.type === "round" ? (selectedNode.data?.roundType as "GROUP_BASED" | "DIRECT_KNOCKOUT") : undefined}
+        groupId={teamAssignmentContext.groupId}
+        roundId={teamAssignmentContext.roundId}
+        roundType={teamAssignmentContext.roundType}
         teams={teams}
         tournamentStructure={tournamentStructure}
         isModalVisible={showTeamAssignment}
         onClose={() => {
           dispatch(setShowTeamAssignment(false));
+          setTeamAssignmentContext({ groupId: null, roundId: null, roundType: undefined });
           dispatch(setSelectedNode(null));
         }}
         onSuccess={() => {
           onRefresh();
           dispatch(setShowTeamAssignment(false));
+          setTeamAssignmentContext({ groupId: null, roundId: null, roundType: undefined });
           dispatch(setSelectedNode(null));
         }}
       />
