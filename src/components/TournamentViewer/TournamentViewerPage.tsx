@@ -2,20 +2,27 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Empty, Grid, Layout, Select, Space, Tabs, Typography } from "antd";
 import {
   BarChartOutlined,
+  BookOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   DownOutlined,
   EnvironmentOutlined,
+  HomeOutlined,
   TeamOutlined,
   TrophyOutlined,
   UnorderedListOutlined,
 } from "@ant-design/icons";
+import ViewerHomeTab from "./ViewerHomeTab";
 import ViewerFixturesTab from "./ViewerFixturesTab";
 import ViewerResultsTab from "./ViewerResultsTab";
 import ViewerTableTab from "./ViewerTableTab";
 import ViewerPlayersTab from "./ViewerPlayersTab";
+import ViewerRulesTab from "./ViewerRulesTab";
 import StatsLeaderboardPanel from "../Tournaments/Statistics/StatsLeaderboardPanel";
-import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
+import {
+  useGetTournamentsQuery,
+  useGetTournamentSummaryQuery,
+} from "../../state/features/tournaments/tournamentsSlice";
 import { Link } from "react-router-dom";
 import { showBdLocalTime } from "../../utils/utils";
 import { useSelector } from "react-redux";
@@ -46,7 +53,7 @@ export default function TournamentViewerPage({
   const isLoggedIn = Boolean(loginInfo.token);
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState("fixtures");
+  const [activeTab, setActiveTab] = useState("home");
 
   const { data: tournamentsData, isLoading: tournamentsLoading } =
     useGetTournamentsQuery({
@@ -74,6 +81,12 @@ export default function TournamentViewerPage({
     ? showBdLocalTime(selectedTournament.tournamentDate)
     : "Date/time not set";
 
+  const { data: summaryData } = useGetTournamentSummaryQuery(
+    { tournamentId: selectedId ?? 0 },
+    { skip: !selectedId },
+  );
+  const hasRules = Boolean(summaryData?.content?.[0]?.rules?.trim());
+
   useEffect(() => {
     if (tournaments.length === 0) {
       if (selectedId !== null) {
@@ -95,10 +108,38 @@ export default function TournamentViewerPage({
 
   const handleSelect = (id: number) => {
     setSelectedId(id);
-    setActiveTab("fixtures");
+    setActiveTab("home");
   };
 
   const tabItems = [
+    {
+      key: "home",
+      label: (
+        <span>
+          <HomeOutlined style={{ marginRight: 6 }} />
+          Home
+        </span>
+      ),
+      children: selectedId ? (
+        <ViewerHomeTab tournamentId={selectedId} />
+      ) : null,
+    },
+    ...(hasRules
+      ? [
+          {
+            key: "rules",
+            label: (
+              <span>
+                <BookOutlined style={{ marginRight: 6 }} />
+                Rules
+              </span>
+            ),
+            children: selectedId ? (
+              <ViewerRulesTab tournamentId={selectedId} />
+            ) : null,
+          },
+        ]
+      : []),
     {
       key: "fixtures",
       label: (

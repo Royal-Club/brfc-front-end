@@ -1,0 +1,58 @@
+.heroCard {
+  border-radius: 34px;
+  text-align: center;
+  padding: 64px 32px;
+}
+
+.heroBadge {
+  margin-bottom: 24px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(24, 255, 152, 0.08);
+  color: #18ff98;
+  border: 1px solid rgba(24, 255, 152, 0.35);
+}
+
+.heroTitle {
+  margin: 0;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  line-height: 1.15;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.heroSeason {
+  display: block;
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+}
+
+.heroDescription {
+  margin-top: 24px;
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.78);
+  white-space: pre-line;
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 768px) {
+  .heroCard {
+    padding: 40px 18px;
+  }
+
+  .heroBadge {
+    margin-bottom: 16px;
+  }
+
+  .heroDescription {
+    margin-top: 16px;
+  }
+}

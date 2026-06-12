@@ -57,6 +57,7 @@ export default function CreateTournament({
         tournamentTime: any;
         venueId: number;
         defaultTournament?: boolean;
+        rules?: string;
     }) => {
         if (!values.tournamentDate || !values.tournamentTime) {
             message.error("Please select both date and time");
@@ -78,6 +79,7 @@ export default function CreateTournament({
             tournamentDate: tournamentDateUTC,
             venueId: values.venueId,
             defaultTournament: Boolean(values.defaultTournament),
+            rules: values.rules,
         };
 
         if (tournamentId) {
@@ -125,6 +127,7 @@ export default function CreateTournament({
                 tournamentDate: tournamentDateTime,
                 tournamentTime: tournamentDateTime,
                 defaultTournament: Boolean(tournamentData.defaultTournament),
+                rules: tournamentData.rules,
                 venueId: venuesData.content.find(
                     (venue: any) => venue.name === tournamentData.venueName
                 )?.id,
@@ -251,6 +254,17 @@ export default function CreateTournament({
                             valuePropName="checked"
                         >
                             <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="rules"
+                            label="Tournament Rules"
+                            extra="Optional. Supports Markdown formatting (headings, lists, bold, etc.). If left empty, the Rules tab will be hidden on the viewer page."
+                        >
+                            <Input.TextArea
+                                rows={8}
+                                placeholder="Enter tournament rules in Markdown format"
+                            />
                         </Form.Item>
 
                         <Form.Item>

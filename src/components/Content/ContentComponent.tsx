@@ -47,6 +47,7 @@ import ClubRules from "../ClubRules/ClubRules";
 import MatchDetailsPage from "../Tournaments/Fixtures/MatchDetailsPage";
 import TournamentViewerPage from "../TournamentViewer/TournamentViewerPage";
 import companyLogo from "../../assets/logo.png";
+import AppFooter from "../CommonAtoms/AppFooter";
 import type { MenuProps } from "antd";
 import { useGetMyGoalkeepingHistoryQuery } from "../../state/features/player/playerSlice";
 import { showBdLocalTime } from "../../utils/utils";
@@ -485,6 +486,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             }}
                         />
                     )}
+                    <AppFooter />
                 </Content>
             </Layout>
 
