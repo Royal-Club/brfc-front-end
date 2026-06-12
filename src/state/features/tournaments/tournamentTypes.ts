@@ -8,6 +8,8 @@ export interface IoTournamentSingleSummaryType {
     activeStatus: boolean;
     defaultTournament?: boolean;
     tournamentStatus?: string;
+    season?: string;
+    description?: string;
     rules?: string;
 }
 
