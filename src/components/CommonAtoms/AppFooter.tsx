@@ -18,7 +18,7 @@ export default function AppFooter() {
       <Text type="secondary" style={{ fontSize: 13 }}>
         BJIT Royal Football Club — Unity. Energy. Legacy.
         <br />
-        &copy; {year} BJIT Group. All rights reserved.
+        &copy; {year} BJIT Royal Football Club. All rights reserved.
       </Text>
     </Footer>
   );
