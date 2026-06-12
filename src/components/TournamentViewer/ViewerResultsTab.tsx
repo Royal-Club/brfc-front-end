@@ -414,9 +414,7 @@ function ResultCard({
           </Row>
         )}
 
-        {(homeScorers.length > 0 ||
-          awayScorers.length > 0 ||
-          fixture.venueName) && (
+        {(homeScorers.length > 0 || awayScorers.length > 0) && (
           <>
             <Divider
               style={{
@@ -634,15 +632,15 @@ function ResultCard({
                 </Col>
               </Row>
             )}
-            {fixture.venueName && (
-              <div style={{ marginTop: 16, textAlign: "center" }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  <EnvironmentOutlined style={{ marginRight: 4 }} />
-                  {fixture.venueName}
-                </Text>
-              </div>
-            )}
           </>
+        )}
+        {fixture.venueName && (
+          <div style={{ marginTop: 16, textAlign: "center" }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              <EnvironmentOutlined style={{ marginRight: 4 }} />
+              {fixture.venueName}
+            </Text>
+          </div>
         )}
       </div>
     </Card>
