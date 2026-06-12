@@ -1,11 +1,31 @@
 import React, { useMemo } from "react";
-import { Alert, Avatar, Card, Col, Divider, Empty, Grid, Row, Space, Spin, Tag, Typography } from "antd";
+import {
+  Alert,
+  Avatar,
+  Card,
+  Col,
+  Divider,
+  Empty,
+  Grid,
+  Row,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+} from "antd";
 import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
-import { useGetFixturesQuery, useGetMatchEventsQuery } from "../../state/features/fixtures/fixturesSlice";
+import {
+  useGetFixturesQuery,
+  useGetMatchEventsQuery,
+} from "../../state/features/fixtures/fixturesSlice";
 import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { MatchEventType } from "../../state/features/fixtures/fixtureTypes";
-import type { IFixture, IMatchEvent } from "../../state/features/fixtures/fixtureTypes";
+import type {
+  IFixture,
+  IMatchEvent,
+} from "../../state/features/fixtures/fixtureTypes";
 import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
+import styles from "./ViewerFixturesTab.module.css";
 
 const { Text, Title } = Typography;
 
@@ -13,7 +33,10 @@ interface ViewerResultsTabProps {
   tournamentId: number;
 }
 
-const formatGoalMinute = (event: IMatchEvent, matchStartedAt?: string | null) => {
+const formatGoalMinute = (
+  event: IMatchEvent,
+  matchStartedAt?: string | null,
+) => {
   if (matchStartedAt && event.createdDate) {
     try {
       const startMs = new Date(matchStartedAt).getTime();
@@ -35,11 +58,15 @@ const formatGoalMinute = (event: IMatchEvent, matchStartedAt?: string | null) =>
 const buildGoalEvents = (
   events: IMatchEvent[] = [],
   teamId: number,
-  matchStartedAt?: string | null
-
+  matchStartedAt?: string | null,
 ): Array<{ key: string; playerName: string; minute: string }> => {
   const goalEvents = events
-    .filter((event) => event.eventType === MatchEventType.GOAL && event.teamId === teamId && event.playerId)
+    .filter(
+      (event) =>
+        event.eventType === MatchEventType.GOAL &&
+        event.teamId === teamId &&
+        event.playerId,
+    )
     .sort((left, right) => (left.eventTime || 0) - (right.eventTime || 0));
 
   return goalEvents.map((event, index) => ({
@@ -49,90 +76,114 @@ const buildGoalEvents = (
   }));
 };
 
-function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixture; tournamentSummary?: any; isMobile: boolean }) {
+const buildStageLabel = (label: string) => label.toUpperCase();
+
+const getResultCardClassName = (status: string) => {
+  if (status === "COMPLETED")
+    return `${styles.matchCard} ${styles.matchCardCompleted}`;
+  if (status === "ONGOING" || status === "PAUSED")
+    return `${styles.matchCard} ${styles.matchCardLive}`;
+  return styles.matchCard;
+};
+
+const formatPlayedDate = (value?: string | null) => {
+  if (!value) return "DATE N/A";
+  return new Date(value).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+function ResultCard({
+  fixture,
+  tournamentSummary,
+  isMobile,
+}: {
+  fixture: IFixture;
+  tournamentSummary?: any;
+  isMobile: boolean;
+}) {
   const homeWin = fixture.homeTeamScore > fixture.awayTeamScore;
   const awayWin = fixture.awayTeamScore > fixture.homeTeamScore;
-  const isLive = fixture.matchStatus === "ONGOING" || fixture.matchStatus === "PAUSED";
+  const isLive =
+    fixture.matchStatus === "ONGOING" || fixture.matchStatus === "PAUSED";
   const { data: eventsResponse } = useGetMatchEventsQuery(
     { matchId: fixture.id },
-    { skip: fixture.matchStatus === "SCHEDULED" }
+    { skip: fixture.matchStatus === "SCHEDULED" },
   );
 
   const homeScorers = useMemo(
-    () => buildGoalEvents(eventsResponse?.content, fixture.homeTeamId, fixture.startedAt),
-    [eventsResponse?.content, fixture.homeTeamId, fixture.startedAt]
+    () =>
+      buildGoalEvents(
+        eventsResponse?.content,
+        fixture.homeTeamId,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.homeTeamId, fixture.startedAt],
   );
   const awayScorers = useMemo(
-    () => buildGoalEvents(eventsResponse?.content, fixture.awayTeamId, fixture.startedAt),
-    [eventsResponse?.content, fixture.awayTeamId, fixture.startedAt]
+    () =>
+      buildGoalEvents(
+        eventsResponse?.content,
+        fixture.awayTeamId,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.awayTeamId, fixture.startedAt],
   );
-  const homeRecordedGoals = useMemo(
-    () => homeScorers.length,
-    [homeScorers]
-  );
-  const awayRecordedGoals = useMemo(
-    () => awayScorers.length,
-    [awayScorers]
-  );
+  const homeRecordedGoals = useMemo(() => homeScorers.length, [homeScorers]);
+  const awayRecordedGoals = useMemo(() => awayScorers.length, [awayScorers]);
   const hasScorerMismatch =
-    fixture.matchStatus === "COMPLETED" &&
-    homeRecordedGoals !== fixture.homeTeamScore ||
-    (fixture.matchStatus === "COMPLETED" && awayRecordedGoals !== fixture.awayTeamScore);
+    (fixture.matchStatus === "COMPLETED" &&
+      homeRecordedGoals !== fixture.homeTeamScore) ||
+    (fixture.matchStatus === "COMPLETED" &&
+      awayRecordedGoals !== fixture.awayTeamScore);
 
   const competitionLabel = fixture.groupName
     ? fixture.groupName.toUpperCase()
     : fixture.round != null
-    ? `ROUND ${fixture.round}`
-    : "RESULT";
+      ? `ROUND ${fixture.round}`
+      : "RESULT";
   const playedDate = fixture.completedAt || fixture.matchDate;
-  const homeTeamLogoUrl = getTeamLogoUrlFromSummary(tournamentSummary, fixture.homeTeamId);
-  const awayTeamLogoUrl = getTeamLogoUrlFromSummary(tournamentSummary, fixture.awayTeamId);
+  const homeTeamLogoUrl = getTeamLogoUrlFromSummary(
+    tournamentSummary,
+    fixture.homeTeamId,
+  );
+  const awayTeamLogoUrl = getTeamLogoUrlFromSummary(
+    tournamentSummary,
+    fixture.awayTeamId,
+  );
 
   return (
     <Card
-      size="small"
-      style={{
-        marginBottom: 18,
-        borderRadius: 28,
-        overflow: "hidden",
-        border: "1px solid rgba(255,255,255,0.08)",
-        background:
-          "radial-gradient(circle at center, rgba(82,196,26,0.08) 0%, rgba(255,255,255,0.02) 42%, rgba(255,255,255,0.01) 100%)",
-        boxShadow: "0 16px 36px rgba(0,0,0,0.28)",
-      }}
-      bodyStyle={{ padding: 0 }}
+      bordered={false}
+      className={getResultCardClassName(fixture.matchStatus)}
+      bodyStyle={{ padding: isMobile ? "14px 14px 16px" : "20px 22px 24px" }}
     >
-      <div
-        style={{
-          padding: isMobile ? "14px 12px" : "18px 24px",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: isMobile ? 8 : 12,
-          flexWrap: isMobile ? "wrap" : "nowrap",
-          textTransform: "uppercase",
-        }}
-      >
-        <Text strong style={{ fontSize: isMobile ? 13 : 16, letterSpacing: isMobile ? 0.4 : 0.6, opacity: 0.7 }}>
-          {competitionLabel}
-        </Text>
-        <Space size={isMobile ? 6 : 10}>
-          {isLive && <Tag color="green">LIVE</Tag>}
-          {fixture.matchStatus === "PAUSED" && <Tag color="purple">PAUSED</Tag>}
+      <div className={styles.cardTopRow}>
+        <Tag className={styles.stageTag}>
+          {buildStageLabel(competitionLabel)}
+        </Tag>
+        <Space size={8} wrap>
+          {isLive && (
+            <Tag className={styles.statusTag} color="green">
+              LIVE
+            </Tag>
+          )}
+          {fixture.matchStatus === "PAUSED" && (
+            <Tag className={styles.statusTag} color="purple">
+              PAUSED
+            </Tag>
+          )}
           {playedDate && (
-            <Text strong style={{ fontSize: isMobile ? 12 : 15, letterSpacing: isMobile ? 0.4 : 0.6, opacity: 0.8 }}>
-              {new Date(playedDate).toLocaleDateString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })}
-            </Text>
+            <Tag className={styles.statusTag} color="default">
+              {formatPlayedDate(playedDate)}
+            </Tag>
           )}
         </Space>
       </div>
 
-      <div style={{ padding: isMobile ? "16px 12px 14px" : "28px 24px 22px" }}>
+      <div>
         {hasScorerMismatch && (
           <Alert
             type="warning"
@@ -145,11 +196,20 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
 
         {isMobile ? (
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 6 }}>
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                gap: 6,
+              }}
+            >
               <Text
                 strong
+                className={styles.teamName}
                 style={{
-                  fontSize: 12,
                   color: homeWin ? "#ffffff" : "rgba(255,255,255,0.88)",
                   lineHeight: 1.3,
                   flex: 1,
@@ -160,10 +220,11 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
                 {fixture.homeTeamName}
               </Text>
               <Avatar
-                size={28}
+                size={isMobile ? 40 : 58}
                 src={homeTeamLogoUrl}
                 style={{
-                  background: "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
+                  background:
+                    "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
                   color: "#1890ff",
                   fontWeight: 800,
                   fontSize: 11,
@@ -176,32 +237,52 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
 
             <div
               style={{
-                minWidth: 92,
+                minWidth: 68,
                 textAlign: "center",
-                padding: "8px 10px",
-                borderRadius: 16,
-                background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)",
+                padding: "4px 6px",
+                borderRadius: 10,
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 flexShrink: 0,
               }}
             >
-              <Text strong style={{ fontSize: 17, lineHeight: 1, color: "#ffffff" }}>
+              <Text
+                strong
+                style={{ fontSize: 13, lineHeight: 1, color: "#ffffff" }}
+              >
                 {fixture.homeTeamScore}
               </Text>
-              <Text strong style={{ fontSize: 14, margin: "0 6px", opacity: 0.5 }}>
+              <Text
+                strong
+                style={{ fontSize: 10, margin: "0 3px", opacity: 0.5 }}
+              >
                 -
               </Text>
-              <Text strong style={{ fontSize: 17, lineHeight: 1, color: "#ffffff" }}>
+              <Text
+                strong
+                style={{ fontSize: 13, lineHeight: 1, color: "#ffffff" }}
+              >
                 {fixture.awayTeamScore}
               </Text>
             </div>
 
-            <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: 6,
+              }}
+            >
               <Avatar
-                size={28}
+                size={isMobile ? 40 : 58}
                 src={awayTeamLogoUrl}
                 style={{
-                  background: "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
+                  background:
+                    "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
                   color: "#1890ff",
                   fontWeight: 800,
                   fontSize: 11,
@@ -212,8 +293,8 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
               </Avatar>
               <Text
                 strong
+                className={styles.teamName}
                 style={{
-                  fontSize: 12,
                   color: awayWin ? "#ffffff" : "rgba(255,255,255,0.88)",
                   lineHeight: 1.3,
                   textAlign: "left",
@@ -237,18 +318,19 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
               >
                 <Text
                   strong
+                  className={styles.teamName}
                   style={{
-                    fontSize: 24,
                     color: homeWin ? "#ffffff" : "rgba(255,255,255,0.88)",
                   }}
                 >
                   {fixture.homeTeamName}
                 </Text>
                 <Avatar
-                  size={82}
+                  size={isMobile ? 40 : 58}
                   src={homeTeamLogoUrl}
                   style={{
-                    background: "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
+                    background:
+                      "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
                     color: "#1890ff",
                     fontWeight: 800,
                     fontSize: 24,
@@ -269,17 +351,27 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
                   textAlign: "center",
                   padding: "16px 22px",
                   borderRadius: 28,
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)",
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)",
                   border: "1px solid rgba(255,255,255,0.1)",
                 }}
               >
-                <Text strong style={{ fontSize: 40, lineHeight: 1, color: "#ffffff" }}>
+                <Text
+                  strong
+                  style={{ fontSize: 40, lineHeight: 1, color: "#ffffff" }}
+                >
                   {fixture.homeTeamScore}
                 </Text>
-                <Text strong style={{ fontSize: 26, margin: "0 10px", opacity: 0.5 }}>
+                <Text
+                  strong
+                  style={{ fontSize: 26, margin: "0 10px", opacity: 0.5 }}
+                >
                   -
                 </Text>
-                <Text strong style={{ fontSize: 40, lineHeight: 1, color: "#ffffff" }}>
+                <Text
+                  strong
+                  style={{ fontSize: 40, lineHeight: 1, color: "#ffffff" }}
+                >
                   {fixture.awayTeamScore}
                 </Text>
               </div>
@@ -295,10 +387,11 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
                 }}
               >
                 <Avatar
-                  size={82}
+                  size={isMobile ? 40 : 58}
                   src={awayTeamLogoUrl}
                   style={{
-                    background: "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
+                    background:
+                      "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
                     color: "#1890ff",
                     fontWeight: 800,
                     fontSize: 24,
@@ -309,8 +402,8 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
                 </Avatar>
                 <Text
                   strong
+                  className={styles.teamName}
                   style={{
-                    fontSize: 24,
                     color: awayWin ? "#ffffff" : "rgba(255,255,255,0.88)",
                   }}
                 >
@@ -321,38 +414,137 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
           </Row>
         )}
 
-        {(homeScorers.length > 0 || awayScorers.length > 0 || fixture.venueName) && (
+        {(homeScorers.length > 0 ||
+          awayScorers.length > 0 ||
+          fixture.venueName) && (
           <>
-            <Divider style={{ margin: isMobile ? "14px 0 12px" : "24px 0 18px", borderColor: "rgba(255,255,255,0.06)" }} />
+            <Divider
+              style={{
+                margin: isMobile ? "14px 0 12px" : "24px 0 18px",
+                borderColor: "rgba(255,255,255,0.06)",
+              }}
+            />
             {isMobile ? (
               <div style={{ display: "flex", gap: 8, width: "100%" }}>
                 {/* Home scorers - left side */}
-                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    alignItems: "flex-start",
+                  }}
+                >
                   {homeScorers.map((scorer) => (
-                    <div key={scorer.key} style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0, width: "100%" }}>
-                      <span style={{ color: "#fadb14", fontSize: 13, lineHeight: 1, flexShrink: 0 }}>⚽</span>
-                      <Tag color="green" style={{ margin: 0, fontWeight: 700, fontSize: 11, padding: "0 5px", flexShrink: 0 }}>
+                    <div
+                      key={scorer.key}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        minWidth: 0,
+                        width: "100%",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#fadb14",
+                          fontSize: 13,
+                          lineHeight: 1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        ⚽
+                      </span>
+                      <Tag
+                        color="green"
+                        style={{
+                          margin: 0,
+                          fontWeight: 700,
+                          fontSize: 11,
+                          padding: "0 5px",
+                          flexShrink: 0,
+                        }}
+                      >
                         {scorer.minute}
                       </Tag>
-                      <Text style={{ fontSize: 12, fontWeight: 600, wordBreak: "break-word" }}>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          wordBreak: "break-word",
+                        }}
+                      >
                         {scorer.playerName}
                       </Text>
                     </div>
                   ))}
                 </div>
                 {/* Divider */}
-                <div style={{ width: 1, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+                <div
+                  style={{
+                    width: 1,
+                    background: "rgba(255,255,255,0.08)",
+                    flexShrink: 0,
+                  }}
+                />
                 {/* Away scorers - right side */}
-                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    alignItems: "flex-end",
+                  }}
+                >
                   {awayScorers.map((scorer) => (
-                    <div key={scorer.key} style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0, width: "100%", justifyContent: "flex-end" }}>
-                      <Text style={{ fontSize: 12, fontWeight: 600, wordBreak: "break-word", textAlign: "right" }}>
+                    <div
+                      key={scorer.key}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        minWidth: 0,
+                        width: "100%",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          wordBreak: "break-word",
+                          textAlign: "right",
+                        }}
+                      >
                         {scorer.playerName}
                       </Text>
-                      <Tag color="green" style={{ margin: 0, fontWeight: 700, fontSize: 11, padding: "0 5px", flexShrink: 0 }}>
+                      <Tag
+                        color="green"
+                        style={{
+                          margin: 0,
+                          fontWeight: 700,
+                          fontSize: 11,
+                          padding: "0 5px",
+                          flexShrink: 0,
+                        }}
+                      >
                         {scorer.minute}
                       </Tag>
-                      <span style={{ color: "#fadb14", fontSize: 13, lineHeight: 1, flexShrink: 0 }}>⚽</span>
+                      <span
+                        style={{
+                          color: "#fadb14",
+                          fontSize: 13,
+                          lineHeight: 1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        ⚽
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -360,14 +552,36 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
             ) : (
               <Row gutter={[16, 10]} align="top">
                 <Col xs={24} md={11}>
-                  <Space direction="vertical" size={8} style={{ width: "100%", alignItems: "flex-end" }}>
+                  <Space
+                    direction="vertical"
+                    size={8}
+                    style={{ width: "100%", alignItems: "flex-end" }}
+                  >
                     {homeScorers.map((scorer) => (
                       <Space key={scorer.key} size={8} align="center">
-                        <Text style={{ fontSize: 17, fontWeight: 600 }}>{scorer.playerName}</Text>
-                        <Tag color="green" style={{ margin: 0, fontWeight: 700, minWidth: 46, textAlign: "center" }}>
+                        <Text style={{ fontSize: 17, fontWeight: 600 }}>
+                          {scorer.playerName}
+                        </Text>
+                        <Tag
+                          color="green"
+                          style={{
+                            margin: 0,
+                            fontWeight: 700,
+                            minWidth: 46,
+                            textAlign: "center",
+                          }}
+                        >
                           {scorer.minute}
                         </Tag>
-                        <span style={{ color: "#fadb14", fontSize: 16, lineHeight: 1 }}>⚽</span>
+                        <span
+                          style={{
+                            color: "#fadb14",
+                            fontSize: 16,
+                            lineHeight: 1,
+                          }}
+                        >
+                          ⚽
+                        </span>
                       </Space>
                     ))}
                   </Space>
@@ -384,14 +598,36 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
                   />
                 </Col>
                 <Col xs={24} md={11}>
-                  <Space direction="vertical" size={8} style={{ width: "100%", alignItems: "flex-start" }}>
+                  <Space
+                    direction="vertical"
+                    size={8}
+                    style={{ width: "100%", alignItems: "flex-start" }}
+                  >
                     {awayScorers.map((scorer) => (
                       <Space key={scorer.key} size={8} align="center">
-                        <span style={{ color: "#fadb14", fontSize: 16, lineHeight: 1 }}>⚽</span>
-                        <Tag color="green" style={{ margin: 0, fontWeight: 700, minWidth: 46, textAlign: "center" }}>
+                        <span
+                          style={{
+                            color: "#fadb14",
+                            fontSize: 16,
+                            lineHeight: 1,
+                          }}
+                        >
+                          ⚽
+                        </span>
+                        <Tag
+                          color="green"
+                          style={{
+                            margin: 0,
+                            fontWeight: 700,
+                            minWidth: 46,
+                            textAlign: "center",
+                          }}
+                        >
                           {scorer.minute}
                         </Tag>
-                        <Text style={{ fontSize: 17, fontWeight: 600 }}>{scorer.playerName}</Text>
+                        <Text style={{ fontSize: 17, fontWeight: 600 }}>
+                          {scorer.playerName}
+                        </Text>
                       </Space>
                     ))}
                   </Space>
@@ -413,64 +649,98 @@ function ResultCard({ fixture, tournamentSummary, isMobile }: { fixture: IFixtur
   );
 }
 
-export default function ViewerResultsTab({ tournamentId }: ViewerResultsTabProps) {
+export default function ViewerResultsTab({
+  tournamentId,
+}: ViewerResultsTabProps) {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.sm;
   const { data, isLoading, isFetching } = useGetFixturesQuery({ tournamentId });
-  const { data: tournamentSummary } = useGetTournamentSummaryQuery({ tournamentId });
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery({
+    tournamentId,
+  });
 
   const sections = useMemo(() => {
     const fixtures = data?.content || [];
     const liveFixtures = fixtures
-      .filter((fixture) => fixture.matchStatus === "ONGOING" || fixture.matchStatus === "PAUSED")
-      .sort((left, right) => (left.matchDate ?? "").localeCompare(right.matchDate ?? ""));
+      .filter(
+        (fixture) =>
+          fixture.matchStatus === "ONGOING" || fixture.matchStatus === "PAUSED",
+      )
+      .sort((left, right) =>
+        (left.matchDate ?? "").localeCompare(right.matchDate ?? ""),
+      );
 
     const completedFixtures = fixtures
       .filter((fixture) => fixture.matchStatus === "COMPLETED")
-      .sort((left, right) => (right.completedAt ?? right.matchDate ?? "").localeCompare(left.completedAt ?? left.matchDate ?? ""));
+      .sort((left, right) =>
+        (right.completedAt ?? right.matchDate ?? "").localeCompare(
+          left.completedAt ?? left.matchDate ?? "",
+        ),
+      );
 
     return [
-      { key: "live", title: "Live Results", fixtures: liveFixtures, tagColor: "green", tagLabel: "live" },
-      { key: "completed", title: "Completed Results", fixtures: completedFixtures, tagColor: "default", tagLabel: "result" },
+      {
+        key: "live",
+        title: "Live Results",
+        fixtures: liveFixtures,
+        tagColor: "green",
+        tagLabel: "live",
+      },
+      {
+        key: "completed",
+        title: "Completed Results",
+        fixtures: completedFixtures,
+        tagColor: "default",
+        tagLabel: "result",
+      },
     ].filter((section) => section.fixtures.length > 0);
   }, [data]);
 
   if (isLoading || isFetching) {
     return (
-      <div style={{ textAlign: "center", padding: 48 }}>
+      <div className={styles.loadingWrap}>
         <Spin size="large" />
       </div>
     );
   }
 
   if (sections.length === 0) {
-    return <Empty description="No live or completed results yet" style={{ padding: 48 }} />;
+    return (
+      <Empty
+        description="No live or completed results yet"
+        className={styles.emptyWrap}
+      />
+    );
   }
 
   return (
-    <div>
-      {sections.map((section) => (
-        <div key={section.key} style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 10,
-              paddingBottom: 6,
-              borderBottom: "2px solid rgba(82,196,26,0.35)",
-            }}
-          >
-            <Title level={5} style={{ margin: 0 }}>
-              {section.title}
-            </Title>
-            <Tag color={section.tagColor}>{section.fixtures.length} {section.tagLabel}{section.fixtures.length !== 1 ? "s" : ""}</Tag>
-          </div>
-          {section.fixtures.map((f) => (
-            <ResultCard key={f.id} fixture={f} tournamentSummary={tournamentSummary} isMobile={isMobile} />
-          ))}
-        </div>
-      ))}
+    <div className={styles.pageWrap}>
+      <div className={styles.contentWrap}>
+        {sections.map((section) => (
+          <section key={section.key} className={styles.groupSection}>
+            <div className={styles.groupHeader}>
+              <div className={styles.groupTitleWrap}>
+                <Title level={5} className={styles.groupTitle}>
+                  {section.title}
+                </Title>
+                {!isMobile && <div className={styles.groupDivider} />}
+              </div>
+              <Tag className={styles.groupCountTag} color={section.tagColor}>
+                {section.fixtures.length} {section.tagLabel}
+                {section.fixtures.length !== 1 ? "s" : ""}
+              </Tag>
+            </div>
+            {section.fixtures.map((f) => (
+              <ResultCard
+                key={f.id}
+                fixture={f}
+                tournamentSummary={tournamentSummary}
+                isMobile={isMobile}
+              />
+            ))}
+          </section>
+        ))}
+      </div>
     </div>
   );
 }

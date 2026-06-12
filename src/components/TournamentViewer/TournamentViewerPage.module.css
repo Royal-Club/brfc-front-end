@@ -1,0 +1,149 @@
+.viewerLayout {
+  height: 100%;
+  background: radial-gradient(
+    1200px 420px at 50% -220px,
+    rgba(16, 238, 138, 0.09),
+    rgba(16, 238, 138, 0)
+  );
+}
+
+.viewerContent {
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.topBar {
+  padding: 14px 24px;
+  background: linear-gradient(180deg, #0b0f12 0%, #0a0d10 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.topBarInner {
+  max-width: 1300px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.infoBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.tournamentName {
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.infoMetaRow {
+  width: 100%;
+}
+
+.infoMetaText {
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-size: 0.82rem !important;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.controlsRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.tournamentSelect {
+  min-width: 0;
+}
+
+.optionLabel {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loginLink {
+  flex-shrink: 0;
+}
+
+.tabsOuter {
+  padding: 0 20px;
+  flex: 1;
+}
+
+.tabsInner {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.mobileInfoBlock {
+  padding: 10px 0 2px;
+  color: #ffffff;
+}
+
+.mobileTournamentName {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
+  margin-bottom: 6px;
+}
+
+.mobileMetaRow {
+  width: 100%;
+}
+
+.mobileMetaText {
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-size: 0.75rem !important;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.emptyStateWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyIcon {
+  font-size: 64px;
+  color: #d4af37;
+}
+
+.emptyDescription {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+@media (max-width: 768px) {
+  .topBar {
+    padding: 10px 12px;
+  }
+
+  .topBarInner {
+    gap: 10px;
+  }
+
+  .controlsRow {
+    width: 100%;
+  }
+}
