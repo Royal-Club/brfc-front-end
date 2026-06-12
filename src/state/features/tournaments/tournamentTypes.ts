@@ -8,6 +8,7 @@ export interface IoTournamentSingleSummaryType {
     activeStatus: boolean;
     defaultTournament?: boolean;
     tournamentStatus?: string;
+    rules?: string;
 }
 
 export interface getSingleTournamentInfoType extends BasicResType {
@@ -62,6 +63,10 @@ export interface TournamentSummeryResType {
             id: number;
             tournamentName: string;
             name?: string;
+            title?: string;
+            season?: string;
+            description?: string;
+            rules?: string;
             tournamentDate: string;
             venueName: string;
             activeStatus: boolean;

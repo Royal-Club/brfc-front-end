@@ -14,6 +14,7 @@ import LoginPage from "./components/authPages/LoginPage";
 import PasswordResetPage from "./components/authPages/PasswordResetPage";
 import { useSelector } from "react-redux";
 import { selectResetPassword } from "./state/slices/loginInfoSlice";
+import AppFooter from "./components/CommonAtoms/AppFooter";
 
 function App() {
     const [collapsed, setCollapsed] = useState(false);
@@ -69,6 +70,7 @@ function App() {
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="*" element={<TournamentViewerPage hasHeader={false} />} />
                     </Routes>
+                    <AppFooter />
                 </Layout>
             </ConfigProvider>
         );
