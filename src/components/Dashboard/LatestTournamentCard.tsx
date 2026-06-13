@@ -20,9 +20,13 @@ import { useSelector } from 'react-redux';
 import { selectLoginInfo } from '../../state/slices/loginInfoSlice';
 import { Link } from 'react-router-dom';
 import { TournamentPlayerInfoType } from '../../state/features/tournaments/tournamentTypes';
+import { normalizeErrorMessage } from '../../utils/normalizeErrorMessage';
 
 const { Title, Text } = Typography;
 
+const getErrorMessage = (error: any) => {
+    return normalizeErrorMessage(error, 'Failed to update participation status');
+};
 const LatestTournamentCard: React.FC = () => {
     const loginInfo = useSelector(selectLoginInfo);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -78,6 +82,8 @@ const LatestTournamentCard: React.FC = () => {
             
             message.success(statusMessage);
             refetch();
+        } catch (error: any) {
+            message.error(getErrorMessage(error));
         } finally {
             setIsUpdating(false);
         }

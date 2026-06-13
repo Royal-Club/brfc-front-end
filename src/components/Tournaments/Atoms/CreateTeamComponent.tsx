@@ -1,6 +1,7 @@
 import React from "react";
 import { Button, message } from "antd";
 import { useCreateTournamentTeamMutation } from "../../../state/features/tournaments/tournamentTeamSlice";
+import { normalizeErrorMessage } from "../../../utils/normalizeErrorMessage";
 
 export default function CreateTeamComponent({
     tournamentId,
@@ -14,6 +15,9 @@ export default function CreateTeamComponent({
     const [createTeam, { isLoading: isCreating }] =
         useCreateTournamentTeamMutation();
 
+    const getErrorMessage = (error: any) => {
+        return normalizeErrorMessage(error, "Failed to create team");
+    };
     const handleCreateTeam = () => {
         const teamName = `Team ${String.fromCharCode(
             65 + existingTeams.length
@@ -24,6 +28,9 @@ export default function CreateTeamComponent({
             .then(() => {
                 message.success("Team created successfully");
                 refetchSummary();
+            })
+            .catch((error) => {
+                message.error(getErrorMessage(error));
             });
     };
 

@@ -10,6 +10,7 @@ import {
     useRenameTeamMutation,
     usePresignTeamLogoUploadMutation,
 } from "../state/features/tournaments/tournamentTeamSlice";
+import { normalizeErrorMessage } from "../utils/normalizeErrorMessage";
 
 const MAX_LOGO_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_LOGO_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -285,6 +286,18 @@ const useTournamentTeams = (tournamentId: number) => {
             message.info("Player removed from team successfully");
             await refetchTournament();
             await refetchPlayer();
+        } catch (error: any) {
+            // Prevent unhandled promise rejection with object payloads (e.g., 403 responses).
+            message.error(
+                normalizeErrorMessage(
+                    error?.data || error,
+                    "You do not have permission to remove this player from the team"
+                )
+            );
+
+            // Re-sync local optimistic state from backend.
+            await refetchTournament();
+            await refetchPlayer();
         } finally {
             setIsLoading(false);
         }
@@ -382,6 +395,16 @@ const useTournamentTeams = (tournamentId: number) => {
 
             await deleteTournamentTeam({ teamId }).unwrap();
             message.success("Team removed successfully");
+            await refetchTournament();
+            await refetchPlayer();
+        } catch (error: any) {
+            message.error(
+                normalizeErrorMessage(
+                    error?.data || error,
+                    "You do not have permission to remove this team"
+                )
+            );
+
             await refetchTournament();
             await refetchPlayer();
         } finally {

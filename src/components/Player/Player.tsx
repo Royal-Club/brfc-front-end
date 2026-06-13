@@ -42,6 +42,7 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import axiosApi from "../../state/api/axiosBase";
 import { usePresignPlayerPhotoUploadMutation } from "../../state/features/player/playerSlice";
 import { validatePlayerPhoto, compressPlayerPhoto, toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
+import { normalizeErrorMessage } from "../../utils/normalizeErrorMessage";
 
 const { Title } = Typography;
 
@@ -102,6 +103,14 @@ function Player() {
                 .then((response) => {
                     message.success(response.data.message);
                     navigate("/players");
+                })
+                .catch((err: any) => {
+                    message.error(
+                        normalizeErrorMessage(
+                            err?.response?.data || err,
+                            "Error creating player"
+                        )
+                    );
                 });
                 // .catch((err) => {
                 //     console.error("Server error:", err);
@@ -127,6 +136,14 @@ function Player() {
                             );
                             message.success(response.data.message);
                             navigate("/players");
+                        })
+                        .catch((statusError: any) => {
+                            message.error(
+                                normalizeErrorMessage(
+                                    statusError?.response?.data || statusError,
+                                    "Error updating player status"
+                                )
+                            );
                         });
                         // .catch((statusError) => {
                         //     console.error(
@@ -138,6 +155,14 @@ function Player() {
                         //         description: statusError.message,
                         //     });
                         // });
+                })
+                .catch((err: any) => {
+                    message.error(
+                        normalizeErrorMessage(
+                            err?.response?.data || err,
+                            "Error updating player"
+                        )
+                    );
                 });
                 // .catch((err) => {
                 //     console.error("Server error:", err);
