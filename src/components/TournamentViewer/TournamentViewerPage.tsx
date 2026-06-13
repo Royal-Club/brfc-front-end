@@ -41,6 +41,33 @@ const statusOrder: Record<string, number> = {
   INACTIVE: 4,
 };
 
+const VIEWER_TAB_STORAGE_PREFIX = "tournament-viewer-tab:";
+
+const getStoredViewerTab = (tournamentId: number) => {
+  try {
+    return localStorage.getItem(`${VIEWER_TAB_STORAGE_PREFIX}${tournamentId}`);
+  } catch {
+    return null;
+  }
+};
+
+const saveStoredViewerTab = (tournamentId: number, tabKey: string) => {
+  try {
+    localStorage.setItem(`${VIEWER_TAB_STORAGE_PREFIX}${tournamentId}`, tabKey);
+  } catch {
+    // Ignore storage failures and keep the in-memory tab state working.
+  }
+};
+
+const isValidViewerTab = (tabKey: string | null, hasRules: boolean) => {
+  if (!tabKey) return false;
+
+  return (
+    ["home", "fixtures", "results", "table", "stats", "players"].includes(tabKey) ||
+    (tabKey === "rules" && hasRules)
+  );
+};
+
 export default function TournamentViewerPage({
   hasHeader = true,
 }: {
@@ -87,6 +114,16 @@ export default function TournamentViewerPage({
   const hasRules = Boolean(summaryData?.content?.[0]?.rules?.trim());
 
   useEffect(() => {
+    if (!selectedId) {
+      setActiveTab("home");
+      return;
+    }
+
+    const storedTab = getStoredViewerTab(selectedId);
+    setActiveTab(isValidViewerTab(storedTab, hasRules) ? storedTab! : "home");
+  }, [selectedId, hasRules]);
+
+  useEffect(() => {
     if (tournaments.length === 0) {
       if (selectedId !== null) {
         setSelectedId(null);
@@ -107,7 +144,9 @@ export default function TournamentViewerPage({
 
   const handleSelect = (id: number) => {
     setSelectedId(id);
-    setActiveTab("home");
+
+    const storedTab = getStoredViewerTab(id);
+    setActiveTab(isValidViewerTab(storedTab, hasRules) ? storedTab! : "home");
   };
 
   const tabItems = [
@@ -300,7 +339,13 @@ export default function TournamentViewerPage({
               )}
               <Tabs
                 activeKey={activeTab}
-                onChange={setActiveTab}
+                onChange={(tabKey) => {
+                  setActiveTab(tabKey);
+
+                  if (selectedId) {
+                    saveStoredViewerTab(selectedId, tabKey);
+                  }
+                }}
                 items={tabItems}
                 centered
                 className="tournament-viewer-tabs"
