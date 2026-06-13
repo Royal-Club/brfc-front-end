@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { RootState } from "../store";
 import { API_URL } from "../../settings";
 import { showErrorNotification } from "../../utils/errorNotification";
+import { normalizeErrorMessage } from "../../utils/normalizeErrorMessage";
 
 // Define types for the error response
 interface FieldError {
@@ -68,15 +69,17 @@ const customBaseQuery: typeof baseQuery = async (args, api, extraOptions) => {
           .join("\n");
         alertMessage += fieldErrors;
       } else if (errorMessage) {
-        alertMessage = errorMessage;
+        alertMessage = normalizeErrorMessage(errorMessage, "An error occurred");
       } else if (statusCode === 500) {
         // For 500 errors without a message, show endpoint-specific error
         const endpoint = typeof args === 'string' ? args : (args as any)?.url || "unknown endpoint";
         alertMessage = `Internal server error for API ${endpoint}`;
       } else {
-        // Fallback: use status or generic message if no message field exists
-        alertMessage = String((result?.error as any)?.status || "An error occurred");
+        // Fallback: normalize the full error object for consistent user-facing text.
+        alertMessage = normalizeErrorMessage(result.error, "An error occurred");
       }
+
+      alertMessage = normalizeErrorMessage(alertMessage, "An error occurred");
 
       // Check if this error was recently displayed
       const now = Date.now();

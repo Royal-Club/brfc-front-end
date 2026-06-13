@@ -5,7 +5,11 @@ import {
     useGetTournamentParticipantsListQuery,
 } from "../state/features/tournaments/tournamentsSlice";
 import { TournamentPlayerInfoType } from "../state/features/tournaments/tournamentTypes";
+import { normalizeErrorMessage } from "../utils/normalizeErrorMessage";
 
+const getErrorMessage = (error: any) => {
+    return normalizeErrorMessage(error, "Failed to update player information");
+};
 export default function useJoinTournament(tournamentId: number) {
     const {
         data: nextTournament,
@@ -56,6 +60,12 @@ export default function useJoinTournament(tournamentId: number) {
                         );
                         message.success({
                             content: "Player information updated!",
+                            key: playerId,
+                        });
+                    })
+                    .catch((error) => {
+                        message.error({
+                            content: getErrorMessage(error),
                             key: playerId,
                         });
                     });
