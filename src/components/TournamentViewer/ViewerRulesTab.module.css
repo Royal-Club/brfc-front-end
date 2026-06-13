@@ -1,0 +1,64 @@
+.rulesContent {
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.7;
+}
+
+.rulesContent h1,
+.rulesContent h2,
+.rulesContent h3 {
+  color: #ffffff;
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+
+.rulesContent h1:first-child,
+.rulesContent h2:first-child,
+.rulesContent h3:first-child {
+  margin-top: 0;
+}
+
+.rulesContent h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 8px;
+}
+
+.rulesContent p {
+  margin: 8px 0;
+}
+
+.rulesContent ol,
+.rulesContent ul {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.rulesContent li {
+  margin: 6px 0;
+}
+
+.rulesContent li > ul,
+.rulesContent li > ol {
+  margin-top: 6px;
+}
+
+.rulesContent strong {
+  color: #ffffff;
+}
+
+.rulesContent a {
+  color: #18ff98;
+}
+
+.rulesContent code {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.rulesContent hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 20px 0;
+}

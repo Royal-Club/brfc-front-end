@@ -57,6 +57,9 @@ export default function CreateTournament({
         tournamentTime: any;
         venueId: number;
         defaultTournament?: boolean;
+        season?: string;
+        description?: string;
+        rules?: string;
     }) => {
         if (!values.tournamentDate || !values.tournamentTime) {
             message.error("Please select both date and time");
@@ -78,6 +81,9 @@ export default function CreateTournament({
             tournamentDate: tournamentDateUTC,
             venueId: values.venueId,
             defaultTournament: Boolean(values.defaultTournament),
+            season: values.season,
+            description: values.description,
+            rules: values.rules,
         };
 
         if (tournamentId) {
@@ -125,6 +131,9 @@ export default function CreateTournament({
                 tournamentDate: tournamentDateTime,
                 tournamentTime: tournamentDateTime,
                 defaultTournament: Boolean(tournamentData.defaultTournament),
+                season: tournamentData.season,
+                description: tournamentData.description,
+                rules: tournamentData.rules,
                 venueId: venuesData.content.find(
                     (venue: any) => venue.name === tournamentData.venueName
                 )?.id,
@@ -251,6 +260,36 @@ export default function CreateTournament({
                             valuePropName="checked"
                         >
                             <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="season"
+                            label="Season"
+                            extra="Optional. e.g. 'Season 2026' — shown under the title on the Tournament Viewer Home tab."
+                        >
+                            <Input placeholder="e.g. Season 2026" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="description"
+                            label="Description / Session Message"
+                            extra="Optional. Shown on the Tournament Viewer Home tab below the title."
+                        >
+                            <Input.TextArea
+                                rows={3}
+                                placeholder="Enter a short description or session message"
+                            />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="rules"
+                            label="Tournament Rules"
+                            extra="Optional. Supports Markdown formatting (headings, lists, bold, etc.). If left empty, the Rules tab will be hidden on the viewer page."
+                        >
+                            <Input.TextArea
+                                rows={8}
+                                placeholder="Enter tournament rules in Markdown format"
+                            />
                         </Form.Item>
 
                         <Form.Item>

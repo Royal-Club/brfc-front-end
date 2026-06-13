@@ -202,29 +202,6 @@ code {
   font-weight: 700 !important;
 }
 
-/* LOGIN button styles + hover */
-.tournament-login-button {
-  background: #10ff87;
-  border: 1px solid #10ff87;
-  color: #000000;
-  padding: 8px 20px 6px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.14s ease;
-  font-weight: 700;
-}
-.tournament-login-button:hover {
-  background: rgba(16, 255, 135, 0.12);
-  border-color: #10ff87;
-  color: #10ff87;
-  box-shadow: 0 8px 20px rgba(16, 255, 135, 0.12);
-  transform: translateY(-1px);
-}
-.tournament-login-button:active {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
 .tournament-portal-select.ant-select-focused .ant-select-selector,
 .tournament-portal-select.ant-select-open .ant-select-selector {
   box-shadow:

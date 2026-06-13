@@ -2,21 +2,27 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Empty, Grid, Layout, Select, Space, Tabs, Typography } from "antd";
 import {
   BarChartOutlined,
+  BookOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   DownOutlined,
   EnvironmentOutlined,
+  HomeOutlined,
   TeamOutlined,
   TrophyOutlined,
   UnorderedListOutlined,
 } from "@ant-design/icons";
+import ViewerHomeTab from "./ViewerHomeTab";
 import ViewerFixturesTab from "./ViewerFixturesTab";
 import ViewerResultsTab from "./ViewerResultsTab";
 import ViewerTableTab from "./ViewerTableTab";
 import ViewerPlayersTab from "./ViewerPlayersTab";
+import ViewerRulesTab from "./ViewerRulesTab";
 import StatsLeaderboardPanel from "../Tournaments/Statistics/StatsLeaderboardPanel";
-import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
-import { Link } from "react-router-dom";
+import {
+  useGetTournamentsQuery,
+  useGetTournamentSummaryQuery,
+} from "../../state/features/tournaments/tournamentsSlice";
 import { showBdLocalTime } from "../../utils/utils";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
@@ -46,7 +52,7 @@ export default function TournamentViewerPage({
   const isLoggedIn = Boolean(loginInfo.token);
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState("fixtures");
+  const [activeTab, setActiveTab] = useState("home");
 
   const { data: tournamentsData, isLoading: tournamentsLoading } =
     useGetTournamentsQuery({
@@ -74,6 +80,12 @@ export default function TournamentViewerPage({
     ? showBdLocalTime(selectedTournament.tournamentDate)
     : "Date/time not set";
 
+  const { data: summaryData } = useGetTournamentSummaryQuery(
+    { tournamentId: selectedId ?? 0 },
+    { skip: !selectedId },
+  );
+  const hasRules = Boolean(summaryData?.content?.[0]?.rules?.trim());
+
   useEffect(() => {
     if (tournaments.length === 0) {
       if (selectedId !== null) {
@@ -95,10 +107,38 @@ export default function TournamentViewerPage({
 
   const handleSelect = (id: number) => {
     setSelectedId(id);
-    setActiveTab("fixtures");
+    setActiveTab("home");
   };
 
   const tabItems = [
+    {
+      key: "home",
+      label: (
+        <span>
+          <HomeOutlined style={{ marginRight: 6 }} />
+          Home
+        </span>
+      ),
+      children: selectedId ? (
+        <ViewerHomeTab tournamentId={selectedId} />
+      ) : null,
+    },
+    ...(hasRules
+      ? [
+          {
+            key: "rules",
+            label: (
+              <span>
+                <BookOutlined style={{ marginRight: 6 }} />
+                Rules
+              </span>
+            ),
+            children: selectedId ? (
+              <ViewerRulesTab tournamentId={selectedId} />
+            ) : null,
+          },
+        ]
+      : []),
     {
       key: "fixtures",
       label: (
@@ -173,75 +213,64 @@ export default function TournamentViewerPage({
     >
       {/* Content */}
       <Content className={styles.viewerContent}>
-        <div className={styles.topBar}>
-          <div className={styles.topBarInner}>
-            {/* Left: Tournament Info */}
-            {!isMobile && (
-              <div className={styles.infoBlock}>
-                <div className={styles.tournamentName}>
-                  {selectedTournament?.name || "Select Tournament"}
+        {isLoggedIn && (
+          <div className={styles.topBar}>
+            <div className={styles.topBarInner}>
+              {/* Left: Tournament Info */}
+              {!isMobile && (
+                <div className={styles.infoBlock}>
+                  <div className={styles.tournamentName}>
+                    {selectedTournament?.name || "Select Tournament"}
+                  </div>
+
+                  {selectedTournament && (
+                    <Space size={16} wrap className={styles.infoMetaRow}>
+                      <Text className={styles.infoMetaText}>
+                        <CalendarOutlined style={{ marginRight: 6 }} />
+                        {selectedTournamentDateTime}
+                      </Text>
+                      <Text className={styles.infoMetaText}>
+                        <EnvironmentOutlined style={{ marginRight: 6 }} />
+                        {selectedTournament.venueName || "Venue not set"}
+                      </Text>
+                    </Space>
+                  )}
                 </div>
-
-                {selectedTournament && (
-                  <Space size={16} wrap className={styles.infoMetaRow}>
-                    <Text className={styles.infoMetaText}>
-                      <CalendarOutlined style={{ marginRight: 6 }} />
-                      {selectedTournamentDateTime}
-                    </Text>
-                    <Text className={styles.infoMetaText}>
-                      <EnvironmentOutlined style={{ marginRight: 6 }} />
-                      {selectedTournament.venueName || "Venue not set"}
-                    </Text>
-                  </Space>
-                )}
-              </div>
-            )}
-
-            {/* Right: Select & Login */}
-            <div className={styles.controlsRow}>
-              <Select
-                className={`tournament-portal-select-custom ${styles.tournamentSelect}`}
-                showSearch
-                loading={tournamentsLoading}
-                placeholder="Select tournament"
-                value={selectedId ?? undefined}
-                onChange={handleSelect}
-                suffixIcon={<DownOutlined />}
-                style={{
-                  width: isMobile ? "auto" : 250,
-                  flex: isMobile ? 1 : "none",
-                  minWidth: 0,
-                }}
-                optionFilterProp="searchLabel"
-                options={tournaments.map((t) => ({
-                  value: t.id,
-                  searchLabel: `${t.name} ${(t.tournamentStatus || "UNKNOWN").toUpperCase()}`,
-                  label: (
-                    <span
-                      className={styles.optionLabel}
-                      title={`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
-                    >
-                      {`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
-                    </span>
-                  ),
-                }))}
-              />
-              {!isLoggedIn && (
-                <Link to="/login" className={styles.loginLink}>
-                  <button
-                    className="tournament-login-button"
-                    style={{
-                      whiteSpace: "nowrap",
-                      minWidth: isMobile ? "88px" : "auto",
-                    }}
-                  >
-                    LOGIN
-                  </button>
-                </Link>
               )}
+
+              {/* Right: Select */}
+              <div className={styles.controlsRow}>
+                <Select
+                  className={`tournament-portal-select-custom ${styles.tournamentSelect}`}
+                  showSearch
+                  loading={tournamentsLoading}
+                  placeholder="Select tournament"
+                  value={selectedId ?? undefined}
+                  onChange={handleSelect}
+                  suffixIcon={<DownOutlined />}
+                  style={{
+                    width: isMobile ? "auto" : 250,
+                    flex: isMobile ? 1 : "none",
+                    minWidth: 0,
+                  }}
+                  optionFilterProp="searchLabel"
+                  options={tournaments.map((t) => ({
+                    value: t.id,
+                    searchLabel: `${t.name} ${(t.tournamentStatus || "UNKNOWN").toUpperCase()}`,
+                    label: (
+                      <span
+                        className={styles.optionLabel}
+                        title={`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
+                      >
+                        {`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
+                      </span>
+                    ),
+                  }))}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {selectedId ? (
           <div className={styles.tabsOuter}>
@@ -249,7 +278,7 @@ export default function TournamentViewerPage({
               className={styles.tabsInner}
               style={{ maxWidth: VIEWER_CONTENT_MAX_WIDTH }}
             >
-              {isMobile && (
+              {isMobile && isLoggedIn && (
                 <div className={styles.mobileInfoBlock}>
                   <div className={styles.mobileTournamentName}>
                     {selectedTournament?.name || "Select Tournament"}
