@@ -74,6 +74,7 @@ import { useGetTournamentSummaryQuery } from "../../../../../state/features/tour
 import { useGetVanuesQuery } from "../../../../../state/features/vanues/vanuesSlice";
 import { selectLoginInfo } from "../../../../../state/slices/loginInfoSlice";
 import { hasAnyRole } from "../../../../../utils/roleUtils";
+import { RoundGroupResponse } from "../../../../../state/features/manualFixtures/manualFixtureTypes";
 
 const { Title, Text } = Typography;
 
@@ -86,6 +87,46 @@ interface InteractiveTournamentTabProps {
   isActive?: boolean;
 }
 
+interface TeamAssignmentContext {
+  groupId: number | null;
+  roundId: number | null;
+  roundType?: "GROUP_BASED" | "DIRECT_KNOCKOUT";
+}
+
+interface RoundCreateContext {
+  sourceRoundName?: string;
+  sourceGroupName?: string;
+  suggestedRoundName?: string;
+  suggestedRoundType?: RoundType;
+}
+
+const flattenGroups = (groups: RoundGroupResponse[] = []): RoundGroupResponse[] => {
+  const result: RoundGroupResponse[] = [];
+
+  const walk = (items: RoundGroupResponse[]) => {
+    items.forEach((group) => {
+      result.push(group);
+      if (group.childGroups && group.childGroups.length > 0) {
+        walk(group.childGroups);
+      }
+    });
+  };
+
+  walk(groups);
+  return result;
+};
+
+const findGroupById = (groups: RoundGroupResponse[] = [], groupId: number): RoundGroupResponse | null => {
+  for (const group of groups) {
+    if (group.id === groupId) return group;
+    if (group.childGroups && group.childGroups.length > 0) {
+      const found = findGroupById(group.childGroups, groupId);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
 export default function InteractiveTournamentTab({
   tournamentId,
   teams,
@@ -97,6 +138,12 @@ export default function InteractiveTournamentTab({
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [teamAssignmentContext, setTeamAssignmentContext] = useState<TeamAssignmentContext>({
+    groupId: null,
+    roundId: null,
+    roundType: undefined,
+  });
+  const [roundCreateContext, setRoundCreateContext] = useState<RoundCreateContext | null>(null);
   const { token } = theme.useToken();
   const loginInfo = useSelector(selectLoginInfo);
   
@@ -199,9 +246,9 @@ export default function InteractiveTournamentTab({
     } else if (nodeType === "groupNode") {
       const groupId = parseInt(nodeId.replace("group-", ""));
       const round = tournamentStructure?.rounds.find((r) =>
-        r.groups?.some((g) => g.id === groupId)
+        flattenGroups(r.groups || []).some((g) => g.id === groupId)
       );
-      const group = round?.groups?.find((g) => g.id === groupId);
+      const group = round ? findGroupById(round.groups || [], groupId) : null;
       if (group && round) {
         dispatch(setSelectedNode({
           type: "group",
@@ -213,7 +260,44 @@ export default function InteractiveTournamentTab({
     }
   }, [tournamentStructure, dispatch]);
 
-  const handleCreateRound = () => {
+  const handleCreateRound = (sourceRoundId?: number, sourceGroupId?: number) => {
+    let nextContext: RoundCreateContext | null = null;
+
+    if (sourceRoundId) {
+      const sourceRound = tournamentStructure?.rounds.find((r) => r.id === sourceRoundId);
+      if (sourceRound) {
+        let suggestedRoundName = `Round ${sourceRound.sequenceOrder + 1}`;
+        let suggestedRoundType = sourceRound.roundType;
+
+        if (sourceRound.roundType === RoundType.GROUP_BASED) {
+          suggestedRoundName = `Knockout Stage`;
+          suggestedRoundType = RoundType.DIRECT_KNOCKOUT;
+        }
+
+        if (sourceGroupId) {
+          const sourceGroup = findGroupById(sourceRound.groups || [], sourceGroupId);
+          if (sourceGroup) {
+            suggestedRoundName = `${sourceGroup.groupName} - Next Stage`;
+            nextContext = {
+              sourceRoundName: sourceRound.roundName,
+              sourceGroupName: sourceGroup.groupName,
+              suggestedRoundName,
+              suggestedRoundType,
+            };
+          }
+        }
+
+        if (!nextContext) {
+          nextContext = {
+            sourceRoundName: sourceRound.roundName,
+            suggestedRoundName,
+            suggestedRoundType,
+          };
+        }
+      }
+    }
+
+    setRoundCreateContext(nextContext);
     dispatch(setSelectedNode(null));
     dispatch(setShowRoundModal(true));
   };
@@ -264,14 +348,20 @@ export default function InteractiveTournamentTab({
     // Validate that all matches are completed
     const allMatchesCompleted = round.totalMatches > 0 && round.completedMatches === round.totalMatches;
     
-    // For group-based rounds, also check that all groups have completed matches
+    // For group-based rounds, also check that all groups have completed matches.
+    // Only leaf groups (groups without child groups) actually hold matches -
+    // parent groups are containers with totalMatches: 0 by design.
     if (round.roundType === RoundType.GROUP_BASED && round.groups) {
-      const allGroupsCompleted = round.groups.every((group) => {
+      const leafGroups = flattenGroups(round.groups).filter(
+        (group) => !group.childGroups || group.childGroups.length === 0
+      );
+
+      const allGroupsCompleted = leafGroups.every((group) => {
         return group.totalMatches > 0 && group.completedMatches === group.totalMatches;
       });
 
       if (!allGroupsCompleted) {
-        const incompleteGroups = round.groups.filter(
+        const incompleteGroups = leafGroups.filter(
           (group) => !(group.totalMatches > 0 && group.completedMatches === group.totalMatches)
         );
         message.error(
@@ -307,23 +397,38 @@ export default function InteractiveTournamentTab({
 
 
 
-  const handleCreateGroup = async (roundId: number) => {
+  const handleCreateGroup = async (roundId: number, parentGroupId?: number) => {
     const round = tournamentStructure?.rounds.find((r) => r.id === roundId);
     if (!round || round.roundType !== RoundType.GROUP_BASED) return;
 
     // Get existing groups to determine next group name
-    const existingGroups = round.groups || [];
-    const groupLetters = existingGroups.map(g => g.groupName).filter(name => /^Group [A-Z]$/.test(name));
-    const nextLetter = String.fromCharCode(65 + groupLetters.length); // A, B, C, etc.
+    const existingGroups = flattenGroups(round.groups || []);
+    let groupName = "";
+
+    if (parentGroupId) {
+      const parentGroup = existingGroups.find((g) => g.id === parentGroupId);
+      const existingSubgroups = existingGroups.filter((g) => g.parentGroupId === parentGroupId);
+      const subgroupIndex = existingSubgroups.length + 1;
+      groupName = parentGroup
+        ? `${parentGroup.groupName} - Subgroup ${subgroupIndex}`
+        : `Subgroup ${subgroupIndex}`;
+    } else {
+      const groupLetters = existingGroups
+        .map((g) => g.groupName)
+        .filter((name) => /^Group [A-Z]$/.test(name));
+      const nextLetter = String.fromCharCode(65 + groupLetters.length); // A, B, C, etc.
+      groupName = `Group ${nextLetter}`;
+    }
 
     try {
       await createGroup({
         roundId,
-        groupName: `Group ${nextLetter}`,
+        ...(parentGroupId ? { parentGroupId } : {}),
+        groupName,
         groupFormat: GroupFormat.ROUND_ROBIN_SINGLE,
         maxTeams: 4,
       }).unwrap();
-      message.success(`Group ${nextLetter} created successfully`);
+      message.success(parentGroupId ? "Subgroup created successfully" : `${groupName} created successfully`);
       // Wait a bit for cache invalidation to complete, then refresh
       setTimeout(() => {
         onRefresh();
@@ -398,9 +503,9 @@ export default function InteractiveTournamentTab({
   const handleAssignTeams = (groupId: number) => {
     // Find the group in tournament structure
     const round = tournamentStructure?.rounds.find((r) =>
-      r.groups?.some((g) => g.id === groupId)
+      flattenGroups(r.groups || []).some((g) => g.id === groupId)
     );
-    const group = round?.groups?.find((g) => g.id === groupId);
+    const group = round ? findGroupById(round.groups || [], groupId) : null;
     
     if (group && round) {
       // Check if group already has teams
@@ -411,6 +516,11 @@ export default function InteractiveTournamentTab({
       }
       
       dispatch(setSelectedNode({ type: "group", id: groupId, data: { ...group, roundId: round.id } }));
+      setTeamAssignmentContext({
+        groupId,
+        roundId: round.id,
+        roundType: "GROUP_BASED",
+      });
       dispatch(setShowTeamAssignment(true));
     }
   };
@@ -418,9 +528,9 @@ export default function InteractiveTournamentTab({
   const handleGenerateMatches = (groupId: number, groupName: string, teamCount: number) => {
     // Ensure selectedNode is set correctly for the modal
     const round = tournamentStructure?.rounds.find((r) => 
-      r.groups?.some((g) => g.id === groupId)
+      flattenGroups(r.groups || []).some((g) => g.id === groupId)
     );
-    const group = round?.groups?.find((g) => g.id === groupId);
+    const group = round ? findGroupById(round.groups || [], groupId) : null;
     if (group && round) {
       dispatch(setSelectedNode({ 
         type: "group", 
@@ -699,9 +809,9 @@ export default function InteractiveTournamentTab({
     const hasTeams = !isGroupBased && round.teams && round.teams.length > 0;
     const hasRequiredStructure = isGroupBased ? hasGroups : hasTeams;
 
-    // For GROUP_BASED rounds, check if at least one group has matches
+    // For GROUP_BASED rounds, check if at least one group (including nested child groups) has matches
     const hasGroupMatches = isGroupBased && hasGroups
-      ? round.groups!.some((group) => (group.totalMatches || 0) > 0)
+      ? flattenGroups(round.groups!).some((group) => (group.totalMatches || 0) > 0)
       : true; // Not applicable for DIRECT_KNOCKOUT or if no groups
 
     // For DIRECT_KNOCKOUT rounds, check if round has matches
@@ -837,6 +947,14 @@ export default function InteractiveTournamentTab({
                 Edit Round
               </Button>
 
+              <Button
+                icon={<PlusOutlined />}
+                onClick={() => handleCreateRound(round.id)}
+                block
+              >
+                Create Next Round from This Round
+              </Button>
+
               {isGroupBased && (
                 <Button
                   icon={<PlusOutlined />}
@@ -853,6 +971,11 @@ export default function InteractiveTournamentTab({
                     icon={<UserAddOutlined />}
                     onClick={() => {
                       dispatch(setSelectedNode({ type: "round", id: round.id, data: round }));
+                      setTeamAssignmentContext({
+                        groupId: null,
+                        roundId: round.id,
+                        roundType: round.roundType as "GROUP_BASED" | "DIRECT_KNOCKOUT",
+                      });
                       dispatch(setShowTeamAssignment(true));
                     }}
                     block
@@ -1182,9 +1305,9 @@ export default function InteractiveTournamentTab({
 
     // Get fresh group data from tournament structure
     const round = tournamentStructure?.rounds.find((r) => 
-      r.groups?.some((g) => g.id === selectedNode.id)
+      flattenGroups(r.groups || []).some((g) => g.id === selectedNode.id)
     );
-    const group = round?.groups?.find((g) => g.id === selectedNode.id);
+    const group = round ? findGroupById(round.groups || [], selectedNode.id) : null;
     if (!round || !group) return null;
 
     // Get ongoing matches for this group
@@ -1279,6 +1402,22 @@ export default function InteractiveTournamentTab({
             block
           >
             Edit Group
+          </Button>
+
+          <Button
+            icon={<PlusOutlined />}
+            onClick={() => handleCreateGroup(group.roundId, group.id)}
+            block
+          >
+            Add Subgroup
+          </Button>
+
+          <Button
+            icon={<PlusOutlined />}
+            onClick={() => handleCreateRound(group.roundId, group.id)}
+            block
+          >
+            Create Next Round from This Group
           </Button>
 
           <Popconfirm
@@ -1446,7 +1585,7 @@ export default function InteractiveTournamentTab({
                   type="primary"
                   size="large"
                   icon={<PlusOutlined />}
-                  onClick={handleCreateRound}
+                  onClick={() => handleCreateRound()}
                   style={{ marginTop: 16 }}
                 >
                   Add First Round
@@ -1501,14 +1640,17 @@ export default function InteractiveTournamentTab({
       <RoundManagement
         tournamentId={tournamentId}
         roundId={selectedNode?.type === "round" ? selectedNode.id : null}
+        createContext={roundCreateContext}
         isModalVisible={showRoundModal}
         onClose={() => {
           dispatch(setShowRoundModal(false));
+          setRoundCreateContext(null);
           dispatch(setSelectedNode(null));
         }}
         onSuccess={() => {
           onRefresh();
           dispatch(setShowRoundModal(false));
+          setRoundCreateContext(null);
           dispatch(setSelectedNode(null));
         }}
         existingRounds={tournamentStructure?.rounds || []}
@@ -1530,19 +1672,21 @@ export default function InteractiveTournamentTab({
       />
 
       <TeamAssignment
-        groupId={selectedNode?.type === "group" ? selectedNode.id : null}
-        roundId={selectedNode?.type === "round" ? selectedNode.id : (selectedNode?.data?.roundId || null)}
-        roundType={selectedNode?.type === "round" ? (selectedNode.data?.roundType as "GROUP_BASED" | "DIRECT_KNOCKOUT") : undefined}
+        groupId={teamAssignmentContext.groupId}
+        roundId={teamAssignmentContext.roundId}
+        roundType={teamAssignmentContext.roundType}
         teams={teams}
         tournamentStructure={tournamentStructure}
         isModalVisible={showTeamAssignment}
         onClose={() => {
           dispatch(setShowTeamAssignment(false));
+          setTeamAssignmentContext({ groupId: null, roundId: null, roundType: undefined });
           dispatch(setSelectedNode(null));
         }}
         onSuccess={() => {
           onRefresh();
           dispatch(setShowTeamAssignment(false));
+          setTeamAssignmentContext({ groupId: null, roundId: null, roundType: undefined });
           dispatch(setSelectedNode(null));
         }}
       />

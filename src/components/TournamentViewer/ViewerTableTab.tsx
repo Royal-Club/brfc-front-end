@@ -43,14 +43,6 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
   const leftGridCols = leftGridColumns(isMobile);
   const rightGridCols = isMobile ? mobileStatsGridColumns : rightGridColumns;
 
-  const rankingMap = useMemo(() => {
-    const map = new Map<number, number>();
-    standings.forEach((team, index) => {
-      map.set(team.teamId, index + 1);
-    });
-    return map;
-  }, [standings]);
-
   const sectionedRows = useMemo(() => {
     const rows = standings.map((team, index) => ({
       ...team,
@@ -96,7 +88,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
 
     const sectionsMap = new Map<
       string,
-      { title: string; meta: string; teamIds: Set<number> }
+      { title: string; meta: string; fixtures: IFixture[] }
     >();
 
     fixtures.forEach((fixture) => {
@@ -110,27 +102,80 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
         sectionsMap.set(key, {
           title: displaySectionTitle(fixture),
           meta: displayMeta(fixture),
-          teamIds: new Set<number>(),
+          fixtures: [],
         });
       }
 
-      const section = sectionsMap.get(key);
-      if (!section) return;
-
-      section.teamIds.add(fixture.homeTeamId);
-      section.teamIds.add(fixture.awayTeamId);
+      sectionsMap.get(key)!.fixtures.push(fixture);
     });
+
+    const teamNameMap = new Map<number, string>();
+    standings.forEach((team) => teamNameMap.set(team.teamId, team.teamName));
 
     const sections = Array.from(sectionsMap.entries())
       .map(([key, section]) => {
-        const scopedRows = standings
-          .filter((team) => section.teamIds.has(team.teamId))
+        const statsByTeam = new Map<number, ITournamentStanding>();
+
+        const ensureTeam = (teamId: number, teamName: string) => {
+          let team = statsByTeam.get(teamId);
+          if (!team) {
+            team = {
+              teamId,
+              teamName: teamNameMap.get(teamId) || teamName,
+              points: 0,
+              goalsFor: 0,
+              goalsAgainst: 0,
+              matches: 0,
+              wins: 0,
+              draws: 0,
+              losses: 0,
+              goalDifference: 0,
+            };
+            statsByTeam.set(teamId, team);
+          }
+          return team;
+        };
+
+        section.fixtures.forEach((fixture) => {
+          const home = ensureTeam(fixture.homeTeamId, fixture.homeTeamName);
+          const away = ensureTeam(fixture.awayTeamId, fixture.awayTeamName);
+
+          if (fixture.matchStatus !== "COMPLETED") return;
+
+          const homeScore = fixture.homeTeamScore ?? 0;
+          const awayScore = fixture.awayTeamScore ?? 0;
+
+          home.matches += 1;
+          away.matches += 1;
+          home.goalsFor += homeScore;
+          home.goalsAgainst += awayScore;
+          away.goalsFor += awayScore;
+          away.goalsAgainst += homeScore;
+
+          if (homeScore > awayScore) {
+            home.wins += 1;
+            home.points += 3;
+            away.losses += 1;
+          } else if (homeScore < awayScore) {
+            away.wins += 1;
+            away.points += 3;
+            home.losses += 1;
+          } else {
+            home.draws += 1;
+            away.draws += 1;
+            home.points += 1;
+            away.points += 1;
+          }
+
+          home.goalDifference = home.goalsFor - home.goalsAgainst;
+          away.goalDifference = away.goalsFor - away.goalsAgainst;
+        });
+
+        const scopedRows = Array.from(statsByTeam.values())
           .sort((left, right) => {
-            const leftRank =
-              rankingMap.get(left.teamId) ?? Number.MAX_SAFE_INTEGER;
-            const rightRank =
-              rankingMap.get(right.teamId) ?? Number.MAX_SAFE_INTEGER;
-            return leftRank - rightRank;
+            if (right.points !== left.points) return right.points - left.points;
+            if (right.goalDifference !== left.goalDifference) return right.goalDifference - left.goalDifference;
+            return right.goalsFor - left.goalsFor;
           })
           .map((team, index) => ({
             ...team,
@@ -163,7 +208,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
             rows,
           },
         ];
-  }, [fixtures, rankingMap, standings]);
+  }, [fixtures, standings]);
 
   if (isLoading || fixturesLoading) {
     return (

@@ -1,0 +1,41 @@
+.flowTabWrap {
+  width: 100%;
+  height: calc(100vh - 220px);
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.toggleWrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.flowWrap {
+  flex: 1;
+  min-height: 0;
+}
+
+.imageWrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.roadmapImage {
+  max-width: 100%;
+}
+
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.emptyWrap {
+  padding: 60px 0;
+}

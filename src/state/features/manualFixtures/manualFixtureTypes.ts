@@ -59,6 +59,8 @@ export interface GroupStandingResponse {
 export interface RoundGroupResponse {
   id: number;
   roundId: number;
+  parentGroupId?: number | null;
+  childGroups?: RoundGroupResponse[] | null;
   groupName: string;
   groupFormat: GroupFormat;
   advancementRule: string | null;
@@ -72,6 +74,7 @@ export interface RoundGroupResponse {
 
 export interface RoundGroupRequest {
   roundId: number;
+  parentGroupId?: number;
   groupName: string;
   groupFormat?: string;
   advancementRule?: string;

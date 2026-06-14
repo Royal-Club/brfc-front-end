@@ -25,7 +25,7 @@ interface RoundNodeData {
   isHovered?: boolean;
   onHover?: (roundId: number | null) => void;
   onCreateGroup?: (roundId: number) => void;
-  onCreateRound?: () => void;
+  onCreateRound?: (sourceRoundId?: number) => void;
   onGenerateMatches?: (roundId: number) => void;
 }
 
@@ -484,7 +484,7 @@ function RoundNode({ data, selected }: RoundNodeProps) {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  data.onCreateRound && data.onCreateRound();
+                  data.onCreateRound && data.onCreateRound(data.roundId);
                 }}
               />
             )}

@@ -8,6 +8,7 @@ import {
   DownOutlined,
   EnvironmentOutlined,
   HomeOutlined,
+  NodeIndexOutlined,
   TeamOutlined,
   TrophyOutlined,
   UnorderedListOutlined,
@@ -18,6 +19,7 @@ import ViewerResultsTab from "./ViewerResultsTab";
 import ViewerTableTab from "./ViewerTableTab";
 import ViewerPlayersTab from "./ViewerPlayersTab";
 import ViewerRulesTab from "./ViewerRulesTab";
+import ViewerTournamentFlowTab from "./ViewerTournamentFlowTab";
 import StatsLeaderboardPanel from "../Tournaments/Statistics/StatsLeaderboardPanel";
 import {
   useGetTournamentsQuery,
@@ -29,7 +31,7 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import styles from "./TournamentViewerPage.module.css";
 
 const { Content } = Layout;
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { useBreakpoint } = Grid;
 const VIEWER_CONTENT_MAX_WIDTH = 1180;
 
@@ -63,7 +65,7 @@ const isValidViewerTab = (tabKey: string | null, hasRules: boolean) => {
   if (!tabKey) return false;
 
   return (
-    ["home", "fixtures", "results", "table", "stats", "players"].includes(tabKey) ||
+    ["home", "fixtures", "roadmap", "results", "table", "stats", "players"].includes(tabKey) ||
     (tabKey === "rules" && hasRules)
   );
 };
@@ -188,6 +190,21 @@ export default function TournamentViewerPage({
       ),
       children: selectedId ? (
         <ViewerFixturesTab tournamentId={selectedId} />
+      ) : null,
+    },
+    {
+      key: "roadmap",
+      label: (
+        <span>
+          <NodeIndexOutlined style={{ marginRight: 6 }} />
+          Roadmap
+        </span>
+      ),
+      children: selectedId ? (
+        <ViewerTournamentFlowTab
+          tournamentId={selectedId}
+          isActive={activeTab === "roadmap"}
+        />
       ) : null,
     },
     {

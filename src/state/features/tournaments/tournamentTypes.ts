@@ -11,6 +11,7 @@ export interface IoTournamentSingleSummaryType {
     season?: string;
     description?: string;
     rules?: string;
+    roadmapImageUrl?: string;
 }
 
 export interface getSingleTournamentInfoType extends BasicResType {
@@ -69,6 +70,7 @@ export interface TournamentSummeryResType {
             season?: string;
             description?: string;
             rules?: string;
+            roadmapImageUrl?: string;
             tournamentDate: string;
             venueName: string;
             activeStatus: boolean;

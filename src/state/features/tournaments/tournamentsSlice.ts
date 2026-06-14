@@ -29,12 +29,13 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         season?: string;
         description?: string;
         rules?: string;
+        roadmapImageUrl?: string;
       }
     >({
-      query: ({ tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules }) => ({
+      query: ({ tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
         url: "tournaments",
         method: "POST",
-        body: { tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules },
+        body: { tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules, roadmapImageUrl },
       }),
       invalidatesTags: ["tournaments"],
     }),
@@ -56,12 +57,13 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         season?: string;
         description?: string;
         rules?: string;
+        roadmapImageUrl?: string;
       }
     >({
-      query: ({ id, tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules }) => ({
+      query: ({ id, tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
         url: `tournaments/${id}`,
         method: "PUT",
-        body: { tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules },
+        body: { tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules, roadmapImageUrl },
       }),
       invalidatesTags: ["tournaments"],
     }),
@@ -82,6 +84,17 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         method: "PUT",
       }),
       invalidatesTags: ["tournaments"],
+    }),
+
+    presignRoadmapImageUpload: builder.mutation<
+      BasicResType & { content: { key: string; url: string; uploadUrl: string; expiresInSeconds: number } },
+      { fileName: string; contentType: string }
+    >({
+      query: ({ fileName, contentType }) => ({
+        url: `files/team-logos/presign`,
+        method: "POST",
+        params: { fileName, contentType },
+      }),
     }),
 
     getTournaments: builder.query<
@@ -201,6 +214,7 @@ export const {
   useGetTournamentsQuery,
   useUpdateTournamentActiveStatusMutation,
   useConcludeTournamentMutation,
+  usePresignRoadmapImageUploadMutation,
   useGetTournamentParticipantsListQuery,
   useAddParticipationToTournamentMutation,
   useGetTournamentSummaryQuery,

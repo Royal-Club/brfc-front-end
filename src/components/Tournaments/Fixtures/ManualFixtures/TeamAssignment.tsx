@@ -29,11 +29,66 @@ import {
   useGetRoundByIdQuery,
   useGetGroupStandingsQuery,
 } from "../../../../state/features/manualFixtures/manualFixturesSlice";
-import { TournamentStructureResponse } from "../../../../state/features/manualFixtures/manualFixtureTypes";
+import { TournamentStructureResponse, RoundGroupResponse, TournamentRoundResponse } from "../../../../state/features/manualFixtures/manualFixtureTypes";
 import { useGetFixturesQuery } from "../../../../state/features/fixtures/fixturesSlice";
 import { IFixture } from "../../../../state/features/fixtures/fixtureTypes";
 
 const { Text, Title } = Typography;
+
+// Recursively flatten a group tree (including nested childGroups) into a flat list
+function flattenGroups(groups: RoundGroupResponse[] = []): RoundGroupResponse[] {
+  const result: RoundGroupResponse[] = [];
+
+  const walk = (items: RoundGroupResponse[]) => {
+    items.forEach((group) => {
+      result.push(group);
+      if (group.childGroups && group.childGroups.length > 0) {
+        walk(group.childGroups);
+      }
+    });
+  };
+
+  walk(groups);
+  return result;
+}
+
+// Leaf groups are the ones that actually hold teams/matches/standings -
+// parent groups are just containers for nested sub-groups
+function getLeafGroups(groups: RoundGroupResponse[] = []): RoundGroupResponse[] {
+  return flattenGroups(groups).filter(
+    (group) => !group.childGroups || group.childGroups.length === 0
+  );
+}
+
+// First word of a group/round name, used to match lanes like "CUP"/"PLATE"
+function getLaneKeyword(name?: string | null): string {
+  return (name || "").trim().split(/\s+/)[0]?.toUpperCase() || "";
+}
+
+// Resolve the leaf groups of the previous round that feed the current round.
+// For branched knockouts (e.g. "CUP FINAL" fed by "CUP SEMIFINAL" -> "Cup Semifinal 1/2"
+// and "PLATE FINAL" fed by "PLATE SEMIFINAL" -> "Plate Semifinal 1/2"), this scopes
+// the result to the matching lane based on the leading word of the group/round name.
+function getSourceLeafGroups(
+  previousRound: TournamentRoundResponse | null | undefined,
+  currentRound: TournamentRoundResponse | null | undefined
+): RoundGroupResponse[] {
+  if (!previousRound?.groups) return [];
+
+  const allLeafGroups = getLeafGroups(previousRound.groups);
+
+  const laneKeyword = getLaneKeyword(currentRound?.roundName);
+  if (!laneKeyword) return allLeafGroups;
+
+  const matchingTopGroups = previousRound.groups.filter(
+    (group) => getLaneKeyword(group.groupName) === laneKeyword
+  );
+
+  if (matchingTopGroups.length === 0) return allLeafGroups;
+
+  const laneLeafGroups = getLeafGroups(matchingTopGroups);
+  return laneLeafGroups.length > 0 ? laneLeafGroups : allLeafGroups;
+}
 
 interface TeamAssignmentProps {
   groupId: number | null;
@@ -78,10 +133,30 @@ export default function TeamAssignment({
   
   const isDirectKnockout = roundType === "DIRECT_KNOCKOUT" || round?.roundType === "DIRECT_KNOCKOUT";
   
-  // Find previous round
-  const previousRound = round && round.sequenceOrder && round.sequenceOrder > 1
-    ? tournamentStructure?.rounds.find((r) => r.sequenceOrder === round.sequenceOrder - 1)
-    : null;
+  // Find the previous round that actually feeds this round.
+  // Simply taking "sequenceOrder - 1" breaks for branched knockouts: e.g. if
+  // CUP FINAL is sequence 3 and PLATE FINAL is sequence 4, PLATE FINAL's
+  // "sequenceOrder - 1" would resolve to CUP FINAL instead of the Semifinal
+  // Stage's PLATE lane. Walk backwards and pick the nearest round whose
+  // lane (CUP/PLATE/etc.) matches the current round.
+  const previousRound = (() => {
+    if (!round || !round.sequenceOrder || round.sequenceOrder <= 1) return null;
+
+    const laneKeyword = getLaneKeyword(round.roundName);
+    const candidates = (tournamentStructure?.rounds || [])
+      .filter((r) => r.sequenceOrder < round.sequenceOrder!)
+      .sort((a, b) => b.sequenceOrder - a.sequenceOrder);
+
+    for (const candidate of candidates) {
+      if (candidate.roundType === "GROUP_BASED") {
+        if (getSourceLeafGroups(candidate, round).length > 0) return candidate;
+      } else if (!laneKeyword || getLaneKeyword(candidate.roundName) === laneKeyword) {
+        return candidate;
+      }
+    }
+
+    return candidates[0] || null;
+  })();
   
   // Get tournament ID from round or tournament structure
   const tournamentId = round?.tournamentId || tournamentStructure?.tournamentId;
@@ -93,8 +168,9 @@ export default function TeamAssignment({
   );
   const fixtures = fixturesData?.content || [];
 
-  // Get standings for all groups in previous round
-  const previousRoundGroups = previousRound?.groups || [];
+  // Get standings for the groups in the previous round that feed this round
+  // (scoped to the matching CUP/PLATE lane and resolved down to leaf sub-groups)
+  const previousRoundGroups = getSourceLeafGroups(previousRound, round);
   
   const assignedTeamIds = isDirectKnockout
     ? (round?.teams?.filter((t) => {
@@ -256,10 +332,12 @@ export default function TeamAssignment({
     const previousRoundTeams: Array<{ teamId: number; teamName: string }> = [];
 
     if (previousRound.roundType === "GROUP_BASED" && previousRound.groups) {
-      // For GROUP_BASED rounds, get all teams from all groups' standings
-      // If standings exist, use them (more accurate as they show actual participation)
-      // Otherwise, fall back to teams in groups
-      previousRound.groups.forEach((group) => {
+      // For GROUP_BASED rounds, get all teams from the relevant leaf groups' standings
+      // (scoped to the matching CUP/PLATE lane). If standings exist, use them
+      // (more accurate as they show actual participation). Otherwise, fall back to
+      // teams in the groups.
+      const sourceGroups = getSourceLeafGroups(previousRound, round);
+      sourceGroups.forEach((group) => {
         if (group.standings && group.standings.length > 0) {
           // Use standings (shows teams that actually played)
           group.standings.forEach((standing) => {
