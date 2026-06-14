@@ -13,8 +13,10 @@ import {
     Col,
     Space,
     Switch,
+    Upload,
+    Image,
 } from "antd";
-import { CalendarOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { CalendarOutlined, ClockCircleOutlined, UploadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useGetVanuesQuery } from "../../../state/features/vanues/vanuesSlice";
 import Title from "antd/es/typography/Title";
 import dayjs from "dayjs";
@@ -22,8 +24,13 @@ import utc from "dayjs/plugin/utc";
 import {
     useCreateTournamentMutation,
     useUpdateTournamentMutation,
+    usePresignRoadmapImageUploadMutation,
 } from "../../../state/features/tournaments/tournamentsSlice";
 import { IoTournamentSingleSummaryType } from "../../../state/features/tournaments/tournamentTypes";
+import { toAbsoluteLogoUrl } from "../../TournamentViewer/teamLogoUtils";
+import { validateImageFile, compressImage } from "../../../utils/imageUploadUtils";
+
+const MAX_ROADMAP_IMAGE_SIZE = 8 * 1024 * 1024;
 
 dayjs.extend(utc);
 
@@ -48,8 +55,11 @@ export default function CreateTournament({
         useCreateTournamentMutation();
     const [updateTournament, { isLoading: isUpdating }] =
         useUpdateTournamentMutation();
+    const [presignRoadmapImageUpload] = usePresignRoadmapImageUploadMutation();
     const [open, setOpen] = useState(false);
     const [form] = Form.useForm();
+    const [roadmapImageUrl, setRoadmapImageUrl] = useState<string | undefined>(undefined);
+    const [isUploadingRoadmapImage, setIsUploadingRoadmapImage] = useState(false);
 
     const handleCreateOrUpdateTournament = async (values: {
         tournamentName: string;
@@ -84,6 +94,7 @@ export default function CreateTournament({
             season: values.season,
             description: values.description,
             rules: values.rules,
+            roadmapImageUrl,
         };
 
         if (tournamentId) {
@@ -93,6 +104,7 @@ export default function CreateTournament({
                     message.success("Tournament updated successfully");
                     setOpen(false);
                     form.resetFields();
+                    setRoadmapImageUrl(undefined);
                     if (handleSetIsUpdateModalVisible) {
                         handleSetIsUpdateModalVisible(false);
                     }
@@ -107,11 +119,53 @@ export default function CreateTournament({
                     message.success("Tournament created successfully");
                     setOpen(false);
                     form.resetFields();
+                    setRoadmapImageUrl(undefined);
                 })
                 .catch((err) => {
                     console.error(err);
 
                 });
+        }
+    };
+
+    const handleUploadRoadmapImage = async (file: File) => {
+        try {
+            setIsUploadingRoadmapImage(true);
+            validateImageFile(file, MAX_ROADMAP_IMAGE_SIZE);
+
+            const optimizedFile = await compressImage(file, 1600);
+
+            const uploadResponse = await presignRoadmapImageUpload({
+                fileName: optimizedFile.name,
+                contentType: optimizedFile.type || "image/jpeg",
+            }).unwrap();
+
+            const key = uploadResponse?.content?.key;
+            const uploadUrl = uploadResponse?.content?.uploadUrl;
+            const url = uploadResponse?.content?.url;
+
+            if (!key || !uploadUrl || !url) {
+                throw new Error("Roadmap image upload failed");
+            }
+
+            const putResponse = await fetch(uploadUrl, {
+                method: "PUT",
+                body: optimizedFile,
+                headers: {
+                    "Content-Type": optimizedFile.type || "image/jpeg",
+                },
+            });
+
+            if (!putResponse.ok) {
+                throw new Error(`Upload failed with status ${putResponse.status}`);
+            }
+
+            setRoadmapImageUrl(url);
+            message.success("Roadmap image uploaded successfully");
+        } catch (error: any) {
+            message.error(error?.message || "Roadmap image upload failed");
+        } finally {
+            setIsUploadingRoadmapImage(false);
         }
     };
 
@@ -138,6 +192,7 @@ export default function CreateTournament({
                     (venue: any) => venue.name === tournamentData.venueName
                 )?.id,
             });
+            setRoadmapImageUrl(tournamentData.roadmapImageUrl);
         }
     }, [tournamentData, venuesData, form]);
 
@@ -157,6 +212,9 @@ export default function CreateTournament({
                 open={open}
                 onCancel={() => {
                     setOpen(false);
+                    if (!tournamentId) {
+                        setRoadmapImageUrl(undefined);
+                    }
                     if (handleSetIsUpdateModalVisible) {
                         handleSetIsUpdateModalVisible(false);
                     }
@@ -290,6 +348,45 @@ export default function CreateTournament({
                                 rows={8}
                                 placeholder="Enter tournament rules in Markdown format"
                             />
+                        </Form.Item>
+
+                        <Form.Item
+                            label="Roadmap Image"
+                            extra="Optional. Upload a static roadmap/bracket image. If uploaded, viewers can switch between this image and the live flow chart in the Roadmap tab."
+                        >
+                            {roadmapImageUrl ? (
+                                <Space direction="vertical">
+                                    <Image
+                                        src={toAbsoluteLogoUrl(roadmapImageUrl)}
+                                        alt="Roadmap"
+                                        width={200}
+                                        style={{ borderRadius: 4 }}
+                                    />
+                                    <Button
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        onClick={() => setRoadmapImageUrl(undefined)}
+                                    >
+                                        Remove Image
+                                    </Button>
+                                </Space>
+                            ) : (
+                                <Upload
+                                    accept="image/png,image/jpeg,image/webp"
+                                    showUploadList={false}
+                                    beforeUpload={(file) => {
+                                        handleUploadRoadmapImage(file);
+                                        return false;
+                                    }}
+                                >
+                                    <Button
+                                        icon={<UploadOutlined />}
+                                        loading={isUploadingRoadmapImage}
+                                    >
+                                        Upload Roadmap Image
+                                    </Button>
+                                </Upload>
+                            )}
                         </Form.Item>
 
                         <Form.Item>
