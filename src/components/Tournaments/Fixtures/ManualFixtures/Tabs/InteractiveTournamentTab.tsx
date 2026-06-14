@@ -803,9 +803,9 @@ export default function InteractiveTournamentTab({
     const hasTeams = !isGroupBased && round.teams && round.teams.length > 0;
     const hasRequiredStructure = isGroupBased ? hasGroups : hasTeams;
 
-    // For GROUP_BASED rounds, check if at least one group has matches
+    // For GROUP_BASED rounds, check if at least one group (including nested child groups) has matches
     const hasGroupMatches = isGroupBased && hasGroups
-      ? round.groups!.some((group) => (group.totalMatches || 0) > 0)
+      ? flattenGroups(round.groups!).some((group) => (group.totalMatches || 0) > 0)
       : true; // Not applicable for DIRECT_KNOCKOUT or if no groups
 
     // For DIRECT_KNOCKOUT rounds, check if round has matches
