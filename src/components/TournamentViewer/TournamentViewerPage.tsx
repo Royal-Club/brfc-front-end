@@ -29,7 +29,7 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import styles from "./TournamentViewerPage.module.css";
 
 const { Content } = Layout;
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { useBreakpoint } = Grid;
 const VIEWER_CONTENT_MAX_WIDTH = 1180;
 
