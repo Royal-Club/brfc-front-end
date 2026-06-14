@@ -348,14 +348,20 @@ export default function InteractiveTournamentTab({
     // Validate that all matches are completed
     const allMatchesCompleted = round.totalMatches > 0 && round.completedMatches === round.totalMatches;
     
-    // For group-based rounds, also check that all groups have completed matches
+    // For group-based rounds, also check that all groups have completed matches.
+    // Only leaf groups (groups without child groups) actually hold matches -
+    // parent groups are containers with totalMatches: 0 by design.
     if (round.roundType === RoundType.GROUP_BASED && round.groups) {
-      const allGroupsCompleted = round.groups.every((group) => {
+      const leafGroups = flattenGroups(round.groups).filter(
+        (group) => !group.childGroups || group.childGroups.length === 0
+      );
+
+      const allGroupsCompleted = leafGroups.every((group) => {
         return group.totalMatches > 0 && group.completedMatches === group.totalMatches;
       });
 
       if (!allGroupsCompleted) {
-        const incompleteGroups = round.groups.filter(
+        const incompleteGroups = leafGroups.filter(
           (group) => !(group.totalMatches > 0 && group.completedMatches === group.totalMatches)
         );
         message.error(
