@@ -262,24 +262,32 @@ export default function ViewerFixturesTab({ tournamentId }: ViewerFixturesTabPro
           })}
         </div>
 
-        {groups.map(([groupName, fixtures]) => (
-          <section key={groupName} className={styles.groupSection}>
-            <div className={styles.groupHeader}>
-              <div className={styles.groupTitleWrap}>
-                <Title level={4} className={styles.groupTitle}>
-                  {groupName}
-                </Title>
-                {!isMobile && <div className={styles.groupDivider} />}
-              </div>
-              <Tag className={styles.groupCountTag}>
-                {fixtures.length} MATCH{fixtures.length !== 1 ? "ES" : ""}
-              </Tag>
-            </div>
+        {activeFilter === "ALL" ? (
+          <section className={styles.groupSection}>
             {fixtures.map((f) => (
               <MatchCard key={f.id} fixture={f} tournamentSummary={tournamentSummary} isMobile={isMobile} roundNameMap={roundNameMap} />
             ))}
           </section>
-        ))}
+        ) : (
+          groups.map(([groupName, fixtures]) => (
+            <section key={groupName} className={styles.groupSection}>
+              <div className={styles.groupHeader}>
+                <div className={styles.groupTitleWrap}>
+                  <Title level={4} className={styles.groupTitle}>
+                    {groupName}
+                  </Title>
+                  {!isMobile && <div className={styles.groupDivider} />}
+                </div>
+                <Tag className={styles.groupCountTag}>
+                  {fixtures.length} MATCH{fixtures.length !== 1 ? "ES" : ""}
+                </Tag>
+              </div>
+              {fixtures.map((f) => (
+                <MatchCard key={f.id} fixture={f} tournamentSummary={tournamentSummary} isMobile={isMobile} roundNameMap={roundNameMap} />
+              ))}
+            </section>
+          ))
+        )}
       </div>
     </div>
   );
