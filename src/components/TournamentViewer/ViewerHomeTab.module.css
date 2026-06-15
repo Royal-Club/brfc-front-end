@@ -15,6 +15,17 @@
   border: 1px solid rgba(24, 255, 152, 0.35);
 }
 
+.heroTitleRow {
+  display: block;
+  width: 100%;
+}
+
+.heroTitleWrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
 .heroTitle {
   margin: 0;
   color: #ffffff;
@@ -23,6 +34,57 @@
   line-height: 1.15;
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+.titleReveal {
+  display: block;
+  clip-path: inset(0 100% 0 0);
+  animation: heroTitleReveal 8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.football {
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
+  animation: heroFootballMove 8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes heroTitleReveal {
+  0%,
+  3% {
+    clip-path: inset(0 100% 0 0);
+  }
+  75%,
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes heroFootballMove {
+  0% {
+    left: -8px;
+    transform: translate(-50%, -50%) rotate(0deg);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  75% {
+    left: calc(100% + 8px);
+    transform: translate(-50%, -50%) rotate(900deg);
+    opacity: 0;
+  }
+  100% {
+    left: calc(100% + 8px);
+    opacity: 0;
+  }
 }
 
 .heroSeason {

@@ -47,9 +47,18 @@ export default function ViewerHomeTab({ tournamentId }: ViewerHomeTabProps) {
       >
         <Tag className={styles.heroBadge}>OFFICIAL TOURNAMENT</Tag>
 
-        <Title level={1} className={styles.heroTitle}>
-          {displayTitle}
-        </Title>
+        <div className={styles.heroTitleRow}>
+          <div className={styles.heroTitleWrapper}>
+            <div className={styles.titleReveal}>
+              <Title level={1} className={styles.heroTitle}>
+                {displayTitle}
+              </Title>
+            </div>
+            <span className={styles.football} aria-hidden="true">
+              ⚽
+            </span>
+          </div>
+        </div>
 
         {tournament.season && (
           <Text className={styles.heroSeason}>{tournament.season}</Text>
