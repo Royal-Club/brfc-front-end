@@ -196,6 +196,14 @@
   gap: 8px;
 }
 
+/* Slightly darker background for even rows for better row separation */
+.playersList .playerItem:nth-child(even) {
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 6px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
 .playerItem {
   display: flex;
   align-items: center;
