@@ -13,13 +13,27 @@ export default function AppFooter() {
         textAlign: "center",
         background: "transparent",
         padding: "16px 24px",
+        marginTop: '24px'
       }}
     >
-      <Text type="secondary" style={{ fontSize: 13 }}>
-        BJIT Royal Football Club — Unity. Energy. Legacy.
-        <br />
-        &copy; {year} BJIT Royal Football Club. All rights reserved.
-      </Text>
+      <div>
+        <Text
+          style={{
+            color: "#ffffff",
+            fontWeight: 700,
+            fontSize: 13,
+            display: "block",
+          }}
+        >
+          BJIT Royal Football Club — Unity. Energy. Legacy.
+        </Text>
+        <Text
+          type="secondary"
+          style={{ fontSize: 13, display: "block", marginTop: 2 }}
+        >
+          &copy; {year} BJIT Royal Football Club. All rights reserved.
+        </Text>
+      </div>
     </Footer>
   );
 }
