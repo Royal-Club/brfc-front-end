@@ -26,6 +26,8 @@ import type {
 } from "../../state/features/fixtures/fixtureTypes";
 import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
 import styles from "./ViewerFixturesTab.module.css";
+import yellowCardIcon from "../../assets/matchDetails/yolo_card.png";
+import redCardIcon from "../../assets/matchDetails/red_card.png";
 
 const { Text, Title } = Typography;
 
@@ -74,6 +76,27 @@ const buildGoalEvents = (
     playerName: event.playerName || "Unknown",
     minute: formatGoalMinute(event, matchStartedAt),
   }));
+};
+
+const buildCardEvents = (
+  events: IMatchEvent[] = [],
+  teamId: number,
+  cardType: MatchEventType.YELLOW_CARD | MatchEventType.RED_CARD,
+  matchStartedAt?: string | null,
+): Array<{ key: string; playerName: string; minute: string }> => {
+  return events
+    .filter(
+      (event) =>
+        event.eventType === cardType &&
+        event.teamId === teamId &&
+        event.playerId,
+    )
+    .sort((a, b) => (a.eventTime || 0) - (b.eventTime || 0))
+    .map((event, index) => ({
+      key: `${teamId}-${cardType}-${event.playerId}-${event.eventTime}-${index}`,
+      playerName: event.playerName || "Unknown",
+      minute: formatGoalMinute(event, matchStartedAt),
+    }));
 };
 
 const buildStageLabel = (label: string) => label.toUpperCase();
@@ -131,6 +154,52 @@ function ResultCard({
       ),
     [eventsResponse?.content, fixture.awayTeamId, fixture.startedAt],
   );
+  const homeYellowCards = useMemo(
+    () =>
+      buildCardEvents(
+        eventsResponse?.content,
+        fixture.homeTeamId,
+        MatchEventType.YELLOW_CARD,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.homeTeamId, fixture.startedAt],
+  );
+  const awayYellowCards = useMemo(
+    () =>
+      buildCardEvents(
+        eventsResponse?.content,
+        fixture.awayTeamId,
+        MatchEventType.YELLOW_CARD,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.awayTeamId, fixture.startedAt],
+  );
+  const homeRedCards = useMemo(
+    () =>
+      buildCardEvents(
+        eventsResponse?.content,
+        fixture.homeTeamId,
+        MatchEventType.RED_CARD,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.homeTeamId, fixture.startedAt],
+  );
+  const awayRedCards = useMemo(
+    () =>
+      buildCardEvents(
+        eventsResponse?.content,
+        fixture.awayTeamId,
+        MatchEventType.RED_CARD,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.awayTeamId, fixture.startedAt],
+  );
+  const hasCardEvents =
+    homeYellowCards.length > 0 ||
+    awayYellowCards.length > 0 ||
+    homeRedCards.length > 0 ||
+    awayRedCards.length > 0;
+
   const homeRecordedGoals = useMemo(() => homeScorers.length, [homeScorers]);
   const awayRecordedGoals = useMemo(() => awayScorers.length, [awayScorers]);
   const hasScorerMismatch =
@@ -634,6 +703,108 @@ function ResultCard({
             )}
           </>
         )}
+        {hasCardEvents && (
+          <>
+            <Divider
+              style={{
+                margin: isMobile ? "14px 0 12px" : "20px 0 14px",
+                borderColor: "rgba(255,255,255,0.06)",
+              }}
+            />
+            {isMobile ? (
+              <div style={{ display: "flex", gap: 8, width: "100%" }}>
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 5,
+                    alignItems: "flex-start",
+                  }}
+                >
+                  {[...homeYellowCards.map((c) => ({ ...c, type: "yellow" })), ...homeRedCards.map((c) => ({ ...c, type: "red" }))].map((card) => (
+                    <div
+                      key={card.key}
+                      style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0, width: "100%" }}
+                    >
+                      <img
+                        src={card.type === "yellow" ? yellowCardIcon : redCardIcon}
+                        alt={card.type === "yellow" ? "Yellow card" : "Red card"}
+                        style={{ width: 12, height: 16, flexShrink: 0 }}
+                      />
+                      <Text style={{ fontSize: 12, fontWeight: 600, wordBreak: "break-word" }}>
+                        {card.playerName}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ width: 1, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 5,
+                    alignItems: "flex-end",
+                  }}
+                >
+                  {[...awayYellowCards.map((c) => ({ ...c, type: "yellow" })), ...awayRedCards.map((c) => ({ ...c, type: "red" }))].map((card) => (
+                    <div
+                      key={card.key}
+                      style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0, width: "100%", justifyContent: "flex-end" }}
+                    >
+                      <Text style={{ fontSize: 12, fontWeight: 600, wordBreak: "break-word", textAlign: "right" }}>
+                        {card.playerName}
+                      </Text>
+                      <img
+                        src={card.type === "yellow" ? yellowCardIcon : redCardIcon}
+                        alt={card.type === "yellow" ? "Yellow card" : "Red card"}
+                        style={{ width: 12, height: 16, flexShrink: 0 }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Row gutter={[16, 10]} align="top">
+                <Col xs={24} md={11}>
+                  <Space direction="vertical" size={6} style={{ width: "100%", alignItems: "flex-end" }}>
+                    {[...homeYellowCards.map((c) => ({ ...c, type: "yellow" })), ...homeRedCards.map((c) => ({ ...c, type: "red" }))].map((card) => (
+                      <Space key={card.key} size={8} align="center">
+                        <Text style={{ fontSize: 15, fontWeight: 600 }}>{card.playerName}</Text>
+                        <img
+                          src={card.type === "yellow" ? yellowCardIcon : redCardIcon}
+                          alt={card.type === "yellow" ? "Yellow card" : "Red card"}
+                          style={{ width: 14, height: 18 }}
+                        />
+                      </Space>
+                    ))}
+                  </Space>
+                </Col>
+                <Col xs={0} md={2}>
+                  <div style={{ height: "100%", minHeight: 40, width: 1, background: "rgba(255,255,255,0.08)", margin: "0 auto" }} />
+                </Col>
+                <Col xs={24} md={11}>
+                  <Space direction="vertical" size={6} style={{ width: "100%", alignItems: "flex-start" }}>
+                    {[...awayYellowCards.map((c) => ({ ...c, type: "yellow" })), ...awayRedCards.map((c) => ({ ...c, type: "red" }))].map((card) => (
+                      <Space key={card.key} size={8} align="center">
+                        <img
+                          src={card.type === "yellow" ? yellowCardIcon : redCardIcon}
+                          alt={card.type === "yellow" ? "Yellow card" : "Red card"}
+                          style={{ width: 14, height: 18 }}
+                        />
+                        <Text style={{ fontSize: 15, fontWeight: 600 }}>{card.playerName}</Text>
+                      </Space>
+                    ))}
+                  </Space>
+                </Col>
+              </Row>
+            )}
+          </>
+        )}
+
         {fixture.venueName && (
           <div style={{ marginTop: 16, textAlign: "center" }}>
             <Text type="secondary" style={{ fontSize: 12 }}>
