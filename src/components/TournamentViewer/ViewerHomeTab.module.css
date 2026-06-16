@@ -46,11 +46,13 @@
   position: absolute;
   top: 50%;
   left: -8px;
-  font-size: clamp(1.4rem, 4vw, 2.4rem);
-  line-height: 1;
+  width: clamp(1.4rem, 4vw, 2.4rem);
+  height: clamp(1.4rem, 4vw, 2.4rem);
+  object-fit: contain;
   pointer-events: none;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
   animation: heroFootballMove 8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  transform: translateY(-50%);
 }
 
 @keyframes heroTitleReveal {
@@ -67,7 +69,7 @@
 @keyframes heroFootballMove {
   0% {
     left: -8px;
-    transform: translate(-50%, -50%) rotate(0deg);
+    transform: translateX(-50%) translateY(-50%) rotate(0deg);
     opacity: 0;
   }
   3% {
@@ -77,8 +79,8 @@
     opacity: 1;
   }
   75% {
-    left: calc(100% + 8px);
-    transform: translate(-50%, -50%) rotate(900deg);
+    left: calc(100% + 30px);
+    transform: translateX(-50%) translateY(-50%) rotate(900deg);
     opacity: 0;
   }
   100% {
@@ -116,5 +118,34 @@
 
   .heroDescription {
     margin-top: 16px;
+  }
+
+  .football {
+    width: clamp(2rem, 6vw, 2.8rem) !important;
+    height: clamp(2rem, 6vw, 2.8rem) !important;
+    animation: heroFootballMoveMobile 8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+
+  @keyframes heroFootballMoveMobile {
+    0% {
+      left: -8px;
+      transform: translateX(-50%) translateY(-50%) rotate(0deg);
+      opacity: 0;
+    }
+    3% {
+      opacity: 1;
+    }
+    72% {
+      opacity: 1;
+    }
+    75% {
+      left: 98%;
+      transform: translateX(-50%) translateY(-50%) rotate(900deg);
+      opacity: 0;
+    }
+    100% {
+      left: 95%;
+      opacity: 0;
+    }
   }
 }

@@ -4,6 +4,7 @@ import { TrophyOutlined } from "@ant-design/icons";
 import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { getTeamInitials, toAbsoluteLogoUrl } from "./teamLogoUtils";
 import styles from "./ViewerHomeTab.module.css";
+import footballBall from "../../assets/fc26_ball.png";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -26,7 +27,12 @@ export default function ViewerHomeTab({ tournamentId }: ViewerHomeTabProps) {
   const teams = tournament?.teams || [];
 
   if (!tournament) {
-    return <Empty description="Tournament details not found" style={{ padding: 48 }} />;
+    return (
+      <Empty
+        description="Tournament details not found"
+        style={{ padding: 48 }}
+      />
+    );
   }
 
   const displayTitle =
@@ -54,9 +60,12 @@ export default function ViewerHomeTab({ tournamentId }: ViewerHomeTabProps) {
                 {displayTitle}
               </Title>
             </div>
-            <span className={styles.football} aria-hidden="true">
-              ⚽
-            </span>
+            <img
+              src={footballBall}
+              alt=""
+              className={styles.football}
+              aria-hidden="true"
+            />
           </div>
         </div>
 
@@ -75,7 +84,8 @@ export default function ViewerHomeTab({ tournamentId }: ViewerHomeTabProps) {
         bordered={false}
         style={{
           borderRadius: 34,
-          background: "linear-gradient(135deg, rgba(14,18,34,0.96) 0%, rgba(19,27,46,0.92) 100%)",
+          background:
+            "linear-gradient(135deg, rgba(14,18,34,0.96) 0%, rgba(19,27,46,0.92) 100%)",
           boxShadow: "0 22px 44px rgba(0,0,0,0.28)",
           border: "1px solid rgba(255,255,255,0.08)",
         }}
@@ -110,7 +120,8 @@ export default function ViewerHomeTab({ tournamentId }: ViewerHomeTabProps) {
                     size={56}
                     src={toAbsoluteLogoUrl(team.logoUrl)}
                     style={{
-                      background: "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)",
+                      background:
+                        "linear-gradient(180deg, #ebfff2 0%, #dff7eb 100%)",
                       color: "#18ff98",
                       fontWeight: 900,
                       fontSize: 20,
@@ -120,7 +131,9 @@ export default function ViewerHomeTab({ tournamentId }: ViewerHomeTabProps) {
                   >
                     {getTeamInitials(team.teamName)}
                   </Avatar>
-                  <Text style={{ color: "#ffffff", fontWeight: 600, fontSize: 13 }}>
+                  <Text
+                    style={{ color: "#ffffff", fontWeight: 600, fontSize: 13 }}
+                  >
                     {team.teamName}
                   </Text>
                 </div>

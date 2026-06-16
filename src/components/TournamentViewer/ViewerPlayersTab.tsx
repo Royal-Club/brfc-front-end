@@ -293,13 +293,12 @@ export default function ViewerPlayersTab({
         {isMobile ? (
           <div className={styles.filterDropdown}>
             <Select
-              mode="multiple"
               value={
                 activeFilter === "ALL"
                   ? []
                   : Array.isArray(activeFilter)
                     ? activeFilter
-                    : []
+                    : [activeFilter]
               }
               onChange={handleFilterChange}
               options={filters.map((filter) => ({
