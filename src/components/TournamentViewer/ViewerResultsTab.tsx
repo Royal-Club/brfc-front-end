@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Alert,
   Avatar,
@@ -24,6 +24,7 @@ import type {
   IFixture,
   IMatchEvent,
 } from "../../state/features/fixtures/fixtureTypes";
+import { calculateElapsedTime, formatElapsedTime } from "../../utils/matchTimeUtils";
 import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
 import styles from "./ViewerFixturesTab.module.css";
 import yellowCardIcon from "../../assets/matchDetails/yolo_card.png";
@@ -200,6 +201,34 @@ function ResultCard({
     homeRedCards.length > 0 ||
     awayRedCards.length > 0;
 
+  const [liveTime, setLiveTime] = useState(() =>
+    formatElapsedTime(
+      calculateElapsedTime(
+        fixture.matchStatus,
+        fixture.startedAt,
+        fixture.elapsedTimeSeconds,
+        fixture.completedAt,
+      ),
+    ),
+  );
+
+  useEffect(() => {
+    if (fixture.matchStatus !== "ONGOING") return;
+    const tick = () =>
+      setLiveTime(
+        formatElapsedTime(
+          calculateElapsedTime(
+            fixture.matchStatus,
+            fixture.startedAt,
+            fixture.elapsedTimeSeconds,
+            fixture.completedAt,
+          ),
+        ),
+      );
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [fixture.matchStatus, fixture.startedAt, fixture.elapsedTimeSeconds, fixture.completedAt]);
+
   const homeRecordedGoals = useMemo(() => homeScorers.length, [homeScorers]);
   const awayRecordedGoals = useMemo(() => awayScorers.length, [awayScorers]);
   const hasScorerMismatch =
@@ -229,27 +258,34 @@ function ResultCard({
       className={getResultCardClassName(fixture.matchStatus)}
       bodyStyle={{ padding: isMobile ? "14px 14px 16px" : "20px 22px 24px" }}
     >
-      <div className={styles.cardTopRow}>
+      <div className={styles.cardTopRow} style={{ position: "relative" }}>
         <Tag className={styles.stageTag}>
           {buildStageLabel(competitionLabel)}
         </Tag>
-        <Space size={8} wrap>
-          {isLive && (
+        <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+          {fixture.matchStatus === "ONGOING" && (
             <Tag className={styles.statusTag} color="green">
-              LIVE
+              LIVE{liveTime && <> | <span style={{ fontVariantNumeric: "tabular-nums" }}>{liveTime}</span></>}
             </Tag>
           )}
           {fixture.matchStatus === "PAUSED" && (
             <Tag className={styles.statusTag} color="purple">
-              PAUSED
+              PAUSED{liveTime && <> | <span style={{ fontVariantNumeric: "tabular-nums" }}>{liveTime}</span></>}
             </Tag>
           )}
-          {playedDate && (
+          {fixture.matchStatus === "COMPLETED" && (
+            <Tag className={styles.statusTag} color="default">
+              FT
+            </Tag>
+          )}
+        </div>
+        <div>
+          {playedDate && fixture.matchStatus === "COMPLETED" && (
             <Tag className={styles.statusTag} color="default">
               {formatPlayedDate(playedDate)}
             </Tag>
           )}
-        </Space>
+        </div>
       </div>
 
       <div>
