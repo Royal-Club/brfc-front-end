@@ -428,7 +428,7 @@ export default function TournamentFlowVisualization({
   };
 
   const containerHeight = isFullscreen ? "100vh" : "100%";
-  const minHeight = isFullscreen ? "100vh" : 600;
+  const minHeight = isFullscreen ? "100vh" : undefined;
 
   return (
     <div

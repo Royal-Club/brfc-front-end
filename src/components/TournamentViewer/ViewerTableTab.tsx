@@ -22,7 +22,7 @@ const rankColor = (rank: number) => {
 };
 
 const leftGridColumns = (isMobile: boolean) =>
-  isMobile ? "20px minmax(120px, 1fr)" : "64px minmax(200px, 2.3fr)";
+  isMobile ? "20px minmax(150px, 1fr)" : "64px minmax(200px, 2.3fr)";
 
 const rightGridColumns = "repeat(8, minmax(52px, 0.7fr))";
 

@@ -29,12 +29,22 @@ import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
 import styles from "./ViewerFixturesTab.module.css";
 import yellowCardIcon from "../../assets/matchDetails/yolo_card.png";
 import redCardIcon from "../../assets/matchDetails/red_card.png";
+import { API_URL } from "../../settings";
 
 const { Text, Title } = Typography;
 
 interface ViewerResultsTabProps {
   tournamentId: number;
 }
+
+const LIVE_RESULTS_POLLING_INTERVAL_MS = 20000;
+const LIVE_MATCH_EVENTS_POLLING_INTERVAL_MS = 10000;
+const LIVE_SSE_RECONNECT_DELAY_MS = 3000;
+
+const buildLiveStreamUrl = (tournamentId: number) => {
+  const normalizedBaseUrl = API_URL.replace(/\/+$/, "");
+  return `${normalizedBaseUrl}/matches/live/tournaments/${tournamentId}/stream`;
+};
 
 const formatGoalMinute = (
   event: IMatchEvent,
@@ -123,19 +133,34 @@ function ResultCard({
   fixture,
   tournamentSummary,
   isMobile,
+  streamTick,
 }: {
   fixture: IFixture;
   tournamentSummary?: any;
   isMobile: boolean;
+  streamTick: number;
 }) {
   const homeWin = fixture.homeTeamScore > fixture.awayTeamScore;
   const awayWin = fixture.awayTeamScore > fixture.homeTeamScore;
   const isLive =
     fixture.matchStatus === "ONGOING" || fixture.matchStatus === "PAUSED";
-  const { data: eventsResponse } = useGetMatchEventsQuery(
+  const { data: eventsResponse, refetch: refetchEvents } = useGetMatchEventsQuery(
     { matchId: fixture.id },
-    { skip: fixture.matchStatus === "SCHEDULED" },
+    {
+      skip: fixture.matchStatus === "SCHEDULED",
+      pollingInterval: isLive ? LIVE_MATCH_EVENTS_POLLING_INTERVAL_MS : 0,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    },
   );
+
+  useEffect(() => {
+    if (fixture.matchStatus === "SCHEDULED" || streamTick === 0) {
+      return;
+    }
+
+    void refetchEvents();
+  }, [fixture.matchStatus, refetchEvents, streamTick]);
 
   const homeScorers = useMemo(
     () =>
@@ -859,10 +884,57 @@ export default function ViewerResultsTab({
 }: ViewerResultsTabProps) {
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.sm;
-  const { data, isLoading, isFetching } = useGetFixturesQuery({ tournamentId });
+  const [streamTick, setStreamTick] = useState(0);
+  const { data, isLoading, refetch } = useGetFixturesQuery(
+    { tournamentId },
+    {
+      pollingInterval: LIVE_RESULTS_POLLING_INTERVAL_MS,
+      skipPollingIfUnfocused: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    },
+  );
   const { data: tournamentSummary } = useGetTournamentSummaryQuery({
     tournamentId,
   });
+
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+    let reconnectTimeoutId: number | null = null;
+    let isClosed = false;
+
+    const connect = () => {
+      if (isClosed) {
+        return;
+      }
+
+      const streamUrl = buildLiveStreamUrl(tournamentId);
+      eventSource = new EventSource(streamUrl);
+
+      eventSource.onmessage = () => {
+        setStreamTick((previous) => previous + 1);
+        void refetch();
+      };
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+        if (!isClosed) {
+          reconnectTimeoutId = window.setTimeout(connect, LIVE_SSE_RECONNECT_DELAY_MS);
+        }
+      };
+    };
+
+    connect();
+
+    return () => {
+      isClosed = true;
+      if (reconnectTimeoutId !== null) {
+        window.clearTimeout(reconnectTimeoutId);
+      }
+      eventSource?.close();
+    };
+  }, [tournamentId, refetch]);
 
   const sections = useMemo(() => {
     const fixtures = data?.content || [];
@@ -901,7 +973,7 @@ export default function ViewerResultsTab({
     ].filter((section) => section.fixtures.length > 0);
   }, [data]);
 
-  if (isLoading || isFetching) {
+  if (isLoading && !data) {
     return (
       <div className={styles.loadingWrap}>
         <Spin size="large" />
@@ -941,6 +1013,7 @@ export default function ViewerResultsTab({
                 fixture={f}
                 tournamentSummary={tournamentSummary}
                 isMobile={isMobile}
+                streamTick={streamTick}
               />
             ))}
           </section>

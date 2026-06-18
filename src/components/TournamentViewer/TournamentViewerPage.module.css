@@ -11,6 +11,11 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
+  scrollbar-width: none;
+}
+
+.viewerContent::-webkit-scrollbar {
+  display: none;
 }
 
 .topBar {
