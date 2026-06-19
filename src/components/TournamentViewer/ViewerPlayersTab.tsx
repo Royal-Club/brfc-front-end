@@ -5,7 +5,6 @@ import {
   Empty,
   Grid,
   Spin,
-  Tag,
   Typography,
   Modal,
   Button,
@@ -39,6 +38,7 @@ interface Player {
   playerPosition?: string;
   footballPosition?: string;
   teamPlayerRole?: string;
+  isCaptain?: boolean;
 }
 
 const resolveDisplayPosition = (player: Player): string | null => {
@@ -68,7 +68,6 @@ function PlayerCard({
 }) {
   const [previewVisible, setPreviewVisible] = useState(false);
   const lastActiveElement = useRef<HTMLElement | null>(null);
-  const displayPosition = resolveDisplayPosition(player);
 
   const openPreview = (photoUrl?: string) => {
     if (!photoUrl) return;
@@ -89,6 +88,31 @@ function PlayerCard({
   const photoUrl = player.photoUrl
     ? toAbsolutePlayerPhotoUrl(player.photoUrl)
     : undefined;
+  const normalizedPosition = resolveDisplayPosition(player)?.toUpperCase();
+  const isGoalkeeper = normalizedPosition === "GOALKEEPER";
+  const isCaptain =
+    player.teamPlayerRole === "CAPTAIN" ||
+    player.isCaptain === true ||
+    /\((c)\)|\[(c)\]/i.test(player.playerName);
+  const isViceCaptain = player.teamPlayerRole === "VICE_CAPTAIN";
+  const roleSuffixes: string[] = [];
+
+  if (isCaptain) {
+    roleSuffixes.push("C");
+  }
+
+  if (isViceCaptain) {
+    roleSuffixes.push("VC");
+  }
+
+  if (isGoalkeeper) {
+    roleSuffixes.push("GK");
+  }
+
+  const playerDisplayName =
+    roleSuffixes.length > 0
+      ? `${player.playerName} (${roleSuffixes.join(", ")})`
+      : player.playerName;
 
   return (
     <>
@@ -123,20 +147,7 @@ function PlayerCard({
         </div>
 
         <div className={styles.playerContent}>
-          <Text className={styles.playerName}>{player.playerName}</Text>
-          {displayPosition && (
-            <Tag className={styles.positionTag}>
-              {displayPosition.replace(/_/g, " ")}
-            </Tag>
-          )}
-          {player.teamPlayerRole === "CAPTAIN" && (
-            <Tag className={`${styles.roleTag} ${styles.captainTag}`}>C</Tag>
-          )}
-          {player.teamPlayerRole === "VICE_CAPTAIN" && (
-            <Tag className={`${styles.roleTag} ${styles.viceCaptainTag}`}>
-              VC
-            </Tag>
-          )}
+          <Text className={styles.playerName}>{playerDisplayName}</Text>
         </div>
       </div>
 
