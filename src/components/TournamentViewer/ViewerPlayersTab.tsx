@@ -111,8 +111,8 @@ function PlayerCard({
 
   const playerDisplayName =
     roleSuffixes.length > 0
-      ? `${player.playerName} (${roleSuffixes.join(", ")})`
-      : player.playerName;
+      ? `${player.playerName.toUpperCase()} (${roleSuffixes.join(", ")})`
+      : player.playerName.toUpperCase();
 
   return (
     <>
