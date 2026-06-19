@@ -421,6 +421,7 @@ export default function MatchEventTimeline({
                             background: "rgba(255, 255, 255, 0.95)",
                             boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                             borderRadius: 4,
+                            color: "rgba(0, 0, 0, 0.85)",
                           }}
                         />
                       </Tooltip>
@@ -446,7 +447,7 @@ export default function MatchEventTimeline({
                       </Tooltip>
                     </Space>
                   )}
-                  <div style={{ 
+                  <div style={{
                     textAlign: "center",
                     wordWrap: "break-word",
                     overflowWrap: "break-word",
@@ -553,6 +554,7 @@ export default function MatchEventTimeline({
                                 background: "rgba(255, 255, 255, 0.95)",
                                 boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                                 borderRadius: 4,
+                                color: "rgba(0, 0, 0, 0.85)",
                               }}
                             />
                           </Tooltip>
@@ -806,6 +808,7 @@ export default function MatchEventTimeline({
                                 background: "rgba(255, 255, 255, 0.95)",
                                 boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                                 borderRadius: 4,
+                                color: "rgba(0, 0, 0, 0.85)",
                               }}
                             />
                           </Tooltip>
