@@ -146,6 +146,18 @@ export interface IRecordMatchEventResponse extends BasicResType {
   content: IMatchEvent;
 }
 
+// Match Event Update Request
+export interface IUpdateMatchEventRequest {
+  eventTime: number;
+  description?: string;
+  details?: string;
+}
+
+// Match Event Update Response
+export interface IUpdateMatchEventResponse extends BasicResType {
+  content: IMatchEvent;
+}
+
 // Bulk Match Update
 export interface IBulkMatchUpdateRequest {
   matchStatus?: MatchStatus | string;

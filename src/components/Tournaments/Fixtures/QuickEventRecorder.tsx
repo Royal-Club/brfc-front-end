@@ -3,12 +3,12 @@ import {
   Card,
   Button,
   Select,
+  InputNumber,
   message,
   Space,
   Typography,
   Row,
   Col,
-  Input,
   Modal,
   Divider,
   theme,
@@ -53,7 +53,7 @@ export default function QuickEventRecorder({
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
   const [assistPlayerId, setAssistPlayerId] = useState<number | null>(null);
-  const [description, setDescription] = useState("");
+  const [manualEventMinute, setManualEventMinute] = useState<number | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   // Calculate current elapsed time (capped at 120 minutes)
@@ -107,14 +107,17 @@ export default function QuickEventRecorder({
   const submitEvent = async () => {
     try {
       const currentMinute = calculateElapsedTime();
+      const resolvedMinute =
+        manualEventMinute == null
+          ? currentMinute
+          : Math.max(0, Math.min(150, Math.floor(manualEventMinute)));
 
       await recordEvent({
         matchId,
         eventType: selectedEventType!,
         playerId: selectedPlayerId!,
         teamId: selectedTeamId!,
-        eventTime: currentMinute,
-        description: description.trim() || undefined,
+        eventTime: resolvedMinute,
         relatedPlayerId: assistPlayerId || undefined, // For GOAL events, this is the assist player
       }).unwrap();
 
@@ -132,7 +135,7 @@ export default function QuickEventRecorder({
     setSelectedTeamId(null);
     setSelectedPlayerId(null);
     setAssistPlayerId(null);
-    setDescription("");
+    setManualEventMinute(null);
     setModalVisible(false);
   };
 
@@ -411,16 +414,23 @@ export default function QuickEventRecorder({
           {/* Optional Notes */}
           <div>
             <Text strong style={{ display: "block", marginBottom: 8 }}>
-              Additional Notes (Optional)
+              Event Minute (Optional)
             </Text>
-            <Input.TextArea
-              rows={3}
-              placeholder="Add any additional details about this event..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              style={{ borderRadius: 8, resize: "none" }}
+            <InputNumber
+              min={0}
+              max={150}
+              step={1}
+              style={{ width: "100%" }}
+              size="large"
+              value={manualEventMinute}
+              onChange={(value) => setManualEventMinute(typeof value === "number" ? value : null)}
+              placeholder={`Auto (${calculateElapsedTime()}')`}
             />
+            <Text type="secondary" style={{ fontSize: 12, display: "block", marginTop: 4 }}>
+              Leave empty to use current match minute automatically.
+            </Text>
           </div>
+
         </Space>
       </Modal>
     </>

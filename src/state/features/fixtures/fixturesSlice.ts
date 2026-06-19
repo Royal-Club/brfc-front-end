@@ -16,6 +16,8 @@ import {
   IUpdateFixtureResponse,
   IClearFixturesResponse,
   IRecordMatchEventResponse,
+  IUpdateMatchEventRequest,
+  IUpdateMatchEventResponse,
   IGetMatchStatisticsResponse,
   IGetMatchEventsResponse,
   IDeleteEventResponse,
@@ -294,6 +296,26 @@ export const fixturesApi = apiWithTags.injectEndpoints({
     }),
 
     /**
+     * Update a match event
+     * Endpoint: PUT /matches/events/{eventId}
+     */
+    updateMatchEvent: builder.mutation<
+      IUpdateMatchEventResponse,
+      { matchId: number; eventId: number; body: IUpdateMatchEventRequest }
+    >({
+      query: ({ eventId, body }) => ({
+        url: `/matches/events/${eventId}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (result, error, { matchId }) => [
+        "fixtures",
+        { type: "matches", id: matchId },
+        "statistics",
+      ],
+    }),
+
+    /**
      * Create a new match
      * Endpoint: POST /matches
      */
@@ -351,6 +373,7 @@ export const {
   useGetMatchEventsQuery,
   useGetMatchStatisticsQuery,
   useDeleteMatchEventMutation,
+  useUpdateMatchEventMutation,
   useUpdateElapsedTimeMutation,
   useGetFixtureByIdQuery,
   useGetMatchByIdQuery,

@@ -161,7 +161,13 @@ export default function ElectricTeamBanner({ match, isAdmin = false, onRefresh }
 
   // Helper function to format event time as minutes only
   const formatEventTime = (event: IMatchEvent): string => {
-    // Try to calculate seconds from timestamps if available
+    // eventTime is the source of truth (supports manual/edited minute).
+    if (event.eventTime !== undefined && event.eventTime !== null) {
+      const minutes = Math.max(0, Math.floor(Number(event.eventTime) || 0));
+      return `${minutes}'`;
+    }
+
+    // Fallback to createdDate-based calculation for legacy events missing eventTime.
     if (match.startedAt && event.createdDate) {
       try {
         const startTime = new Date(match.startedAt).getTime();

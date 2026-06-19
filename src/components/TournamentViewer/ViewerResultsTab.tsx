@@ -50,6 +50,13 @@ const formatGoalMinute = (
   event: IMatchEvent,
   matchStartedAt?: string | null,
 ) => {
+  // eventTime is the source of truth (supports manual/edited minute).
+  if (event.eventTime !== undefined && event.eventTime !== null) {
+    const minutes = Number(event.eventTime) || 0;
+    return `${Math.max(0, Math.floor(minutes))}'`;
+  }
+
+  // Fallback to createdDate for legacy events missing eventTime.
   if (matchStartedAt && event.createdDate) {
     try {
       const startMs = new Date(matchStartedAt).getTime();
