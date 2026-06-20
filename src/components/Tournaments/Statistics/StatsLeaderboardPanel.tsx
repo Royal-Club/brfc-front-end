@@ -503,6 +503,7 @@ export default function StatsLeaderboardPanel({
               isAdmin={isAdmin}
               completedMatches={completedMatches}
               onNavigate={handleNavigateToMatch}
+              showCompletedMatchesHelp={false}
             />
           ),
         },

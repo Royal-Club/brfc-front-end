@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Avatar, Card, Empty, Grid, List, Spin, Tag, Typography } from "antd";
 import { useGetFixturesQuery } from "../../state/features/fixtures/fixturesSlice";
 import { useGetTournamentStandingsQuery } from "../../state/features/statistics/statisticsSlice";
@@ -58,6 +58,14 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
   const leftGridCols = leftGridColumns(isMobile);
   const rightGridCols = isMobile ? mobileStatsGridColumns : rightGridColumns;
 
+  const roundNameMap = useMemo(() => {
+    const map = new Map<number, string>();
+    (structureData?.content?.rounds || []).forEach((round) => {
+      if (round.roundName) map.set(round.roundNumber, round.roundName);
+    });
+    return map;
+  }, [structureData]);
+
   // Build order map from tournament structure (same logic as ViewerFixturesTab)
   // then reverse it so the latest stage comes first
   const orderMap = useMemo(() => {
@@ -108,18 +116,10 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
       ];
     }
 
-    const rounds = fixtures
-      .map((fixture) => fixture.round)
-      .filter((round): round is number => typeof round === "number");
-    const maxRound = rounds.length ? Math.max(...rounds) : null;
-
     const displaySectionTitle = (fixture: IFixture) => {
       if (fixture.groupName) return fixture.groupName;
       if (fixture.round != null) {
-        if (maxRound != null && fixture.round === maxRound && maxRound > 1)
-          return "Final";
-        if (fixture.round === 1) return "Group Stage";
-        return `Round ${fixture.round}`;
+        return roundNameMap.get(fixture.round) ?? `Round ${fixture.round}`;
       }
       return "Tournament Stage";
     };
@@ -250,7 +250,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
             rows,
           },
         ];
-  }, [fixtures, standings, orderMap]);
+  }, [fixtures, standings, orderMap, roundNameMap]);
 
   if (isLoading || fixturesLoading) {
     return (
@@ -450,9 +450,8 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
         {sectionedRows.map((section) => (
           <Card
             key={section.key}
-            bordered={false}
             className={styles.sectionCard}
-            bodyStyle={{ padding: isMobile ? "14px 12px" : "18px 22px" }}
+            styles={{ body: { padding: isMobile ? "14px 12px" : "18px 22px" } }}
           >
             <div className={styles.sectionHeader}>
               <div className={styles.headerLeft}>

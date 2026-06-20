@@ -19,6 +19,7 @@ import {
   useGetMatchEventsQuery,
 } from "../../state/features/fixtures/fixturesSlice";
 import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
+import { useGetTournamentStructureQuery } from "../../state/features/manualFixtures/manualFixturesSlice";
 import { MatchEventType } from "../../state/features/fixtures/fixtureTypes";
 import type {
   IFixture,
@@ -141,11 +142,13 @@ function ResultCard({
   tournamentSummary,
   isMobile,
   streamTick,
+  roundNameMap,
 }: {
   fixture: IFixture;
   tournamentSummary?: any;
   isMobile: boolean;
   streamTick: number;
+  roundNameMap: Map<number, string>;
 }) {
   const homeWin = fixture.homeTeamScore > fixture.awayTeamScore;
   const awayWin = fixture.awayTeamScore > fixture.homeTeamScore;
@@ -272,7 +275,7 @@ function ResultCard({
   const competitionLabel = fixture.groupName
     ? fixture.groupName.toUpperCase()
     : fixture.round != null
-      ? `ROUND ${fixture.round}`
+      ? (roundNameMap.get(fixture.round) ?? `ROUND ${fixture.round}`).toUpperCase()
       : "RESULT";
   const playedDate = fixture.completedAt || fixture.matchDate;
   const homeTeamLogoUrl = getTeamLogoUrlFromSummary(
@@ -905,6 +908,15 @@ export default function ViewerResultsTab({
   const { data: tournamentSummary } = useGetTournamentSummaryQuery({
     tournamentId,
   });
+  const { data: structureData } = useGetTournamentStructureQuery({ tournamentId });
+
+  const roundNameMap = useMemo(() => {
+    const map = new Map<number, string>();
+    (structureData?.content?.rounds || []).forEach((round) => {
+      if (round.roundName) map.set(round.roundNumber, round.roundName);
+    });
+    return map;
+  }, [structureData]);
 
   useEffect(() => {
     let eventSource: EventSource | null = null;
@@ -1021,6 +1033,7 @@ export default function ViewerResultsTab({
                 tournamentSummary={tournamentSummary}
                 isMobile={isMobile}
                 streamTick={streamTick}
+                roundNameMap={roundNameMap}
               />
             ))}
           </section>
