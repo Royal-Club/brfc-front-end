@@ -3,10 +3,24 @@ import { Avatar, Card, Empty, Grid, List, Spin, Tag, Typography } from "antd";
 import { useGetFixturesQuery } from "../../state/features/fixtures/fixturesSlice";
 import { useGetTournamentStandingsQuery } from "../../state/features/statistics/statisticsSlice";
 import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
+import { useGetTournamentStructureQuery } from "../../state/features/manualFixtures/manualFixturesSlice";
+import type { RoundGroupResponse } from "../../state/features/manualFixtures/manualFixtureTypes";
 import type { ITournamentStanding } from "../../state/features/statistics/statisticsTypes";
 import type { IFixture } from "../../state/features/fixtures/fixtureTypes";
 import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
 import styles from "./ViewerTableTab.module.css";
+
+const getLeafGroups = (groups: RoundGroupResponse[] = []): RoundGroupResponse[] => {
+  const result: RoundGroupResponse[] = [];
+  const walk = (items: RoundGroupResponse[]) => {
+    items.forEach((g) => {
+      if (!g.childGroups || g.childGroups.length === 0) result.push(g);
+      else walk(g.childGroups);
+    });
+  };
+  walk(groups);
+  return result;
+};
 
 const { Text, Title } = Typography;
 
@@ -35,6 +49,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
   const { data: tournamentSummary } = useGetTournamentSummaryQuery({
     tournamentId,
   });
+  const { data: structureData } = useGetTournamentStructureQuery({ tournamentId });
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
@@ -42,6 +57,38 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
   const fixtures = fixturesResponse?.content || [];
   const leftGridCols = leftGridColumns(isMobile);
   const rightGridCols = isMobile ? mobileStatsGridColumns : rightGridColumns;
+
+  // Build order map from tournament structure (same logic as ViewerFixturesTab)
+  // then reverse it so the latest stage comes first
+  const orderMap = useMemo(() => {
+    const map = new Map<string, number>();
+    const rounds = [...(structureData?.content?.rounds || [])].sort(
+      (a, b) => (a.sequenceOrder ?? a.roundNumber) - (b.sequenceOrder ?? b.roundNumber)
+    );
+    let index = 0;
+    rounds.forEach((round) => {
+      const leafGroups = getLeafGroups(round.groups || []);
+      if (leafGroups.length > 0) {
+        leafGroups.forEach((group) => {
+          const key = group.groupName.toUpperCase();
+          if (!map.has(key)) map.set(key, index++);
+        });
+      } else {
+        const key = (round.roundName || "").toUpperCase();
+        if (!map.has(key)) map.set(key, index++);
+      }
+    });
+    // Reverse: highest original index → lowest sort value (latest stage first)
+    const maxIndex = index - 1;
+    const reversed = new Map<string, number>();
+    map.forEach((val, key) => reversed.set(key, maxIndex - val));
+    return reversed;
+  }, [structureData]);
+
+  const getSectionOrder = (title: string) => {
+    const idx = orderMap.get(title.toUpperCase());
+    return idx === undefined ? Number.MAX_SAFE_INTEGER : idx;
+  };
 
   const sectionedRows = useMemo(() => {
     const rows = standings.map((team, index) => ({
@@ -191,12 +238,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
         };
       })
       .filter((section) => section.rows.length > 0)
-      .sort((left, right) => {
-        const leftOrder = left.title.toLowerCase() === "final" ? -1 : 0;
-        const rightOrder = right.title.toLowerCase() === "final" ? -1 : 0;
-        if (leftOrder !== rightOrder) return leftOrder - rightOrder;
-        return left.title.localeCompare(right.title);
-      });
+      .sort((left, right) => getSectionOrder(left.title) - getSectionOrder(right.title));
 
     return sections.length
       ? sections
@@ -208,7 +250,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
             rows,
           },
         ];
-  }, [fixtures, standings]);
+  }, [fixtures, standings, orderMap]);
 
   if (isLoading || fixturesLoading) {
     return (
