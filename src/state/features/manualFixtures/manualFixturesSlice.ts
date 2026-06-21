@@ -27,6 +27,8 @@ import {
   RemoveTeamResponse,
   GetGroupStandingsResponse,
   RecalculateStandingsResponse,
+  GroupTiebreakRequest,
+  ApplyGroupTiebreakResponse,
   GroupMatchGenerationRequest,
   RoundMatchGenerationRequest,
   GenerateGroupMatchesResponse,
@@ -396,6 +398,26 @@ export const manualFixturesApi = apiWithTags.injectEndpoints({
     }),
 
     /**
+     * Apply a manual penalty-shootout tiebreak for a group
+     * POST /api/groups/{groupId}/standings/tiebreak
+     */
+    applyGroupTiebreak: builder.mutation<
+      ApplyGroupTiebreakResponse,
+      { groupId: number } & GroupTiebreakRequest
+    >({
+      query: ({ groupId, ...body }) => ({
+        url: `/groups/${groupId}/standings/tiebreak`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (result, error, { groupId }) => [
+        { type: "standings", id: groupId },
+        { type: "groups", id: groupId },
+        "tournament-structure",
+      ],
+    }),
+
+    /**
      * Generate round-robin matches for a group
      * POST /api/groups/{groupId}/generate-matches
      */
@@ -495,6 +517,7 @@ export const {
   useRemoveTeamFromGroupMutation,
   useRemoveTeamFromRoundMutation,
   useRecalculateGroupStandingsMutation,
+  useApplyGroupTiebreakMutation,
   useGenerateGroupMatchesMutation,
   useGenerateRoundMatchesMutation,
   useClearGroupMatchesMutation,

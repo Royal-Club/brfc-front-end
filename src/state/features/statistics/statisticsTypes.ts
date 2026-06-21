@@ -27,6 +27,8 @@ export interface ITournamentStanding {
   draws: number;
   losses: number;
   goalDifference: number;
+  yellowCards?: number;
+  redCards?: number;
 }
 
 // Response wrappers
