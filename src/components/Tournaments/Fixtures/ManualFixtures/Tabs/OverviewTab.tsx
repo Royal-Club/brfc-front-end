@@ -40,6 +40,15 @@ import { ITournamentTopScorer } from "../../../../../state/features/statistics/s
 
 const { Text, Title } = Typography;
 
+/** Disciplinary-card count as a colored number (neutral when none). */
+function CardCount({ count, color }: { count?: number; color: string }) {
+    return (
+        <Text strong={!!count} style={count ? { color } : undefined}>
+            {count ?? 0}
+        </Text>
+    );
+}
+
 interface OverviewTabProps {
     tournamentId: number;
     tournamentStructure?: TournamentStructureResponse;
@@ -60,6 +69,8 @@ interface TeamStanding {
     goalsAgainst: number;
     goalDifference: number;
     points: number;
+    yellowCards?: number;
+    redCards?: number;
     position: number;
     roundName: string;
     groupName?: string;
@@ -373,6 +384,8 @@ export default function OverviewTab({
                         goalsAgainst: standing.goalsAgainst,
                         goalDifference: standing.goalDifference,
                         points: standing.points,
+                        yellowCards: standing.yellowCards,
+                        redCards: standing.redCards,
                         position: standing.position || 0,
                         roundName,
                         groupName,
@@ -570,20 +583,6 @@ export default function OverviewTab({
             ),
         },
         {
-            title: "GF",
-            dataIndex: "goalsFor",
-            key: "goalsFor",
-            width: 60,
-            align: "center" as const,
-        },
-        {
-            title: "GA",
-            dataIndex: "goalsAgainst",
-            key: "goalsAgainst",
-            width: 60,
-            align: "center" as const,
-        },
-        {
             title: "GD",
             dataIndex: "goalDifference",
             key: "goalDifference",
@@ -604,6 +603,36 @@ export default function OverviewTab({
                     {gd > 0 ? `+${gd}` : gd}
                 </Text>
             ),
+        },
+        {
+            title: "GF",
+            dataIndex: "goalsFor",
+            key: "goalsFor",
+            width: 60,
+            align: "center" as const,
+        },
+        {
+            title: "GA",
+            dataIndex: "goalsAgainst",
+            key: "goalsAgainst",
+            width: 60,
+            align: "center" as const,
+        },
+        {
+            title: "Y",
+            dataIndex: "yellowCards",
+            key: "yellowCards",
+            width: 50,
+            align: "center" as const,
+            render: (yellow?: number) => <CardCount count={yellow} color="#fadb14" />,
+        },
+        {
+            title: "R",
+            dataIndex: "redCards",
+            key: "redCards",
+            width: 50,
+            align: "center" as const,
+            render: (red?: number) => <CardCount count={red} color="#f5222d" />,
         },
         {
             title: "Pts",

@@ -49,9 +49,17 @@ import TeamAssignment from "./TeamAssignment";
 import GroupMatchGenerationModal from "./GroupMatchGenerationModal";
 import GroupMatchesView from "./GroupMatchesView";
 import TeamAdvancementModal from "./TeamAdvancementModal";
+import GroupTiebreakModal from "./GroupTiebreakModal";
 
 const { Panel } = Collapse;
 const { Text, Title } = Typography;
+
+/** Render a disciplinary-card count as a colored number (neutral when none). */
+const renderCardCount = (count: number | undefined, color: string) => (
+  <Text strong={!!count} style={count ? { color } : undefined}>
+    {count ?? 0}
+  </Text>
+);
 
 interface TournamentStructureViewProps {
   tournamentStructure: TournamentStructureResponse;
@@ -102,6 +110,8 @@ export default function TournamentStructureView({
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [selectedGroupName, setSelectedGroupName] = useState<string | null>(null);
   const [selectedGroupTeamCount, setSelectedGroupTeamCount] = useState<number>(0);
+  const [showTiebreak, setShowTiebreak] = useState(false);
+  const [tiebreakGroup, setTiebreakGroup] = useState<RoundGroupResponse | null>(null);
 
   const handleDeleteRound = async (roundId: number) => {
     try {
@@ -262,6 +272,17 @@ export default function TournamentStructureView({
       width: 60,
     },
     {
+      title: "GD",
+      dataIndex: "goalDifference",
+      key: "goalDifference",
+      width: 70,
+      render: (gd: number) => (
+        <Text strong style={{ color: gd > 0 ? "#52c41a" : gd < 0 ? "#ff4d4f" : undefined }}>
+          {gd > 0 ? `+${gd}` : gd}
+        </Text>
+      ),
+    },
+    {
       title: "GF",
       dataIndex: "goalsFor",
       key: "goalsFor",
@@ -274,15 +295,20 @@ export default function TournamentStructureView({
       width: 60,
     },
     {
-      title: "GD",
-      dataIndex: "goalDifference",
-      key: "goalDifference",
-      width: 70,
-      render: (gd: number) => (
-        <Text strong style={{ color: gd > 0 ? "#52c41a" : gd < 0 ? "#ff4d4f" : undefined }}>
-          {gd > 0 ? `+${gd}` : gd}
-        </Text>
-      ),
+      title: "Y",
+      dataIndex: "yellowCards",
+      key: "yellowCards",
+      width: 50,
+      align: "center" as const,
+      render: (yellow?: number) => renderCardCount(yellow, "#fadb14"),
+    },
+    {
+      title: "R",
+      dataIndex: "redCards",
+      key: "redCards",
+      width: 50,
+      align: "center" as const,
+      render: (red?: number) => renderCardCount(red, "#f5222d"),
     },
     {
       title: "Pts",
@@ -332,6 +358,17 @@ export default function TournamentStructureView({
               size="small"
               icon={<ReloadOutlined />}
               onClick={() => handleRecalculateStandings(group.id)}
+            />
+          </Tooltip>
+          <Tooltip title="Manual Tiebreak (penalty shootout)">
+            <Button
+              size="small"
+              icon={<TrophyOutlined />}
+              disabled={!group.standings || group.standings.length === 0}
+              onClick={() => {
+                setTiebreakGroup(group);
+                setShowTiebreak(true);
+              }}
             />
           </Tooltip>
           <Tooltip title="Edit Group">
@@ -674,6 +711,18 @@ export default function TournamentStructureView({
           setSelectedGroupName(null);
           setSelectedGroupTeamCount(0);
         }}
+      />
+
+      <GroupTiebreakModal
+        open={showTiebreak}
+        groupId={tiebreakGroup?.id ?? null}
+        groupName={tiebreakGroup?.groupName ?? ""}
+        standings={tiebreakGroup?.standings ?? []}
+        onClose={() => {
+          setShowTiebreak(false);
+          setTiebreakGroup(null);
+        }}
+        onApplied={onRefresh}
       />
     </>
   );

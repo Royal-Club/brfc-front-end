@@ -4,7 +4,10 @@ import { useGetFixturesQuery } from "../../state/features/fixtures/fixturesSlice
 import { useGetTournamentStandingsQuery } from "../../state/features/statistics/statisticsSlice";
 import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { useGetTournamentStructureQuery } from "../../state/features/manualFixtures/manualFixturesSlice";
-import type { RoundGroupResponse } from "../../state/features/manualFixtures/manualFixtureTypes";
+import type {
+  RoundGroupResponse,
+  GroupStandingResponse,
+} from "../../state/features/manualFixtures/manualFixtureTypes";
 import type { ITournamentStanding } from "../../state/features/statistics/statisticsTypes";
 import type { IFixture } from "../../state/features/fixtures/fixtureTypes";
 import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
@@ -38,9 +41,20 @@ const rankColor = (rank: number) => {
 const leftGridColumns = (isMobile: boolean) =>
   isMobile ? "20px minmax(150px, 1fr)" : "64px minmax(200px, 2.3fr)";
 
-const rightGridColumns = "repeat(8, minmax(52px, 0.7fr))";
+const rightGridColumns = "repeat(10, minmax(52px, 0.7fr))";
 
-const mobileStatsGridColumns = "repeat(8, minmax(38px, 1fr))";
+const mobileStatsGridColumns = "repeat(10, minmax(38px, 1fr))";
+
+const statHeaderLabels = ["P", "W", "D", "L", "GD", "GF", "GA", "Y", "R", "PTS"];
+
+const CardCell = ({ count, color }: { count?: number; color: string }) => (
+  <Text
+    className={styles.statCell}
+    style={count ? { color, fontWeight: 600 } : undefined}
+  >
+    {count ?? 0}
+  </Text>
+);
 
 export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
   const { data, isLoading } = useGetTournamentStandingsQuery({ tournamentId });
@@ -98,6 +112,21 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
     return idx === undefined ? Number.MAX_SAFE_INTEGER : idx;
   };
 
+  // Authoritative group standings from the backend, keyed by group name.
+  // These already encode the full ranking sequence (points -> GD -> GF ->
+  // head-to-head -> fair play -> penalty tiebreak) and the disciplinary cards.
+  const groupStandingsByName = useMemo(() => {
+    const map = new Map<string, GroupStandingResponse[]>();
+    (structureData?.content?.rounds || []).forEach((round) => {
+      getLeafGroups(round.groups || []).forEach((group) => {
+        if (group.standings && group.standings.length > 0) {
+          map.set(group.groupName.toUpperCase(), group.standings);
+        }
+      });
+    });
+    return map;
+  }, [structureData]);
+
   const sectionedRows = useMemo(() => {
     const rows = standings.map((team, index) => ({
       ...team,
@@ -135,7 +164,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
 
     const sectionsMap = new Map<
       string,
-      { title: string; meta: string; fixtures: IFixture[] }
+      { title: string; meta: string; groupName: string | null; fixtures: IFixture[] }
     >();
 
     fixtures.forEach((fixture) => {
@@ -149,6 +178,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
         sectionsMap.set(key, {
           title: displaySectionTitle(fixture),
           meta: displayMeta(fixture),
+          groupName: fixture.groupName,
           fixtures: [],
         });
       }
@@ -161,6 +191,56 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
 
     const sections = Array.from(sectionsMap.entries())
       .map(([key, section]) => {
+        // Prefer the authoritative backend group standings when available, so the
+        // public table always matches the official ranking (fair play + penalty
+        // tiebreak included) instead of recomputing locally from fixtures.
+        const backendStandings = section.groupName
+          ? groupStandingsByName.get(section.groupName.toUpperCase())
+          : undefined;
+
+        if (backendStandings && backendStandings.length > 0) {
+          // Live card totals from this section's fixtures, so disciplinary
+          // counts show immediately without waiting for a standings recalc.
+          // (The order still comes from the authoritative backend position.)
+          const liveCards = new Map<number, { yellow: number; red: number }>();
+          section.fixtures.forEach((fixture) => {
+            const home = liveCards.get(fixture.homeTeamId) ?? { yellow: 0, red: 0 };
+            home.yellow += fixture.homeYellowCards ?? 0;
+            home.red += fixture.homeRedCards ?? 0;
+            liveCards.set(fixture.homeTeamId, home);
+
+            const away = liveCards.get(fixture.awayTeamId) ?? { yellow: 0, red: 0 };
+            away.yellow += fixture.awayYellowCards ?? 0;
+            away.red += fixture.awayRedCards ?? 0;
+            liveCards.set(fixture.awayTeamId, away);
+          });
+
+          const rows = [...backendStandings]
+            .sort(
+              (a, b) =>
+                (a.position ?? Number.MAX_SAFE_INTEGER) -
+                (b.position ?? Number.MAX_SAFE_INTEGER),
+            )
+            .map((s, index) => ({
+              teamId: s.teamId,
+              teamName: s.teamName,
+              points: s.points,
+              goalsFor: s.goalsFor,
+              goalsAgainst: s.goalsAgainst,
+              matches: s.matchesPlayed,
+              wins: s.wins,
+              draws: s.draws,
+              losses: s.losses,
+              goalDifference: s.goalDifference,
+              yellowCards: liveCards.get(s.teamId)?.yellow ?? s.yellowCards,
+              redCards: liveCards.get(s.teamId)?.red ?? s.redCards,
+              rank: s.position ?? index + 1,
+              key: `${key}-${s.teamId}`,
+            }));
+
+          return { key, title: section.title, meta: section.meta, rows };
+        }
+
         const statsByTeam = new Map<number, ITournamentStanding>();
 
         const ensureTeam = (teamId: number, teamName: string) => {
@@ -177,6 +257,8 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
               draws: 0,
               losses: 0,
               goalDifference: 0,
+              yellowCards: 0,
+              redCards: 0,
             };
             statsByTeam.set(teamId, team);
           }
@@ -199,6 +281,11 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
           away.goalsFor += awayScore;
           away.goalsAgainst += homeScore;
 
+          home.yellowCards = (home.yellowCards ?? 0) + (fixture.homeYellowCards ?? 0);
+          home.redCards = (home.redCards ?? 0) + (fixture.homeRedCards ?? 0);
+          away.yellowCards = (away.yellowCards ?? 0) + (fixture.awayYellowCards ?? 0);
+          away.redCards = (away.redCards ?? 0) + (fixture.awayRedCards ?? 0);
+
           if (homeScore > awayScore) {
             home.wins += 1;
             home.points += 3;
@@ -218,11 +305,52 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
           away.goalDifference = away.goalsFor - away.goalsAgainst;
         });
 
+        // Head-to-head between two teams from this section's completed fixtures.
+        // Returns <0 if `aId` ranks higher, >0 if lower, 0 if level.
+        const headToHead = (aId: number, bId: number) => {
+          let aPts = 0;
+          let bPts = 0;
+          let aGoals = 0;
+          let bGoals = 0;
+          section.fixtures.forEach((fixture) => {
+            if (fixture.matchStatus !== "COMPLETED") return;
+            const isAvB =
+              fixture.homeTeamId === aId && fixture.awayTeamId === bId;
+            const isBvA =
+              fixture.homeTeamId === bId && fixture.awayTeamId === aId;
+            if (!isAvB && !isBvA) return;
+            const homeScore = fixture.homeTeamScore ?? 0;
+            const awayScore = fixture.awayTeamScore ?? 0;
+            const aScore = isAvB ? homeScore : awayScore;
+            const bScore = isAvB ? awayScore : homeScore;
+            aGoals += aScore;
+            bGoals += bScore;
+            if (aScore > bScore) aPts += 3;
+            else if (aScore < bScore) bPts += 3;
+            else {
+              aPts += 1;
+              bPts += 1;
+            }
+          });
+          if (aPts !== bPts) return bPts - aPts;
+          return bGoals - aGoals; // h2h goal difference (and goals for) reduce to this for a pair
+        };
+
+        // Fair-play score from disciplinary cards; fewer (lower) ranks higher.
+        const fairPlay = (team: ITournamentStanding) =>
+          (team.yellowCards ?? 0) + (team.redCards ?? 0) * 3;
+
         const scopedRows = Array.from(statsByTeam.values())
           .sort((left, right) => {
+            // Points -> Goal Difference -> Goals For -> Head-to-Head -> Fair Play -> name
             if (right.points !== left.points) return right.points - left.points;
             if (right.goalDifference !== left.goalDifference) return right.goalDifference - left.goalDifference;
-            return right.goalsFor - left.goalsFor;
+            if (right.goalsFor !== left.goalsFor) return right.goalsFor - left.goalsFor;
+            const h2h = headToHead(left.teamId, right.teamId);
+            if (h2h !== 0) return h2h;
+            const fp = fairPlay(left) - fairPlay(right);
+            if (fp !== 0) return fp;
+            return left.teamName.localeCompare(right.teamName);
           })
           .map((team, index) => ({
             ...team,
@@ -250,7 +378,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
             rows,
           },
         ];
-  }, [fixtures, standings, orderMap, roundNameMap]);
+  }, [fixtures, standings, orderMap, roundNameMap, groupStandingsByName]);
 
   if (isLoading || fixturesLoading) {
     return (
@@ -289,7 +417,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
           className={styles.headerRowScrollable}
           style={{ gridTemplateColumns: rightGridCols }}
         >
-          {["P", "W", "D", "L", "GF", "GA", "GD", "PTS"].map((label) => (
+          {statHeaderLabels.map((label) => (
             <Text key={label} className={styles.headerCell}>
               {label}
             </Text>
@@ -303,7 +431,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
           gridTemplateColumns: `${leftGridCols} ${rightGridCols}`,
         }}
       >
-        {["#", "Team", "P", "W", "D", "L", "GF", "GA", "GD", "PTS"].map(
+        {["#", "Team", ...statHeaderLabels].map(
           (label) => (
             <Text
               key={label}
@@ -361,8 +489,6 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
           <Text className={styles.statCell}>{row.wins}</Text>
           <Text className={styles.statCell}>{row.draws}</Text>
           <Text className={styles.statCell}>{row.losses}</Text>
-          <Text className={styles.statCell}>{row.goalsFor}</Text>
-          <Text className={styles.statCell}>{row.goalsAgainst}</Text>
 
           <Text
             className={`${styles.gdCell} ${
@@ -377,6 +503,12 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
               ? `+${row.goalDifference}`
               : row.goalDifference}
           </Text>
+
+          <Text className={styles.statCell}>{row.goalsFor}</Text>
+          <Text className={styles.statCell}>{row.goalsAgainst}</Text>
+
+          <CardCell count={row.yellowCards} color="#fadb14" />
+          <CardCell count={row.redCards} color="#f5222d" />
 
           <Text className={styles.ptsCell}>{row.points}</Text>
         </div>
@@ -416,8 +548,6 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
         <Text className={styles.statCell}>{row.wins}</Text>
         <Text className={styles.statCell}>{row.draws}</Text>
         <Text className={styles.statCell}>{row.losses}</Text>
-        <Text className={styles.statCell}>{row.goalsFor}</Text>
-        <Text className={styles.statCell}>{row.goalsAgainst}</Text>
 
         <Text
           className={`${styles.gdCell} ${
@@ -432,6 +562,12 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
             ? `+${row.goalDifference}`
             : row.goalDifference}
         </Text>
+
+        <Text className={styles.statCell}>{row.goalsFor}</Text>
+        <Text className={styles.statCell}>{row.goalsAgainst}</Text>
+
+        <CardCell count={row.yellowCards} color="#fadb14" />
+        <CardCell count={row.redCards} color="#f5222d" />
 
         <Text className={styles.ptsCell}>{row.points}</Text>
       </div>
@@ -523,7 +659,7 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
                     className={styles.headerRow}
                     style={{ gridTemplateColumns: mobileStatsGridColumns }}
                   >
-                    {["P", "W", "D", "L", "GF", "GA", "GD", "PTS"].map(
+                    {statHeaderLabels.map(
                       (label) => (
                         <Text key={label} className={styles.headerCell}>
                           {label}
@@ -542,10 +678,6 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
                         <Text className={styles.statCell}>{row.wins}</Text>
                         <Text className={styles.statCell}>{row.draws}</Text>
                         <Text className={styles.statCell}>{row.losses}</Text>
-                        <Text className={styles.statCell}>{row.goalsFor}</Text>
-                        <Text className={styles.statCell}>
-                          {row.goalsAgainst}
-                        </Text>
 
                         <Text
                           className={`${styles.gdCell} ${
@@ -560,6 +692,14 @@ export default function ViewerTableTab({ tournamentId }: ViewerTableTabProps) {
                             ? `+${row.goalDifference}`
                             : row.goalDifference}
                         </Text>
+
+                        <Text className={styles.statCell}>{row.goalsFor}</Text>
+                        <Text className={styles.statCell}>
+                          {row.goalsAgainst}
+                        </Text>
+
+                        <CardCell count={row.yellowCards} color="#fadb14" />
+                        <CardCell count={row.redCards} color="#f5222d" />
 
                         <Text className={styles.ptsCell}>{row.points}</Text>
                       </div>

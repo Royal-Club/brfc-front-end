@@ -41,6 +41,10 @@ export interface IFixture {
   matchStatus: MatchStatus | string;
   homeTeamScore: number;
   awayTeamScore: number;
+  homeYellowCards?: number;
+  homeRedCards?: number;
+  awayYellowCards?: number;
+  awayRedCards?: number;
   matchOrder: number;
   round: number | null; // This is the roundNumber
   roundNumber?: number | null; // Explicit roundNumber field (if backend provides it separately)
