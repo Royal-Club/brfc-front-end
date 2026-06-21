@@ -799,11 +799,26 @@ export default function InteractiveTournamentTab({
 
     const roundStandings = !isGroupBased ? calculateRoundStandings() : [];
 
-    // Check if previous round is completed (for starting validation)
-    const previousRound = round.sequenceOrder && round.sequenceOrder > 1
+    // Resolve this round's real feeder rounds from the bracket's logic-node
+    // edges (sourceRoundIds) rather than the adjacent sequence number, so
+    // parallel brackets (e.g. Cup vs Plate) stay independent. A round with no
+    // feeders is an entry round and can start freely.
+    const feederRounds = (round.sourceRoundIds ?? [])
+      .map((id) => tournamentStructure?.rounds.find((r) => r.id === id))
+      .filter((r): r is typeof round => !!r);
+
+    const incompleteFeeders = feederRounds.filter(
+      (r) => r.status !== RoundStatus.COMPLETED
+    );
+
+    // Single "previous round" for the import-teams UI: prefer the first feeder,
+    // and fall back to the adjacent sequence for brackets without logic edges.
+    const previousRound = feederRounds.length > 0
+      ? feederRounds[0]
+      : round.sequenceOrder && round.sequenceOrder > 1
       ? tournamentStructure?.rounds.find((r) => r.sequenceOrder === round.sequenceOrder - 1)
       : null;
-    
+
     // Check if round has groups (for GROUP_BASED) or teams (for DIRECT_KNOCKOUT)
     const hasGroups = isGroupBased && round.groups && round.groups.length > 0;
     const hasTeams = !isGroupBased && round.teams && round.teams.length > 0;
@@ -822,14 +837,14 @@ export default function InteractiveTournamentTab({
     const hasMatches = isGroupBased ? hasGroupMatches : hasRoundMatches;
 
     const canStartRound = canStart &&
-      (round.sequenceOrder === 1 || (previousRound?.status === RoundStatus.COMPLETED)) &&
+      incompleteFeeders.length === 0 &&
       hasRequiredStructure &&
       hasMatches;
 
     const startRoundReason = !canStart
       ? `Round is already ${round.status}`
-      : previousRound && previousRound.status !== RoundStatus.COMPLETED
-      ? `Previous round "${previousRound.roundName}" must be completed first`
+      : incompleteFeeders.length > 0
+      ? `Feeder round "${incompleteFeeders[0].roundName}" must be completed first`
       : !hasRequiredStructure
       ? isGroupBased
         ? "Round must have at least one group before it can be started"

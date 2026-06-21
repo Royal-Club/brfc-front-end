@@ -103,6 +103,12 @@ export interface TournamentRoundResponse {
   teams: TeamInGroupResponse[] | null;
   totalMatches: number;
   completedMatches: number;
+  /**
+   * IDs of the rounds that feed into this one (bracket logic-node edges).
+   * Empty/absent for an entry round. Used to gate "Start Round" on the real
+   * predecessors so parallel brackets (e.g. Cup vs Plate) stay independent.
+   */
+  sourceRoundIds?: number[];
 }
 
 export interface TournamentRoundRequest {
