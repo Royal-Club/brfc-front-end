@@ -109,7 +109,7 @@ function MatchCard({ fixture, tournamentSummary, isMobile, roundNameMap }: { fix
             {fixture.homeTeamName || "TBA"}
           </Text>
           <Avatar
-            size={isMobile ? 40 : 58}
+            size={isMobile ? 32 : 58}
             src={homeTeamLogoUrl}
             className={styles.teamLogo}
           >
@@ -123,7 +123,7 @@ function MatchCard({ fixture, tournamentSummary, isMobile, roundNameMap }: { fix
 
         <div className={`${styles.teamBlock} ${styles.teamAway}`}>
           <Avatar
-            size={isMobile ? 40 : 58}
+            size={isMobile ? 32 : 58}
             src={awayTeamLogoUrl}
             className={styles.teamLogo}
           >
