@@ -8,6 +8,7 @@ import {
   DownOutlined,
   EnvironmentOutlined,
   HomeOutlined,
+  LoginOutlined,
   NodeIndexOutlined,
   TeamOutlined,
   TrophyOutlined,
@@ -20,6 +21,7 @@ import ViewerTableTab from "./ViewerTableTab";
 import ViewerPlayersTab from "./ViewerPlayersTab";
 import ViewerRulesTab from "./ViewerRulesTab";
 import ViewerTournamentFlowTab from "./ViewerTournamentFlowTab";
+import ViewerLoginTab from "./ViewerLoginTab";
 import StatsLeaderboardPanel from "../Tournaments/Statistics/StatsLeaderboardPanel";
 import {
   useGetTournamentsQuery,
@@ -61,12 +63,17 @@ const saveStoredViewerTab = (tournamentId: number, tabKey: string) => {
   }
 };
 
-const isValidViewerTab = (tabKey: string | null, hasRules: boolean) => {
+const isValidViewerTab = (
+  tabKey: string | null,
+  hasRules: boolean,
+  isLoggedIn: boolean,
+) => {
   if (!tabKey) return false;
 
   return (
     ["home", "fixtures", "roadmap", "results", "table", "stats", "players"].includes(tabKey) ||
-    (tabKey === "rules" && hasRules)
+    (tabKey === "rules" && hasRules) ||
+    (tabKey === "login" && !isLoggedIn)
   );
 };
 
@@ -122,8 +129,10 @@ export default function TournamentViewerPage({
     }
 
     const storedTab = getStoredViewerTab(selectedId);
-    setActiveTab(isValidViewerTab(storedTab, hasRules) ? storedTab! : "home");
-  }, [selectedId, hasRules]);
+    setActiveTab(
+      isValidViewerTab(storedTab, hasRules, isLoggedIn) ? storedTab! : "home",
+    );
+  }, [selectedId, hasRules, isLoggedIn]);
 
   useEffect(() => {
     if (tournaments.length === 0) {
@@ -148,7 +157,9 @@ export default function TournamentViewerPage({
     setSelectedId(id);
 
     const storedTab = getStoredViewerTab(id);
-    setActiveTab(isValidViewerTab(storedTab, hasRules) ? storedTab! : "home");
+    setActiveTab(
+      isValidViewerTab(storedTab, hasRules, isLoggedIn) ? storedTab! : "home",
+    );
   };
 
   const tabItems = [
@@ -258,6 +269,20 @@ export default function TournamentViewerPage({
         <ViewerPlayersTab tournamentId={selectedId} />
       ) : null,
     },
+    ...(!isLoggedIn
+      ? [
+          {
+            key: "login",
+            label: (
+              <span>
+                <LoginOutlined style={{ marginRight: 6 }} />
+                Login
+              </span>
+            ),
+            children: <ViewerLoginTab />,
+          },
+        ]
+      : []),
   ];
 
   return (

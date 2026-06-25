@@ -1,0 +1,150 @@
+.wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 32px 0 56px;
+}
+
+.card {
+  display: flex;
+  width: 100%;
+  max-width: 920px;
+  min-height: 440px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: viewerLoginRise 0.5s ease-out;
+}
+
+/* ---------- Left branding panel ---------- */
+.brandPanel {
+  position: relative;
+  flex: 1.1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: var(--login-bg);
+  background-size: cover;
+  background-position: center;
+}
+
+.brandOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(8, 12, 20, 0.82) 0%,
+    rgba(11, 18, 32, 0.72) 50%,
+    rgba(8, 28, 22, 0.78) 100%
+  );
+}
+
+.brandContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 40px 32px;
+}
+
+.brandLogo {
+  width: 140px;
+  max-width: 60%;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.45));
+}
+
+.brandTitle {
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  margin: 0 0 6px;
+}
+
+.brandSubtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* ---------- Right form panel ---------- */
+.formPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 44px 40px;
+  background: linear-gradient(135deg, rgba(14, 18, 34, 0.98) 0%, rgba(19, 27, 46, 0.96) 100%);
+}
+
+.title {
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.92rem;
+  margin: 0 0 26px;
+}
+
+.form :global(.ant-form-item-label > label) {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.rememberRow {
+  margin-bottom: 14px;
+}
+
+.submitRow {
+  margin-bottom: 0;
+}
+
+@keyframes viewerLoginRise {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .wrap {
+    padding: 16px 0 40px;
+    min-height: auto;
+  }
+
+  .card {
+    flex-direction: column;
+    max-width: 420px;
+    min-height: auto;
+  }
+
+  .brandPanel {
+    flex: none;
+    min-height: 170px;
+  }
+
+  .brandLogo {
+    width: 96px;
+    margin-bottom: 12px;
+  }
+
+  .brandTitle {
+    font-size: 1.3rem;
+  }
+
+  .formPanel {
+    padding: 28px 24px 32px;
+  }
+}
