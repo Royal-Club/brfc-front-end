@@ -12,7 +12,7 @@ import type { MenuProps } from "antd";
 import { Layout, Menu, Typography } from "antd";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import companyLogo from "./../../assets/logo.png";
 
@@ -51,7 +51,12 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   isDarkMode,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const loginInfo = useSelector(selectLoginInfo);
+
+  // Root path renders the Dashboard, so highlight the Dashboard item there.
+  const selectedKey =
+    location.pathname === "/" ? "/dashboard" : location.pathname;
   const [isMobile, setIsMobile] = useState(false);
 
   const isUserAdmin =
@@ -59,7 +64,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
 
   const items: MenuProps["items"] = [
     getItem("Dashboard", "/dashboard", <PieChartOutlined />),
-    getItem("Tournament Viewer", "/", <EyeOutlined />),
+    getItem("Tournament Viewer", "/tournament-viewer", <EyeOutlined />),
     getItem("Player", "setupSubMenu", <RadarChartOutlined />, [
       getItem(
         "Player Registration",
@@ -179,7 +184,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         </div>
         <Menu
           onClick={onClick}
-          defaultSelectedKeys={["/"]}
+          selectedKeys={[selectedKey]}
           items={items}
           mode="inline"
           style={{

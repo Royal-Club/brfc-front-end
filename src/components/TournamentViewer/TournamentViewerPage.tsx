@@ -45,6 +45,14 @@ const statusOrder: Record<string, number> = {
   INACTIVE: 4,
 };
 
+const statusPillClass: Record<string, string> = {
+  ONGOING: styles.statusOngoing,
+  ACTIVE: styles.statusOngoing,
+  UPCOMING: styles.statusUpcoming,
+  CONCLUDED: styles.statusConcluded,
+  INACTIVE: styles.statusInactive,
+};
+
 const VIEWER_TAB_STORAGE_PREFIX = "tournament-viewer-tab:";
 
 const getStoredViewerTab = (tournamentId: number) => {
@@ -115,6 +123,10 @@ export default function TournamentViewerPage({
   const selectedTournamentDateTime = selectedTournament?.tournamentDate
     ? showBdLocalTime(selectedTournament.tournamentDate)
     : "Date/time not set";
+
+  const selectedStatus = (
+    selectedTournament?.tournamentStatus || ""
+  ).toUpperCase();
 
   const { data: summaryData } = useGetTournamentSummaryQuery(
     { tournamentId: selectedId ?? 0 },
@@ -294,89 +306,83 @@ export default function TournamentViewerPage({
     >
       {/* Content */}
       <Content className={styles.viewerContent}>
-        {isLoggedIn && (
-          <div className={styles.topBar}>
-            <div className={styles.topBarInner}>
-              {/* Left: Tournament Info */}
-              {!isMobile && (
-                <div className={styles.infoBlock}>
-                  <div className={styles.tournamentName}>
-                    {selectedTournament?.name || "Select Tournament"}
-                  </div>
-
-                  {selectedTournament && (
-                    <Space size={16} wrap className={styles.infoMetaRow}>
-                      <Text className={styles.infoMetaText}>
-                        <CalendarOutlined style={{ marginRight: 6 }} />
-                        {selectedTournamentDateTime}
-                      </Text>
-                      <Text className={styles.infoMetaText}>
-                        <EnvironmentOutlined style={{ marginRight: 6 }} />
-                        {selectedTournament.venueName || "Venue not set"}
-                      </Text>
-                    </Space>
-                  )}
-                </div>
-              )}
-
-              {/* Right: Select */}
-              <div className={styles.controlsRow}>
-                <Select
-                  className={`tournament-portal-select-custom ${styles.tournamentSelect}`}
-                  showSearch
-                  loading={tournamentsLoading}
-                  placeholder="Select tournament"
-                  value={selectedId ?? undefined}
-                  onChange={handleSelect}
-                  suffixIcon={<DownOutlined />}
-                  style={{
-                    width: isMobile ? "auto" : 250,
-                    flex: isMobile ? 1 : "none",
-                    minWidth: 0,
-                  }}
-                  optionFilterProp="searchLabel"
-                  options={tournaments.map((t) => ({
-                    value: t.id,
-                    searchLabel: `${t.name} ${(t.tournamentStatus || "UNKNOWN").toUpperCase()}`,
-                    label: (
-                      <span
-                        className={styles.optionLabel}
-                        title={`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
-                      >
-                        {`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
-                      </span>
-                    ),
-                  }))}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
         {selectedId ? (
           <div className={styles.tabsOuter}>
             <div
               className={styles.tabsInner}
               style={{ maxWidth: VIEWER_CONTENT_MAX_WIDTH }}
             >
-              {isMobile && isLoggedIn && (
-                <div className={styles.mobileInfoBlock}>
-                  <div className={styles.mobileTournamentName}>
-                    {selectedTournament?.name || "Select Tournament"}
-                  </div>
+              {isLoggedIn && (
+                <div className={styles.commandBar}>
+                  <div className={styles.commandBarTop}>
+                    {/* Left: identity */}
+                    <div className={styles.identity}>
+                      <div className={styles.trophyAvatar}>
+                        <TrophyOutlined />
+                      </div>
+                      <div className={styles.identityText}>
+                        <div className={styles.titleLine}>
+                          <span className={styles.tournamentName}>
+                            {selectedTournament?.name || "Select Tournament"}
+                          </span>
+                          {selectedStatus && (
+                            <span
+                              className={`${styles.statusPill} ${
+                                statusPillClass[selectedStatus] ??
+                                styles.statusInactive
+                              }`}
+                            >
+                              {selectedStatus}
+                            </span>
+                          )}
+                        </div>
 
-                  {selectedTournament && (
-                    <Space size={8} wrap className={styles.mobileMetaRow}>
-                      <Text className={styles.mobileMetaText}>
-                        <CalendarOutlined style={{ marginRight: 6 }} />
-                        {selectedTournamentDateTime}
-                      </Text>
-                      <Text className={styles.mobileMetaText}>
-                        <EnvironmentOutlined style={{ marginRight: 6 }} />
-                        {selectedTournament.venueName || "Venue not set"}
-                      </Text>
-                    </Space>
-                  )}
+                        {selectedTournament && (
+                          <Space size={16} wrap className={styles.infoMetaRow}>
+                            <Text className={styles.infoMetaText}>
+                              <CalendarOutlined style={{ marginRight: 6 }} />
+                              {selectedTournamentDateTime}
+                            </Text>
+                            <Text className={styles.infoMetaText}>
+                              <EnvironmentOutlined style={{ marginRight: 6 }} />
+                              {selectedTournament.venueName || "Venue not set"}
+                            </Text>
+                          </Space>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: tournament switcher */}
+                    <div className={styles.controlsRow}>
+                      <Select
+                        className={`tournament-portal-select-custom ${styles.tournamentSelect}`}
+                        showSearch
+                        loading={tournamentsLoading}
+                        placeholder="Switch tournament"
+                        value={selectedId ?? undefined}
+                        onChange={handleSelect}
+                        suffixIcon={<DownOutlined />}
+                        style={{
+                          width: isMobile ? "100%" : 260,
+                          flex: isMobile ? 1 : "none",
+                          minWidth: 0,
+                        }}
+                        optionFilterProp="searchLabel"
+                        options={tournaments.map((t) => ({
+                          value: t.id,
+                          searchLabel: `${t.name} ${(t.tournamentStatus || "UNKNOWN").toUpperCase()}`,
+                          label: (
+                            <span
+                              className={styles.optionLabel}
+                              title={`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
+                            >
+                              {`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
+                            </span>
+                          ),
+                        }))}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
               <Tabs

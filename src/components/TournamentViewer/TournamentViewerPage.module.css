@@ -18,36 +18,119 @@
   display: none;
 }
 
-.topBar {
-  padding: 14px 24px;
-  background: linear-gradient(180deg, #0b0f12 0%, #0a0d10 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+.tabsOuter {
+  padding: 0 20px;
+  flex: 1;
+}
+
+.tabsInner {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Unified command bar: identity + switcher in one card above the tabs */
+.commandBar {
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(16, 255, 135, 0.06) 0%,
+    rgba(19, 27, 46, 0.55) 45%,
+    rgba(10, 13, 18, 0.65) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
   color: #ffffff;
 }
 
-.topBarInner {
-  max-width: 1300px;
-  margin: 0 auto;
+.commandBarTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
-.infoBlock {
-  flex: 1;
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
+  flex: 1;
+}
+
+.trophyAvatar {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #062515;
+  background: linear-gradient(135deg, #10ff87 0%, #00d66b 100%);
+  box-shadow: 0 8px 18px rgba(16, 255, 135, 0.28);
+}
+
+.identityText {
+  min-width: 0;
+  flex: 1;
+}
+
+.titleLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: 6px;
 }
 
 .tournamentName {
   font-weight: 700;
-  font-size: 1.2rem;
-  letter-spacing: 0.03em;
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.2;
-  margin-bottom: 6px;
+  min-width: 0;
+}
+
+.statusPill {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  line-height: 1.4;
+  border: 1px solid transparent;
+}
+
+.statusOngoing {
+  color: #10ff87;
+  background: rgba(16, 255, 135, 0.12);
+  border-color: rgba(16, 255, 135, 0.4);
+}
+
+.statusUpcoming {
+  color: #ffd166;
+  background: rgba(255, 209, 102, 0.12);
+  border-color: rgba(255, 209, 102, 0.4);
+}
+
+.statusConcluded {
+  color: #9aa4b2;
+  background: rgba(154, 164, 178, 0.12);
+  border-color: rgba(154, 164, 178, 0.35);
+}
+
+.statusInactive {
+  color: #ff8585;
+  background: rgba(255, 133, 133, 0.12);
+  border-color: rgba(255, 133, 133, 0.35);
 }
 
 .infoMetaRow {
@@ -67,6 +150,7 @@
   flex-wrap: nowrap;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .tournamentSelect {
@@ -78,45 +162,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.tabsOuter {
-  padding: 0 20px;
-  flex: 1;
-}
-
-.tabsInner {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.mobileInfoBlock {
-  padding: 10px 0 2px;
-  color: #ffffff;
-}
-
-.mobileTournamentName {
-  font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: 0.03em;
-  overflow: hidden;
-  text-overflow: clip;
-  white-space: normal;
-  word-break: break-word;
-  line-height: 1.25;
-  margin-bottom: 6px;
-}
-
-.mobileMetaRow {
-  width: 100%;
-}
-
-.mobileMetaText {
-  color: rgba(255, 255, 255, 0.72) !important;
-  font-size: 0.75rem !important;
-  max-width: 100%;
-  white-space: normal;
-  word-break: break-word;
 }
 
 .emptyStateWrap {
@@ -136,12 +181,42 @@
 }
 
 @media (max-width: 768px) {
-  .topBar {
-    padding: 10px 12px;
+  .commandBar {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
   }
 
-  .topBarInner {
-    gap: 10px;
+  .commandBarTop {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .identity {
+    gap: 12px;
+  }
+
+  .trophyAvatar {
+    width: 40px;
+    height: 40px;
+    font-size: 19px;
+  }
+
+  .tournamentName {
+    font-size: 1.05rem;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .titleLine {
+    flex-wrap: wrap;
+  }
+
+  .infoMetaText {
+    font-size: 0.75rem !important;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .controlsRow {

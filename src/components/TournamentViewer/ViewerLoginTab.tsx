@@ -1,11 +1,6 @@
 import React, { useState } from "react";
 import { Button, Checkbox, Form, Input, message } from "antd";
-import {
-  EyeInvisibleOutlined,
-  EyeOutlined,
-  LockOutlined,
-  MailOutlined,
-} from "@ant-design/icons";
+import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { setAllData, setImage } from "../../state/slices/loginInfoSlice";
 import { useLoginMutation } from "../../state/features/auth/authSlice";
@@ -68,9 +63,6 @@ export default function ViewerLoginTab() {
         {/* Right: Form */}
         <div className={styles.formPanel}>
           <h3 className={styles.title}>Welcome Back</h3>
-          <p className={styles.subtitle}>
-            Sign in to manage tournaments, fixtures and teams.
-          </p>
 
           <Form
             form={form}
@@ -88,11 +80,7 @@ export default function ViewerLoginTab() {
                 { type: "email", message: "Please enter a valid email" },
               ]}
             >
-              <Input
-                prefix={<MailOutlined />}
-                placeholder="you@example.com"
-                size="large"
-              />
+              <Input placeholder="you@example.com" size="large" />
             </Form.Item>
 
             <Form.Item
@@ -101,7 +89,6 @@ export default function ViewerLoginTab() {
               rules={[{ required: true, message: "Please enter your password" }]}
             >
               <Input.Password
-                prefix={<LockOutlined />}
                 placeholder="Enter your password"
                 size="large"
                 iconRender={(visible) =>

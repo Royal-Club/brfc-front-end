@@ -393,7 +393,11 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 >
                     <Routes>
                         <Route path="/" element={<ContentOutlet />}>
-                            <Route index element={<TournamentViewerPage />} />
+                            <Route index element={<Dashboard isDarkMode={isDarkMode} />} />
+                            <Route
+                                path="/tournament-viewer"
+                                element={<TournamentViewerPage />}
+                            />
                             <Route
                                 path="/dashboard"
                                 element={<Dashboard isDarkMode={isDarkMode} />}
