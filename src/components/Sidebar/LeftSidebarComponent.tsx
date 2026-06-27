@@ -64,7 +64,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
 
   const items: MenuProps["items"] = [
     getItem("Dashboard", "/dashboard", <PieChartOutlined />),
-    getItem("Tournament Viewer", "/tournament-viewer", <EyeOutlined />),
+    getItem("Match Center", "/tournament-viewer", <EyeOutlined />),
     getItem("Player", "setupSubMenu", <RadarChartOutlined />, [
       getItem(
         "Player Registration",
@@ -98,7 +98,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
       getItem("Venues", "/venues"),
     ]),
     getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
-      getItem("Tourtnaments", "/tournaments"),
+      getItem("Tournaments", "/tournaments"),
     ]),
     getItem("Club Rules", "/club-rules", <BookOutlined />),
   ];
