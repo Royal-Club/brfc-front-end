@@ -205,6 +205,16 @@
     border-bottom-color: #ff4d4f;
 }
 
+.underline-input:-webkit-autofill,
+.underline-input:-webkit-autofill:hover,
+.underline-input:-webkit-autofill:focus,
+.underline-input:-webkit-autofill:active {
+    -webkit-text-fill-color: #1e293b;
+    -webkit-box-shadow: 0 0 0 1000px transparent inset;
+    box-shadow: 0 0 0 1000px transparent inset;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 .password-input-container {
     position: relative;
 }
