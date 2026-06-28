@@ -1,0 +1,78 @@
+.flowTabWrap {
+  width: 100%;
+  height: calc(100vh - 220px);
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.toggleWrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.toggleWrap :global(.ant-segmented) {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+.toggleWrap :global(.ant-segmented-item) {
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.toggleWrap :global(.ant-segmented-item-label) {
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 700;
+}
+
+.toggleWrap :global(.ant-segmented-item:hover .ant-segmented-item-label) {
+  color: #10ff87;
+}
+
+.toggleWrap :global(.ant-segmented-thumb) {
+  background: rgba(16, 255, 135, 0.08) !important;
+  border: 1px solid #10ff87;
+  border-radius: 10px !important;
+  box-shadow: 0 0 0 1px rgba(16, 255, 135, 0.3);
+}
+
+.toggleWrap :global(.ant-segmented-item-selected) {
+  background: transparent;
+  box-shadow: none;
+}
+
+.toggleWrap :global(.ant-segmented-item-selected .ant-segmented-item-label) {
+  color: #10ff87 !important;
+}
+
+.flowWrap {
+  flex: 1;
+  min-height: 0;
+}
+
+.imageWrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.roadmapImage {
+  max-width: 100%;
+}
+
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.emptyWrap {
+  padding: 60px 0;
+}

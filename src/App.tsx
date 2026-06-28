@@ -1,19 +1,21 @@
-import { Layout, ConfigProvider, theme } from "antd";
+import { Layout, ConfigProvider, theme, Button } from "antd";
 import { useLayoutEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 import "./styles/toastStyles.css";
 import ContentComponent from "./components/Content/ContentComponent";
 import LeftSidebarComponent from "./components/Sidebar/LeftSidebarComponent";
+import TournamentViewerPage from "./components/TournamentViewer/TournamentViewerPage";
 import { useAuthHook } from "./hooks/useAuthHook";
 import { checkTockenValidity } from "./utils/utils";
 import LoginPage from "./components/authPages/LoginPage";
 import PasswordResetPage from "./components/authPages/PasswordResetPage";
 import { useSelector } from "react-redux";
 import { selectResetPassword } from "./state/slices/loginInfoSlice";
-import { Routes, Route, useLocation } from "react-router-dom";
 import { AuctionRegistrationPage } from "./components/Auction";
+import AppFooter from "./components/CommonAtoms/AppFooter";
 
 function App() {
     const [collapsed, setCollapsed] = useState(false);
@@ -60,19 +62,38 @@ function App() {
 
     if (!user?.token) {
         return (
-            <Layout className={isDarkMode ? "dark-mode" : "light-mode"}>
-                <ToastContainer
-                    theme={isDarkMode ? "dark" : "light"}
-                    position="top-right"
-                    autoClose={3000}
-                    hideProgressBar={false}
-                    newestOnTop={true}
-                    closeOnClick={true}
-                    pauseOnHover={true}
-                    draggable={true}
-                />
-                <LoginPage />
-            </Layout>
+            <ConfigProvider
+                theme={{
+                    algorithm: isDarkMode
+                        ? theme.darkAlgorithm
+                        : theme.defaultAlgorithm,
+                }}
+            >
+                <Layout className={isDarkMode ? "dark-mode" : "light-mode"}>
+                    <ToastContainer
+                        theme={isDarkMode ? "dark" : "light"}
+                        position="top-right"
+                        autoClose={3000}
+                        hideProgressBar={false}
+                        newestOnTop={true}
+                        closeOnClick={true}
+                        pauseOnHover={true}
+                        draggable={true}
+                    />
+                    {location.pathname !== "/login" && (
+                        <div style={{ position: "fixed", top: 12, right: 12, zIndex: 1200 }}>
+                            <Link to="/login">
+                                {/* <Button type="primary">Login</Button> */}
+                            </Link>
+                        </div>
+                    )}
+                    <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route path="*" element={<TournamentViewerPage hasHeader={false} />} />
+                    </Routes>
+                    <AppFooter />
+                </Layout>
+            </ConfigProvider>
         );
     }
 

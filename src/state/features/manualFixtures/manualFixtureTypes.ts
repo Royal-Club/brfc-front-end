@@ -51,6 +51,12 @@ export interface GroupStandingResponse {
   goalsAgainst: number;
   goalDifference: number;
   points: number;
+  yellowCards: number;
+  redCards: number;
+  /** UEFA fair-play points (deductions; lower/more-negative is worse). */
+  fairPlayPoints: number;
+  /** Manual penalty-shootout tiebreak order (lower wins; null when unset). */
+  tiebreakRank: number | null;
   position: number | null;
   isAdvanced: boolean;
 }
@@ -59,6 +65,8 @@ export interface GroupStandingResponse {
 export interface RoundGroupResponse {
   id: number;
   roundId: number;
+  parentGroupId?: number | null;
+  childGroups?: RoundGroupResponse[] | null;
   groupName: string;
   groupFormat: GroupFormat;
   advancementRule: string | null;
@@ -72,6 +80,7 @@ export interface RoundGroupResponse {
 
 export interface RoundGroupRequest {
   roundId: number;
+  parentGroupId?: number;
   groupName: string;
   groupFormat?: string;
   advancementRule?: string;
@@ -94,6 +103,12 @@ export interface TournamentRoundResponse {
   teams: TeamInGroupResponse[] | null;
   totalMatches: number;
   completedMatches: number;
+  /**
+   * IDs of the rounds that feed into this one (bracket logic-node edges).
+   * Empty/absent for an entry round. Used to gate "Start Round" on the real
+   * predecessors so parallel brackets (e.g. Cup vs Plate) stay independent.
+   */
+  sourceRoundIds?: number[];
 }
 
 export interface TournamentRoundRequest {
@@ -187,6 +202,12 @@ export type CreatePlaceholderResponse = ApiResponse<null>;
 export type RemoveTeamResponse = ApiResponse<null>;
 export type GetGroupStandingsResponse = ApiResponse<GroupStandingResponse[]>;
 export type RecalculateStandingsResponse = ApiResponse<null>;
+
+/** Teams listed in their final finishing order after a penalty shootout. */
+export interface GroupTiebreakRequest {
+  orderedTeamIds: number[];
+}
+export type ApplyGroupTiebreakResponse = ApiResponse<GroupStandingResponse[]>;
 
 // ===== Round Match Generation Types =====
 export type FixtureFormat = "SINGLE_ELIMINATION" | "ROUND_ROBIN" | "DOUBLE_ROUND_ROBIN";

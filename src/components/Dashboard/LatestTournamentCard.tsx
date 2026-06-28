@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Typography, Space, Row, Col, Radio, message, Badge, theme } from 'antd';
+import { Card, Button, Typography, Space, Row, Col, Radio, message, Badge, theme, Modal, List, Avatar } from 'antd';
 import {
     TrophyOutlined,
     CalendarOutlined,
@@ -10,17 +10,28 @@ import {
     CloseCircleOutlined,
     QuestionCircleOutlined
 } from '@ant-design/icons';
-import { useGetLatestTournamentWithUserStatusQuery, useAddParticipationToTournamentMutation } from '../../state/features/tournaments/tournamentsSlice';
+import {
+    useGetLatestTournamentWithUserStatusQuery,
+    useAddParticipationToTournamentMutation,
+    useGetTournamentParticipantsListQuery,
+} from '../../state/features/tournaments/tournamentsSlice';
 import { showBdLocalTime } from '../../utils/utils';
 import { useSelector } from 'react-redux';
 import { selectLoginInfo } from '../../state/slices/loginInfoSlice';
 import { Link } from 'react-router-dom';
+import { TournamentPlayerInfoType } from '../../state/features/tournaments/tournamentTypes';
+import { normalizeErrorMessage } from '../../utils/normalizeErrorMessage';
 
 const { Title, Text } = Typography;
 
+const getErrorMessage = (error: any) => {
+    return normalizeErrorMessage(error, 'Failed to update participation status');
+};
 const LatestTournamentCard: React.FC = () => {
     const loginInfo = useSelector(selectLoginInfo);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const [selectedStatus, setSelectedStatus] = useState<'confirmed' | 'pending' | 'not-joining' | null>(null);
     const { token } = theme.useToken();
     
     const { 
@@ -28,6 +39,13 @@ const LatestTournamentCard: React.FC = () => {
         isLoading, 
         refetch 
     } = useGetLatestTournamentWithUserStatusQuery();
+
+    const latestTournamentId = latestTournamentData?.content?.tournament?.id;
+    const tournamentStatus = latestTournamentData?.content?.tournament?.tournamentStatus;
+    const { data: tournamentParticipantsData } = useGetTournamentParticipantsListQuery(
+        { tournamentId: latestTournamentId ?? 0 },
+        { skip: !latestTournamentId || tournamentStatus === 'CONCLUDED' }
+    );
     
     const [addParticipationToTournament] = useAddParticipationToTournamentMutation();
 
@@ -64,6 +82,8 @@ const LatestTournamentCard: React.FC = () => {
             
             message.success(statusMessage);
             refetch();
+        } catch (error: any) {
+            message.error(getErrorMessage(error));
         } finally {
             setIsUpdating(false);
         }
@@ -87,6 +107,59 @@ const LatestTournamentCard: React.FC = () => {
     }
 
     const { tournament, totalParticipant, remainParticipant, totalPlayer, isUserParticipated } = latestTournamentData.content;
+
+    const tournamentPlayers = tournamentParticipantsData?.content?.players || [];
+    const hasPlayerStatusData = tournamentPlayers.length > 0;
+
+    const confirmedCount = hasPlayerStatusData
+        ? tournamentPlayers.filter((p) => p.participationStatus === true).length
+        : totalParticipant;
+
+    const notJoiningCount = hasPlayerStatusData
+        ? tournamentPlayers.filter((p) => p.participationStatus === false).length
+        : 0;
+
+    const pendingCount = hasPlayerStatusData
+        ? tournamentPlayers.filter((p) => p.participationStatus === null).length
+        : remainParticipant;
+
+    const getPlayersBySelectedStatus = (): TournamentPlayerInfoType[] => {
+        if (!selectedStatus) return [];
+
+        if (selectedStatus === 'confirmed') {
+            return tournamentPlayers.filter((p) => p.participationStatus === true);
+        }
+        if (selectedStatus === 'not-joining') {
+            return tournamentPlayers.filter((p) => p.participationStatus === false);
+        }
+        return tournamentPlayers.filter((p) => p.participationStatus === null);
+    };
+
+    const getPlayerColumns = (players: TournamentPlayerInfoType[]) => {
+        const chunkSize = 10;
+        const columns: TournamentPlayerInfoType[][] = [];
+
+        for (let i = 0; i < players.length; i += chunkSize) {
+            columns.push(players.slice(i, i + chunkSize));
+        }
+
+        return columns;
+    };
+
+    const getModalTitle = () => {
+        if (selectedStatus === 'confirmed') return 'Confirmed Players';
+        if (selectedStatus === 'not-joining') return 'Not Joining Players';
+        return 'Pending Players';
+    };
+
+    const openStatusModal = (status: 'confirmed' | 'pending' | 'not-joining') => {
+        setSelectedStatus(status);
+        setIsStatusModalOpen(true);
+    };
+
+    const selectedPlayers = getPlayersBySelectedStatus();
+    const playerColumns = getPlayerColumns(selectedPlayers);
+    const modalWidth = Math.min(Math.max(360, playerColumns.length * 270 + 64), 980);
 
     console.log('Latest Tournament Data:', latestTournamentData);
     console.log('User Participation Status:', isUserParticipated);
@@ -183,7 +256,7 @@ const LatestTournamentCard: React.FC = () => {
                     
                     <Col xs={24} md={10}>
                         <Row gutter={[8, 8]}>
-                            <Col xs={8} sm={8}>
+                            <Col xs={12} sm={6}>
                                 <div style={{ 
                                     textAlign: 'center', 
                                     padding: '12px 6px', 
@@ -205,47 +278,102 @@ const LatestTournamentCard: React.FC = () => {
                                     </Text>
                                 </div>
                             </Col>
-                            <Col xs={8} sm={8}>
+                            <Col xs={12} sm={6}>
                                 <div style={{ 
                                     textAlign: 'center', 
                                     padding: '12px 6px', 
                                     background: `linear-gradient(135deg, ${token.colorSuccess}15 0%, ${token.colorSuccess}08 100%)`,
                                     border: `1px solid ${token.colorSuccess}30`,
                                     borderRadius: 8,
-                                    transition: 'all 0.3s ease'
-                                }}>
+                                    transition: 'all 0.3s ease',
+                                    cursor: 'pointer'
+                                }}
+                                    onClick={() => openStatusModal('confirmed')}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            openStatusModal('confirmed');
+                                        }
+                                    }}
+                                >
                                     <div style={{ 
                                         fontSize: 16, 
                                         fontWeight: 'bold', 
                                         color: token.colorSuccess,
                                         marginBottom: 2
                                     }}>
-                                        {totalParticipant}
+                                        {confirmedCount}
                                     </div>
                                     <Text type="secondary" style={{ fontSize: 10, fontWeight: '500' }}>
                                         Confirmed
                                     </Text>
                                 </div>
                             </Col>
-                            <Col xs={8} sm={8}>
+                            <Col xs={12} sm={6}>
                                 <div style={{ 
                                     textAlign: 'center', 
                                     padding: '12px 6px', 
                                     background: `linear-gradient(135deg, ${token.colorWarning}15 0%, ${token.colorWarning}08 100%)`,
                                     border: `1px solid ${token.colorWarning}30`,
                                     borderRadius: 8,
-                                    transition: 'all 0.3s ease'
-                                }}>
+                                    transition: 'all 0.3s ease',
+                                    cursor: 'pointer'
+                                }}
+                                    onClick={() => openStatusModal('pending')}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            openStatusModal('pending');
+                                        }
+                                    }}
+                                >
                                     <div style={{ 
                                         fontSize: 16, 
                                         fontWeight: 'bold', 
                                         color: token.colorWarning,
                                         marginBottom: 2
                                     }}>
-                                        {remainParticipant}
+                                        {pendingCount}
                                     </div>
                                     <Text type="secondary" style={{ fontSize: 10, fontWeight: '500' }}>
                                         Pending
+                                    </Text>
+                                </div>
+                            </Col>
+                            <Col xs={12} sm={6}>
+                                <div style={{ 
+                                    textAlign: 'center', 
+                                    padding: '12px 6px', 
+                                    background: `linear-gradient(135deg, ${token.colorError}15 0%, ${token.colorError}08 100%)`,
+                                    border: `1px solid ${token.colorError}30`,
+                                    borderRadius: 8,
+                                    transition: 'all 0.3s ease',
+                                    cursor: 'pointer'
+                                }}
+                                    onClick={() => openStatusModal('not-joining')}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            openStatusModal('not-joining');
+                                        }
+                                    }}
+                                >
+                                    <div style={{ 
+                                        fontSize: 16, 
+                                        fontWeight: 'bold', 
+                                        color: token.colorError,
+                                        marginBottom: 2
+                                    }}>
+                                        {notJoiningCount}
+                                    </div>
+                                    <Text type="secondary" style={{ fontSize: 10, fontWeight: '500' }}>
+                                        Not Joining
                                     </Text>
                                 </div>
                             </Col>
@@ -341,6 +469,105 @@ const LatestTournamentCard: React.FC = () => {
                     </Col>
                 </Row>
             </div>
+
+            <Modal
+                title={getModalTitle()}
+                open={isStatusModalOpen}
+                onCancel={() => setIsStatusModalOpen(false)}
+                footer={null}
+                width={modalWidth}
+                styles={{
+                    content: {
+                        background: token.colorBgContainer,
+                        border: `1px solid ${token.colorBorder}`,
+                        borderRadius: 12,
+                    },
+                    header: {
+                        background: 'transparent',
+                        borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                        marginBottom: 12,
+                    },
+                    body: {
+                        background: 'transparent',
+                    },
+                }}
+            >
+                {selectedPlayers.length === 0 ? (
+                    <Text type="secondary">No players found for this status.</Text>
+                ) : (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 16,
+                            alignItems: 'flex-start',
+                            justifyContent: playerColumns.length === 1 ? 'center' : 'flex-start',
+                            paddingBottom: 4,
+                        }}
+                    >
+                        {playerColumns.map((columnPlayers, columnIndex) => (
+                            <div
+                                key={`column-${columnIndex}`}
+                                style={{
+                                    minWidth: 240,
+                                    flex: '0 0 240px',
+                                    border: `1px solid ${token.colorBorder}`,
+                                    borderRadius: 8,
+                                    padding: '8px 10px',
+                                    background: token.colorBgElevated,
+                                }}
+                            >
+                                <Text
+                                    type="secondary"
+                                    style={{
+                                        display: 'block',
+                                        fontSize: 12,
+                                        marginBottom: 8,
+                                    }}
+                                >
+                                    Players {columnIndex * 10 + 1} - {columnIndex * 10 + columnPlayers.length}
+                                </Text>
+
+                                <List
+                                    size="small"
+                                    dataSource={columnPlayers}
+                                    renderItem={(player) => (
+                                        <List.Item
+                                            style={{
+                                                padding: '8px 0',
+                                                borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                                            }}
+                                        >
+                                            <List.Item.Meta
+                                                avatar={
+                                                    <Avatar
+                                                        size="small"
+                                                        icon={<UserOutlined />}
+                                                        style={{
+                                                            background: token.colorPrimaryBg,
+                                                            color: token.colorPrimary,
+                                                        }}
+                                                    />
+                                                }
+                                                title={
+                                                    <span style={{ fontSize: 13, color: token.colorText, fontWeight: 600 }}>
+                                                        {player.playerName}
+                                                    </span>
+                                                }
+                                                description={
+                                                    <span style={{ color: token.colorTextSecondary }}>
+                                                        ID: {player.employeeId}
+                                                    </span>
+                                                }
+                                            />
+                                        </List.Item>
+                                    )}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Modal>
         </Card>
     );
 };

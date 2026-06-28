@@ -10,10 +10,10 @@ interface DoubleClickTextInputFieldProps {
 }
 
 const DoubleClickTextInputField: React.FC<DoubleClickTextInputFieldProps> = ({
-    initialName,
-    onNameChange,
-    isDiabled = false,
-}) => {
+                                                                                 initialName,
+                                                                                 onNameChange,
+                                                                                 isDiabled = false,
+                                                                             }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(initialName);
     const [hovered, setHovered] = useState(false);
@@ -24,7 +24,7 @@ const DoubleClickTextInputField: React.FC<DoubleClickTextInputFieldProps> = ({
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setName(e.target.value.slice(0, 20)); // Limit to 20 characters
+        setName(e.target.value.slice(0, 35)); // Limit to 35 characters
     };
 
     const handleBlur = () => {
@@ -46,7 +46,7 @@ const DoubleClickTextInputField: React.FC<DoubleClickTextInputFieldProps> = ({
         }
     }, [isEditing]);
 
-    const displayName = name.length > 20 ? name.slice(0, 20) + "..." : name;
+    const displayName = name.length > 35 ? name.slice(0, 35) + "..." : name;
 
     return isEditing && !isDiabled ? (
         <Input

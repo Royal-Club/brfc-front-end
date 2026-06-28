@@ -4,7 +4,7 @@ import {
   Form,
   Select,
   Button,
-  Input,
+  InputNumber,
   message,
   List,
   Tag,
@@ -47,6 +47,7 @@ export default function MatchEventRecorder({
   const [recordEvent, { isLoading: isRecording }] = useRecordMatchEventMutation();
   const [deleteEvent, { isLoading: isDeleting }] = useDeleteMatchEventMutation();
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
+  const [manualEventMinute, setManualEventMinute] = useState<number | null>(null);
   
   // Get match events
   const { 
@@ -90,20 +91,24 @@ export default function MatchEventRecorder({
   const handleRecordEvent = async (values: any) => {
     try {
       const currentMinute = calculateElapsedTime();
+      const resolvedMinute =
+        manualEventMinute == null
+          ? currentMinute
+          : Math.max(0, Math.min(150, Math.floor(manualEventMinute)));
 
       await recordEvent({
         matchId,
         eventType: values.eventType,
         playerId: values.playerId,
         teamId: values.teamId,
-        eventTime: currentMinute, // Use calculated elapsed time in minutes
-        description: values.description,
+        eventTime: resolvedMinute,
         details: values.details,
       }).unwrap();
 
       message.success("Event recorded successfully");
       form.resetFields();
       setSelectedTeamId(null);
+      setManualEventMinute(null);
       refetchEvents();
       onSuccess?.(); // Call onSuccess callback if provided
     } catch (error: any) {
@@ -267,18 +272,20 @@ export default function MatchEventRecorder({
               </Col>
 
               <Col xs={24}>
-                <Form.Item
-                  name="description"
-                  label="Notes (Optional)"
-                  style={{ marginBottom: 8 }}
-                >
-                  <Input.TextArea
-                    rows={2}
-                    placeholder="Additional details"
-                    style={{ resize: 'none' }}
+                <Form.Item label="Event Minute (Optional)" style={{ marginBottom: 8 }}>
+                  <InputNumber
+                    min={0}
+                    max={150}
+                    step={1}
+                    size="large"
+                    style={{ width: "100%" }}
+                    value={manualEventMinute}
+                    onChange={(value) => setManualEventMinute(typeof value === "number" ? value : null)}
+                    placeholder={`Auto (${calculateElapsedTime()}')`}
                   />
                 </Form.Item>
               </Col>
+
             </Row>
 
             <Form.Item style={{ marginBottom: 0 }}>

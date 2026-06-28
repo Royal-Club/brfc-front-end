@@ -3,34 +3,36 @@ import {
     Card,
     Col,
     Form,
-    Image,
     Input,
     InputNumber,
     Row,
     Select,
     Space,
     Spin,
-    Upload,
     message,
     Breadcrumb,
     Divider,
-    Typography
+    Typography,
+    Upload,
+    Avatar
 } from "antd";
 
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { 
-    MailOutlined, 
-    UserOutlined, 
-    IdcardOutlined, 
-    SkypeOutlined, 
-    PhoneOutlined, 
+import {
+    MailOutlined,
+    UserOutlined,
+    IdcardOutlined,
+    SkypeOutlined,
+    PhoneOutlined,
     EnvironmentOutlined,
     HomeFilled,
     TeamOutlined,
     CheckCircleOutlined,
-    CloseCircleOutlined
+    CloseCircleOutlined,
+    CameraOutlined,
+    LoadingOutlined
 } from "@ant-design/icons";
 import IFootballPosition from "../../interfaces/IFootballPosition";
 import { API_URL, COMMON_PLAYER_PASSWORD } from "../../settings";
@@ -38,7 +40,9 @@ import { checkTockenValidity } from "../../utils/utils";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import axiosApi from "../../state/api/axiosBase";
-import { uploadImageToStorage } from "../../utils/fileStorage";
+import { usePresignPlayerPhotoUploadMutation } from "../../state/features/player/playerSlice";
+import { validatePlayerPhoto, compressPlayerPhoto, toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
+import { normalizeErrorMessage } from "../../utils/normalizeErrorMessage";
 
 const { Title } = Typography;
 
@@ -53,9 +57,11 @@ function Player() {
     var [formState, setFormState] = useState("CREATE");
     const [formSubmitButtonText, setFormSubmitButtonText] = useState("Create");
     const [playerLoading, setPlayerLoading] = React.useState<boolean>(false);
-    const [photoUploading, setPhotoUploading] = useState(false);
-    const [photoPreview, setPhotoPreview] = useState<string>();
     const [playerForm] = Form.useForm();
+    const [presignPlayerPhoto] = usePresignPlayerPhotoUploadMutation();
+    const [photoKey, setPhotoKey] = useState<string | null>(null);
+    const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+    const [photoUploading, setPhotoUploading] = useState(false);
 
     const tokenContent = localStorage.getItem("tokenContent");
 
@@ -85,10 +91,10 @@ function Player() {
             employeeId: playerForm.getFieldValue("employeeId"),
             skypeId: playerForm.getFieldValue("skypeId"),
             mobileNo: playerForm.getFieldValue("mobileNo"),
-            profilePhoto: playerForm.getFieldValue("profilePhoto"),
             password: COMMON_PLAYER_PASSWORD,
             playingPosition:
-                playerForm.getFieldValue("playingPosition") || "UNASSIGNED", // Default to avoid undefined
+                playerForm.getFieldValue("playingPosition") || "UNASSIGNED",
+            photoKey: photoKey || undefined,
         };
 
         if (!id) {
@@ -97,6 +103,14 @@ function Player() {
                 .then((response) => {
                     message.success(response.data.message);
                     navigate("/players");
+                })
+                .catch((err: any) => {
+                    message.error(
+                        normalizeErrorMessage(
+                            err?.response?.data || err,
+                            "Error creating player"
+                        )
+                    );
                 });
                 // .catch((err) => {
                 //     console.error("Server error:", err);
@@ -122,6 +136,14 @@ function Player() {
                             );
                             message.success(response.data.message);
                             navigate("/players");
+                        })
+                        .catch((statusError: any) => {
+                            message.error(
+                                normalizeErrorMessage(
+                                    statusError?.response?.data || statusError,
+                                    "Error updating player status"
+                                )
+                            );
                         });
                         // .catch((statusError) => {
                         //     console.error(
@@ -133,6 +155,14 @@ function Player() {
                         //         description: statusError.message,
                         //     });
                         // });
+                })
+                .catch((err: any) => {
+                    message.error(
+                        normalizeErrorMessage(
+                            err?.response?.data || err,
+                            "Error updating player"
+                        )
+                    );
                 });
                 // .catch((err) => {
                 //     console.error("Server error:", err);
@@ -161,13 +191,12 @@ function Player() {
                     skypeId: response.data.content.skypeId,
                     mobileNo: response.data.content.mobileNo,
                     employeeId: response.data.content.employeeId,
-                    profilePhoto: response.data.content.profilePhoto,
                     active: response.data.content.active,
                     playingPosition: response.data.content.playingPosition,
                 });
-
-                if (response.data.content.profilePhoto) {
-                    setPhotoPreview(undefined);
+                if (response.data.content.photoKey) {
+                    setPhotoKey(response.data.content.photoKey);
+                    setPhotoPreviewUrl(toAbsolutePlayerPhotoUrl(response.data.content.photoUrl) || null);
                 }
                 setPlayerLoading(false);
                 setFormSubmitButtonText("Change");
@@ -208,21 +237,6 @@ function Player() {
         required: true,
         message: `Please input your ${label}!`,
     });
-
-    const handleProfilePhotoUpload = async (file: File) => {
-        try {
-            setPhotoUploading(true);
-            const key = await uploadImageToStorage(file, "player-profiles");
-            playerForm.setFieldValue("profilePhoto", key);
-            setPhotoPreview(URL.createObjectURL(file));
-            message.success("Profile photo uploaded");
-        } catch (error: any) {
-            message.error(error?.message || "Profile photo upload failed");
-        } finally {
-            setPhotoUploading(false);
-        }
-        return false;
-    };
 
     return (
         <>
@@ -268,6 +282,64 @@ function Player() {
                             >
                                 <Spin spinning={playerLoading}>
                                     <Row gutter={[16, 16]}>
+                                        {/* Photo upload section */}
+                                        <Col xs={24} style={{ marginBottom: 8 }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                                                <Avatar
+                                                    size={80}
+                                                    src={photoPreviewUrl || undefined}
+                                                    icon={!photoPreviewUrl ? <UserOutlined /> : undefined}
+                                                    style={{ border: "2px solid #d9d9d9", flexShrink: 0 }}
+                                                />
+                                                <Upload
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    showUploadList={false}
+                                                    beforeUpload={async (file) => {
+                                                        const error = validatePlayerPhoto(file);
+                                                        if (error) { message.error(error); return false; }
+                                                        setPhotoUploading(true);
+                                                        try {
+                                                            const compressed = await compressPlayerPhoto(file);
+                                                            const contentType = file.type === "image/png" ? "image/png" : "image/jpeg";
+                                                            const ext = contentType === "image/png" ? ".png" : ".jpg";
+                                                            const fileName = file.name.replace(/\.[^.]+$/, ext);
+                                                            const res = await presignPlayerPhoto({ fileName, contentType }).unwrap();
+                                                            const { key, uploadUrl } = res.content;
+                                                            const uploadResp = await fetch(uploadUrl, {
+                                                                method: "PUT",
+                                                                headers: { "Content-Type": contentType },
+                                                                body: compressed,
+                                                            });
+                                                            if (!uploadResp.ok) throw new Error("Upload failed");
+                                                            setPhotoKey(key);
+                                                            setPhotoPreviewUrl(URL.createObjectURL(compressed));
+                                                            message.success("Photo uploaded");
+                                                        } catch (err: any) {
+                                                            message.error(err?.message || "Photo upload failed");
+                                                        } finally {
+                                                            setPhotoUploading(false);
+                                                        }
+                                                        return false;
+                                                    }}
+                                                >
+                                                    <Button
+                                                        icon={photoUploading ? <LoadingOutlined /> : <CameraOutlined />}
+                                                        disabled={photoUploading}
+                                                    >
+                                                        {photoPreviewUrl ? "Change Photo" : "Upload Photo"}
+                                                    </Button>
+                                                </Upload>
+                                                {photoPreviewUrl && (
+                                                    <Button
+                                                        size="small"
+                                                        danger
+                                                        onClick={() => { setPhotoKey(null); setPhotoPreviewUrl(null); }}
+                                                    >
+                                                        Remove
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </Col>
                                         <Col md={12} lg={8}>
                                             <Form.Item
                                                 name="name"
@@ -362,37 +434,6 @@ function Player() {
                                                         )
                                                     )}
                                                 </Select>
-                                            </Form.Item>
-                                        </Col>
-                                        <Col md={12} lg={8}>
-                                            <Form.Item label="Profile Photo">
-                                                <Space direction="vertical" style={{ width: "100%" }}>
-                                                    <Upload
-                                                        accept="image/*"
-                                                        showUploadList={false}
-                                                        beforeUpload={handleProfilePhotoUpload}
-                                                        disabled={photoUploading}
-                                                    >
-                                                        <Button loading={photoUploading}>Upload Profile Photo</Button>
-                                                    </Upload>
-                                                    {photoPreview && (
-                                                        <Image
-                                                            src={photoPreview}
-                                                            alt="Profile preview"
-                                                            width={96}
-                                                            height={96}
-                                                            style={{ objectFit: "cover", borderRadius: 8 }}
-                                                        />
-                                                    )}
-                                                    {!photoPreview && playerForm.getFieldValue("profilePhoto") && (
-                                                        <div style={{ fontSize: 12, color: "#666" }}>
-                                                            Stored key: {playerForm.getFieldValue("profilePhoto")}
-                                                        </div>
-                                                    )}
-                                                </Space>
-                                            </Form.Item>
-                                            <Form.Item name="profilePhoto" hidden>
-                                                <Input />
                                             </Form.Item>
                                         </Col>
                                         {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) &&

@@ -1,9 +1,9 @@
-import React from "react";
-import { Card, Empty, Typography, Spin, theme, Button, Modal, message, Tooltip, Space, Tag } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
+import { Card, Empty, Typography, Spin, theme, Button, Modal, message, Tooltip, Space, Tag, Form, InputNumber } from "antd";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { IMatchEvent } from "../../../state/features/fixtures/fixtureTypes";
-import { useGetMatchEventsQuery, useDeleteMatchEventMutation } from "../../../state/features/fixtures/fixturesSlice";
+import { useGetMatchEventsQuery, useDeleteMatchEventMutation, useUpdateMatchEventMutation } from "../../../state/features/fixtures/fixturesSlice";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 
 // Import event images
@@ -37,8 +37,12 @@ export default function MatchEventTimeline({
   completedAt,
 }: MatchEventTimelineProps) {
   const { token } = useToken();
+  const [form] = Form.useForm();
   const { data: eventsData, isLoading, refetch } = useGetMatchEventsQuery({ matchId });
-  const [deleteMatchEvent, { isLoading: isDeleting }] = useDeleteMatchEventMutation();
+  const [deleteMatchEvent] = useDeleteMatchEventMutation();
+  const [updateMatchEvent, { isLoading: isUpdating }] = useUpdateMatchEventMutation();
+  const [editingEvent, setEditingEvent] = useState<IMatchEvent | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const loginInfo = useSelector(selectLoginInfo);
   const isAdmin = loginInfo.roles?.includes("ADMIN") || loginInfo.roles?.includes("SUPERADMIN");
 
@@ -84,7 +88,13 @@ export default function MatchEventTimeline({
       return "0:00";
     }
     
-    // For regular events, try to calculate seconds from timestamps if available
+    // For regular events, eventTime is the source of truth (supports manual/edited minute).
+    if (event.eventTime !== undefined && event.eventTime !== null) {
+      const minutes = Math.max(0, Math.floor(Number(event.eventTime) || 0));
+      return `${minutes}:00`;
+    }
+
+    // Fallback to createdDate-based calculation for legacy events missing eventTime.
     if (startedAt && event.createdDate) {
       try {
         const startTime = new Date(startedAt).getTime();
@@ -160,6 +170,46 @@ export default function MatchEventTimeline({
         }
       },
     });
+  };
+
+  const openEditModal = (event: IMatchEvent) => {
+    setEditingEvent(event);
+    form.setFieldsValue({
+      eventTime: event.eventTime,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateEvent = async () => {
+    if (!editingEvent) return;
+
+    try {
+      const values = await form.validateFields();
+      await updateMatchEvent({
+        matchId,
+        eventId: editingEvent.id,
+        body: {
+          eventTime: Math.max(0, Math.min(150, Math.floor(values.eventTime))),
+        },
+      }).unwrap();
+
+      message.success("Event updated successfully");
+      setIsEditModalOpen(false);
+      setEditingEvent(null);
+      form.resetFields();
+      refetch();
+    } catch (error: any) {
+      if (error?.errorFields) {
+        return;
+      }
+      const errorData = error?.data || error?.error || error;
+      const errorMessage =
+        errorData?.message ||
+        errorData?.detail ||
+        errorData?.error ||
+        "Failed to update event";
+      message.error(errorMessage);
+    }
   };
 
   // Helper function to get event icon image
@@ -354,38 +404,50 @@ export default function MatchEventTimeline({
                   bodyStyle={{ padding: "16px 20px" }}
                 >
                   {isAdmin && (
-                    <Tooltip title="Delete Event">
-                      <Button
-                        type="text"
-                        danger
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteEvent(event.id);
-                        }}
-                        style={{
-                          position: "absolute",
-                          top: 4,
-                          right: 4,
-                          padding: "4px 8px",
-                          minWidth: 32,
-                          height: 32,
-                          zIndex: 100,
-                          background: "rgba(255, 255, 255, 0.95)",
-                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                          borderRadius: 4,
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(255, 77, 79, 0.1)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
-                        }}
-                      />
-                    </Tooltip>
+                    <Space size={4} style={{ position: "absolute", top: 4, right: 4, zIndex: 100 }}>
+                      <Tooltip title="Edit Event">
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(event);
+                          }}
+                          style={{
+                            padding: "4px 8px",
+                            minWidth: 32,
+                            height: 32,
+                            background: "rgba(255, 255, 255, 0.95)",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                            borderRadius: 4,
+                            color: "rgba(0, 0, 0, 0.85)",
+                          }}
+                        />
+                      </Tooltip>
+                      <Tooltip title="Delete Event">
+                        <Button
+                          type="text"
+                          danger
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteEvent(event.id);
+                          }}
+                          style={{
+                            padding: "4px 8px",
+                            minWidth: 32,
+                            height: 32,
+                            background: "rgba(255, 255, 255, 0.95)",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                            borderRadius: 4,
+                          }}
+                        />
+                      </Tooltip>
+                    </Space>
                   )}
-                  <div style={{ 
+                  <div style={{
                     textAlign: "center",
                     wordWrap: "break-word",
                     overflowWrap: "break-word",
@@ -475,36 +537,48 @@ export default function MatchEventTimeline({
                       }}
                     >
                       {isAdmin && (
-                        <Tooltip title="Delete Event">
-                          <Button
-                            type="text"
-                            danger
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteEvent(event.id);
-                            }}
-                            style={{
-                              position: "absolute",
-                              top: 4,
-                              left: 4,
-                              padding: "4px 8px",
-                              minWidth: 32,
-                              height: 32,
-                              zIndex: 100,
-                              background: "rgba(255, 255, 255, 0.95)",
-                              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                              borderRadius: 4,
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = "rgba(255, 77, 79, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
-                            }}
-                          />
-                        </Tooltip>
+                        <Space size={4} style={{ position: "absolute", top: 4, left: 4, zIndex: 100 }}>
+                          <Tooltip title="Edit Event">
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<EditOutlined />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(event);
+                              }}
+                              style={{
+                                padding: "4px 8px",
+                                minWidth: 32,
+                                height: 32,
+                                background: "rgba(255, 255, 255, 0.95)",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                borderRadius: 4,
+                                color: "rgba(0, 0, 0, 0.85)",
+                              }}
+                            />
+                          </Tooltip>
+                          <Tooltip title="Delete Event">
+                            <Button
+                              type="text"
+                              danger
+                              size="small"
+                              icon={<DeleteOutlined />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEvent(event.id);
+                              }}
+                              style={{
+                                padding: "4px 8px",
+                                minWidth: 32,
+                                height: 32,
+                                background: "rgba(255, 255, 255, 0.95)",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                borderRadius: 4,
+                              }}
+                            />
+                          </Tooltip>
+                        </Space>
                       )}
                       <div
                         className="timeline-card-content"
@@ -717,36 +791,48 @@ export default function MatchEventTimeline({
                       }}
                     >
                       {isAdmin && (
-                        <Tooltip title="Delete Event">
-                          <Button
-                            type="text"
-                            danger
-                            size="small"
-                            icon={<DeleteOutlined />}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteEvent(event.id);
-                            }}
-                            style={{
-                              position: "absolute",
-                              top: 4,
-                              right: 4,
-                              padding: "4px 8px",
-                              minWidth: 32,
-                              height: 32,
-                              zIndex: 100,
-                              background: "rgba(255, 255, 255, 0.95)",
-                              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                              borderRadius: 4,
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = "rgba(255, 77, 79, 0.1)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
-                            }}
-                          />
-                        </Tooltip>
+                        <Space size={4} style={{ position: "absolute", top: 4, right: 4, zIndex: 100 }}>
+                          <Tooltip title="Edit Event">
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<EditOutlined />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(event);
+                              }}
+                              style={{
+                                padding: "4px 8px",
+                                minWidth: 32,
+                                height: 32,
+                                background: "rgba(255, 255, 255, 0.95)",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                borderRadius: 4,
+                                color: "rgba(0, 0, 0, 0.85)",
+                              }}
+                            />
+                          </Tooltip>
+                          <Tooltip title="Delete Event">
+                            <Button
+                              type="text"
+                              danger
+                              size="small"
+                              icon={<DeleteOutlined />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEvent(event.id);
+                              }}
+                              style={{
+                                padding: "4px 8px",
+                                minWidth: 32,
+                                height: 32,
+                                background: "rgba(255, 255, 255, 0.95)",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                                borderRadius: 4,
+                              }}
+                            />
+                          </Tooltip>
+                        </Space>
                       )}
                       <div
                         className="timeline-card-content"
@@ -856,6 +942,29 @@ export default function MatchEventTimeline({
         })}
         </div>
       </div>
+
+        <Modal
+          title="Edit Match Event"
+          open={isEditModalOpen}
+          onCancel={() => {
+            setIsEditModalOpen(false);
+            setEditingEvent(null);
+            form.resetFields();
+          }}
+          onOk={handleUpdateEvent}
+          confirmLoading={isUpdating}
+          okText="Save"
+        >
+          <Form form={form} layout="vertical">
+            <Form.Item
+              name="eventTime"
+              label="Event Minute"
+              rules={[{ required: true, message: "Minute is required" }]}
+            >
+              <InputNumber min={0} max={150} step={1} style={{ width: "100%" }} />
+            </Form.Item>
+          </Form>
+        </Modal>
 
       <style>{`
         .timeline-container::-webkit-scrollbar {

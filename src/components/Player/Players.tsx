@@ -39,6 +39,7 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { ColumnsType } from "antd/es/table";
 import { useResetPlayerPasswordMutation } from "../../state/features/auth/authSlice";
 import { useGetRolesQuery, useAssignRolesMutation, useGetPlayerRolesQuery } from "../../state/features/roles/rolesSlice";
+import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import "./Players.css";
 
 const { Title, Text } = Typography;
@@ -303,8 +304,9 @@ function Players() {
       key: "name",
       render: (_, record: IPlayer) => (
         <Space>
-          <Avatar 
-            style={{ 
+          <Avatar
+            src={toAbsolutePlayerPhotoUrl(record.photoUrl) || undefined}
+            style={{
               backgroundColor: record.active ? '#1890ff' : '#ccc',
               color: '#fff'
             }}

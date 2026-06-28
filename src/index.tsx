@@ -5,6 +5,8 @@ import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 import { Provider } from "react-redux";
 import store from "./state/store";
+import { normalizeErrorMessage } from "./utils/normalizeErrorMessage";
+import { showErrorNotification } from "./utils/errorNotification";
 
 // Suppress harmless ResizeObserver error from ReactFlow
 // This is a known issue: https://github.com/xyflow/xyflow/issues/3457
@@ -26,6 +28,38 @@ window.addEventListener('error', (event: ErrorEvent) => {
     event.stopImmediatePropagation();
     event.preventDefault();
   }
+});
+
+// Prevent dev/runtime overlay crashes caused by unhandled API promise rejections
+// that may carry non-Error objects (e.g., backend 403 payload objects).
+window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+  const reason = event.reason as any;
+
+  const hasApiShape = Boolean(
+    reason &&
+      typeof reason === 'object' &&
+      (reason.statusCode || reason.status || reason.data || reason.response)
+  );
+
+  if (!hasApiShape) {
+    return;
+  }
+
+  const statusCode =
+    reason?.statusCode ||
+    reason?.status ||
+    reason?.response?.status ||
+    reason?.data?.statusCode;
+
+  const apiPayload = reason?.response?.data || reason?.data || reason;
+  const message = normalizeErrorMessage(apiPayload, "An unexpected error occurred");
+
+  event.preventDefault();
+
+  showErrorNotification({
+    statusCode: typeof statusCode === 'number' ? statusCode : undefined,
+    message,
+  });
 });
 
 const root = ReactDOM.createRoot(

@@ -41,6 +41,10 @@ export interface IFixture {
   matchStatus: MatchStatus | string;
   homeTeamScore: number;
   awayTeamScore: number;
+  homeYellowCards?: number;
+  homeRedCards?: number;
+  awayYellowCards?: number;
+  awayRedCards?: number;
   matchOrder: number;
   round: number | null; // This is the roundNumber
   roundNumber?: number | null; // Explicit roundNumber field (if backend provides it separately)
@@ -143,6 +147,18 @@ export interface IRecordMatchEventRequest {
 
 // Match Event Response
 export interface IRecordMatchEventResponse extends BasicResType {
+  content: IMatchEvent;
+}
+
+// Match Event Update Request
+export interface IUpdateMatchEventRequest {
+  eventTime: number;
+  description?: string;
+  details?: string;
+}
+
+// Match Event Update Response
+export interface IUpdateMatchEventResponse extends BasicResType {
   content: IMatchEvent;
 }
 

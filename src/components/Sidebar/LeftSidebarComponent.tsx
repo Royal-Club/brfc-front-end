@@ -3,6 +3,7 @@ import {
     BookOutlined,
   DollarOutlined,
   FireOutlined,
+  EyeOutlined,
   PieChartOutlined,
   ProjectOutlined,
   RadarChartOutlined,
@@ -12,7 +13,7 @@ import type { MenuProps } from "antd";
 import { Layout, Menu, Typography } from "antd";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import companyLogo from "./../../assets/logo.png";
 
@@ -51,13 +52,20 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   isDarkMode,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const loginInfo = useSelector(selectLoginInfo);
+
+  // Root path renders the Dashboard, so highlight the Dashboard item there.
+  const selectedKey =
+    location.pathname === "/" ? "/dashboard" : location.pathname;
   const [isMobile, setIsMobile] = useState(false);
 
-  const isUserAdmin = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
+  const isUserAdmin =
+    loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
 
   const items: MenuProps["items"] = [
-    getItem("Dashboard", "/", <PieChartOutlined />),
+    getItem("Dashboard", "/dashboard", <PieChartOutlined />),
+    getItem("Match Center", "/tournament-viewer", <EyeOutlined />),
     getItem("Player", "setupSubMenu", <RadarChartOutlined />, [
       getItem(
         "Player Registration",
@@ -76,22 +84,22 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         getItem("AC Natures", "/ac/natures"),
         getItem("Chart of Account", "/ac/charts"),
       ]),
-        getItem("Collections (+)", "/ac/collections"),
-        getItem("Bill Payment (-)", "/ac/bill-payments"),
+      getItem("Collections (+)", "/ac/collections"),
+      getItem("Bill Payment (-)", "/ac/bill-payments"),
       getItem("Voucher", "VoucherSubMenu", null, [
-          getItem("Voucher Register", "/ac/vouchers"),
+        getItem("Voucher Register", "/ac/vouchers"),
       ]),
       getItem("Accounts Reports", "acReportsSubMenu", null, [
-          getItem("Accounts Report", "/ac/reports/accounts-summary"),
-          getItem("Balances Summary", "/ac/reports/balance-summary"),
-          getItem("Balances Sheet", "/ac/reports/balance-sheet"),
+        getItem("Accounts Report", "/ac/reports/accounts-summary"),
+        getItem("Balances Summary", "/ac/reports/balance-summary"),
+        getItem("Balances Sheet", "/ac/reports/balance-sheet"),
       ]),
     ]),
     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
       getItem("Venues", "/venues"),
     ]),
     getItem("Tournaments", "tournamentSubMenu", <TrophyOutlined />, [
-      getItem("Tourtnaments", "/tournaments"),
+      getItem("Tournaments", "/tournaments"),
     ]),
     getItem("Club Rules", "/club-rules", <BookOutlined />),
     getItem("Auction", "/auction", <FireOutlined />),
@@ -178,7 +186,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         </div>
         <Menu
           onClick={onClick}
-          defaultSelectedKeys={["/"]}
+          selectedKeys={[selectedKey]}
           items={items}
           mode="inline"
           style={{

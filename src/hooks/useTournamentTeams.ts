@@ -8,7 +8,12 @@ import {
     usePlayerListToAddToTeamQuery,
     useRemovePlayerFromTeamMutation,
     useRenameTeamMutation,
+    usePresignTeamLogoUploadMutation,
 } from "../state/features/tournaments/tournamentTeamSlice";
+import { normalizeErrorMessage } from "../utils/normalizeErrorMessage";
+
+const MAX_LOGO_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_LOGO_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 interface Player {
     id?: number;
@@ -35,6 +40,8 @@ interface TeamPlayer {
 interface Teams {
     teamId: number;
     teamName: string;
+    logoKey?: string;
+    logoUrl?: string;
     players: TeamPlayer[];
 }
 
@@ -52,6 +59,7 @@ const useTournamentTeams = (tournamentId: number) => {
     const [deleteTournamentTeam] = useDeleteTournamentTeamMutation();
     const [removePlayerFromTeam] = useRemovePlayerFromTeamMutation();
     const [renameTeam] = useRenameTeamMutation();
+    const [presignTeamLogoUpload] = usePresignTeamLogoUploadMutation();
 
     const [teams, setTeams] = useState<Teams[]>([]);
     const [players, setPlayers] = useState<Player[]>([]);
@@ -63,6 +71,8 @@ const useTournamentTeams = (tournamentId: number) => {
             const teams: Teams[] = teamsData.map((team) => ({
                 teamId: team.teamId,
                 teamName: team.teamName,
+                logoKey: team.logoKey,
+                logoUrl: team.logoUrl,
                 players: team.players.map((player) => ({
                     teamId: team.teamId,
                     playerId: player.playerId,
@@ -276,6 +286,18 @@ const useTournamentTeams = (tournamentId: number) => {
             message.info("Player removed from team successfully");
             await refetchTournament();
             await refetchPlayer();
+        } catch (error: any) {
+            // Prevent unhandled promise rejection with object payloads (e.g., 403 responses).
+            message.error(
+                normalizeErrorMessage(
+                    error?.data || error,
+                    "You do not have permission to remove this player from the team"
+                )
+            );
+
+            // Re-sync local optimistic state from backend.
+            await refetchTournament();
+            await refetchPlayer();
         } finally {
             setIsLoading(false);
         }
@@ -298,12 +320,65 @@ const useTournamentTeams = (tournamentId: number) => {
                 teamId,
                 teamName: newName,
                 tournamentId,
+                logoKey: teams.find((team) => team.teamId === teamId)?.logoKey,
             }).unwrap();
 
             message.info(
                 `Renamed team with ID ${teamId} to ${newName} in tournament ${tournamentId}`
             );
             await refetchTournament();
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUploadTeamLogo = async (teamId: number, file: File) => {
+        try {
+            setIsLoading(true);
+            validateLogoFile(file);
+
+            const optimizedFile = await compressImage(file);
+
+            const uploadResponse = await presignTeamLogoUpload({
+                fileName: optimizedFile.name,
+                contentType: optimizedFile.type || "image/jpeg",
+            }).unwrap();
+
+            const key = uploadResponse?.content?.key;
+            const uploadUrl = uploadResponse?.content?.uploadUrl;
+
+            if (!key || !uploadUrl) {
+                throw new Error("Logo upload failed");
+            }
+
+            const putResponse = await fetch(uploadUrl, {
+                method: "PUT",
+                body: optimizedFile,
+                headers: {
+                    "Content-Type": optimizedFile.type || "image/jpeg",
+                },
+            });
+
+            if (!putResponse.ok) {
+                throw new Error(`Upload failed with status ${putResponse.status}`);
+            }
+
+            const team = teams.find((item) => item.teamId === teamId);
+            if (!team) {
+                throw new Error("Team not found");
+            }
+
+            await renameTeam({
+                teamId,
+                teamName: team.teamName,
+                tournamentId,
+                logoKey: key,
+            }).unwrap();
+
+            message.success("Team logo updated successfully");
+            await refetchTournament();
+        } catch (error: any) {
+            message.error(error?.message || "Team logo upload failed");
         } finally {
             setIsLoading(false);
         }
@@ -322,6 +397,16 @@ const useTournamentTeams = (tournamentId: number) => {
             message.success("Team removed successfully");
             await refetchTournament();
             await refetchPlayer();
+        } catch (error: any) {
+            message.error(
+                normalizeErrorMessage(
+                    error?.data || error,
+                    "You do not have permission to remove this team"
+                )
+            );
+
+            await refetchTournament();
+            await refetchPlayer();
         } finally {
             setIsLoading(false);
         }
@@ -337,8 +422,74 @@ const useTournamentTeams = (tournamentId: number) => {
         handleAddPlayerToTeam,
         handleRemovePlayer,
         handleRenameTeam,
+        handleUploadTeamLogo,
         handleRemoveTeam,
     };
 };
 
 export default useTournamentTeams;
+
+function validateLogoFile(file: File) {
+    if (!ALLOWED_LOGO_TYPES.includes(file.type.toLowerCase())) {
+        throw new Error("Only JPG, PNG, or WEBP images are allowed");
+    }
+
+    if (file.size > MAX_LOGO_FILE_SIZE) {
+        throw new Error("Image size must be 5MB or less");
+    }
+}
+
+async function compressImage(file: File): Promise<File> {
+    const maxDimension = 512;
+    const quality = 0.8;
+
+    const imageDataUrl = await readFileAsDataUrl(file);
+    const image = await loadImage(imageDataUrl);
+
+    const ratio = Math.min(maxDimension / image.width, maxDimension / image.height, 1);
+    const targetWidth = Math.max(1, Math.round(image.width * ratio));
+    const targetHeight = Math.max(1, Math.round(image.height * ratio));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+        return file;
+    }
+
+    context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+    const outputType = file.type === "image/png" ? "image/png" : "image/jpeg";
+    const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((result) => resolve(result), outputType, quality);
+    });
+
+    if (!blob) {
+        return file;
+    }
+
+    const normalizedName = file.name.replace(/\.[^.]+$/, outputType === "image/png" ? ".png" : ".jpg");
+    const compressedFile = new File([blob], normalizedName, { type: outputType });
+
+    return compressedFile.size <= file.size ? compressedFile : file;
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+    });
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error("Invalid image file"));
+        image.src = src;
+    });
+}

@@ -1,0 +1,424 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Empty, Grid, Layout, Select, Space, Tabs, Typography } from "antd";
+import {
+  BarChartOutlined,
+  BookOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  DownOutlined,
+  EnvironmentOutlined,
+  HomeOutlined,
+  LoginOutlined,
+  NodeIndexOutlined,
+  TeamOutlined,
+  TrophyOutlined,
+  UnorderedListOutlined,
+} from "@ant-design/icons";
+import ViewerHomeTab from "./ViewerHomeTab";
+import ViewerFixturesTab from "./ViewerFixturesTab";
+import ViewerResultsTab from "./ViewerResultsTab";
+import ViewerTableTab from "./ViewerTableTab";
+import ViewerPlayersTab from "./ViewerPlayersTab";
+import ViewerRulesTab from "./ViewerRulesTab";
+import ViewerTournamentFlowTab from "./ViewerTournamentFlowTab";
+import ViewerLoginTab from "./ViewerLoginTab";
+import StatsLeaderboardPanel from "../Tournaments/Statistics/StatsLeaderboardPanel";
+import {
+  useGetTournamentsQuery,
+  useGetTournamentSummaryQuery,
+} from "../../state/features/tournaments/tournamentsSlice";
+import { showBdLocalTime } from "../../utils/utils";
+import { useSelector } from "react-redux";
+import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import styles from "./TournamentViewerPage.module.css";
+
+const { Content } = Layout;
+const { Text } = Typography;
+const { useBreakpoint } = Grid;
+const VIEWER_CONTENT_MAX_WIDTH = 1180;
+
+const statusOrder: Record<string, number> = {
+  ONGOING: 0,
+  ACTIVE: 1,
+  UPCOMING: 2,
+  CONCLUDED: 3,
+  INACTIVE: 4,
+};
+
+const statusPillClass: Record<string, string> = {
+  ONGOING: styles.statusOngoing,
+  ACTIVE: styles.statusOngoing,
+  UPCOMING: styles.statusUpcoming,
+  CONCLUDED: styles.statusConcluded,
+  INACTIVE: styles.statusInactive,
+};
+
+const VIEWER_TAB_STORAGE_PREFIX = "tournament-viewer-tab:";
+
+const getStoredViewerTab = (tournamentId: number) => {
+  try {
+    return localStorage.getItem(`${VIEWER_TAB_STORAGE_PREFIX}${tournamentId}`);
+  } catch {
+    return null;
+  }
+};
+
+const saveStoredViewerTab = (tournamentId: number, tabKey: string) => {
+  try {
+    localStorage.setItem(`${VIEWER_TAB_STORAGE_PREFIX}${tournamentId}`, tabKey);
+  } catch {
+    // Ignore storage failures and keep the in-memory tab state working.
+  }
+};
+
+const isValidViewerTab = (
+  tabKey: string | null,
+  hasRules: boolean,
+  isLoggedIn: boolean,
+) => {
+  if (!tabKey) return false;
+
+  return (
+    ["home", "fixtures", "roadmap", "results", "table", "stats", "players"].includes(tabKey) ||
+    (tabKey === "rules" && hasRules) ||
+    (tabKey === "login" && !isLoggedIn)
+  );
+};
+
+export default function TournamentViewerPage({
+  hasHeader = true,
+}: {
+  hasHeader?: boolean;
+}) {
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
+  const loginInfo = useSelector(selectLoginInfo);
+  const isLoggedIn = Boolean(loginInfo.token);
+
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("home");
+
+  const { data: tournamentsData, isLoading: tournamentsLoading } =
+    useGetTournamentsQuery({
+      offSet: 0,
+      pageSize: 200,
+      sortedBy: "tournamentDate",
+      sortDirection: "DESC",
+    });
+
+  const tournaments = useMemo(() => {
+    const list = tournamentsData?.content?.tournaments || [];
+    return [...list].sort(
+      (a, b) =>
+        (statusOrder[a.tournamentStatus?.toUpperCase() ?? ""] ?? 5) -
+        (statusOrder[b.tournamentStatus?.toUpperCase() ?? ""] ?? 5),
+    );
+  }, [tournamentsData]);
+
+  const selectedTournament = useMemo(
+    () => tournaments.find((t) => t.id === selectedId) || null,
+    [selectedId, tournaments],
+  );
+
+  const selectedTournamentDateTime = selectedTournament?.tournamentDate
+    ? showBdLocalTime(selectedTournament.tournamentDate)
+    : "Date/time not set";
+
+  const selectedStatus = (
+    selectedTournament?.tournamentStatus || ""
+  ).toUpperCase();
+
+  const { data: summaryData } = useGetTournamentSummaryQuery(
+    { tournamentId: selectedId ?? 0 },
+    { skip: !selectedId },
+  );
+  const hasRules = Boolean(summaryData?.content?.[0]?.rules?.trim());
+
+  useEffect(() => {
+    if (!selectedId) {
+      setActiveTab("home");
+      return;
+    }
+
+    const storedTab = getStoredViewerTab(selectedId);
+    setActiveTab(
+      isValidViewerTab(storedTab, hasRules, isLoggedIn) ? storedTab! : "home",
+    );
+  }, [selectedId, hasRules, isLoggedIn]);
+
+  useEffect(() => {
+    if (tournaments.length === 0) {
+      if (selectedId !== null) {
+        setSelectedId(null);
+      }
+      return;
+    }
+
+    const selectedTournamentStillAvailable =
+      selectedId != null && tournaments.some((t) => t.id === selectedId);
+
+    if (selectedTournamentStillAvailable) {
+      return;
+    }
+
+    const defaultTournament = tournaments.find((t) => t.defaultTournament);
+    setSelectedId((defaultTournament ?? tournaments[0]).id);
+  }, [selectedId, tournaments]);
+
+  const handleSelect = (id: number) => {
+    setSelectedId(id);
+
+    const storedTab = getStoredViewerTab(id);
+    setActiveTab(
+      isValidViewerTab(storedTab, hasRules, isLoggedIn) ? storedTab! : "home",
+    );
+  };
+
+  const tabItems = [
+    {
+      key: "home",
+      label: (
+        <span>
+          <HomeOutlined style={{ marginRight: 6 }} />
+          Home
+        </span>
+      ),
+      children: selectedId ? (
+        <ViewerHomeTab tournamentId={selectedId} />
+      ) : null,
+    },
+    ...(hasRules
+      ? [
+          {
+            key: "rules",
+            label: (
+              <span>
+                <BookOutlined style={{ marginRight: 6 }} />
+                Rules
+              </span>
+            ),
+            children: selectedId ? (
+              <ViewerRulesTab tournamentId={selectedId} />
+            ) : null,
+          },
+        ]
+      : []),
+    {
+      key: "fixtures",
+      label: (
+        <span>
+          <CalendarOutlined style={{ marginRight: 6 }} />
+          Fixtures
+        </span>
+      ),
+      children: selectedId ? (
+        <ViewerFixturesTab tournamentId={selectedId} />
+      ) : null,
+    },
+    {
+      key: "roadmap",
+      label: (
+        <span>
+          <NodeIndexOutlined style={{ marginRight: 6 }} />
+          Roadmap
+        </span>
+      ),
+      children: selectedId ? (
+        <ViewerTournamentFlowTab
+          tournamentId={selectedId}
+          isActive={activeTab === "roadmap"}
+        />
+      ) : null,
+    },
+    {
+      key: "results",
+      label: (
+        <span>
+          <CheckCircleOutlined style={{ marginRight: 6 }} />
+          Results
+        </span>
+      ),
+      children: selectedId ? (
+        <ViewerResultsTab tournamentId={selectedId} />
+      ) : null,
+    },
+    {
+      key: "table",
+      label: (
+        <span>
+          <UnorderedListOutlined style={{ marginRight: 6 }} />
+          Table
+        </span>
+      ),
+      children: selectedId ? (
+        <ViewerTableTab tournamentId={selectedId} />
+      ) : null,
+    },
+    {
+      key: "stats",
+      label: (
+        <span>
+          <BarChartOutlined style={{ marginRight: 6 }} />
+          Stats
+        </span>
+      ),
+      children: selectedId ? (
+        <StatsLeaderboardPanel
+          tournamentId={selectedId}
+          isActive={activeTab === "stats"}
+        />
+      ) : null,
+    },
+    {
+      key: "players",
+      label: (
+        <span>
+          <TeamOutlined style={{ marginRight: 6 }} />
+          Players
+        </span>
+      ),
+      children: selectedId ? (
+        <ViewerPlayersTab tournamentId={selectedId} />
+      ) : null,
+    },
+    ...(!isLoggedIn
+      ? [
+          {
+            key: "login",
+            label: (
+              <span>
+                <LoginOutlined style={{ marginRight: 6 }} />
+                Login
+              </span>
+            ),
+            children: <ViewerLoginTab />,
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <Layout
+      className={styles.viewerLayout}
+      style={{
+        minHeight: hasHeader ? "calc(100vh - 64px)" : "100vh",
+      }}
+    >
+      {/* Content */}
+      <Content className={styles.viewerContent}>
+        {selectedId ? (
+          <div className={styles.tabsOuter}>
+            <div
+              className={styles.tabsInner}
+              style={{ maxWidth: VIEWER_CONTENT_MAX_WIDTH }}
+            >
+              {isLoggedIn && (
+                <div className={styles.commandBar}>
+                  <div className={styles.commandBarTop}>
+                    {/* Left: identity */}
+                    <div className={styles.identity}>
+                      <div className={styles.trophyAvatar}>
+                        <TrophyOutlined />
+                      </div>
+                      <div className={styles.identityText}>
+                        <div className={styles.titleLine}>
+                          <span className={styles.tournamentName}>
+                            {selectedTournament?.name || "Select Tournament"}
+                          </span>
+                          {selectedStatus && (
+                            <span
+                              className={`${styles.statusPill} ${
+                                statusPillClass[selectedStatus] ??
+                                styles.statusInactive
+                              }`}
+                            >
+                              {selectedStatus}
+                            </span>
+                          )}
+                        </div>
+
+                        {selectedTournament && (
+                          <Space size={16} wrap className={styles.infoMetaRow}>
+                            <Text className={styles.infoMetaText}>
+                              <CalendarOutlined style={{ marginRight: 6 }} />
+                              {selectedTournamentDateTime}
+                            </Text>
+                            <Text className={styles.infoMetaText}>
+                              <EnvironmentOutlined style={{ marginRight: 6 }} />
+                              {selectedTournament.venueName || "Venue not set"}
+                            </Text>
+                          </Space>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: tournament switcher */}
+                    <div className={styles.controlsRow}>
+                      <Select
+                        className={`tournament-portal-select-custom ${styles.tournamentSelect}`}
+                        showSearch
+                        loading={tournamentsLoading}
+                        placeholder="Switch tournament"
+                        value={selectedId ?? undefined}
+                        onChange={handleSelect}
+                        suffixIcon={<DownOutlined />}
+                        style={{
+                          width: isMobile ? "100%" : 260,
+                          flex: isMobile ? 1 : "none",
+                          minWidth: 0,
+                        }}
+                        optionFilterProp="searchLabel"
+                        options={tournaments.map((t) => ({
+                          value: t.id,
+                          searchLabel: `${t.name} ${(t.tournamentStatus || "UNKNOWN").toUpperCase()}`,
+                          label: (
+                            <span
+                              className={styles.optionLabel}
+                              title={`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
+                            >
+                              {`${t.name} (${(t.tournamentStatus || "UNKNOWN").toUpperCase()})`}
+                            </span>
+                          ),
+                        }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <Tabs
+                activeKey={activeTab}
+                onChange={(tabKey) => {
+                  setActiveTab(tabKey);
+
+                  if (selectedId) {
+                    saveStoredViewerTab(selectedId, tabKey);
+                  }
+                }}
+                items={tabItems}
+                centered
+                className="tournament-viewer-tabs"
+                size={isMobile ? "small" : "middle"}
+                style={{ marginTop: 6 }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className={styles.emptyStateWrap}>
+            <Empty
+              image={<TrophyOutlined className={styles.emptyIcon} />}
+              imageStyle={{ height: 64 }}
+              description={
+                <span>
+                  <Text type="secondary" className={styles.emptyDescription}>
+                    Select a tournament from the dropdown to view fixtures,
+                    results, standings and stats
+                  </Text>
+                </span>
+              }
+            />
+          </div>
+        )}
+      </Content>
+    </Layout>
+  );
+}

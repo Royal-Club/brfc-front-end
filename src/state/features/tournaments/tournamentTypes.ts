@@ -6,8 +6,13 @@ export interface IoTournamentSingleSummaryType {
     tournamentDate: string;
     venueName: string;
     activeStatus: boolean;
+    defaultTournament?: boolean;
     tournamentStatus?: string;
     auctionMode?: boolean;
+    season?: string;
+    description?: string;
+    rules?: string;
+    roadmapImageUrl?: string;
 }
 
 export interface getSingleTournamentInfoType extends BasicResType {
@@ -27,6 +32,8 @@ export interface TournamentPlayerInfoType {
     isCaptain?: boolean;
     teamPlayerRole?: string;
     jerseyNumber?: number;
+    photoUrl?: string;
+    photoKey?: string;
 }
 
 export interface IoTournamentSummaryResType extends BasicResType {
@@ -60,6 +67,11 @@ export interface TournamentSummeryResType {
             id: number;
             tournamentName: string;
             name?: string;
+            title?: string;
+            season?: string;
+            description?: string;
+            rules?: string;
+            roadmapImageUrl?: string;
             tournamentDate: string;
             venueName: string;
             activeStatus: boolean;
@@ -67,6 +79,8 @@ export interface TournamentSummeryResType {
                 {
                     teamId: number;
                     teamName: string;
+                    logoKey?: string;
+                    logoUrl?: string;
                     players: TournamentPlayerInfoType[];
                 }
             ];

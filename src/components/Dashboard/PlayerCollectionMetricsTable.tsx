@@ -271,6 +271,14 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
     return row;
   });
 
+  const monthlyTotals = useMemo(
+    () =>
+      monthNames.map((_, idx) =>
+        dataSource.reduce((sum, row) => sum + (Number(row[`month_${idx + 1}`]) || 0), 0)
+      ),
+    [dataSource]
+  );
+
   const handleTableChange = (
     _pagination: TablePaginationConfig,
     _filters: Record<string, FilterValue | null>,
@@ -460,6 +468,21 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
                 rowKey="key"
                 onChange={handleTableChange}
                 className={`${styles.tableData} ${isDarkMode ? styles.darkTheme : styles.lightTheme}`}
+                summary={() => (
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell index={0} align="center">
+                      Total
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={1} align="center">
+                      <b>{dataSource.length}</b>
+                    </Table.Summary.Cell>
+                    {monthlyTotals.map((total, idx) => (
+                      <Table.Summary.Cell key={monthNames[idx]} index={idx + 2} align="center">
+                        <b>{total > 0 ? total.toFixed(0) : ""}</b>
+                      </Table.Summary.Cell>
+                    ))}
+                  </Table.Summary.Row>
+                )}
               />
             </div>
           )
@@ -476,6 +499,21 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
               rowKey="key"
               onChange={handleTableChange}
               className={`${styles.tableData} ${isDarkMode ? styles.darkTheme : styles.lightTheme}`}
+              summary={() => (
+                <Table.Summary.Row>
+                  <Table.Summary.Cell index={0} align="center">
+                    Total
+                  </Table.Summary.Cell>
+                  <Table.Summary.Cell index={1} align="center">
+                    <b>{dataSource.length}</b>
+                  </Table.Summary.Cell>
+                  {monthlyTotals.map((total, idx) => (
+                    <Table.Summary.Cell key={monthNames[idx]} index={idx + 2} align="center">
+                      <b>{total > 0 ? total.toFixed(0) : ""}</b>
+                    </Table.Summary.Cell>
+                  ))}
+                </Table.Summary.Row>
+              )}
             />
           </div>
         )}

@@ -55,7 +55,9 @@ import {
   LiveAuctionPage,
   AuctionResultsPage,
 } from "../Auction";
+import TournamentViewerPage from "../TournamentViewer/TournamentViewerPage";
 import companyLogo from "../../assets/logo.png";
+import AppFooter from "../CommonAtoms/AppFooter";
 import type { MenuProps } from "antd";
 import { useGetMyGoalkeepingHistoryQuery } from "../../state/features/player/playerSlice";
 import { showBdLocalTime } from "../../utils/utils";
@@ -139,11 +141,11 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     };
 
     const handleDashboardClick = () => {
-        navigate("/");
+        navigate("/dashboard");
     };
 
     const isOnStatisticsPage = location.pathname === "/player-statistics";
-    const isOnDashboard = location.pathname === "/";
+    const isOnDashboard = location.pathname === "/" || location.pathname === "/dashboard";
 
     const items: MenuProps['items'] = [
         {
@@ -402,6 +404,14 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                     <Routes>
                         <Route path="/" element={<ContentOutlet />}>
                             <Route index element={<Dashboard isDarkMode={isDarkMode} />} />
+                            <Route
+                                path="/tournament-viewer"
+                                element={<TournamentViewerPage />}
+                            />
+                            <Route
+                                path="/dashboard"
+                                element={<Dashboard isDarkMode={isDarkMode} />}
+                            />
                             <Route path="/profile" element={<UserProfile />} />
                             <Route path="/player" element={<Player />} />
                             {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
@@ -494,6 +504,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             }}
                         />
                     )}
+                    <AppFooter />
                 </Content>
             </Layout>
 

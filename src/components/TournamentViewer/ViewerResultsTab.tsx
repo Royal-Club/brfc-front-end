@@ -1,0 +1,1044 @@
+import React, { useMemo, useState, useEffect } from "react";
+import {
+  Alert,
+  Avatar,
+  Card,
+  Col,
+  Divider,
+  Empty,
+  Grid,
+  Row,
+  Space,
+  Spin,
+  Tag,
+  Typography,
+} from "antd";
+import { CalendarOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import {
+  useGetFixturesQuery,
+  useGetMatchEventsQuery,
+} from "../../state/features/fixtures/fixturesSlice";
+import { useGetTournamentSummaryQuery } from "../../state/features/tournaments/tournamentsSlice";
+import { useGetTournamentStructureQuery } from "../../state/features/manualFixtures/manualFixturesSlice";
+import { MatchEventType } from "../../state/features/fixtures/fixtureTypes";
+import type {
+  IFixture,
+  IMatchEvent,
+} from "../../state/features/fixtures/fixtureTypes";
+import { calculateElapsedTime, formatElapsedTime } from "../../utils/matchTimeUtils";
+import { getTeamInitials, getTeamLogoUrlFromSummary } from "./teamLogoUtils";
+import styles from "./ViewerFixturesTab.module.css";
+import yellowCardIcon from "../../assets/matchDetails/yolo_card.png";
+import redCardIcon from "../../assets/matchDetails/red_card.png";
+import { API_URL } from "../../settings";
+
+const { Text, Title } = Typography;
+
+interface ViewerResultsTabProps {
+  tournamentId: number;
+}
+
+const LIVE_RESULTS_POLLING_INTERVAL_MS = 20000;
+const LIVE_MATCH_EVENTS_POLLING_INTERVAL_MS = 10000;
+const LIVE_SSE_RECONNECT_DELAY_MS = 3000;
+
+const buildLiveStreamUrl = (tournamentId: number) => {
+  const normalizedBaseUrl = API_URL.replace(/\/+$/, "");
+  return `${normalizedBaseUrl}/matches/live/tournaments/${tournamentId}/stream`;
+};
+
+const formatGoalMinute = (
+  event: IMatchEvent,
+  matchStartedAt?: string | null,
+) => {
+  // eventTime is the source of truth (supports manual/edited minute).
+  if (event.eventTime !== undefined && event.eventTime !== null) {
+    const minutes = Number(event.eventTime) || 0;
+    return `${Math.max(0, Math.floor(minutes))}'`;
+  }
+
+  // Fallback to createdDate for legacy events missing eventTime.
+  if (matchStartedAt && event.createdDate) {
+    try {
+      const startMs = new Date(matchStartedAt).getTime();
+      const eventMs = new Date(event.createdDate).getTime();
+      const diffSeconds = Math.floor((eventMs - startMs) / 1000);
+      if (Number.isFinite(diffSeconds) && diffSeconds >= 0) {
+        return `${Math.floor(diffSeconds / 60)}'`;
+      }
+    } catch {
+      // Fallback to eventTime value.
+    }
+  }
+
+  // In this app, eventTime is stored as match minute.
+  const minutes = Number(event.eventTime) || 0;
+  return `${Math.floor(minutes)}'`;
+};
+
+const buildGoalEvents = (
+  events: IMatchEvent[] = [],
+  teamId: number,
+  matchStartedAt?: string | null,
+): Array<{ key: string; playerName: string; minute: string }> => {
+  const goalEvents = events
+    .filter(
+      (event) =>
+        event.eventType === MatchEventType.GOAL &&
+        event.teamId === teamId &&
+        event.playerId,
+    )
+    .sort((left, right) => (left.eventTime || 0) - (right.eventTime || 0));
+
+  return goalEvents.map((event, index) => ({
+    key: `${teamId}-${event.playerId}-${event.eventTime}-${index}`,
+    playerName: event.playerName || "Unknown",
+    minute: formatGoalMinute(event, matchStartedAt),
+  }));
+};
+
+const buildCardEvents = (
+  events: IMatchEvent[] = [],
+  teamId: number,
+  cardType: MatchEventType.YELLOW_CARD | MatchEventType.RED_CARD,
+  matchStartedAt?: string | null,
+): Array<{ key: string; playerName: string; minute: string }> => {
+  return events
+    .filter(
+      (event) =>
+        event.eventType === cardType &&
+        event.teamId === teamId &&
+        event.playerId,
+    )
+    .sort((a, b) => (a.eventTime || 0) - (b.eventTime || 0))
+    .map((event, index) => ({
+      key: `${teamId}-${cardType}-${event.playerId}-${event.eventTime}-${index}`,
+      playerName: event.playerName || "Unknown",
+      minute: formatGoalMinute(event, matchStartedAt),
+    }));
+};
+
+const buildStageLabel = (label: string) => label.toUpperCase();
+
+const getResultCardClassName = (status: string) => {
+  if (status === "COMPLETED")
+    return `${styles.matchCard} ${styles.matchCardCompleted}`;
+  if (status === "ONGOING" || status === "PAUSED")
+    return `${styles.matchCard} ${styles.matchCardLive}`;
+  return styles.matchCard;
+};
+
+const formatPlayedDate = (value?: string | null) => {
+  if (!value) return "DATE N/A";
+  return new Date(value).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+function ResultCard({
+  fixture,
+  tournamentSummary,
+  isMobile,
+  streamTick,
+  roundNameMap,
+}: {
+  fixture: IFixture;
+  tournamentSummary?: any;
+  isMobile: boolean;
+  streamTick: number;
+  roundNameMap: Map<number, string>;
+}) {
+  const homeWin = fixture.homeTeamScore > fixture.awayTeamScore;
+  const awayWin = fixture.awayTeamScore > fixture.homeTeamScore;
+  const isLive =
+    fixture.matchStatus === "ONGOING" || fixture.matchStatus === "PAUSED";
+  const { data: eventsResponse, refetch: refetchEvents } = useGetMatchEventsQuery(
+    { matchId: fixture.id },
+    {
+      skip: fixture.matchStatus === "SCHEDULED",
+      pollingInterval: isLive ? LIVE_MATCH_EVENTS_POLLING_INTERVAL_MS : 0,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+    },
+  );
+
+  useEffect(() => {
+    if (fixture.matchStatus === "SCHEDULED" || streamTick === 0) {
+      return;
+    }
+
+    void refetchEvents();
+  }, [fixture.matchStatus, refetchEvents, streamTick]);
+
+  const homeScorers = useMemo(
+    () =>
+      buildGoalEvents(
+        eventsResponse?.content,
+        fixture.homeTeamId,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.homeTeamId, fixture.startedAt],
+  );
+  const awayScorers = useMemo(
+    () =>
+      buildGoalEvents(
+        eventsResponse?.content,
+        fixture.awayTeamId,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.awayTeamId, fixture.startedAt],
+  );
+  const homeYellowCards = useMemo(
+    () =>
+      buildCardEvents(
+        eventsResponse?.content,
+        fixture.homeTeamId,
+        MatchEventType.YELLOW_CARD,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.homeTeamId, fixture.startedAt],
+  );
+  const awayYellowCards = useMemo(
+    () =>
+      buildCardEvents(
+        eventsResponse?.content,
+        fixture.awayTeamId,
+        MatchEventType.YELLOW_CARD,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.awayTeamId, fixture.startedAt],
+  );
+  const homeRedCards = useMemo(
+    () =>
+      buildCardEvents(
+        eventsResponse?.content,
+        fixture.homeTeamId,
+        MatchEventType.RED_CARD,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.homeTeamId, fixture.startedAt],
+  );
+  const awayRedCards = useMemo(
+    () =>
+      buildCardEvents(
+        eventsResponse?.content,
+        fixture.awayTeamId,
+        MatchEventType.RED_CARD,
+        fixture.startedAt,
+      ),
+    [eventsResponse?.content, fixture.awayTeamId, fixture.startedAt],
+  );
+  const hasCardEvents =
+    homeYellowCards.length > 0 ||
+    awayYellowCards.length > 0 ||
+    homeRedCards.length > 0 ||
+    awayRedCards.length > 0;
+
+  const [liveTime, setLiveTime] = useState(() =>
+    formatElapsedTime(
+      calculateElapsedTime(
+        fixture.matchStatus,
+        fixture.startedAt,
+        fixture.elapsedTimeSeconds,
+        fixture.completedAt,
+      ),
+    ),
+  );
+
+  useEffect(() => {
+    if (fixture.matchStatus !== "ONGOING") return;
+    const tick = () =>
+      setLiveTime(
+        formatElapsedTime(
+          calculateElapsedTime(
+            fixture.matchStatus,
+            fixture.startedAt,
+            fixture.elapsedTimeSeconds,
+            fixture.completedAt,
+          ),
+        ),
+      );
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [fixture.matchStatus, fixture.startedAt, fixture.elapsedTimeSeconds, fixture.completedAt]);
+
+  const homeRecordedGoals = useMemo(() => homeScorers.length, [homeScorers]);
+  const awayRecordedGoals = useMemo(() => awayScorers.length, [awayScorers]);
+  const hasScorerMismatch =
+    (fixture.matchStatus === "COMPLETED" &&
+      homeRecordedGoals !== fixture.homeTeamScore) ||
+    (fixture.matchStatus === "COMPLETED" &&
+      awayRecordedGoals !== fixture.awayTeamScore);
+
+  const competitionLabel = fixture.groupName
+    ? fixture.groupName.toUpperCase()
+    : fixture.round != null
+      ? (roundNameMap.get(fixture.round) ?? `ROUND ${fixture.round}`).toUpperCase()
+      : "RESULT";
+  const playedDate = fixture.completedAt || fixture.matchDate;
+  const homeTeamLogoUrl = getTeamLogoUrlFromSummary(
+    tournamentSummary,
+    fixture.homeTeamId,
+  );
+  const awayTeamLogoUrl = getTeamLogoUrlFromSummary(
+    tournamentSummary,
+    fixture.awayTeamId,
+  );
+
+  return (
+    <Card
+      bordered={false}
+      className={getResultCardClassName(fixture.matchStatus)}
+      bodyStyle={{ padding: isMobile ? "14px 14px 16px" : "20px 22px 24px" }}
+    >
+      <div className={styles.cardTopRow} style={{ position: "relative" }}>
+        <Tag className={styles.stageTag}>
+          {buildStageLabel(competitionLabel)}
+        </Tag>
+        <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+          {fixture.matchStatus === "ONGOING" && (
+            <Tag className={styles.statusTag} color="green">
+              LIVE{liveTime && <> | <span style={{ fontVariantNumeric: "tabular-nums" }}>{liveTime}</span></>}
+            </Tag>
+          )}
+          {fixture.matchStatus === "PAUSED" && (
+            <Tag className={styles.statusTag} color="purple">
+              PAUSED{liveTime && <> | <span style={{ fontVariantNumeric: "tabular-nums" }}>{liveTime}</span></>}
+            </Tag>
+          )}
+          {fixture.matchStatus === "COMPLETED" && (
+            <Tag className={styles.statusTag} color="default">
+              FT
+            </Tag>
+          )}
+        </div>
+        <div>
+          {playedDate && fixture.matchStatus === "COMPLETED" && (
+            <Tag className={styles.statusTag} color="default">
+              {formatPlayedDate(playedDate)}
+            </Tag>
+          )}
+        </div>
+      </div>
+
+      <div>
+        {hasScorerMismatch && (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginBottom: 18, borderRadius: 16 }}
+            message="Scorer breakdown incomplete"
+            description="The final score is saved, but not every goal has a recorded scorer event yet. Open the match details and record the missing goal events to complete the breakdown."
+          />
+        )}
+
+        {isMobile ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-start",
+                gap: 6,
+              }}
+            >
+              <Text
+                strong
+                className={styles.teamName}
+                style={{
+                  color: homeWin ? "#ffffff" : "rgba(255,255,255,0.88)",
+                  lineHeight: 1.3,
+                  flex: 1,
+                  minWidth: 0,
+                  wordBreak: "break-word",
+                }}
+              >
+                {fixture.homeTeamName}
+              </Text>
+              <Avatar
+                size={isMobile ? 40 : 58}
+                src={homeTeamLogoUrl}
+                style={{
+                  background:
+                    "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
+                  color: "#1890ff",
+                  fontWeight: 800,
+                  fontSize: 11,
+                  flexShrink: 0,
+                }}
+              >
+                {getTeamInitials(fixture.homeTeamName, "T")}
+              </Avatar>
+            </div>
+
+            <div
+              style={{
+                minWidth: 68,
+                textAlign: "center",
+                padding: "4px 6px",
+                borderRadius: 10,
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                flexShrink: 0,
+              }}
+            >
+              <Text
+                strong
+                style={{ fontSize: 13, lineHeight: 1, color: "#ffffff" }}
+              >
+                {fixture.homeTeamScore}
+              </Text>
+              <Text
+                strong
+                style={{ fontSize: 10, margin: "0 3px", opacity: 0.5 }}
+              >
+                -
+              </Text>
+              <Text
+                strong
+                style={{ fontSize: 13, lineHeight: 1, color: "#ffffff" }}
+              >
+                {fixture.awayTeamScore}
+              </Text>
+            </div>
+
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: 6,
+              }}
+            >
+              <Avatar
+                size={isMobile ? 40 : 58}
+                src={awayTeamLogoUrl}
+                style={{
+                  background:
+                    "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
+                  color: "#1890ff",
+                  fontWeight: 800,
+                  fontSize: 11,
+                  flexShrink: 0,
+                }}
+              >
+                {getTeamInitials(fixture.awayTeamName, "T")}
+              </Avatar>
+              <Text
+                strong
+                className={styles.teamName}
+                style={{
+                  color: awayWin ? "#ffffff" : "rgba(255,255,255,0.88)",
+                  lineHeight: 1.3,
+                  textAlign: "left",
+                  wordBreak: "break-word",
+                }}
+              >
+                {fixture.awayTeamName}
+              </Text>
+            </div>
+          </div>
+        ) : (
+          <Row align="middle" gutter={[16, 16]}>
+            <Col xs={24} md={9}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 16,
+                }}
+              >
+                <Text
+                  strong
+                  className={styles.teamName}
+                  style={{
+                    color: homeWin ? "#ffffff" : "rgba(255,255,255,0.88)",
+                  }}
+                >
+                  {fixture.homeTeamName}
+                </Text>
+                <Avatar
+                  size={isMobile ? 40 : 58}
+                  src={homeTeamLogoUrl}
+                  style={{
+                    background:
+                      "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
+                    color: "#1890ff",
+                    fontWeight: 800,
+                    fontSize: 24,
+                    boxShadow: "0 10px 24px rgba(0,0,0,0.22)",
+                  }}
+                >
+                  {getTeamInitials(fixture.homeTeamName, "T")}
+                </Avatar>
+              </div>
+            </Col>
+
+            <Col xs={24} md={6}>
+              <div
+                style={{
+                  margin: "0 auto",
+                  minWidth: 160,
+                  maxWidth: 200,
+                  textAlign: "center",
+                  padding: "4px 16px",
+                  borderRadius: 16,
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                <Text
+                  strong
+                  style={{ fontSize: 40, lineHeight: 1, color: "#ffffff" }}
+                >
+                  {fixture.homeTeamScore}
+                </Text>
+                <Text
+                  strong
+                  style={{ fontSize: 26, margin: "0 10px", opacity: 0.5 }}
+                >
+                  -
+                </Text>
+                <Text
+                  strong
+                  style={{ fontSize: 40, lineHeight: 1, color: "#ffffff" }}
+                >
+                  {fixture.awayTeamScore}
+                </Text>
+              </div>
+            </Col>
+
+            <Col xs={24} md={9}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: 16,
+                }}
+              >
+                <Avatar
+                  size={isMobile ? 40 : 58}
+                  src={awayTeamLogoUrl}
+                  style={{
+                    background:
+                      "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
+                    color: "#1890ff",
+                    fontWeight: 800,
+                    fontSize: 24,
+                    boxShadow: "0 10px 24px rgba(0,0,0,0.22)",
+                  }}
+                >
+                  {getTeamInitials(fixture.awayTeamName, "T")}
+                </Avatar>
+                <Text
+                  strong
+                  className={styles.teamName}
+                  style={{
+                    color: awayWin ? "#ffffff" : "rgba(255,255,255,0.88)",
+                  }}
+                >
+                  {fixture.awayTeamName}
+                </Text>
+              </div>
+            </Col>
+          </Row>
+        )}
+
+        {(homeScorers.length > 0 || awayScorers.length > 0) && (
+          <>
+            <Divider
+              style={{
+                margin: isMobile ? "14px 0 12px" : "24px 0 18px",
+                borderColor: "rgba(255,255,255,0.06)",
+              }}
+            />
+            {isMobile ? (
+              <div style={{ display: "flex", gap: 8, width: "100%" }}>
+                {/* Home scorers - left side */}
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    alignItems: "flex-start",
+                  }}
+                >
+                  {homeScorers.map((scorer) => (
+                    <div
+                      key={scorer.key}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        minWidth: 0,
+                        width: "100%",
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: "#fadb14",
+                          fontSize: 13,
+                          lineHeight: 1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        ⚽
+                      </span>
+                      <Tag
+                        color="green"
+                        style={{
+                          margin: 0,
+                          fontWeight: 700,
+                          fontSize: 11,
+                          padding: "0 5px",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {scorer.minute}
+                      </Tag>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {scorer.playerName}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+                {/* Divider */}
+                <div
+                  style={{
+                    width: 1,
+                    background: "rgba(255,255,255,0.08)",
+                    flexShrink: 0,
+                  }}
+                />
+                {/* Away scorers - right side */}
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    alignItems: "flex-end",
+                  }}
+                >
+                  {awayScorers.map((scorer) => (
+                    <div
+                      key={scorer.key}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                        minWidth: 0,
+                        width: "100%",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          wordBreak: "break-word",
+                          textAlign: "right",
+                        }}
+                      >
+                        {scorer.playerName}
+                      </Text>
+                      <Tag
+                        color="green"
+                        style={{
+                          margin: 0,
+                          fontWeight: 700,
+                          fontSize: 11,
+                          padding: "0 5px",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {scorer.minute}
+                      </Tag>
+                      <span
+                        style={{
+                          color: "#fadb14",
+                          fontSize: 13,
+                          lineHeight: 1,
+                          flexShrink: 0,
+                        }}
+                      >
+                        ⚽
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Row gutter={[16, 10]} align="top">
+                <Col xs={24} md={11}>
+                  <Space
+                    direction="vertical"
+                    size={8}
+                    style={{ width: "100%", alignItems: "flex-end" }}
+                  >
+                    {homeScorers.map((scorer) => (
+                      <Space key={scorer.key} size={8} align="center">
+                        <Text style={{ fontSize: 17, fontWeight: 600 }}>
+                          {scorer.playerName}
+                        </Text>
+                        <Tag
+                          color="green"
+                          style={{
+                            margin: 0,
+                            fontWeight: 700,
+                            minWidth: 46,
+                            textAlign: "center",
+                          }}
+                        >
+                          {scorer.minute}
+                        </Tag>
+                        <span
+                          style={{
+                            color: "#fadb14",
+                            fontSize: 16,
+                            lineHeight: 1,
+                          }}
+                        >
+                          ⚽
+                        </span>
+                      </Space>
+                    ))}
+                  </Space>
+                </Col>
+                <Col xs={0} md={2}>
+                  <div
+                    style={{
+                      height: "100%",
+                      minHeight: 56,
+                      width: 1,
+                      background: "rgba(255,255,255,0.08)",
+                      margin: "0 auto",
+                    }}
+                  />
+                </Col>
+                <Col xs={24} md={11}>
+                  <Space
+                    direction="vertical"
+                    size={8}
+                    style={{ width: "100%", alignItems: "flex-start" }}
+                  >
+                    {awayScorers.map((scorer) => (
+                      <Space key={scorer.key} size={8} align="center">
+                        <span
+                          style={{
+                            color: "#fadb14",
+                            fontSize: 16,
+                            lineHeight: 1,
+                          }}
+                        >
+                          ⚽
+                        </span>
+                        <Tag
+                          color="green"
+                          style={{
+                            margin: 0,
+                            fontWeight: 700,
+                            minWidth: 46,
+                            textAlign: "center",
+                          }}
+                        >
+                          {scorer.minute}
+                        </Tag>
+                        <Text style={{ fontSize: 17, fontWeight: 600 }}>
+                          {scorer.playerName}
+                        </Text>
+                      </Space>
+                    ))}
+                  </Space>
+                </Col>
+              </Row>
+            )}
+          </>
+        )}
+        {hasCardEvents && (
+          <>
+            <Divider
+              style={{
+                margin: isMobile ? "14px 0 12px" : "20px 0 14px",
+                borderColor: "rgba(255,255,255,0.06)",
+              }}
+            />
+            {isMobile ? (
+              <div style={{ display: "flex", gap: 8, width: "100%" }}>
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 5,
+                    alignItems: "flex-start",
+                  }}
+                >
+                  {[...homeYellowCards.map((c) => ({ ...c, type: "yellow" })), ...homeRedCards.map((c) => ({ ...c, type: "red" }))].map((card) => (
+                    <div
+                      key={card.key}
+                      style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0, width: "100%" }}
+                    >
+                      <img
+                        src={card.type === "yellow" ? yellowCardIcon : redCardIcon}
+                        alt={card.type === "yellow" ? "Yellow card" : "Red card"}
+                        style={{ width: 12, height: 16, flexShrink: 0 }}
+                      />
+                      <Text style={{ fontSize: 12, fontWeight: 600, wordBreak: "break-word" }}>
+                        {card.playerName}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ width: 1, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 5,
+                    alignItems: "flex-end",
+                  }}
+                >
+                  {[...awayYellowCards.map((c) => ({ ...c, type: "yellow" })), ...awayRedCards.map((c) => ({ ...c, type: "red" }))].map((card) => (
+                    <div
+                      key={card.key}
+                      style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0, width: "100%", justifyContent: "flex-end" }}
+                    >
+                      <Text style={{ fontSize: 12, fontWeight: 600, wordBreak: "break-word", textAlign: "right" }}>
+                        {card.playerName}
+                      </Text>
+                      <img
+                        src={card.type === "yellow" ? yellowCardIcon : redCardIcon}
+                        alt={card.type === "yellow" ? "Yellow card" : "Red card"}
+                        style={{ width: 12, height: 16, flexShrink: 0 }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Row gutter={[16, 10]} align="top">
+                <Col xs={24} md={11}>
+                  <Space direction="vertical" size={6} style={{ width: "100%", alignItems: "flex-end" }}>
+                    {[...homeYellowCards.map((c) => ({ ...c, type: "yellow" })), ...homeRedCards.map((c) => ({ ...c, type: "red" }))].map((card) => (
+                      <Space key={card.key} size={8} align="center">
+                        <Text style={{ fontSize: 15, fontWeight: 600 }}>{card.playerName}</Text>
+                        <img
+                          src={card.type === "yellow" ? yellowCardIcon : redCardIcon}
+                          alt={card.type === "yellow" ? "Yellow card" : "Red card"}
+                          style={{ width: 14, height: 18 }}
+                        />
+                      </Space>
+                    ))}
+                  </Space>
+                </Col>
+                <Col xs={0} md={2}>
+                  <div style={{ height: "100%", minHeight: 40, width: 1, background: "rgba(255,255,255,0.08)", margin: "0 auto" }} />
+                </Col>
+                <Col xs={24} md={11}>
+                  <Space direction="vertical" size={6} style={{ width: "100%", alignItems: "flex-start" }}>
+                    {[...awayYellowCards.map((c) => ({ ...c, type: "yellow" })), ...awayRedCards.map((c) => ({ ...c, type: "red" }))].map((card) => (
+                      <Space key={card.key} size={8} align="center">
+                        <img
+                          src={card.type === "yellow" ? yellowCardIcon : redCardIcon}
+                          alt={card.type === "yellow" ? "Yellow card" : "Red card"}
+                          style={{ width: 14, height: 18 }}
+                        />
+                        <Text style={{ fontSize: 15, fontWeight: 600 }}>{card.playerName}</Text>
+                      </Space>
+                    ))}
+                  </Space>
+                </Col>
+              </Row>
+            )}
+          </>
+        )}
+
+        {fixture.venueName && (
+          <div style={{ marginTop: 16, textAlign: "center" }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              <EnvironmentOutlined style={{ marginRight: 4 }} />
+              {fixture.venueName}
+            </Text>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+export default function ViewerResultsTab({
+  tournamentId,
+}: ViewerResultsTabProps) {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.sm;
+  const [streamTick, setStreamTick] = useState(0);
+  const { data, isLoading, refetch } = useGetFixturesQuery(
+    { tournamentId },
+    {
+      pollingInterval: LIVE_RESULTS_POLLING_INTERVAL_MS,
+      skipPollingIfUnfocused: true,
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: true,
+    },
+  );
+  const { data: tournamentSummary } = useGetTournamentSummaryQuery({
+    tournamentId,
+  });
+  const { data: structureData } = useGetTournamentStructureQuery({ tournamentId });
+
+  const roundNameMap = useMemo(() => {
+    const map = new Map<number, string>();
+    (structureData?.content?.rounds || []).forEach((round) => {
+      if (round.roundName) map.set(round.roundNumber, round.roundName);
+    });
+    return map;
+  }, [structureData]);
+
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+    let reconnectTimeoutId: number | null = null;
+    let isClosed = false;
+
+    const connect = () => {
+      if (isClosed) {
+        return;
+      }
+
+      const streamUrl = buildLiveStreamUrl(tournamentId);
+      eventSource = new EventSource(streamUrl);
+
+      eventSource.onmessage = () => {
+        setStreamTick((previous) => previous + 1);
+        void refetch();
+      };
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+        if (!isClosed) {
+          reconnectTimeoutId = window.setTimeout(connect, LIVE_SSE_RECONNECT_DELAY_MS);
+        }
+      };
+    };
+
+    connect();
+
+    return () => {
+      isClosed = true;
+      if (reconnectTimeoutId !== null) {
+        window.clearTimeout(reconnectTimeoutId);
+      }
+      eventSource?.close();
+    };
+  }, [tournamentId, refetch]);
+
+  const sections = useMemo(() => {
+    const fixtures = data?.content || [];
+    const liveFixtures = fixtures
+      .filter(
+        (fixture) =>
+          fixture.matchStatus === "ONGOING" || fixture.matchStatus === "PAUSED",
+      )
+      .sort((left, right) =>
+        (left.matchDate ?? "").localeCompare(right.matchDate ?? ""),
+      );
+
+    const completedFixtures = fixtures
+      .filter((fixture) => fixture.matchStatus === "COMPLETED")
+      .sort((left, right) =>
+        (right.completedAt ?? right.matchDate ?? "").localeCompare(
+          left.completedAt ?? left.matchDate ?? "",
+        ),
+      );
+
+    return [
+      {
+        key: "live",
+        title: "Live Results",
+        fixtures: liveFixtures,
+        tagColor: "green",
+        tagLabel: "live",
+      },
+      {
+        key: "completed",
+        title: "Completed Results",
+        fixtures: completedFixtures,
+        tagColor: "default",
+        tagLabel: "result",
+      },
+    ].filter((section) => section.fixtures.length > 0);
+  }, [data]);
+
+  if (isLoading && !data) {
+    return (
+      <div className={styles.loadingWrap}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (sections.length === 0) {
+    return (
+      <Empty
+        description="No live or completed results yet"
+        className={styles.emptyWrap}
+      />
+    );
+  }
+
+  return (
+    <div className={styles.pageWrap}>
+      <div className={styles.contentWrap}>
+        {sections.map((section) => (
+          <section key={section.key} className={styles.groupSection}>
+            <div className={styles.groupHeader}>
+              <div className={styles.groupTitleWrap}>
+                <Title level={5} className={styles.groupTitle}>
+                  {section.title}
+                </Title>
+                {!isMobile && <div className={styles.groupDivider} />}
+              </div>
+              <Tag className={styles.groupCountTag} color={section.tagColor}>
+                {section.fixtures.length} {section.tagLabel}
+                {section.fixtures.length !== 1 ? "s" : ""}
+              </Tag>
+            </div>
+            {section.fixtures.map((f) => (
+              <ResultCard
+                key={f.id}
+                fixture={f}
+                tournamentSummary={tournamentSummary}
+                isMobile={isMobile}
+                streamTick={streamTick}
+                roundNameMap={roundNameMap}
+              />
+            ))}
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}

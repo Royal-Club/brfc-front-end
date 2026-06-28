@@ -16,7 +16,7 @@ import {
 } from "@ant-design/icons";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../../../../state/store";
-import { TournamentStructureResponse } from "../../../../../state/features/manualFixtures/manualFixtureTypes";
+import { TournamentStructureResponse, RoundGroupResponse } from "../../../../../state/features/manualFixtures/manualFixtureTypes";
 import { useGetFixturesQuery } from "../../../../../state/features/fixtures/fixturesSlice";
 import { setEditingFixture, setIsEditModalVisible } from "../../../../../state/features/manualFixtures/manualFixturesUISlice";
 import FixturesTable from "../../FixturesTable";
@@ -24,6 +24,23 @@ import EditFixtureModal from "../../EditFixtureModal";
 import { IFixture } from "../../../../../state/features/fixtures/fixtureTypes";
 
 const { Text, Title } = Typography;
+
+// Recursively flatten a group tree (including nested childGroups) into a flat list
+function flattenGroups(groups: RoundGroupResponse[] = []): RoundGroupResponse[] {
+  const result: RoundGroupResponse[] = [];
+
+  const walk = (items: RoundGroupResponse[]) => {
+    items.forEach((group) => {
+      result.push(group);
+      if (group.childGroups && group.childGroups.length > 0) {
+        walk(group.childGroups);
+      }
+    });
+  };
+
+  walk(groups);
+  return result;
+}
 
 // Helper function to extract all unique teams from tournament structure
 function extractTeamsFromStructure(tournamentStructure?: TournamentStructureResponse): Array<{ teamId: number; teamName: string }> {
@@ -363,8 +380,8 @@ export default function MatchesTab({
             >
               <Space direction="vertical" size={16} style={{ width: "100%" }}>
                 {round.roundType === "GROUP_BASED" && round.groups ? (
-                  // Group-based rounds - show by groups
-                  round.groups.map((group) => {
+                  // Group-based rounds - show by groups (including nested child groups)
+                  flattenGroups(round.groups).map((group) => {
                     const groupMatches = roundFixtures[group.groupName || ""] || [];
                     if (groupMatches.length === 0) return null;
 

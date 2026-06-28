@@ -22,7 +22,7 @@ import { useSelector } from "react-redux";
 import RoundNode from "./Components/RoundNode";
 import GroupNode from "./Components/GroupNode";
 import TeamNode from "./Components/TeamNode";
-import { TournamentStructureResponse } from "../../../../state/features/manualFixtures/manualFixtureTypes";
+import { RoundGroupResponse, TournamentStructureResponse } from "../../../../state/features/manualFixtures/manualFixtureTypes";
 import { IFixture } from "../../../../state/features/fixtures/fixtureTypes";
 import { isMatchOngoing } from "../../../../utils/matchTimeUtils";
 import { selectLoginInfo } from "../../../../state/slices/loginInfoSlice";
@@ -35,7 +35,7 @@ interface TournamentFlowVisualizationProps {
   tournamentStructure: TournamentStructureResponse;
   fixtures?: IFixture[];
   onNodeClick?: (nodeId: string, nodeType: string, data: any) => void;
-  onCreateRound?: () => void;
+  onCreateRound?: (sourceRoundId?: number) => void;
   onCreateGroup?: (roundId: number) => void;
   onAssignTeams?: (groupId: number) => void;
   onGenerateMatches?: (roundId: number) => void;
@@ -47,6 +47,93 @@ const nodeTypes = {
   roundNode: RoundNode,
   groupNode: GroupNode,
   teamNode: TeamNode,
+};
+
+const flattenGroups = (groups: RoundGroupResponse[] = [], depth = 0): Array<RoundGroupResponse & { _depth: number }> => {
+  const flattened: Array<RoundGroupResponse & { _depth: number }> = [];
+
+  const walk = (items: RoundGroupResponse[], currentDepth: number) => {
+    items.forEach((group) => {
+      flattened.push({ ...group, _depth: currentDepth });
+      if (group.childGroups && group.childGroups.length > 0) {
+        walk(group.childGroups, currentDepth + 1);
+      }
+    });
+  };
+
+  walk(groups, depth);
+  return flattened;
+};
+
+const normalizeRoundName = (name?: string) => (name || "").toLowerCase();
+
+const extractLaneToken = (roundName?: string): string | null => {
+  const normalized = normalizeRoundName(roundName);
+  const laneTokens = ["cup", "plate", "bowl", "shield", "bronze", "silver", "gold"];
+  const matchedToken = laneTokens.find((token) => normalized.includes(token));
+  return matchedToken || null;
+};
+
+const resolveRoundSource = (
+  rounds: TournamentStructureResponse["rounds"],
+  currentRoundIndex: number
+) => {
+  const currentRound = rounds[currentRoundIndex];
+  const previousRounds = rounds.slice(0, currentRoundIndex);
+  const laneToken = extractLaneToken(currentRound.roundName);
+
+  if (laneToken) {
+    const matchingLaneRounds = previousRounds.filter((round) =>
+      normalizeRoundName(round.roundName).includes(laneToken)
+    );
+
+    if (matchingLaneRounds.length > 0) {
+      return matchingLaneRounds[matchingLaneRounds.length - 1];
+    }
+  }
+
+  return previousRounds[previousRounds.length - 1];
+};
+
+const resolveLaneSourceGroup = (
+  rounds: TournamentStructureResponse["rounds"],
+  currentRoundIndex: number,
+  laneToken: string
+) => {
+  const currentRound = rounds[currentRoundIndex];
+  const normalizedCurrentRoundName = normalizeRoundName(currentRound?.roundName);
+  const expectsSemifinalSource = normalizedCurrentRoundName.includes("final");
+
+  for (let index = currentRoundIndex - 1; index >= 0; index -= 1) {
+    const candidateRound = rounds[index];
+    const candidateGroups = flattenGroups(candidateRound.groups || []);
+    const laneGroups = candidateGroups.filter((group) =>
+      normalizeRoundName(group.groupName).includes(laneToken)
+    );
+
+    if (laneGroups.length > 0) {
+      const topLevelLaneGroups = laneGroups.filter(
+        (group) => !group.parentGroupId && (group._depth ?? 0) === 0
+      );
+
+      if (expectsSemifinalSource) {
+        const semifinalTopLevel = topLevelLaneGroups.find((group) =>
+          normalizeRoundName(group.groupName).includes("semi")
+        );
+        if (semifinalTopLevel) {
+          return semifinalTopLevel;
+        }
+      }
+
+      if (topLevelLaneGroups.length > 0) {
+        return topLevelLaneGroups[0];
+      }
+
+      return laneGroups[0];
+    }
+  }
+
+  return null;
 };
 
 /**
@@ -170,9 +257,11 @@ export default function TournamentFlowVisualization({
 
       // Create group nodes for GROUP_BASED rounds
       if (round.roundType === "GROUP_BASED" && round.groups) {
-        round.groups.forEach((group, groupIndex) => {
+        const flattenedGroups = flattenGroups(round.groups);
+
+        flattenedGroups.forEach((group, groupIndex) => {
           // Position groups to the left of the round
-          const groupX = roundX - 550; // Position groups further to the left (increased from 400)
+          const groupX = roundX - 550 + group._depth * 260;
           const groupY = roundY + 300 + groupIndex * groupSpacing; // Increased vertical offset from 200
 
           // Get ongoing matches for this group
@@ -222,26 +311,74 @@ export default function TournamentFlowVisualization({
           });
 
           // Edge from round to group (connecting from left side of round to right side of group)
-          generatedEdges.push({
-            id: `edge-round-${round.id}-group-${group.id}`,
-            source: `round-${round.id}`,
-            sourceHandle: "left-source", // Connect from left side of round
-            target: `group-${group.id}`,
-            targetHandle: "right", // Connect to right side of group
-            type: "smoothstep",
-            animated: group.status === "ONGOING",
-            style: {
-              stroke: group.status === "COMPLETED" ? "#52c41a" : "#d9d9d9",
-              strokeWidth: 3, // Make edges larger
-            },
-          });
+          if (group.parentGroupId) {
+            generatedEdges.push({
+              id: `edge-group-${group.parentGroupId}-group-${group.id}`,
+              source: `group-${group.parentGroupId}`,
+              sourceHandle: "right",
+              target: `group-${group.id}`,
+              targetHandle: "left",
+              type: "smoothstep",
+              animated: group.status === "ONGOING",
+              style: {
+                stroke: group.status === "COMPLETED" ? "#52c41a" : "#d9d9d9",
+                strokeWidth: 3,
+              },
+            });
+          } else {
+            generatedEdges.push({
+              id: `edge-round-${round.id}-group-${group.id}`,
+              source: `round-${round.id}`,
+              sourceHandle: "left-source", // Connect from left side of round
+              target: `group-${group.id}`,
+              targetHandle: "right", // Connect to right side of group
+              type: "smoothstep",
+              animated: group.status === "ONGOING",
+              style: {
+                stroke: group.status === "COMPLETED" ? "#52c41a" : "#d9d9d9",
+                strokeWidth: 3, // Make edges larger
+              },
+            });
+          }
 
         });
       }
 
       // Create edges between rounds (advancement connections) - from right to left
       if (roundIndex > 0) {
-        const previousRound = tournamentStructure.rounds[roundIndex - 1];
+        const laneToken = extractLaneToken(round.roundName);
+
+        if (laneToken) {
+          const sourceGroup = resolveLaneSourceGroup(
+            tournamentStructure.rounds,
+            roundIndex,
+            laneToken
+          );
+
+          if (sourceGroup) {
+            generatedEdges.push({
+              id: `edge-group-${sourceGroup.id}-round-${round.id}`,
+              source: `group-${sourceGroup.id}`,
+              sourceHandle: "right",
+              target: `round-${round.id}`,
+              targetHandle: "left",
+              type: "smoothstep",
+              animated: true,
+              style: { stroke: "#13c2c2", strokeWidth: 3 },
+              label: "Lane Advance",
+              labelStyle: { fontSize: 12, fill: "#13c2c2" },
+            });
+
+            return;
+          }
+        }
+
+        const previousRound = resolveRoundSource(tournamentStructure.rounds, roundIndex);
+
+        if (!previousRound) {
+          return;
+        }
+
         generatedEdges.push({
           id: `edge-round-${previousRound.id}-round-${round.id}`,
           source: `round-${previousRound.id}`,
@@ -291,7 +428,7 @@ export default function TournamentFlowVisualization({
   };
 
   const containerHeight = isFullscreen ? "100vh" : "100%";
-  const minHeight = isFullscreen ? "100vh" : 600;
+  const minHeight = isFullscreen ? "100vh" : undefined;
 
   return (
     <div
@@ -352,7 +489,7 @@ export default function TournamentFlowVisualization({
                         size="small"
                         type="primary"
                         icon={<PlusOutlined />}
-                        onClick={onCreateRound}
+                        onClick={() => onCreateRound()}
                       />
                     </Tooltip>
                   )}

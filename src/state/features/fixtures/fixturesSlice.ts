@@ -16,6 +16,8 @@ import {
   IUpdateFixtureResponse,
   IClearFixturesResponse,
   IRecordMatchEventResponse,
+  IUpdateMatchEventRequest,
+  IUpdateMatchEventResponse,
   IGetMatchStatisticsResponse,
   IGetMatchEventsResponse,
   IDeleteEventResponse,
@@ -28,7 +30,7 @@ import {
 } from "./fixtureTypes";
 
 const apiWithTags = apiSlice.enhanceEndpoints({
-  addTagTypes: ["fixtures", "matches"],
+  addTagTypes: ["fixtures", "matches", "statistics"],
 });
 
 export const fixturesApi = apiWithTags.injectEndpoints({
@@ -221,7 +223,9 @@ export const fixturesApi = apiWithTags.injectEndpoints({
         body,
       }),
       invalidatesTags: (result, error, arg) => [
+        "fixtures",
         { type: "matches", id: arg.matchId },
+        "statistics",
       ],
     }),
 
@@ -287,6 +291,27 @@ export const fixturesApi = apiWithTags.injectEndpoints({
       invalidatesTags: (result, error, { matchId }) => [
         "fixtures",
         { type: "matches", id: matchId },
+        "statistics",
+      ],
+    }),
+
+    /**
+     * Update a match event
+     * Endpoint: PUT /matches/events/{eventId}
+     */
+    updateMatchEvent: builder.mutation<
+      IUpdateMatchEventResponse,
+      { matchId: number; eventId: number; body: IUpdateMatchEventRequest }
+    >({
+      query: ({ eventId, body }) => ({
+        url: `/matches/events/${eventId}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: (result, error, { matchId }) => [
+        "fixtures",
+        { type: "matches", id: matchId },
+        "statistics",
       ],
     }),
 
@@ -348,6 +373,7 @@ export const {
   useGetMatchEventsQuery,
   useGetMatchStatisticsQuery,
   useDeleteMatchEventMutation,
+  useUpdateMatchEventMutation,
   useUpdateElapsedTimeMutation,
   useGetFixtureByIdQuery,
   useGetMatchByIdQuery,

@@ -18,10 +18,11 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { RootState } from "../../state/store";
 import { setActiveMainTab } from "../../state/features/tournaments/tournamentUISlice";
 import PickerWheelModal from "./Atoms/pickerWheel/PickerWheelModal";
-import { FileExcelOutlined, RightSquareOutlined, TrophyOutlined, SearchOutlined } from "@ant-design/icons";
+import { BarChartOutlined, FileExcelOutlined, RightSquareOutlined, TrophyOutlined, SearchOutlined } from "@ant-design/icons";
 import { exportToExcel, showBdLocalTime } from "../../utils/utils";
 import FixturesPanel from "./Fixtures/FixturesPanel";
 import PrizesPanel from "./Prizes/PrizesPanel";
+import StatsLeaderboardPanel from "./Statistics/StatsLeaderboardPanel";
 
 const { Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -43,6 +44,7 @@ function SingleTournament() {
     handleAddPlayerToTeam,
     handleRemovePlayer,
     handleRenameTeam,
+    handleUploadTeamLogo,
     handleRemoveTeam,
     refetchTournament,
     refetchPlayer,
@@ -256,6 +258,7 @@ function SingleTournament() {
                           team={team}
                           handleRemovePlayer={handleRemovePlayer}
                           handleRenameTeam={handleRenameTeam}
+                          handleUploadTeamLogo={handleUploadTeamLogo}
                           handleRemoveTeam={handleRemoveTeam}
                           handleAddPlayerToTeam={handleAddPlayerToTeam}
                         />
@@ -364,6 +367,20 @@ function SingleTournament() {
               </span>
             ),
             children: <PrizesPanel tournamentId={tournamentId} />,
+          },
+          {
+            key: "stats-leaderboard",
+            label: (
+              <span>
+                <BarChartOutlined /> Stats & Leaderboard
+              </span>
+            ),
+            children: (
+              <StatsLeaderboardPanel
+                tournamentId={tournamentId}
+                isActive={activeTab === "stats-leaderboard"}
+              />
+            ),
           },
         ]}
       />

@@ -38,13 +38,10 @@ export const statisticsApi = apiWithTags.injectEndpoints({
     >({
       query: ({ tournamentId, limit }) => {
         const queryParams = new URLSearchParams();
-        queryParams.append('tournamentId', tournamentId.toString());
-        queryParams.append('sortBy', 'goalsScored');
-        queryParams.append('sortOrder', 'desc');
         if (limit) queryParams.append('limit', limit.toString());
 
         return {
-          url: `/player-statistics?${queryParams.toString()}`,
+          url: `/player-statistics/tournament/${tournamentId}/top-scorers${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
           method: "GET",
         };
       },
@@ -110,6 +107,17 @@ export const statisticsApi = apiWithTags.injectEndpoints({
     /**
      * Get player statistics with optional filters
      */
+    aggregateTournamentStatistics: builder.mutation<
+      { status: string; message: string },
+      { tournamentId: number }
+    >({
+      query: ({ tournamentId }) => ({
+        url: `/statistics/tournaments/${tournamentId}/aggregate`,
+        method: "POST",
+      }),
+      invalidatesTags: ["statistics"],
+    }),
+
     getPlayerStatistics: builder.query<
       IGetPlayerStatisticsResponse,
       {
@@ -148,4 +156,5 @@ export const {
   useGetMatchStatisticsQuery,
   useGetPlayerTournamentStatisticsQuery,
   useGetPlayerStatisticsQuery,
+  useAggregateTournamentStatisticsMutation,
 } = statisticsApi;

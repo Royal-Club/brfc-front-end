@@ -26,12 +26,17 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         tournamentDate: string | Date;
         venueId: number;
         auctionMode?: boolean;
+        defaultTournament?: boolean;
+        season?: string;
+        description?: string;
+        rules?: string;
+        roadmapImageUrl?: string;
       }
     >({
-      query: ({ tournamentName, tournamentDate, venueId, auctionMode }) => ({
+      query: ({ tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
         url: "tournaments",
         method: "POST",
-        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false },
+        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl },
       }),
       invalidatesTags: ["tournaments"],
     }),
@@ -50,12 +55,17 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         tournamentDate: string | Date;
         venueId: number;
         auctionMode?: boolean;
+        defaultTournament?: boolean;
+        season?: string;
+        description?: string;
+        rules?: string;
+        roadmapImageUrl?: string;
       }
     >({
-      query: ({ id, tournamentName, tournamentDate, venueId, auctionMode }) => ({
+      query: ({ id, tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
         url: `tournaments/${id}`,
         method: "PUT",
-        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false },
+        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl },
       }),
       invalidatesTags: ["tournaments"],
     }),
@@ -68,6 +78,25 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         method: "PUT",
       }),
       invalidatesTags: ["tournaments"],
+    }),
+
+    concludeTournament: builder.mutation<BasicResType, { id: number }>({
+      query: ({ id }) => ({
+        url: `tournaments/${id}/conclude`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["tournaments"],
+    }),
+
+    presignRoadmapImageUpload: builder.mutation<
+      BasicResType & { content: { key: string; url: string; uploadUrl: string; expiresInSeconds: number } },
+      { fileName: string; contentType: string }
+    >({
+      query: ({ fileName, contentType }) => ({
+        url: `files/team-logos/presign`,
+        method: "POST",
+        params: { fileName, contentType },
+      }),
     }),
 
     getTournaments: builder.query<
@@ -186,6 +215,8 @@ export const {
   useUpdateTournamentMutation,
   useGetTournamentsQuery,
   useUpdateTournamentActiveStatusMutation,
+  useConcludeTournamentMutation,
+  usePresignRoadmapImageUploadMutation,
   useGetTournamentParticipantsListQuery,
   useAddParticipationToTournamentMutation,
   useGetTournamentSummaryQuery,

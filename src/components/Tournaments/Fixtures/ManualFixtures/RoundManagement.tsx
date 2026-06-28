@@ -46,6 +46,12 @@ const { Option } = Select;
 interface RoundManagementProps {
   tournamentId: number;
   roundId: number | null;
+  createContext?: {
+    sourceRoundName?: string;
+    sourceGroupName?: string;
+    suggestedRoundName?: string;
+    suggestedRoundType?: RoundType;
+  } | null;
   isModalVisible: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -61,6 +67,7 @@ const ROUND_TYPE_OPTIONS = [
 export default function RoundManagement({
   tournamentId,
   roundId,
+  createContext,
   isModalVisible,
   onClose,
   onSuccess,
@@ -113,7 +120,8 @@ export default function RoundManagement({
       const tournamentDateTime = tournamentDate ? dayjs.utc(tournamentDate).local() : null;
 
       form.setFieldsValue({
-        roundType: RoundType.GROUP_BASED,
+        roundName: createContext?.suggestedRoundName || undefined,
+        roundType: createContext?.suggestedRoundType || RoundType.GROUP_BASED,
         startDate: tournamentDateTime,
         startTime: tournamentDateTime,
       });
@@ -123,7 +131,15 @@ export default function RoundManagement({
     if (!isModalVisible) {
       form.resetFields();
     }
-  }, [isModalVisible, existingRound, form, existingRounds, isEditing, tournamentDate]);
+  }, [
+    isModalVisible,
+    existingRound,
+    form,
+    existingRounds,
+    isEditing,
+    tournamentDate,
+    createContext,
+  ]);
 
   const handleSubmit = async () => {
     try {
@@ -275,6 +291,16 @@ export default function RoundManagement({
           showIcon
           style={{ marginBottom: 24 }}
         />
+
+        {!isEditing && createContext?.sourceRoundName && (
+          <Alert
+            message="Create From Context"
+            description={`Source: ${createContext.sourceRoundName}${createContext.sourceGroupName ? ` -> ${createContext.sourceGroupName}` : ""}. You can adjust name/type before creating.`}
+            type="success"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
         <Form.Item
           name="roundName"
