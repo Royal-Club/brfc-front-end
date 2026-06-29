@@ -1,204 +1,288 @@
-.club-rules-container {
+/* ============================================================
+   Club Rules page
+   Theme-aware: surface/border/accent colors come from antd
+   tokens via CSS variables set in ClubRules.tsx (--cr-*).
+   ============================================================ */
+
+.club-rules-page {
   position: relative;
   width: 100%;
 }
 
-.club-rules-cover {
+/* ---------- Hero banner ---------- */
+.club-rules-hero {
+  position: relative;
   width: 100%;
-  height: auto;
-  display: block;
-  border-radius: 8px;
+  max-height: 240px;
+  overflow: hidden;
+  border-radius: var(--cr-radius, 12px);
 }
 
-.club-rules-fab {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  height: 56px;
-  width: 56px;
-  border-radius: 50%;
-  border: none;
-  font-size: 24px;
-  z-index: 1000;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.club-rules-hero-img {
+  display: block;
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  object-position: center;
+  /* Brighter, richer, more vibrant hero */
+  filter: brightness(1.08) saturate(1.25) contrast(1.05);
+}
+
+.club-rules-hero-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  /* Left padding kept small so the title lines up with the content below */
+  padding: 24px 28px 22px 4px;
+  /* Light, gorgeous wash — just enough shading to keep text readable
+     while letting the image shine through. */
+  background: linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0.12) 35%,
+      rgba(0, 0, 0, 0) 60%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0) 40%,
+      rgba(0, 0, 0, 0.45) 100%
+    );
+}
+
+.club-rules-hero-title.ant-typography {
+  margin: 0;
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.club-rules-hero-subtitle.ant-typography {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  max-width: 640px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Content wrapper ----------
+   Full width and left-aligned so it lines up with the hero banner
+   edges instead of sitting in a narrow centered column. */
+.club-rules-wrapper {
+  width: 100%;
+  margin: 0;
+  padding: 20px 0 96px;
+}
+
+.club-rules-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.club-rules-count.ant-typography {
+  color: var(--cr-text-secondary, rgba(255, 255, 255, 0.55));
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* ---------- Rule cards ---------- */
+.club-rules-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  counter-reset: rule;
+}
+
+.club-rules-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 20px;
+  background: var(--cr-surface, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--cr-border, rgba(255, 255, 255, 0.08));
+  border-left: 3px solid var(--cr-primary, #1890ff);
+  border-radius: var(--cr-radius, 12px);
+  transition: transform 0.18s ease, box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.club-rules-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--cr-primary, #1890ff);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.club-rules-number {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.club-rules-fab:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
-.club-rules-list {
-  margin-bottom: 80px;
-  margin-top: 16px;
-}
-
-.club-rules-item {
-  padding: 16px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-}
-
-.club-rules-item:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-}
-
-.club-rules-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  width: 100%;
-}
-
-.club-rules-icon {
-  color: #1890ff;
-  font-size: 16px;
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.club-rules-text {
-  flex: 1;
-  line-height: 1.6;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--cr-primary-bg, rgba(24, 144, 255, 0.15));
+  color: var(--cr-primary, #1890ff);
   font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.club-rules-actions {
-  margin-left: auto;
+.club-rules-text.ant-typography {
+  flex: 1;
+  min-width: 0;
+  color: var(--cr-text, rgba(255, 255, 255, 0.88));
+  font-size: 15px;
+  line-height: 1.7;
+  /* Leave room for the edit button so long text never collides with it */
+  padding-right: 8px;
+}
+
+.club-rules-edit.ant-btn {
   flex-shrink: 0;
+  opacity: 0.55;
+  transition: opacity 0.18s ease, background 0.18s ease;
 }
 
-/* Mobile responsive styles */
+.club-rules-card:hover .club-rules-edit.ant-btn {
+  opacity: 1;
+}
+
+/* ---------- Empty state ---------- */
+.club-rules-empty {
+  padding: 48px 16px;
+  background: var(--cr-surface, rgba(255, 255, 255, 0.04));
+  border: 1px dashed var(--cr-border, rgba(255, 255, 255, 0.12));
+  border-radius: var(--cr-radius, 12px);
+  text-align: center;
+}
+
+/* ---------- Floating action button ---------- */
+.club-rules-fab.ant-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+  z-index: 1000;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.club-rules-fab.ant-btn:hover {
+  transform: scale(1.08) translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================
+   Responsive — tablet
+   ============================================================ */
 @media (max-width: 768px) {
-  .club-rules-container {
-    margin: 0;
-    padding: 0;
+  .club-rules-hero,
+  .club-rules-hero-img {
+    height: 170px;
+    max-height: 170px;
+    border-radius: var(--cr-radius, 10px);
   }
-  
-  .club-rules-cover {
-    border-radius: 0;
-    margin: 0;
+
+  .club-rules-hero-overlay {
+    padding: 16px 18px;
   }
-  
-  .club-rules-fab {
+
+  .club-rules-hero-subtitle.ant-typography {
+    font-size: 13px;
+  }
+
+  .club-rules-wrapper {
+    padding: 16px 2px 88px;
+  }
+
+  .club-rules-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .club-rules-number {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+  }
+
+  .club-rules-text.ant-typography {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+/* ============================================================
+   Responsive — phone
+   ============================================================ */
+@media (max-width: 480px) {
+  .club-rules-hero,
+  .club-rules-hero-img {
+    height: 140px;
+    max-height: 140px;
+  }
+
+  .club-rules-hero-title.ant-typography {
+    font-size: 22px;
+  }
+
+  .club-rules-hero-subtitle.ant-typography {
+    font-size: 12px;
+  }
+
+  /* On phones the inline "Add Rule" button is redundant with the FAB */
+  .club-rules-add-btn.ant-btn {
+    display: none;
+  }
+
+  .club-rules-card {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .club-rules-text.ant-typography {
+    font-size: 13.5px;
+  }
+
+  .club-rules-edit.ant-btn {
+    /* Always visible on touch devices (no hover) */
+    opacity: 1;
+  }
+
+  .club-rules-fab.ant-btn {
     bottom: 16px;
     right: 16px;
-    height: 48px;
-    width: 48px;
-    font-size: 20px;
-  }
-  
-  .club-rules-list {
-    margin-bottom: 80px;
-    margin-top: 12px;
-    padding: 0 8px;
-  }
-  
-  .club-rules-item {
-    padding: 12px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    flex-direction: column;
-  }
-  
-  .club-rules-content {
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  
-  .club-rules-icon {
-    font-size: 14px;
-  }
-  
-  .club-rules-text {
-    font-size: 13px;
-    line-height: 1.5;
-  }
-  
-  .club-rules-actions {
-    margin-left: 0;
-    width: 100%;
-    text-align: right;
-  }
-  
-  .club-rules-actions .ant-btn {
-    font-size: 12px;
-    padding: 2px 8px;
-    height: 28px;
+    width: 50px;
+    height: 50px;
   }
 }
 
-@media (max-width: 480px) {
-  .club-rules-list {
-    padding: 0 4px;
-    margin-top: 8px;
-  }
-  
-  .club-rules-item {
-    padding: 10px;
-    margin-bottom: 6px;
-  }
-  
-  .club-rules-content {
-    gap: 6px;
-  }
-  
-  .club-rules-text {
-    font-size: 12px;
-  }
-  
-  .club-rules-fab {
-    bottom: 12px;
-    right: 12px;
-    height: 44px;
-    width: 44px;
-    font-size: 18px;
+/* Touch devices: no hover, so keep the edit affordance visible everywhere */
+@media (hover: none) {
+  .club-rules-edit.ant-btn {
+    opacity: 1;
   }
 }
 
-/* Modal responsive styles */
-@media (max-width: 768px) {
-  .club-rules-modal .ant-modal {
-    margin: 16px;
-    max-width: calc(100vw - 32px);
-  }
-  
-  .club-rules-modal .ant-modal-body {
-    padding: 16px;
-  }
-  
-  .club-rules-modal .ant-form-item {
-    margin-bottom: 16px;
-  }
-  
-  .club-rules-modal .ant-input {
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
-}
-
+/* ---------- Modal ---------- */
 @media (max-width: 480px) {
   .club-rules-modal .ant-modal {
-    margin: 8px;
-    max-width: calc(100vw - 16px);
-  }
-  
-  .club-rules-modal .ant-modal-header {
-    padding: 12px 16px;
-  }
-  
-  .club-rules-modal .ant-modal-body {
-    padding: 12px;
-  }
-  
-  .club-rules-modal .ant-modal-footer {
-    padding: 8px 16px;
+    max-width: calc(100vw - 24px);
+    margin: 12px;
   }
 }
