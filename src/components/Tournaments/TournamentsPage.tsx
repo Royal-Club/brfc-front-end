@@ -53,7 +53,7 @@ const TournamentsPage: React.FC = () => {
   const handleMenuClick = (e: any, record: IoTournamentSingleSummaryType) => {
     if (e.key === "join") {
       navigate(`/tournaments/join-tournament/${record.id}`);
-    } else if (e.key === "fixtures") {
+    } else if (e.key === "team-building" || e.key === "fixtures") {
       navigate(`/tournaments/team-building/${record.id}`);
     } else if (e.type === "click" && record.activeStatus) {
       navigate(`/tournaments/join-tournament/${record.id}`);
