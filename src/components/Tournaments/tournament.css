@@ -330,6 +330,35 @@
     }
 }
 
+
+/* ── Join Tournament cards ──────────────────────────────────────── */
+.jt-card {
+    border-radius: 12px !important;
+    transition: box-shadow 0.2s ease;
+}
+
+/* Primary action card — subtle blue ring, no colored border */
+.jt-card--primary {
+    box-shadow: 0 0 0 1px rgba(22, 119, 255, 0.25), 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Force action card buttons to full width */
+.join-action-card .ant-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Tournament grid cards */
+.tournament-grid-card {
+    border-radius: 10px !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tournament-grid-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+
 /* Ensure logged-in player row stands out */
 .logged-in-player-row {
     background-color: rgba(24, 144, 255, 0.02) !important;
