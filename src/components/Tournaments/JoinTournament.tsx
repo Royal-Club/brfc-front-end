@@ -18,6 +18,7 @@ import { showBdLocalTime } from "./../../utils/utils";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
+import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -100,10 +101,11 @@ export default function JoinTournament() {
       key: "player",
       render: (_, r) => {
         const isMe = r.playerId === Number(loginInfo.userId);
+        const photoUrl = toAbsolutePlayerPhotoUrl(r.photoUrl);
         return (
           <Space size={8}>
-            <Avatar size={30} icon={<UserOutlined />}
-              style={{ backgroundColor: isMe ? token.colorPrimary : "#1890ff", flexShrink: 0 }} />
+            <Avatar size={30} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
+              style={{ backgroundColor: photoUrl ? undefined : (isMe ? token.colorPrimary : "#1890ff"), flexShrink: 0 }} />
             <Space size={4}>
               <Text strong style={{ fontSize: 14 }}>{r.playerName}</Text>
               {isMe      && <StarFilled style={{ color: "#faad14", fontSize: 11 }} />}
@@ -265,7 +267,7 @@ export default function JoinTournament() {
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
                 <Avatar
                   size={44}
-                  src={loggedInPlayer.photoUrl || undefined}
+                  src={toAbsolutePlayerPhotoUrl(loggedInPlayer.photoUrl)}
                   icon={!loggedInPlayer.photoUrl ? <UserOutlined /> : undefined}
                   style={{ backgroundColor: loggedInPlayer.photoUrl ? undefined : token.colorPrimary, flexShrink: 0 }}
                 />
