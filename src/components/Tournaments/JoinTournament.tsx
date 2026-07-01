@@ -299,8 +299,8 @@ export default function JoinTournament() {
                     onClick={() => handleUpdate(loggedInPlayer.playerId, editedComments[loggedInPlayer.playerId] ?? loggedInPlayer.comments ?? "", true)}
                     disabled={isUpdating}
                     style={loggedInPlayer.participationStatus === true
-                      ? { background: "#52c41a", borderColor: "#52c41a", color: "#fff", fontWeight: 600 }
-                      : { borderColor: "#52c41a40", color: "#52c41a"  }
+                      ? { background: "#52c41a", borderColor: "#52c41a", color: "#fff", fontWeight: 600, boxShadow: "0 2px 8px #52c41a4d" }
+                      : { background: "#52c41a14", borderColor: "#52c41a40", color: "#52c41a", fontWeight: 500 }
                     }
                   >
                     Yes, I'm in
@@ -312,8 +312,8 @@ export default function JoinTournament() {
                     onClick={() => handleUpdate(loggedInPlayer.playerId, editedComments[loggedInPlayer.playerId] ?? loggedInPlayer.comments ?? "", false)}
                     disabled={isUpdating}
                     style={loggedInPlayer.participationStatus === false
-                      ? { background: "#ff4d4f", borderColor: "#ff4d4f", color: "#fff", fontWeight: 600 }
-                      : { borderColor: "#ff4d4f40", color: "#ff4d4f" }
+                      ? { background: "#ff4d4f", borderColor: "#ff4d4f", color: "#fff", fontWeight: 600, boxShadow: "0 2px 8px #ff4d4f4d" }
+                      : { background: "#ff4d4f14", borderColor: "#ff4d4f40", color: "#ff4d4f", fontWeight: 500 }
                     }
                   >
                     Can't make it
@@ -342,40 +342,52 @@ export default function JoinTournament() {
 
         {/* ── Card 3: Your Team ── */}
         <Col xs={24} md={12} lg={8}>
-          <Card className="jt-card join-action-card" style={{ height: "100%" }}
+          <Card className="jt-card jt-team-card" style={{ height: "100%" }}
             styles={{ body: { padding: "16px 18px", height: "100%", display: "flex", flexDirection: "column" } }}>
 
-            {/* Header */}
-            <Space size={8} align="center" style={{ marginBottom: 14 }}>
-              <TrophyOutlined style={{ fontSize: 18, color: "#faad14" }} />
-              <Text strong style={{ fontSize: 14 }}>Your Team</Text>
-            </Space>
-
-            {/* Status */}
-            {loggedInPlayer?.participationStatus === true && (
-              <Tag color="success" icon={<CheckCircleFilled />} style={{ fontSize: 12, padding: "3px 10px", marginBottom: 14 }}>
-                Confirmed — Waiting for team assignment
-              </Tag>
-            )}
-            {loggedInPlayer?.participationStatus === false && (
-              <Tag color="default" style={{ fontSize: 12, padding: "3px 10px", marginBottom: 14 }}>
-                Not attending this match
-              </Tag>
-            )}
-            {(loggedInPlayer?.participationStatus === null || !loggedInPlayer) && (
-              <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontSize: 12, padding: "3px 10px", marginBottom: 14 }}>
-                Awaiting your response
-              </Tag>
-            )}
-
-            {/* Buttons pushed to bottom */}
-            <div style={{ marginTop: "auto" }}>
-              <GoalKeeperDrawer tournamentId={tournamentId} />
-              <Button type="primary" icon={<TeamOutlined />} block style={{ marginTop: 8 }}
-                onClick={() => navigate(`/tournaments/team-building/${tournamentId}`)}>
-                View Team
-              </Button>
+            {/* Header row: title + compact status badge */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <Space size={6} align="center">
+                <TrophyOutlined style={{ fontSize: 15, color: "#faad14" }} />
+                <Text strong style={{ fontSize: 13 }}>Your Team</Text>
+              </Space>
+              {loggedInPlayer?.participationStatus === true && (
+                <span className="jt-status-badge jt-status-badge--success">
+                  <CheckCircleFilled /> Attending
+                </span>
+              )}
+              {loggedInPlayer?.participationStatus === false && (
+                <span className="jt-status-badge jt-status-badge--error">
+                  <CloseCircleOutlined /> Not Attending
+                </span>
+              )}
+              {(loggedInPlayer?.participationStatus === null || !loggedInPlayer) && (
+                <span className="jt-status-badge jt-status-badge--warning">
+                  <ClockCircleOutlined /> Pending
+                </span>
+              )}
             </div>
+
+            {/* Main focus: Goalkeeper Records */}
+            <div className="jt-team-focus">
+              <GoalKeeperDrawer
+                tournamentId={tournamentId}
+                triggerClassName="jt-team-focus-trigger"
+                triggerIcon={<TrophyOutlined />}
+              />
+              <Text type="secondary" className="jt-team-helper">
+                {loggedInPlayer?.participationStatus === true
+                  ? "You're confirmed — check back here for your team assignment."
+                  : loggedInPlayer?.participationStatus === false
+                  ? "You are currently marked as unavailable for this match."
+                  : "Awaiting your response — let us know if you're in."}
+              </Text>
+            </div>
+
+            <Button type="primary" icon={<TeamOutlined />} block style={{ marginTop: 12 }}
+              onClick={() => navigate(`/tournaments/team-building/${tournamentId}`)}>
+              View Team
+            </Button>
 
           </Card>
         </Col>

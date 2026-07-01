@@ -342,10 +342,77 @@
     box-shadow: 0 0 0 1px rgba(22, 119, 255, 0.25), 0 4px 16px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Force action card buttons to full width */
-.join-action-card .ant-btn {
+/* ── Your Team card ─────────────────────────────────────────────── */
+.jt-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.jt-status-badge--success {
+    background: rgba(82, 196, 26, 0.14);
+    color: #52c41a;
+    border: 1px solid rgba(82, 196, 26, 0.35);
+}
+
+.jt-status-badge--error {
+    background: rgba(255, 122, 69, 0.14);
+    color: #ff7a45;
+    border: 1px solid rgba(255, 122, 69, 0.35);
+}
+
+.jt-status-badge--warning {
+    background: rgba(250, 173, 20, 0.14);
+    color: #faad14;
+    border: 1px solid rgba(250, 173, 20, 0.35);
+}
+
+.jt-team-focus {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.jt-team-focus .ant-btn {
     width: 100%;
     justify-content: center;
+}
+
+.jt-team-focus-trigger.ant-btn {
+    height: auto !important;
+    padding: 10px 16px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    background: rgba(24, 144, 255, 0.08) !important;
+    border: 1px solid rgba(24, 144, 255, 0.3) !important;
+    color: #69b1ff !important;
+}
+
+.jt-team-focus-trigger.ant-btn:hover {
+    background: rgba(24, 144, 255, 0.14) !important;
+    border-color: rgba(24, 144, 255, 0.5) !important;
+    color: #91caff !important;
+}
+
+.jt-team-helper {
+    display: block;
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.4;
 }
 
 /* Tournament grid cards */
