@@ -23,6 +23,7 @@ import { useGetPlayerCollectionMetricsQuery } from "../../state/features/account
 import { PlayerMetric } from "../../interfaces/IPlayerCollectionMetrics";
 import PlayerCollectionMobileView from "./PlayerCollectionMobileView";
 import styles from "./PlayerCollectionMetricsTable.module.css";
+import { club, scoreNum } from "../../theme/clubTheme";
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -258,37 +259,40 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
 
   return (
     <Card
-      style={{ 
-        borderRadius: 16, 
-        border: `1px solid ${token.colorBorder}`,
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-        background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorFillQuaternary} 100%)`,
-        transition: 'all 0.3s ease',
+      style={{
+        borderRadius: 14,
+        border: `1px solid ${club.panelBorder}`,
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
+        background: club.panel,
+        transition: 'box-shadow 0.2s ease',
         overflow: 'hidden'
       }}
       styles={{
         body: { padding: 0 }
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.12)';
+        e.currentTarget.style.boxShadow = '0 8px 22px rgba(0, 0, 0, 0.45)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+        e.currentTarget.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.35)';
       }}
     >
       {/* Toolbar */}
       <div style={{
         padding: '16px 20px',
-        borderBottom: `1px solid ${token.colorBorder}`
+        borderBottom: `1px solid ${club.panelBorder}`
       }}>
         <Row gutter={[12, 8]} align="middle">
           <Col xs={24} md={12}>
-            <Space align="center" size={8}>
-              <BarChartOutlined style={{ fontSize: 15, color: token.colorPrimary }} />
-              <Title level={5} style={{ margin: 0, fontWeight: 600 }}>
+            <Space align="center" size={10}>
+              <span style={{ width: 4, height: 20, borderRadius: 2, background: club.gold }} />
+              <BarChartOutlined style={{ fontSize: 15, color: club.gold }} />
+              <Title level={5} style={{ margin: 0, fontWeight: 700, color: club.textPrimary }}>
                 Monthly Contributions
               </Title>
-              <Tag>{dataSource.length}</Tag>
+              <Tag style={{ background: `${club.gold}22`, borderColor: `${club.gold}55`, color: club.goldSoft, ...scoreNum }}>
+                {dataSource.length}
+              </Tag>
             </Space>
           </Col>
 
@@ -310,7 +314,7 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
                 onChange={handleYearChange}
                 loading={isLoading}
                 disabled={isLoading}
-                suffixIcon={<CalendarOutlined style={{ fontSize: 12, color: token.colorPrimary }} />}
+                suffixIcon={<CalendarOutlined style={{ fontSize: 12, color: club.gold }} />}
               >
                 {years.map((year: number) => (
                   <Option key={year} value={year}>
