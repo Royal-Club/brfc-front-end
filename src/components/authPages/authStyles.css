@@ -2,8 +2,23 @@
     min-height: calc(100vh - 80px);
 }
 
+.userProfileContainer .profile-hero {
+    animation: profileHeroFade 0.55s ease-out both;
+}
+
+@keyframes profileHeroFade {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .userProfileContainer .ant-card {
-    text-align: center;
+    text-align: left;
     height: 100%;
 }
 
