@@ -44,12 +44,15 @@ import {
 } from "../../state/features/player/playerSlice";
 import { useGetPlayerStatisticsQuery } from "../../state/features/statistics/statisticsSlice";
 import { showBdLocalTime } from "../../utils/utils";
+import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
+import useIsMobile from "../../hooks/useIsMobile";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 export default function UserProfile() {
     const loginInfo = useSelector(selectLoginInfo);
+    const isMobile = useIsMobile(576);
     const {
         token: {
             colorTextSecondary,
@@ -69,6 +72,12 @@ export default function UserProfile() {
     } = useGetUserProfileQuery({ id: loginInfo?.userId }, { skip: !loginInfo?.userId });
 
     const profile = playerProfileData?.content;
+
+    // Resolve the player's photo: prefer the profile's own photoUrl, fall back
+    // to the synced store image. Coerce empty strings to undefined so the
+    // Avatar shows the icon instead of trying to load an empty src.
+    const avatarSrc =
+        toAbsolutePlayerPhotoUrl(profile?.photoUrl) || loginInfo.image || undefined;
 
     const { data: playerPositions } = useGetPlayerPositionsQuery();
     const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
@@ -422,7 +431,7 @@ export default function UserProfile() {
                     className="profile-hero"
                     style={{
                         position: "relative",
-                        padding: "32px 32px",
+                        padding: isMobile ? "24px 16px 28px" : "32px 32px",
                         boxShadow: "inset 0 -50px 90px rgba(0,0,0,0.38)",
                         background: `
                             radial-gradient(130% 100% at 50% -25%, rgba(255,255,255,0.09), transparent 55%),
@@ -440,10 +449,10 @@ export default function UserProfile() {
                         aria-hidden
                         style={{
                             position: "absolute",
-                            right: 28,
+                            right: isMobile ? 8 : 28,
                             top: "50%",
                             transform: "translateY(-50%)",
-                            height: 200,
+                            height: isMobile ? 120 : 200,
                             opacity: 0.07,
                             pointerEvents: "none",
                         }}
@@ -468,7 +477,8 @@ export default function UserProfile() {
                             display: "flex",
                             flexWrap: "wrap",
                             alignItems: "center",
-                            gap: 24,
+                            justifyContent: isMobile ? "center" : "flex-start",
+                            gap: isMobile ? 16 : 24,
                         }}
                     >
                         {/* Avatar with gradient ring + active dot */}
@@ -483,10 +493,10 @@ export default function UserProfile() {
                             }}
                         >
                             <Avatar
-                                size={112}
-                                src={loginInfo.image}
+                                size={isMobile ? 92 : 112}
+                                src={avatarSrc}
                                 icon={<UserOutlined />}
-                                style={{ border: "3px solid #0b1f2a", display: "block" }}
+                                style={{ border: "3px solid #0b1f2a" }}
                             />
                             {profile?.active && (
                                 <span
@@ -505,13 +515,18 @@ export default function UserProfile() {
                             )}
                         </div>
 
-                        <div style={{ flex: 1, minWidth: 220 }}>
+                        <div style={{
+                            flex: isMobile ? "1 1 100%" : 1,
+                            minWidth: isMobile ? 0 : 220,
+                            textAlign: isMobile ? "center" : "left",
+                        }}>
                             <Title
                                 level={2}
                                 style={{
                                     margin: 0,
                                     color: "#ffffff",
                                     textShadow: "0 2px 10px rgba(0,0,0,0.35)",
+                                    fontSize: isMobile ? 24 : undefined,
                                 }}
                             >
                                 {profile?.name || loginInfo.username}
@@ -532,6 +547,7 @@ export default function UserProfile() {
                                     gap: 8,
                                     marginTop: 12,
                                     alignItems: "center",
+                                    justifyContent: isMobile ? "center" : "flex-start",
                                 }}
                             >
                                 {profile?.playingPosition && (
@@ -568,7 +584,13 @@ export default function UserProfile() {
                         </div>
 
                         {/* Stat tiles */}
-                        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <div style={{
+                            display: isMobile ? "grid" : "flex",
+                            gridTemplateColumns: isMobile ? "1fr 1fr" : undefined,
+                            gap: 10,
+                            flexWrap: "wrap",
+                            width: isMobile ? "100%" : undefined,
+                        }}>
                             {heroStat("Matches", myStats?.matchesPlayed ?? 0, "#ffffff")}
                             {heroStat("Goals", myStats?.goalsScored ?? 0, "#95de64")}
                             {heroStat("Assists", myStats?.assists ?? 0, "#69c0ff")}
