@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Statistic, StatisticProps } from 'antd';
 import CountUp from 'react-countup';
 import { club, kicker, scoreNum } from '../../theme/clubTheme';
+import useIsMobile from '../../hooks/useIsMobile';
 
 const formatter: StatisticProps["formatter"] = (value) => (
   <CountUp end={value as number} separator="," />
@@ -13,20 +14,6 @@ interface AnalyticsCardProps {
   accentColor: string;
   icon: React.ReactNode;
 }
-
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.innerWidth <= 576 : false
-  );
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 576);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  return isMobile;
-};
 
 const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
   title,

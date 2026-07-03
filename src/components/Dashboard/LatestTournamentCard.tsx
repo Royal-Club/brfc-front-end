@@ -23,7 +23,7 @@ import { Link } from 'react-router-dom';
 import { TournamentPlayerInfoType } from '../../state/features/tournaments/tournamentTypes';
 import { normalizeErrorMessage } from '../../utils/normalizeErrorMessage';
 import { club, kicker, scoreNum } from '../../theme/clubTheme';
-import clubCrest from '../../assets/logo.png';
+import useIsMobile from '../../hooks/useIsMobile';
 
 // Surfaces that read on the navy matchday panel
 const { tileBg, tileBorder, textPrimary, textMuted } = club;
@@ -38,6 +38,7 @@ const LatestTournamentCard: React.FC = () => {
     const [isUpdating, setIsUpdating] = useState(false);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState<'confirmed' | 'pending' | 'not-joining' | null>(null);
+    const isMobile = useIsMobile();
     const { token } = theme.useToken();
     
     const { 
@@ -217,35 +218,42 @@ const LatestTournamentCard: React.FC = () => {
             {/* Matchday header strip */}
             <div style={{
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'space-between',
                 gap: 12,
                 padding: '14px 20px',
                 background: 'rgba(0, 0, 0, 0.22)',
                 borderBottom: `1px solid ${club.panelBorder}`,
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                    <img
-                        src={clubCrest}
-                        alt="BRFC crest"
-                        style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }}
-                    />
-                    <div style={{ minWidth: 0 }}>
-                        <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>
-                            ⚽ Matchday
-                        </div>
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'
-                        }}>
-                            <Title level={5} style={{
-                                margin: 0, fontSize: 17, fontWeight: 700, color: textPrimary,
-                                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                            }}>
-                                {tournament.name}
-                            </Title>
-                            {getStatusBadge()}
-                        </div>
+                <div style={{ minWidth: 0 }}>
+                    <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>
+                        ⚽ Matchday
                     </div>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'
+                    }}>
+                        <Title level={5} style={{
+                            margin: 0, fontSize: 17, fontWeight: 700, color: textPrimary,
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                        }}>
+                            {tournament.name}
+                        </Title>
+                        {getStatusBadge()}
+                    </div>
+                    <Space size={16} wrap style={{ marginTop: 6 }}>
+                        <Space size={6}>
+                            <CalendarOutlined style={{ color: club.gold, fontSize: 13 }} />
+                            <Text style={{ fontSize: 12, color: textMuted, ...scoreNum }}>
+                                {showBdLocalTime(tournament.tournamentDate)}
+                            </Text>
+                        </Space>
+                        <Space size={6}>
+                            <EnvironmentOutlined style={{ color: club.gold, fontSize: 13 }} />
+                            <Text style={{ fontSize: 12, color: textMuted }}>
+                                {tournament.venueName}
+                            </Text>
+                        </Space>
+                    </Space>
                 </div>
                 <div style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0
@@ -268,41 +276,17 @@ const LatestTournamentCard: React.FC = () => {
                 gap: 14,
                 padding: '18px 20px',
             }}>
-                {/* Fixture details: date + venue */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    gap: 10,
-                    padding: '12px 16px',
-                    borderRadius: 10,
-                    background: tileBg,
-                    border: tileBorder,
-                }}>
-                    <Space size={8}>
-                        <CalendarOutlined style={{ color: club.gold, fontSize: 14 }} />
-                        <Text style={{ fontSize: 13, color: textPrimary, ...scoreNum }}>
-                            {showBdLocalTime(tournament.tournamentDate)}
-                        </Text>
-                    </Space>
-                    <Space size={8}>
-                        <EnvironmentOutlined style={{ color: club.gold, fontSize: 14 }} />
-                        <Text style={{ fontSize: 13, color: textPrimary }}>
-                            {tournament.venueName}
-                        </Text>
-                    </Space>
-                </div>
-
                 {/* Stats block: Total+Confirmed on top, Pending+Not Joining below */}
                 <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(2, auto)',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
                     alignContent: 'center',
                     gap: 8,
                     padding: '12px',
                     borderRadius: 10,
                     background: tileBg,
                     border: tileBorder,
+                    flex: isMobile ? '1 1 100%' : undefined,
                 }}>
                     {[
                         { label: 'Total', value: totalPlayer, color: token.colorInfo, onClick: undefined as (() => void) | undefined },
@@ -349,6 +333,7 @@ const LatestTournamentCard: React.FC = () => {
                     borderRadius: 10,
                     background: tileBg,
                     border: tileBorder,
+                    flex: isMobile ? '1 1 100%' : undefined,
                 }}>
                     <Text style={{ ...kicker, fontSize: 10, color: club.goldSoft, whiteSpace: 'nowrap' }}>
                         Your Call
@@ -375,7 +360,9 @@ const LatestTournamentCard: React.FC = () => {
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
+                                        justifyContent: 'center',
                                         gap: 5,
+                                        flex: isMobile ? 1 : undefined,
                                         padding: '6px 12px',
                                         borderRadius: 8,
                                         fontSize: 12,
@@ -428,10 +415,18 @@ const LatestTournamentCard: React.FC = () => {
                 </div>
 
                 {/* View Details */}
-                <Link to={`/tournaments/join-tournament/${tournament.id}`} style={{ display: 'flex', alignItems: 'center' }}>
+                <Link
+                    to={`/tournaments/join-tournament/${tournament.id}`}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        flex: isMobile ? '1 1 100%' : undefined,
+                    }}
+                >
                     <Button
                         icon={<TeamOutlined />}
                         size="middle"
+                        block={isMobile}
                         style={{
                             borderRadius: 8,
                             fontWeight: 700,
