@@ -21,7 +21,7 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import { club, kicker, scoreNum } from "../../theme/clubTheme";
-import clubCrest from "../../assets/logo.png";
+import useIsMobile from "../../hooks/useIsMobile";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -50,6 +50,7 @@ export default function JoinTournament() {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus]       = useState<"in" | "out" | "pending" | null>(null);
   const screens = useBreakpoint();
+  const isMobileTable = useIsMobile(768);
 
   const loggedInPlayer = players.find(p => p.playerId === Number(loginInfo.userId));
 
@@ -229,22 +230,18 @@ export default function JoinTournament() {
           <Card className="jt-card jt-card--panel" style={{ height: "100%" }}
             styles={{ body: { padding: "16px 18px 16px" } }}>
 
-            {/* Matchday header: crest + name + date */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-              <img src={clubCrest} alt="BRFC crest"
-                style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>⚽ Matchday</div>
-                <Title level={4} style={{ margin: "0 0 2px", lineHeight: 1.15, color: club.textPrimary }}>
-                  {nextTournament?.tournamentName}
-                </Title>
-                <Space size={5}>
-                  <CalendarOutlined style={{ color: club.gold, fontSize: 12 }} />
-                  <Text style={{ fontSize: 12, color: club.textMuted, ...scoreNum }}>
-                    {nextTournament?.tournamentDate && showBdLocalTime(nextTournament.tournamentDate)}
-                  </Text>
-                </Space>
-              </div>
+            {/* Matchday header: name + date */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>⚽ Matchday</div>
+              <Title level={4} style={{ margin: "0 0 2px", lineHeight: 1.15, color: club.textPrimary }}>
+                {nextTournament?.tournamentName}
+              </Title>
+              <Space size={5}>
+                <CalendarOutlined style={{ color: club.gold, fontSize: 12 }} />
+                <Text style={{ fontSize: 12, color: club.textMuted, ...scoreNum }}>
+                  {nextTournament?.tournamentDate && showBdLocalTime(nextTournament.tournamentDate)}
+                </Text>
+              </Space>
             </div>
 
             {/* Stat boxes */}
@@ -257,7 +254,7 @@ export default function JoinTournament() {
               ] as const).map(({ value, color, label, status }) => {
                 const clickable = status !== null;
                 return (
-                  <Col span={6} key={label}>
+                  <Col xs={12} sm={6} key={label}>
                     <div
                       style={{
                         background: `${color}22`,
@@ -350,8 +347,8 @@ export default function JoinTournament() {
                     onClick={() => handleUpdate(loggedInPlayer.playerId, editedComments[loggedInPlayer.playerId] ?? loggedInPlayer.comments ?? "", true)}
                     disabled={isUpdating}
                     style={loggedInPlayer.participationStatus === true
-                      ? { background: "#52c41a", borderColor: "#52c41a", color: "#fff", fontWeight: 600, boxShadow: "0 2px 8px #52c41a4d" }
-                      : { background: "#52c41a14", borderColor: "#52c41a40", color: "#52c41a", fontWeight: 500 }
+                      ? { background: club.pitch, borderColor: club.pitch, color: "#fff", fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }
+                      : { background: "rgba(255,255,255,0.03)", borderColor: `${club.pitch}55`, color: club.pitch, fontWeight: 500 }
                     }
                   >
                     Yes, I'm in
@@ -363,8 +360,8 @@ export default function JoinTournament() {
                     onClick={() => handleUpdate(loggedInPlayer.playerId, editedComments[loggedInPlayer.playerId] ?? loggedInPlayer.comments ?? "", false)}
                     disabled={isUpdating}
                     style={loggedInPlayer.participationStatus === false
-                      ? { background: "#ff4d4f", borderColor: "#ff4d4f", color: "#fff", fontWeight: 600, boxShadow: "0 2px 8px #ff4d4f4d" }
-                      : { background: "#ff4d4f14", borderColor: "#ff4d4f40", color: "#ff4d4f", fontWeight: 500 }
+                      ? { background: "#ff4d4f", borderColor: "#ff4d4f", color: "#fff", fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }
+                      : { background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.18)", color: club.textMuted, fontWeight: 500 }
                     }
                   >
                     Can't make it
@@ -461,11 +458,10 @@ export default function JoinTournament() {
         {/* Controls — title row */}
         <Row gutter={[12, 8]} align="middle" style={{ marginBottom: 12 }}>
           <Col xs={24} sm={12}>
-            <Space align="center" size={10}>
-              <span style={{ width: 4, height: 20, borderRadius: 2, background: club.gold }} />
-              <TeamOutlined style={{ fontSize: 15, color: club.gold }} />
+            <Space align="center" size={8}>
+              <TeamOutlined style={{ fontSize: 15 }} />
               <Title level={4} style={{ margin: 0 }}>Tournament Participants</Title>
-              <Tag style={{ background: `${club.gold}22`, borderColor: `${club.gold}55`, color: club.goldSoft, ...scoreNum }}>{players.length}</Tag>
+              <Tag>{players.length}</Tag>
             </Space>
           </Col>
           <Col xs={24} sm={12} style={{ display: "flex", justifyContent: screens.sm ? "flex-end" : "flex-start" }}>
@@ -507,23 +503,95 @@ export default function JoinTournament() {
           )}
         </div>
 
-        <Table
-          columns={columns}
-          dataSource={filteredTableData}
-          size="middle"
-          bordered
-          pagination={{
-            pageSize: 25,
-            showSizeChanger: true,
-            showTotal: (total, range) => `${range[0]}–${range[1]} of ${total} players`,
-          }}
-          scroll={{ x: "max-content" }}
-          loading={isUpdating}
-          locale={{ emptyText: "No players found" }}
-          rowClassName={r =>
-            r.playerId === Number(loginInfo.userId) ? "logged-in-player-row" : ""
-          }
-        />
+        {isMobileTable ? (
+          filteredTableData.length === 0 ? (
+            <Text type="secondary">No players found</Text>
+          ) : (
+            <Space direction="vertical" size={10} style={{ width: "100%" }}>
+              {filteredTableData.map(r => {
+                const isMe = r.playerId === Number(loginInfo.userId);
+                const canEdit =
+                  loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") ||
+                  isMe;
+                const photoUrl = toAbsolutePlayerPhotoUrl(r.photoUrl);
+                const statusTag =
+                  r.participationStatus === true  ? <Tag color="success">Participating</Tag>   :
+                  r.participationStatus === false ? <Tag color="error">Not Participating</Tag> :
+                                                    <Tag color="warning">Pending</Tag>;
+                return (
+                  <div
+                    key={r.key}
+                    className={isMe ? "jt-mplayer-card jt-mplayer-card--me" : "jt-mplayer-card"}
+                  >
+                    {/* Identity + status */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <Avatar size={36} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
+                        style={{ backgroundColor: photoUrl ? undefined : (isMe ? token.colorPrimary : "#1890ff"), flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Space size={5} align="center" wrap>
+                          <Text strong style={{ fontSize: 14 }}>{r.playerName}</Text>
+                          {isMe && <StarFilled style={{ color: "#faad14", fontSize: 11 }} />}
+                          {r.isCaptain && <Tag color="gold" style={{ margin: 0, fontSize: 10, padding: "0 4px", lineHeight: "18px" }}>C</Tag>}
+                        </Space>
+                        <div>
+                          <Text type="secondary" style={{ fontSize: 12 }}>ID: {r.employeeId}</Text>
+                        </div>
+                      </div>
+                      {statusTag}
+                    </div>
+
+                    {/* Action + comments */}
+                    <Row gutter={8} align="middle">
+                      <Col span={9}>
+                        <Select
+                          value={r.participationStatus === true ? "true" : r.participationStatus === false ? "false" : "Select"}
+                          onChange={v => handleUpdate(r.playerId, editedComments[r.playerId] ?? r.comments ?? "", v === "true")}
+                          disabled={isUpdating || !canEdit}
+                          style={{ width: "100%" }}
+                          size="small"
+                        >
+                          <Option value="true"><Space><CheckCircleOutlined style={{ color: "#52c41a" }} />Yes</Space></Option>
+                          <Option value="false"><Space><CloseCircleOutlined style={{ color: "#ff4d4f" }} />No</Space></Option>
+                        </Select>
+                      </Col>
+                      <Col span={15}>
+                        <DebouncedInput
+                          isDisabled={!canEdit}
+                          placeholder="Add your comments..."
+                          debounceDuration={1000}
+                          onChange={value => {
+                            setEditedComments(prev => ({ ...prev, [r.playerId]: value }));
+                            handleUpdate(r.playerId, value, r.participationStatus);
+                          }}
+                          value={editedComments[r.playerId] ?? r.comments ?? ""}
+                        />
+                      </Col>
+                    </Row>
+                  </div>
+                );
+              })}
+            </Space>
+          )
+        ) : (
+          <Table
+            className="jt-participants-table"
+            columns={columns}
+            dataSource={filteredTableData}
+            size="middle"
+            bordered
+            pagination={{
+              pageSize: 25,
+              showSizeChanger: true,
+              showTotal: (total, range) => `${range[0]}–${range[1]} of ${total} players`,
+            }}
+            scroll={{ x: "max-content" }}
+            loading={isUpdating}
+            locale={{ emptyText: "No players found" }}
+            rowClassName={r =>
+              r.playerId === Number(loginInfo.userId) ? "logged-in-player-row" : ""
+            }
+          />
+        )}
       </Card>
 
       {/* ── Stat-box player list modal ───────────────────────────────── */}

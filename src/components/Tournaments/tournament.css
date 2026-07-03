@@ -442,6 +442,42 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
 }
 
+/* Participants — mobile card list (replaces the horizontal-scroll table) */
+.jt-mplayer-card {
+    background: var(--ant-color-fill-quaternary);
+    border: 1px solid var(--ant-color-border-secondary);
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.jt-mplayer-card--me {
+    border-color: rgba(198, 161, 91, 0.5);
+    background: rgba(198, 161, 91, 0.06);
+    border-left: 3px solid #C6A15B;
+}
+
+/* Participants table — navy header with gold underline (matches dashboard) */
+.jt-participants-table .ant-table-thead > tr > th {
+    background: #14213D !important;
+    color: #F5F7FA !important;
+    font-weight: 700;
+    border-bottom: 2px solid #C6A15B !important;
+}
+
+.jt-participants-table .ant-table-thead > tr > th.ant-table-column-has-sorters:hover {
+    background: #1B2A4A !important;
+}
+
+.jt-participants-table .ant-table-thead .ant-table-column-sorter {
+    color: rgba(245, 247, 250, 0.55);
+}
+
+/* Keep the fixed-column header cell navy while scrolling */
+.jt-participants-table .ant-table-thead > tr > th.ant-table-cell-fix-left,
+.jt-participants-table .ant-table-thead > tr > th.ant-table-cell-fix-right {
+    background: #14213D !important;
+}
+
 /* Ensure logged-in player row stands out */
 .logged-in-player-row td:first-child {
     border-left: 3px solid #C6A15B;
