@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   Select, Typography, Space, Skeleton, Input, Grid, theme, Card,
   Row, Col, Button, Table, Segmented, Avatar, Tag, Divider, Progress,
+  Modal, List,
 } from "antd";
 import type { ColumnsType } from "antd/es/table/interface";
 import useJoinTournament from "../../hooks/useJoinTournament";
@@ -44,6 +45,8 @@ export default function JoinTournament() {
   const [searchTerm, setSearchTerm]               = useState("");
   const [participationFilter, setParticipationFilter] = useState<ParticipationFilter>("all");
   const [sortBy, setSortBy]                       = useState<SortOption>("name");
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus]       = useState<"in" | "out" | "pending" | null>(null);
   const screens = useBreakpoint();
 
   const loggedInPlayer = players.find(p => p.playerId === Number(loginInfo.userId));
@@ -177,6 +180,31 @@ export default function JoinTournament() {
     loggedInPlayer?.participationStatus === false ? "rgba(255,77,79,0.06)"  :
     "rgba(250,173,20,0.06)";
 
+  // ── Stat-box modal helpers ──────────────────────────────────────────────
+  const openStatusModal = (status: "in" | "out" | "pending") => {
+    setSelectedStatus(status);
+    setIsStatusModalOpen(true);
+  };
+
+  const selectedPlayers =
+    selectedStatus === "in"      ? participatingPlayers    :
+    selectedStatus === "out"     ? notParticipatingPlayers :
+    selectedStatus === "pending" ? pendingPlayers          :
+    [];
+
+  const getModalTitle = () =>
+    selectedStatus === "in"      ? "Participating Players"     :
+    selectedStatus === "out"     ? "Not Participating Players" :
+    selectedStatus === "pending" ? "Pending Players"           :
+    "";
+
+  const chunkSize = 10;
+  const playerColumns: TournamentPlayerInfoType[][] = [];
+  for (let i = 0; i < selectedPlayers.length; i += chunkSize) {
+    playerColumns.push(selectedPlayers.slice(i, i + chunkSize));
+  }
+  const modalWidth = Math.min(Math.max(360, playerColumns.length * 270 + 64), 980);
+
   // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -214,25 +242,41 @@ export default function JoinTournament() {
 
             {/* Stat boxes */}
             <Row gutter={[8, 8]}>
-              {[
-                { value: players.length,                 color: "#1677ff", bg: "rgba(22,119,255,0.1)",  label: "Total"   },
-                { value: participatingPlayers.length,    color: "#52c41a", bg: "rgba(82,196,26,0.12)",  label: "In"      },
-                { value: notParticipatingPlayers.length, color: "#ff4d4f", bg: "rgba(255,77,79,0.1)",   label: "Out"     },
-                { value: pendingPlayers.length,          color: "#faad14", bg: "rgba(250,173,20,0.1)",  label: "Pending" },
-              ].map(({ value, color, bg, label }) => (
-                <Col span={6} key={label}>
-                  <div style={{
-                    background: bg,
-                    border: `1px solid ${color}30`,
-                    borderRadius: 8,
-                    padding: "8px 4px",
-                    textAlign: "center",
-                  }}>
-                    <Text strong style={{ fontSize: 22, color, display: "block", lineHeight: 1.1 }}>{value}</Text>
-                    <Text style={{ fontSize: 11, color, opacity: 0.85 }}>{label}</Text>
-                  </div>
-                </Col>
-              ))}
+              {([
+                { value: players.length,                 color: "#1677ff", bg: "rgba(22,119,255,0.1)",  label: "Total",   status: null      },
+                { value: participatingPlayers.length,    color: "#52c41a", bg: "rgba(82,196,26,0.12)",  label: "In",      status: "in"      },
+                { value: notParticipatingPlayers.length, color: "#ff4d4f", bg: "rgba(255,77,79,0.1)",   label: "Out",     status: "out"     },
+                { value: pendingPlayers.length,          color: "#faad14", bg: "rgba(250,173,20,0.1)",  label: "Pending", status: "pending" },
+              ] as const).map(({ value, color, bg, label, status }) => {
+                const clickable = status !== null;
+                return (
+                  <Col span={6} key={label}>
+                    <div
+                      style={{
+                        background: bg,
+                        border: `1px solid ${color}30`,
+                        borderRadius: 8,
+                        padding: "8px 4px",
+                        textAlign: "center",
+                        cursor: clickable ? "pointer" : "default",
+                        transition: "all 0.2s ease",
+                      }}
+                      onClick={clickable ? () => openStatusModal(status) : undefined}
+                      role={clickable ? "button" : undefined}
+                      tabIndex={clickable ? 0 : undefined}
+                      onKeyDown={clickable ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openStatusModal(status);
+                        }
+                      } : undefined}
+                    >
+                      <Text strong style={{ fontSize: 22, color, display: "block", lineHeight: 1.1 }}>{value}</Text>
+                      <Text style={{ fontSize: 11, color, opacity: 0.85 }}>{label}</Text>
+                    </div>
+                  </Col>
+                );
+              })}
             </Row>
 
             {/* Participation progress */}
@@ -463,6 +507,101 @@ export default function JoinTournament() {
           }
         />
       </Card>
+
+      {/* ── Stat-box player list modal ───────────────────────────────── */}
+      <Modal
+        title={getModalTitle()}
+        open={isStatusModalOpen}
+        onCancel={() => setIsStatusModalOpen(false)}
+        footer={null}
+        width={modalWidth}
+        styles={{
+          content: {
+            background: token.colorBgContainer,
+            border: `1px solid ${token.colorBorder}`,
+            borderRadius: 12,
+          },
+          header: {
+            background: "transparent",
+            borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            marginBottom: 12,
+          },
+          body: { background: "transparent" },
+        }}
+      >
+        {selectedPlayers.length === 0 ? (
+          <Text type="secondary">No players found for this status.</Text>
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 16,
+              alignItems: "flex-start",
+              justifyContent: playerColumns.length === 1 ? "center" : "flex-start",
+              paddingBottom: 4,
+            }}
+          >
+            {playerColumns.map((columnPlayers, columnIndex) => (
+              <div
+                key={`column-${columnIndex}`}
+                style={{
+                  minWidth: 240,
+                  flex: "0 0 240px",
+                  border: `1px solid ${token.colorBorder}`,
+                  borderRadius: 8,
+                  padding: "8px 10px",
+                  background: token.colorBgElevated,
+                }}
+              >
+                <Text
+                  type="secondary"
+                  style={{ display: "block", fontSize: 12, marginBottom: 8 }}
+                >
+                  Players {columnIndex * 10 + 1} - {columnIndex * 10 + columnPlayers.length}
+                </Text>
+
+                <List
+                  size="small"
+                  dataSource={columnPlayers}
+                  renderItem={(player) => (
+                    <List.Item
+                      style={{
+                        padding: "8px 0",
+                        borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                      }}
+                    >
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar
+                            size="small"
+                            src={toAbsolutePlayerPhotoUrl(player.photoUrl)}
+                            icon={!player.photoUrl ? <UserOutlined /> : undefined}
+                            style={{
+                              background: player.photoUrl ? undefined : token.colorPrimaryBg,
+                              color: token.colorPrimary,
+                            }}
+                          />
+                        }
+                        title={
+                          <span style={{ fontSize: 13, color: token.colorText, fontWeight: 600 }}>
+                            {player.playerName}
+                          </span>
+                        }
+                        description={
+                          <span style={{ color: token.colorTextSecondary }}>
+                            ID: {player.employeeId}
+                          </span>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
 
     </Space>
   );
