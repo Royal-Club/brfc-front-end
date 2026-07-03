@@ -22,55 +22,6 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Header Year Select */
-.headerYearSelect {
-  font-size: 10px !important;
-}
-
-.headerYearSelect :global(.ant-select-selector) {
-  height: 22px !important;
-  min-height: 22px !important;
-  padding: 0 4px !important;
-  border: 1px solid var(--ant-color-primary-border) !important;
-  background: var(--ant-color-bg-container) !important;
-  border-radius: 4px !important;
-  font-size: 10px !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
-}
-
-.headerYearSelect :global(.ant-select-selection-item) {
-  line-height: 20px !important;
-  font-weight: 600 !important;
-  color: var(--ant-color-primary) !important;
-  padding: 0 !important;
-  font-size: 10px !important;
-}
-
-.headerYearSelect :global(.ant-select-arrow) {
-  color: var(--ant-color-primary) !important;
-  font-size: 8px !important;
-}
-
-.headerYearSelect:hover :global(.ant-select-selector) {
-  border-color: var(--ant-color-primary-hover) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Dark theme support for header select */
-.darkTheme .headerYearSelect :global(.ant-select-selector) {
-  background: #1f1f1f !important;
-  border-color: var(--ant-color-primary-border) !important;
-}
-
-.darkTheme .headerYearSelect :global(.ant-select-selection-item) {
-  color: var(--ant-color-primary) !important;
-}
-
-/* Light theme support for header select */
-.lightTheme .headerYearSelect :global(.ant-select-selector) {
-  background: var(--ant-color-bg-container) !important;
-}
-
 /* Remove the shadow that causes gaps */
 .table :global(.ant-table-cell-fix-left) {
   box-shadow: none ;
@@ -235,22 +186,6 @@
     text-align: center ;
     justify-content: center ;
     min-width: 100% ;
-  }
-  
-  .headerYearSelect {
-    width: 85px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 11px !important;
-    padding: 0 6px !important;
-    height: 26px !important;
-    min-height: 26px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 24px !important;
-    font-size: 11px !important;
   }
 }
 
@@ -660,45 +595,7 @@
   border-color: #1f1f1f;
 }
 
-/* Mobile responsive adjustments for larger selectors */
-@media (max-width: 768px) {
-  .headerYearSelect {
-    width: 85px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 11px !important;
-    padding: 0 6px !important;
-    height: 26px !important;
-    min-height: 26px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 24px !important;
-    font-size: 11px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .headerYearSelect {
-    width: 75px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 10px !important;
-    height: 24px !important;
-    min-height: 24px !important;
-    padding: 0 4px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 22px !important;
-    font-size: 10px !important;
-  }
-}
-
-  
-  .table {
+.table {
     padding: 16px;
   }
   
@@ -1108,42 +1005,7 @@
   background: var(--ant-color-bg-container) !important;
 }
 
-/* Mobile responsive adjustments */
-@media (max-width: 768px) {
-  .headerYearSelect {
-    width: 85px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 11px !important;
-    padding: 0 6px !important;
-    height: 26px !important;
-    min-height: 26px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 24px !important;
-    font-size: 11px !important;
-  }
-}
-
 @media (max-width: 480px) {
-  .headerYearSelect {
-    width: 75px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 10px !important;
-    height: 24px !important;
-    min-height: 24px !important;
-    padding: 0 4px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 22px !important;
-    font-size: 10px !important;
-  }
-  
   .mobileCardYearSelect {
     width: 70px !important;
   }

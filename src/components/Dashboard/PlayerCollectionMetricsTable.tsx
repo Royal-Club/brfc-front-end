@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Table, Select, Space, Radio, Button, theme, Tooltip, Card, Row, Col, Typography } from "antd";
+import { Table, Select, Space, Radio, Button, theme, Tooltip, Card, Row, Col, Typography, Tag } from "antd";
 import { 
   TableOutlined, 
   AppstoreOutlined, 
@@ -151,62 +151,11 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
 
   const columns: ColumnsType<TableRow> = [
     {
-      title: (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          minWidth: 80
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <CalendarOutlined style={{ fontSize: 10, color: token.colorPrimary }} />
-            <span style={{ 
-              fontSize: 11,
-              display: window.innerWidth <= 768 ? 'none' : 'inline'
-            }}>
-              Year
-            </span>
-          </div>
-          <Select
-            size="small"
-            style={{ width: window.innerWidth <= 768 ? 85 : 70 }}
-            value={selectedYear || undefined}
-            onChange={handleYearChange}
-            loading={isLoading}
-            disabled={isLoading}
-            dropdownStyle={{ minWidth: 60 }}
-            className={styles.headerYearSelect}
-          >
-            {years.map((year: number) => (
-              <Option key={year} value={year}>
-                {year}
-              </Option>
-            ))}
-          </Select>
-        </div>
-      ),
-      dataIndex: "year",
-      key: "year",
-      fixed: "left",
-      width: window.innerWidth <= 576 ? 90 : 110,
-      align: "center",
-      render: () => selectedYear,
-      onCell: () => ({ 
-        style: { 
-          minWidth: window.innerWidth <= 576 ? 85 : 105,
-          textAlign: 'center',
-          fontWeight: 600,
-          color: token.colorPrimary,
-          fontSize: 12
-        } 
-      }),
-    },
-    {
       title: "Name",
       dataIndex: "playerName",
       key: "playerName",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 100 : (window.innerWidth <= 768 ? 120 : 200),
+      width: window.innerWidth <= 576 ? 110 : (window.innerWidth <= 768 ? 150 : 220),
       sorter: (a, b) => a.playerName.localeCompare(b.playerName),
       sortOrder: sortField === "playerName" ? sortOrder : null,
       render: (text: string) => {
@@ -327,48 +276,48 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
         e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
       }}
     >
-      {/* Header Section */}
-      <div style={{ 
-        background: `linear-gradient(90deg, ${token.colorInfo}15 0%, ${token.colorInfo}08 100%)`,
+      {/* Toolbar */}
+      <div style={{
         padding: '16px 20px',
         borderBottom: `1px solid ${token.colorBorder}`
       }}>
-        <Row gutter={[16, 8]} align="middle">
+        <Row gutter={[12, 8]} align="middle">
           <Col xs={24} md={12}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                background: token.colorInfo,
-                borderRadius: '50%',
-                width: 32,
-                height: 32,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <BarChartOutlined style={{ fontSize: 16, color: 'white' }} />
-              </div>
-              <Title level={4} style={{ 
-                margin: 0, 
-                color: token.colorText, 
-                fontSize: 18,
-                fontWeight: '600'
-              }}>
-                Player Collection Metrics
+            <Space align="center" size={8}>
+              <BarChartOutlined style={{ fontSize: 15, color: token.colorPrimary }} />
+              <Title level={5} style={{ margin: 0, fontWeight: 600 }}>
+                Monthly Contributions
               </Title>
-            </div>
+              <Tag>{dataSource.length}</Tag>
+            </Space>
           </Col>
-          
+
           <Col xs={24} md={12}>
-            <Space 
-              wrap 
+            <Space
+              wrap
               align="center"
-              style={{ 
-                width: "100%", 
+              style={{
+                width: "100%",
                 justifyContent: window.innerWidth <= 768 ? "center" : "flex-end",
                 alignItems: "center",
                 gap: 12
               }}
             >
+              <Select
+                size="middle"
+                style={{ width: 90 }}
+                value={selectedYear || undefined}
+                onChange={handleYearChange}
+                loading={isLoading}
+                disabled={isLoading}
+                suffixIcon={<CalendarOutlined style={{ fontSize: 12, color: token.colorPrimary }} />}
+              >
+                {years.map((year: number) => (
+                  <Option key={year} value={year}>
+                    {year}
+                  </Option>
+                ))}
+              </Select>
               <Radio.Group
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
@@ -502,13 +451,10 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
               summary={() => (
                 <Table.Summary.Row>
                   <Table.Summary.Cell index={0} align="center">
-                    Total
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={1} align="center">
-                    <b>{dataSource.length}</b>
+                    <b>Total ({dataSource.length})</b>
                   </Table.Summary.Cell>
                   {monthlyTotals.map((total, idx) => (
-                    <Table.Summary.Cell key={monthNames[idx]} index={idx + 2} align="center">
+                    <Table.Summary.Cell key={monthNames[idx]} index={idx + 1} align="center">
                       <b>{total > 0 ? total.toFixed(0) : ""}</b>
                     </Table.Summary.Cell>
                   ))}

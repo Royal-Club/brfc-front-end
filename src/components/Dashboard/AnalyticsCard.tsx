@@ -1,7 +1,6 @@
 import React from 'react';
-import { Statistic, StatisticProps } from 'antd';
+import { Statistic, StatisticProps, theme } from 'antd';
 import CountUp from 'react-countup';
-import styles from './DashboardComponent.module.css';
 
 const formatter: StatisticProps["formatter"] = (value) => (
   <CountUp end={value as number} separator="," />
@@ -10,67 +9,77 @@ const formatter: StatisticProps["formatter"] = (value) => (
 interface AnalyticsCardProps {
   title: string;
   value: number;
-  backgroundColor: string;
-  textColor: string;
-  valueColor: string;
+  accentColor: string;
   icon: React.ReactNode;
-  iconColor: string;
 }
 
 const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
   title,
   value,
-  backgroundColor,
-  textColor,
-  valueColor,
+  accentColor,
   icon,
-  iconColor
 }) => {
+  const { token } = theme.useToken();
   const isMobile = window.innerWidth <= 576;
 
   return (
-    <div 
-      className={`${styles.analyticsCard} ${isMobile ? styles.mobile : styles.desktop}`} 
+    <div
       style={{
-        background: backgroundColor,
-        border: '1px solid rgba(0, 0, 0, 0.06)',
-        borderRadius: '12px',
-        padding: '20px',
-        position: 'relative',
-        minHeight: '120px',
+        background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorFillQuaternary} 100%)`,
+        border: `1px solid ${token.colorBorder}`,
+        borderRadius: 16,
+        padding: isMobile ? '16px' : '20px 24px',
+        minHeight: isMobile ? 96 : 120,
         display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between'
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        transition: 'all 0.3s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.12)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+        e.currentTarget.style.transform = 'translateY(0)';
       }}
     >
-      <div>
-        <div style={{ 
-          color: textColor, 
-          fontSize: isMobile ? '16px' : '18px',
-          fontWeight: '600',
-          marginBottom: '8px'
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          color: token.colorTextSecondary,
+          fontSize: isMobile ? 12 : 13,
+          fontWeight: 500,
+          marginBottom: 8,
         }}>
-          {isMobile ? title.split(' ').pop() : title}
+          {title}
         </div>
         <Statistic
           value={value}
           precision={2}
-          valueStyle={{ 
-            color: valueColor, 
-            fontSize: isMobile ? '22px' : '32px',
+          valueStyle={{
+            color: accentColor,
+            fontSize: isMobile ? 20 : 28,
             fontWeight: 'bold',
-            lineHeight: 1
+            lineHeight: 1,
           }}
           formatter={formatter}
-          suffix={<span style={{ fontSize: isMobile ? '18px' : '24px', color: valueColor }}>৳</span>}
+          suffix={<span style={{ fontSize: isMobile ? 14 : 18, color: accentColor }}>৳</span>}
         />
       </div>
       <div style={{
-        position: 'absolute',
-        bottom: '16px',
-        right: '16px',
-        fontSize: '32px',
-        color: iconColor,
+        background: `${accentColor}20`,
+        border: `1px solid ${accentColor}40`,
+        borderRadius: '50%',
+        width: isMobile ? 40 : 48,
+        height: isMobile ? 40 : 48,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        fontSize: isMobile ? 18 : 22,
+        color: accentColor,
       }}>
         {icon}
       </div>

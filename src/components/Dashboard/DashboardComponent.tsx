@@ -5,7 +5,13 @@ import {
   Typography,
   Spin,
 } from "antd";
-import { DollarOutlined, MinusCircleOutlined, WalletOutlined } from "@ant-design/icons";
+import {
+  DollarOutlined,
+  MinusCircleOutlined,
+  WalletOutlined,
+  TrophyOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
 import React, { useState } from "react";
 import { useGetAccountSummaryQuery } from "../../state/features/account/accountSummarySlice";
 import "./DashboardComponent.module.css";
@@ -16,16 +22,34 @@ import PlayerCollectionMetrics from "./PlayerCollectionMetricsTable";
 import LatestTournamentCard from "./LatestTournamentCard";
 import AnalyticsCard from "./AnalyticsCard";
 
-const { Title } = Typography;
+const { Text } = Typography;
 
 interface DashboardProps {
   isDarkMode?: boolean;
 }
 
+const SectionHeader: React.FC<{ icon: React.ReactNode; label: string }> = ({ icon, label }) => {
+  const { token } = theme.useToken();
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <span style={{ color: token.colorPrimary, fontSize: 14 }}>{icon}</span>
+      <Text
+        strong
+        style={{
+          fontSize: 13,
+          color: token.colorTextSecondary,
+          textTransform: "uppercase",
+          letterSpacing: 0.5,
+        }}
+      >
+        {label}
+      </Text>
+    </div>
+  );
+};
+
 const Dashboard: React.FC<DashboardProps> = ({ isDarkMode = false }) => {
-  const {
-    token: { colorBgContainer, borderRadius, colorText, colorPrimary, colorSuccess, colorError, colorBorder }
-  } = theme.useToken();
+  const { token } = theme.useToken();
 
   const [selectedYear, setSelectedYear] = useState<number>();
 
@@ -37,51 +61,39 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode = false }) => {
     <div className={styles.dashboardContainer}>
 
       {/* Account Summary Section */}
-      <div
-        style={{ 
-          marginBottom: '20px', 
-        }}
-      >
+      <div style={{ marginBottom: 28 }}>
+        <SectionHeader icon={<WalletOutlined />} label="Overview" />
         {isSummaryLoading ? (
           <div className={styles.loadingContainer}>
             <Spin size="large" />
-            <div className={styles.loadingText} style={{ color: colorText }}>
+            <div className={styles.loadingText} style={{ color: token.colorText }}>
               Loading account summary...
             </div>
           </div>
         ) : (
           <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8} md={8} lg={8} xl={8}>
+            <Col xs={24} sm={8}>
               <AnalyticsCard
                 title="Total Collections"
                 value={accountSummaryData?.content?.totalCollection || 0}
-                backgroundColor="#F9E6DC"
-                textColor="#8B4513"
-                valueColor="#5D4037"
+                accentColor={token.colorSuccess}
                 icon={<DollarOutlined />}
-                iconColor="rgba(139, 69, 19, 0.3)"
               />
             </Col>
-            <Col xs={24} sm={8} md={8} lg={8} xl={8}>
+            <Col xs={24} sm={8}>
               <AnalyticsCard
                 title="Total Expenses"
                 value={accountSummaryData?.content?.totalExpense || 0}
-                backgroundColor="#E2E3F6"
-                textColor="#4527A0"
-                valueColor="#311B92"
+                accentColor={token.colorError}
                 icon={<MinusCircleOutlined />}
-                iconColor="rgba(69, 39, 160, 0.3)"
               />
             </Col>
-            <Col xs={24} sm={8} md={8} lg={8} xl={8}>
+            <Col xs={24} sm={8}>
               <AnalyticsCard
                 title="Account Balance"
                 value={accountSummaryData?.content?.currentBalance || 0}
-                backgroundColor="#D0F0F3"
-                textColor="#00695C"
-                valueColor="#004D40"
+                accentColor={token.colorPrimary}
                 icon={<WalletOutlined />}
-                iconColor="rgba(0, 105, 92, 0.3)"
               />
             </Col>
           </Row>
@@ -89,16 +101,15 @@ const Dashboard: React.FC<DashboardProps> = ({ isDarkMode = false }) => {
       </div>
 
       {/* Latest Tournament Section */}
-      <div style={{
-          marginBottom: '20px',
-          borderRadius,
-      }}>
+      <div style={{ marginBottom: 28 }}>
+        <SectionHeader icon={<TrophyOutlined />} label="Upcoming Match" />
         <LatestTournamentCard />
       </div>
 
       {/* Player Contributions Section */}
-      <div style={{ marginBottom: '20px' }}>
-        <PlayerCollectionMetrics 
+      <div style={{ marginBottom: 12 }}>
+        <SectionHeader icon={<TeamOutlined />} label="Player Contributions" />
+        <PlayerCollectionMetrics
           selectedYear={selectedYear}
           onYearChange={setSelectedYear}
           isDarkMode={isDarkMode}
