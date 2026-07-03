@@ -333,13 +333,29 @@
 
 /* ── Join Tournament cards ──────────────────────────────────────── */
 .jt-card {
-    border-radius: 12px !important;
-    transition: box-shadow 0.2s ease;
+    border-radius: 14px !important;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-/* Primary action card — subtle blue ring, no colored border */
+/* Club "matchday" panel — navy gradient + gold trim (matches dashboard) */
+.jt-card--panel {
+    background: linear-gradient(160deg, #1B2A4A 0%, #14213D 55%, #0E1830 100%) !important;
+    border: 1px solid rgba(198, 161, 91, 0.28) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+}
+
+.jt-card--panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Primary action card — gold ring to signal the main call-to-action */
 .jt-card--primary {
-    box-shadow: 0 0 0 1px rgba(22, 119, 255, 0.25), 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.45), 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+.jt-card--primary:hover {
+    box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.6), 0 8px 22px rgba(0, 0, 0, 0.45) !important;
 }
 
 /* ── Your Team card ─────────────────────────────────────────────── */
@@ -397,15 +413,15 @@
     font-size: 15px !important;
     font-weight: 600 !important;
     border-radius: 8px !important;
-    background: rgba(24, 144, 255, 0.08) !important;
-    border: 1px solid rgba(24, 144, 255, 0.3) !important;
-    color: #69b1ff !important;
+    background: rgba(198, 161, 91, 0.1) !important;
+    border: 1px solid rgba(198, 161, 91, 0.35) !important;
+    color: #D8BC84 !important;
 }
 
 .jt-team-focus-trigger.ant-btn:hover {
-    background: rgba(24, 144, 255, 0.14) !important;
-    border-color: rgba(24, 144, 255, 0.5) !important;
-    color: #91caff !important;
+    background: rgba(198, 161, 91, 0.18) !important;
+    border-color: rgba(198, 161, 91, 0.55) !important;
+    color: #E7D3A6 !important;
 }
 
 .jt-team-helper {
@@ -427,11 +443,14 @@
 }
 
 /* Ensure logged-in player row stands out */
-.logged-in-player-row {
-    background-color: rgba(24, 144, 255, 0.02) !important;
-    border-left: 3px solid #1890ff;
+.logged-in-player-row td:first-child {
+    border-left: 3px solid #C6A15B;
 }
 
-.logged-in-player-row:hover {
-    background-color: rgba(24, 144, 255, 0.05) !important;
+.logged-in-player-row {
+    background-color: rgba(198, 161, 91, 0.06) !important;
+}
+
+.logged-in-player-row:hover > td {
+    background-color: rgba(198, 161, 91, 0.1) !important;
 }

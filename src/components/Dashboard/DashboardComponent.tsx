@@ -21,6 +21,7 @@ import styles from "./DashboardComponent.module.css";
 import PlayerCollectionMetrics from "./PlayerCollectionMetricsTable";
 import LatestTournamentCard from "./LatestTournamentCard";
 import AnalyticsCard from "./AnalyticsCard";
+import { club } from "../../theme/clubTheme";
 
 const { Text } = Typography;
 
@@ -31,15 +32,17 @@ interface DashboardProps {
 const SectionHeader: React.FC<{ icon: React.ReactNode; label: string }> = ({ icon, label }) => {
   const { token } = theme.useToken();
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-      <span style={{ color: token.colorPrimary, fontSize: 14 }}>{icon}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+      <span style={{ width: 4, height: 18, borderRadius: 2, background: club.gold }} />
+      <span style={{ color: club.gold, fontSize: 15 }}>{icon}</span>
       <Text
         strong
         style={{
           fontSize: 13,
-          color: token.colorTextSecondary,
+          color: token.colorText,
           textTransform: "uppercase",
-          letterSpacing: 0.5,
+          letterSpacing: 1.2,
+          fontWeight: 700,
         }}
       >
         {label}

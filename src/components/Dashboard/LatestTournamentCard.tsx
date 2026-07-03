@@ -22,6 +22,11 @@ import { selectLoginInfo } from '../../state/slices/loginInfoSlice';
 import { Link } from 'react-router-dom';
 import { TournamentPlayerInfoType } from '../../state/features/tournaments/tournamentTypes';
 import { normalizeErrorMessage } from '../../utils/normalizeErrorMessage';
+import { club, kicker, scoreNum } from '../../theme/clubTheme';
+import clubCrest from '../../assets/logo.png';
+
+// Surfaces that read on the navy matchday panel
+const { tileBg, tileBorder, textPrimary, textMuted } = club;
 
 const { Title, Text } = Typography;
 
@@ -177,9 +182,6 @@ const LatestTournamentCard: React.FC = () => {
     const playerColumns = getPlayerColumns(selectedPlayers);
     const modalWidth = Math.min(Math.max(360, playerColumns.length * 270 + 64), 980);
 
-    console.log('Latest Tournament Data:', latestTournamentData);
-    console.log('User Participation Status:', isUserParticipated);
-    
     const getStatusBadge = () => {
         switch (tournament.tournamentStatus) {
             case 'UPCOMING':
@@ -201,75 +203,94 @@ const LatestTournamentCard: React.FC = () => {
 
     return (
         <Card
-            style={{ 
-                borderRadius: 16, 
-                border: `1px solid ${token.colorBorder}`,
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorFillQuaternary} 100%)`,
-                transition: 'all 0.3s ease',
+            style={{
+                borderRadius: 14,
+                border: `1px solid ${club.panelBorder}`,
+                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
+                background: club.panel,
                 overflow: 'hidden'
             }}
             styles={{
-                body: { padding: '20px' }
-            }}
-            onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.12)';
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+                body: { padding: 0 }
             }}
         >
+            {/* Matchday header strip */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                padding: '14px 20px',
+                background: 'rgba(0, 0, 0, 0.22)',
+                borderBottom: `1px solid ${club.panelBorder}`,
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                    <img
+                        src={clubCrest}
+                        alt="BRFC crest"
+                        style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                        <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>
+                            ⚽ Matchday
+                        </div>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap'
+                        }}>
+                            <Title level={5} style={{
+                                margin: 0, fontSize: 17, fontWeight: 700, color: textPrimary,
+                                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                            }}>
+                                {tournament.name}
+                            </Title>
+                            {getStatusBadge()}
+                        </div>
+                    </div>
+                </div>
+                <div style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0
+                }}>
+                    <Text style={{ ...kicker, fontSize: 10, color: textMuted }}>Kick-off</Text>
+                    <Space size={5}>
+                        <ClockCircleOutlined style={{ color: club.gold, fontSize: 12 }} />
+                        <Text strong style={{ fontSize: 12, color: textPrimary, ...scoreNum }}>
+                            {getCountdownText()}
+                        </Text>
+                    </Space>
+                </div>
+            </div>
+
             {/* Everything in one unified row */}
             <div style={{
                 display: 'flex',
                 flexWrap: 'wrap',
                 alignItems: 'stretch',
-                gap: 14
+                gap: 14,
+                padding: '18px 20px',
             }}>
-                {/* Match identity */}
+                {/* Fixture details: date + venue */}
                 <div style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '12px',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    gap: 10,
+                    padding: '12px 16px',
                     borderRadius: 10,
-                    background: token.colorFillQuaternary,
-                    border: `1px solid ${token.colorBorderSecondary}`,
+                    background: tileBg,
+                    border: tileBorder,
                 }}>
-                    <div style={{
-                        background: token.colorPrimary,
-                        borderRadius: '50%',
-                        width: 36,
-                        height: 36,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0
-                    }}>
-                        <TrophyOutlined style={{ fontSize: 18, color: 'white' }} />
-                    </div>
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            <Title level={5} style={{ margin: 0, fontSize: 16, fontWeight: 600, color: token.colorText }}>
-                                {tournament.name}
-                            </Title>
-                            {getStatusBadge()}
-                        </div>
-                        <Space size={14} wrap style={{ marginTop: 3 }}>
-                            <Space size={5}>
-                                <CalendarOutlined style={{ color: token.colorTextSecondary, fontSize: 12 }} />
-                                <Text style={{ fontSize: 12, color: token.colorTextSecondary }}>
-                                    {showBdLocalTime(tournament.tournamentDate)}
-                                </Text>
-                            </Space>
-                            <Space size={5}>
-                                <EnvironmentOutlined style={{ color: token.colorTextSecondary, fontSize: 12 }} />
-                                <Text style={{ fontSize: 12, color: token.colorTextSecondary }}>
-                                    {tournament.venueName}
-                                </Text>
-                            </Space>
-                        </Space>
-                    </div>
+                    <Space size={8}>
+                        <CalendarOutlined style={{ color: club.gold, fontSize: 14 }} />
+                        <Text style={{ fontSize: 13, color: textPrimary, ...scoreNum }}>
+                            {showBdLocalTime(tournament.tournamentDate)}
+                        </Text>
+                    </Space>
+                    <Space size={8}>
+                        <EnvironmentOutlined style={{ color: club.gold, fontSize: 14 }} />
+                        <Text style={{ fontSize: 13, color: textPrimary }}>
+                            {tournament.venueName}
+                        </Text>
+                    </Space>
                 </div>
 
                 {/* Stats block: Total+Confirmed on top, Pending+Not Joining below */}
@@ -280,8 +301,8 @@ const LatestTournamentCard: React.FC = () => {
                     gap: 8,
                     padding: '12px',
                     borderRadius: 10,
-                    background: token.colorFillQuaternary,
-                    border: `1px solid ${token.colorBorderSecondary}`,
+                    background: tileBg,
+                    border: tileBorder,
                 }}>
                     {[
                         { label: 'Total', value: totalPlayer, color: token.colorInfo, onClick: undefined as (() => void) | undefined },
@@ -306,14 +327,14 @@ const LatestTournamentCard: React.FC = () => {
                                 gap: 7,
                                 padding: '8px 14px',
                                 borderRadius: 8,
-                                background: `${stat.color}14`,
-                                border: `1px solid ${stat.color}30`,
+                                background: `${stat.color}22`,
+                                border: `1px solid ${stat.color}45`,
                                 cursor: stat.onClick ? 'pointer' : 'default',
                                 transition: 'all 0.2s ease',
                             }}
                         >
-                            <Text strong style={{ fontSize: 16, color: stat.color, lineHeight: 1 }}>{stat.value}</Text>
-                            <Text style={{ fontSize: 12, color: stat.color, opacity: 0.85, whiteSpace: 'nowrap' }}>{stat.label}</Text>
+                            <Text strong style={{ fontSize: 17, color: stat.color, lineHeight: 1, ...scoreNum }}>{stat.value}</Text>
+                            <Text style={{ ...kicker, fontSize: 10, color: stat.color, opacity: 0.95, whiteSpace: 'nowrap' }}>{stat.label}</Text>
                         </div>
                     ))}
                 </div>
@@ -323,14 +344,14 @@ const LatestTournamentCard: React.FC = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
-                    gap: 6,
+                    gap: 8,
                     padding: '10px 12px',
                     borderRadius: 10,
-                    background: token.colorFillQuaternary,
-                    border: `1px solid ${token.colorBorderSecondary}`,
+                    background: tileBg,
+                    border: tileBorder,
                 }}>
-                    <Text strong style={{ fontSize: 12, color: token.colorText, whiteSpace: 'nowrap' }}>
-                        Your Participation:
+                    <Text style={{ ...kicker, fontSize: 10, color: club.goldSoft, whiteSpace: 'nowrap' }}>
+                        Your Call
                     </Text>
                     <div style={{ display: 'flex', gap: 6 }}>
                         {[
@@ -360,8 +381,8 @@ const LatestTournamentCard: React.FC = () => {
                                         fontSize: 12,
                                         fontWeight: 600,
                                         cursor: isUpdating ? 'not-allowed' : 'pointer',
-                                        border: `1.5px solid ${active ? opt.color : token.colorBorder}`,
-                                        background: active ? opt.color : token.colorBgContainer,
+                                        border: `1.5px solid ${active ? opt.color : 'rgba(255,255,255,0.18)'}`,
+                                        background: active ? opt.color : 'rgba(255,255,255,0.03)',
                                         color: active ? '#fff' : opt.color,
                                         opacity: isUpdating ? 0.6 : 1,
                                         transition: 'all 0.2s ease',
@@ -375,59 +396,53 @@ const LatestTournamentCard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Countdown + fill progress */}
+                {/* Squad fill progress */}
                 <div style={{
                     flex: '1 1 200px',
                     minWidth: 200,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
-                    gap: 8,
-                    padding: '10px 16px',
+                    gap: 10,
+                    padding: '12px 16px',
                     borderRadius: 10,
-                    background: token.colorFillQuaternary,
-                    border: `1px solid ${token.colorBorderSecondary}`,
+                    background: tileBg,
+                    border: tileBorder,
                 }}>
-                    <Space size={6}>
-                        <ClockCircleOutlined style={{ color: token.colorPrimary, fontSize: 13 }} />
-                        <Text strong style={{ fontSize: 12, color: token.colorText }}>
-                            {getCountdownText()}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <Text style={{ ...kicker, fontSize: 10, color: club.goldSoft }}>Squad Filled</Text>
+                        <Text strong style={{ fontSize: 13, color: textPrimary, ...scoreNum }}>
+                            {confirmedCount}/{totalPlayer}
+                            <span style={{ color: textMuted, fontWeight: 400, marginLeft: 6 }}>{fillPercent}%</span>
                         </Text>
-                    </Space>
-                    <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                            <Text style={{ fontSize: 11, color: token.colorTextSecondary }}>Slots filled</Text>
-                            <Text style={{ fontSize: 11, color: token.colorTextSecondary }}>
-                                {confirmedCount}/{totalPlayer} ({fillPercent}%)
-                            </Text>
-                        </div>
-                        <div style={{ height: 6, borderRadius: 3, background: token.colorBorderSecondary, overflow: 'hidden' }}>
-                            <div style={{
-                                height: '100%',
-                                width: `${fillPercent}%`,
-                                background: token.colorSuccess,
-                                borderRadius: 3,
-                                transition: 'width 0.3s ease'
-                            }} />
-                        </div>
+                    </div>
+                    <div style={{ height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                        <div style={{
+                            height: '100%',
+                            width: `${fillPercent}%`,
+                            background: `linear-gradient(90deg, ${club.pitch} 0%, #43c46f 100%)`,
+                            borderRadius: 4,
+                            transition: 'width 0.4s ease'
+                        }} />
                     </div>
                 </div>
 
                 {/* View Details */}
                 <Link to={`/tournaments/join-tournament/${tournament.id}`} style={{ display: 'flex', alignItems: 'center' }}>
                     <Button
-                        type="primary"
                         icon={<TeamOutlined />}
                         size="middle"
                         style={{
                             borderRadius: 8,
-                            fontWeight: '500',
-                            height: 38,
-                            paddingLeft: 16,
-                            paddingRight: 16,
-                            background: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryActive} 100%)`,
+                            fontWeight: 700,
+                            letterSpacing: 0.3,
+                            height: 40,
+                            paddingLeft: 20,
+                            paddingRight: 20,
+                            background: `linear-gradient(135deg, ${club.goldSoft} 0%, ${club.gold} 100%)`,
                             border: 'none',
-                            boxShadow: `0 2px 8px ${token.colorPrimary}30`
+                            color: club.navyDeep,
+                            boxShadow: `0 2px 10px rgba(198, 161, 91, 0.35)`,
                         }}
                     >
                         View Details

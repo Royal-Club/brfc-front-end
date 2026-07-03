@@ -1,6 +1,7 @@
-import React from 'react';
-import { Statistic, StatisticProps, theme } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Statistic, StatisticProps } from 'antd';
 import CountUp from 'react-countup';
+import { club, kicker, scoreNum } from '../../theme/clubTheme';
 
 const formatter: StatisticProps["formatter"] = (value) => (
   <CountUp end={value as number} separator="," />
@@ -13,72 +14,97 @@ interface AnalyticsCardProps {
   icon: React.ReactNode;
 }
 
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 576 : false
+  );
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 576);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  return isMobile;
+};
+
 const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
   title,
   value,
   accentColor,
   icon,
 }) => {
-  const { token } = theme.useToken();
-  const isMobile = window.innerWidth <= 576;
+  const isMobile = useIsMobile();
 
   return (
     <div
       style={{
-        background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorFillQuaternary} 100%)`,
-        border: `1px solid ${token.colorBorder}`,
-        borderRadius: 16,
-        padding: isMobile ? '16px' : '20px 24px',
-        minHeight: isMobile ? 96 : 120,
+        position: 'relative',
+        background: club.panel,
+        border: `1px solid ${club.panelBorder}`,
+        borderRadius: 14,
+        padding: isMobile ? '16px 16px 16px 18px' : '18px 22px 18px 24px',
+        minHeight: isMobile ? 96 : 122,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 16,
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-        transition: 'all 0.3s ease',
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35)',
+        overflow: 'hidden',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.12)';
         e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 8px 22px rgba(0, 0, 0, 0.45)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
         e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.35)';
       }}
     >
+      {/* Top accent bar in the metric's colour */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          height: 3,
+          background: `linear-gradient(90deg, ${accentColor} 0%, ${accentColor}00 90%)`,
+        }}
+      />
+
       <div style={{ minWidth: 0 }}>
-        <div style={{
-          color: token.colorTextSecondary,
-          fontSize: isMobile ? 12 : 13,
-          fontWeight: 500,
-          marginBottom: 8,
-        }}>
+        <div style={{ ...kicker, color: club.goldSoft, marginBottom: 12 }}>
           {title}
         </div>
         <Statistic
           value={value}
           precision={2}
+          prefix={<span style={{ fontSize: isMobile ? 13 : 16, color: 'rgba(255,255,255,0.55)', marginRight: 5, fontWeight: 600 }}>৳</span>}
           valueStyle={{
-            color: accentColor,
-            fontSize: isMobile ? 20 : 28,
-            fontWeight: 'bold',
+            color: '#F5F7FA',
+            fontSize: isMobile ? 24 : 32,
+            fontWeight: 800,
             lineHeight: 1,
+            letterSpacing: -0.8,
+            ...scoreNum,
           }}
           formatter={formatter}
-          suffix={<span style={{ fontSize: isMobile ? 14 : 18, color: accentColor }}>৳</span>}
         />
       </div>
+
       <div style={{
-        background: `${accentColor}20`,
-        border: `1px solid ${accentColor}40`,
-        borderRadius: '50%',
-        width: isMobile ? 40 : 48,
-        height: isMobile ? 40 : 48,
+        background: 'rgba(255,255,255,0.06)',
+        border: `1px solid ${accentColor}55`,
+        borderRadius: 12,
+        width: isMobile ? 42 : 50,
+        height: isMobile ? 42 : 50,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        fontSize: isMobile ? 18 : 22,
+        fontSize: isMobile ? 19 : 23,
         color: accentColor,
       }}>
         {icon}

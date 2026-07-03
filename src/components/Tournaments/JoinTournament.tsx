@@ -20,6 +20,8 @@ import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
+import { club, kicker, scoreNum } from "../../theme/clubTheme";
+import clubCrest from "../../assets/logo.png";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -224,39 +226,44 @@ export default function JoinTournament() {
 
         {/* ── Card 1: Match Summary ── */}
         <Col xs={24} md={12} lg={8}>
-          <Card className="jt-card" style={{ height: "100%" }}
-            styles={{ body: { padding: "16px 18px 14px" } }}>
+          <Card className="jt-card jt-card--panel" style={{ height: "100%" }}
+            styles={{ body: { padding: "16px 18px 16px" } }}>
 
-            {/* Tournament name + date */}
-            <div style={{ marginBottom: 12 }}>
-              <Title level={4} style={{ margin: "0 0 3px", lineHeight: 1.2 }}>
-                {nextTournament?.tournamentName}
-              </Title>
-              <Space size={5}>
-                <CalendarOutlined style={{ color: token.colorTextSecondary, fontSize: 12 }} />
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {nextTournament?.tournamentDate && showBdLocalTime(nextTournament.tournamentDate)}
-                </Text>
-              </Space>
+            {/* Matchday header: crest + name + date */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+              <img src={clubCrest} alt="BRFC crest"
+                style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>⚽ Matchday</div>
+                <Title level={4} style={{ margin: "0 0 2px", lineHeight: 1.15, color: club.textPrimary }}>
+                  {nextTournament?.tournamentName}
+                </Title>
+                <Space size={5}>
+                  <CalendarOutlined style={{ color: club.gold, fontSize: 12 }} />
+                  <Text style={{ fontSize: 12, color: club.textMuted, ...scoreNum }}>
+                    {nextTournament?.tournamentDate && showBdLocalTime(nextTournament.tournamentDate)}
+                  </Text>
+                </Space>
+              </div>
             </div>
 
             {/* Stat boxes */}
             <Row gutter={[8, 8]}>
               {([
-                { value: players.length,                 color: "#1677ff", bg: "rgba(22,119,255,0.1)",  label: "Total",   status: null      },
-                { value: participatingPlayers.length,    color: "#52c41a", bg: "rgba(82,196,26,0.12)",  label: "In",      status: "in"      },
-                { value: notParticipatingPlayers.length, color: "#ff4d4f", bg: "rgba(255,77,79,0.1)",   label: "Out",     status: "out"     },
-                { value: pendingPlayers.length,          color: "#faad14", bg: "rgba(250,173,20,0.1)",  label: "Pending", status: "pending" },
-              ] as const).map(({ value, color, bg, label, status }) => {
+                { value: players.length,                 color: token.colorInfo,    label: "Total",   status: null      },
+                { value: participatingPlayers.length,    color: "#52c41a",          label: "In",      status: "in"      },
+                { value: notParticipatingPlayers.length, color: "#ff4d4f",          label: "Out",     status: "out"     },
+                { value: pendingPlayers.length,          color: "#faad14",          label: "Pending", status: "pending" },
+              ] as const).map(({ value, color, label, status }) => {
                 const clickable = status !== null;
                 return (
                   <Col span={6} key={label}>
                     <div
                       style={{
-                        background: bg,
-                        border: `1px solid ${color}30`,
+                        background: `${color}22`,
+                        border: `1px solid ${color}45`,
                         borderRadius: 8,
-                        padding: "8px 4px",
+                        padding: "10px 4px",
                         textAlign: "center",
                         cursor: clickable ? "pointer" : "default",
                         transition: "all 0.2s ease",
@@ -271,8 +278,8 @@ export default function JoinTournament() {
                         }
                       } : undefined}
                     >
-                      <Text strong style={{ fontSize: 22, color, display: "block", lineHeight: 1.1 }}>{value}</Text>
-                      <Text style={{ fontSize: 11, color, opacity: 0.85 }}>{label}</Text>
+                      <Text strong style={{ fontSize: 24, color, display: "block", lineHeight: 1.1, ...scoreNum }}>{value}</Text>
+                      <Text style={{ ...kicker, fontSize: 10, color, opacity: 0.95 }}>{label}</Text>
                     </div>
                   </Col>
                 );
@@ -281,16 +288,16 @@ export default function JoinTournament() {
 
             {/* Participation progress */}
             {players.length > 0 && (
-              <div style={{ marginTop: 14 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <Text type="secondary" style={{ fontSize: 11 }}>Participation</Text>
-                  <Text type="secondary" style={{ fontSize: 11 }}>
-                    {participatingPlayers.length} / {players.length} confirmed
+              <div style={{ marginTop: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                  <Text style={{ ...kicker, fontSize: 10, color: club.goldSoft }}>Squad Filled</Text>
+                  <Text style={{ fontSize: 12, color: club.textPrimary, ...scoreNum }}>
+                    {participatingPlayers.length} / {players.length}
                   </Text>
                 </div>
                 <Progress
                   percent={Math.round((participatingPlayers.length / players.length) * 100)}
-                  strokeColor="#52c41a"
+                  strokeColor={{ from: club.pitch, to: "#43c46f" }}
                   trailColor="rgba(255,255,255,0.08)"
                   showInfo={false}
                   size="small"
@@ -304,24 +311,24 @@ export default function JoinTournament() {
         {/* ── Card 2: Your Response (main action card) ── */}
         {loggedInPlayer ? (
           <Col xs={24} md={12} lg={8}>
-            <Card className="jt-card jt-card--primary" style={{ height: "100%" }}
+            <Card className="jt-card jt-card--panel jt-card--primary" style={{ height: "100%" }}
               styles={{ body: { padding: "16px 18px" } }}>
 
               {/* Identity row */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
                 <Avatar
-                  size={44}
+                  size={46}
                   src={toAbsolutePlayerPhotoUrl(loggedInPlayer.photoUrl)}
                   icon={!loggedInPlayer.photoUrl ? <UserOutlined /> : undefined}
-                  style={{ backgroundColor: loggedInPlayer.photoUrl ? undefined : token.colorPrimary, flexShrink: 0 }}
+                  style={{ backgroundColor: loggedInPlayer.photoUrl ? undefined : token.colorPrimary, flexShrink: 0, border: `2px solid ${club.gold}` }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <Space size={5} align="center">
-                    <Text strong style={{ fontSize: 15 }}>{loggedInPlayer.playerName}</Text>
-                    <StarFilled style={{ color: "#faad14", fontSize: 12 }} />
+                    <Text strong style={{ fontSize: 15, color: club.textPrimary }}>{loggedInPlayer.playerName}</Text>
+                    <StarFilled style={{ color: club.gold, fontSize: 12 }} />
                   </Space>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>ID: {loggedInPlayer.employeeId}</Text>
+                    <Text style={{ fontSize: 12, color: club.textMuted, ...scoreNum }}>ID: {loggedInPlayer.employeeId}</Text>
                     {loggedInPlayer.participationStatus === true  && <Tag color="success"  style={{ margin: 0, fontSize: 11 }}>Confirmed</Tag>}
                     {loggedInPlayer.participationStatus === false && <Tag color="error"    style={{ margin: 0, fontSize: 11 }}>Declined</Tag>}
                     {loggedInPlayer.participationStatus === null  && <Tag color="warning"  style={{ margin: 0, fontSize: 11 }}>Pending</Tag>}
@@ -329,10 +336,10 @@ export default function JoinTournament() {
                 </div>
               </div>
 
-              <Divider style={{ margin: "8px 0" }} />
+              <Divider style={{ margin: "8px 0", borderColor: club.panelBorder }} />
 
               {/* Participation question */}
-              <Text style={{ display: "block", fontWeight: 500, marginBottom: 8 }}>
+              <Text style={{ ...kicker, display: "block", fontSize: 10, color: club.goldSoft, marginBottom: 8 }}>
                 Are you participating?
               </Text>
 
@@ -386,14 +393,14 @@ export default function JoinTournament() {
 
         {/* ── Card 3: Your Team ── */}
         <Col xs={24} md={12} lg={8}>
-          <Card className="jt-card jt-team-card" style={{ height: "100%" }}
+          <Card className="jt-card jt-card--panel jt-team-card" style={{ height: "100%" }}
             styles={{ body: { padding: "16px 18px", height: "100%", display: "flex", flexDirection: "column" } }}>
 
             {/* Header row: title + compact status badge */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <Space size={6} align="center">
-                <TrophyOutlined style={{ fontSize: 15, color: "#faad14" }} />
-                <Text strong style={{ fontSize: 13 }}>Your Team</Text>
+                <TrophyOutlined style={{ fontSize: 15, color: club.gold }} />
+                <Text style={{ ...kicker, fontSize: 11, color: club.goldSoft }}>Your Team</Text>
               </Space>
               {loggedInPlayer?.participationStatus === true && (
                 <span className="jt-status-badge jt-status-badge--success">
@@ -419,7 +426,7 @@ export default function JoinTournament() {
                 triggerClassName="jt-team-focus-trigger"
                 triggerIcon={<TrophyOutlined />}
               />
-              <Text type="secondary" className="jt-team-helper">
+              <Text className="jt-team-helper" style={{ color: club.textMuted }}>
                 {loggedInPlayer?.participationStatus === true
                   ? "You're confirmed — check back here for your team assignment."
                   : loggedInPlayer?.participationStatus === false
@@ -428,7 +435,17 @@ export default function JoinTournament() {
               </Text>
             </div>
 
-            <Button type="primary" icon={<TeamOutlined />} block style={{ marginTop: 12 }}
+            <Button icon={<TeamOutlined />} block
+              style={{
+                marginTop: 12,
+                height: 40,
+                fontWeight: 700,
+                letterSpacing: 0.3,
+                background: `linear-gradient(135deg, ${club.goldSoft} 0%, ${club.gold} 100%)`,
+                border: "none",
+                color: club.navyDeep,
+                boxShadow: "0 2px 10px rgba(198, 161, 91, 0.35)",
+              }}
               onClick={() => navigate(`/tournaments/team-building/${tournamentId}`)}>
               View Team
             </Button>
@@ -444,10 +461,11 @@ export default function JoinTournament() {
         {/* Controls — title row */}
         <Row gutter={[12, 8]} align="middle" style={{ marginBottom: 12 }}>
           <Col xs={24} sm={12}>
-            <Space align="center" size={8}>
-              <TeamOutlined style={{ fontSize: 15 }} />
+            <Space align="center" size={10}>
+              <span style={{ width: 4, height: 20, borderRadius: 2, background: club.gold }} />
+              <TeamOutlined style={{ fontSize: 15, color: club.gold }} />
               <Title level={4} style={{ margin: 0 }}>Tournament Participants</Title>
-              <Tag>{players.length}</Tag>
+              <Tag style={{ background: `${club.gold}22`, borderColor: `${club.gold}55`, color: club.goldSoft, ...scoreNum }}>{players.length}</Tag>
             </Space>
           </Col>
           <Col xs={24} sm={12} style={{ display: "flex", justifyContent: screens.sm ? "flex-end" : "flex-start" }}>
