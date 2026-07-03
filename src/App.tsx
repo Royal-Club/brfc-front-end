@@ -48,7 +48,10 @@ function App() {
                         : theme.defaultAlgorithm,
                 }}
             >
-                <Layout className={isDarkMode ? "dark-mode" : "light-mode"}>
+                <Layout
+                    className={isDarkMode ? "dark-mode" : "light-mode"}
+                    style={{ minHeight: "100vh" }}
+                >
                     <ToastContainer
                         theme={isDarkMode ? "dark" : "light"}
                         position="top-right"
@@ -66,10 +69,12 @@ function App() {
                             </Link>
                         </div>
                     )}
-                    <Routes>
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="*" element={<TournamentViewerPage hasHeader={false} />} />
-                    </Routes>
+                    <div style={{ flex: 1 }}>
+                        <Routes>
+                            <Route path="/login" element={<LoginPage />} />
+                            <Route path="*" element={<TournamentViewerPage hasHeader={false} />} />
+                        </Routes>
+                    </div>
                     <AppFooter />
                 </Layout>
             </ConfigProvider>

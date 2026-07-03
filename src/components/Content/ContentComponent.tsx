@@ -18,11 +18,12 @@ import {
     Spin,
 } from "antd";
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { useAuthHook } from "../../hooks/useAuthHook";
 import { useGetUserProfileQuery } from "../../state/features/auth/authSlice";
-import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import { selectLoginInfo, setImage } from "../../state/slices/loginInfoSlice";
+import { API_URL } from "../../settings";
 import AcBillPayment from "../Account/BillPayment/AcBillPayment";
 import AcCollection from "../Account/Collection/AcCollection";
 import AcChart from "../Account/Configuration/AcChart";
@@ -78,6 +79,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
     const { user, logout } = useAuthHook();
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch();
 
     const { data: playerProfileData, refetch } = useGetUserProfileQuery({
         id: loginInfo?.userId || "",
@@ -253,6 +255,17 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
         return () => window.removeEventListener("resize", checkMobile);
     }, []);
 
+    // Sync the real profile photo into the store so the header avatar and the
+    // sidebar footer (both read loginInfo.image) show the user's actual photo.
+    useEffect(() => {
+        const photoUrl = playerProfileData?.content?.photoUrl;
+        if (!photoUrl) return;
+        const src = photoUrl.startsWith("http")
+            ? photoUrl
+            : `${API_URL}${photoUrl}`;
+        dispatch(setImage(src));
+    }, [playerProfileData, dispatch]);
+
     return (
         <>
             <Layout style={{ 
@@ -387,10 +400,18 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                 )}
                 <Content
                     style={{
-                        minHeight: isMobile ? 'calc(100vh - 64px)' : 'calc(100vh - 64px)',
+                        height: 'calc(100vh - 64px)',
                         overflow: 'auto',
                     }}
                 >
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            minHeight: '100%',
+                        }}
+                    >
+                        <div style={{ flex: 1 }}>
                     <Routes>
                         <Route path="/" element={<ContentOutlet />}>
                             <Route index element={<Dashboard isDarkMode={isDarkMode} />} />
@@ -484,7 +505,9 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             }}
                         />
                     )}
-                    <AppFooter />
+                        </div>
+                        <AppFooter />
+                    </div>
                 </Content>
             </Layout>
 
