@@ -1,13 +1,11 @@
 import {
     Button,
-    Col,
     DatePicker,
     Form,
     Input,
     InputNumber,
     InputRef,
     Modal,
-    Row,
     Select,
     Space,
     Spin,
@@ -24,8 +22,9 @@ import { API_URL } from "../../../settings";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 import FormatCurrencyWithSymbol from "../../Util/FormatCurrencyWithSymbol";
 import axiosApi from "../../../state/api/axiosBase";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, PlusOutlined, CalendarOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import "../../../theme/clubTable.css";
 const { Text } = Typography;
 
 function AcVouchers() {
@@ -210,13 +209,20 @@ function AcVouchers() {
             dataIndex: "code",
             key: "code",
             ...getColumnSearchProps("code"),
+            render: (code: string) => <span className="brfc-chip">{code}</span>,
         },
         {
             title: "Date",
             dataIndex: "voucherDate",
             key: "voucherDate",
-            render: (_: any, record: IAcVoucher) =>
-                moment.utc(record.voucherDate).local().format("YYYY-MMM-DD"),
+            render: (_: any, record: IAcVoucher) => (
+                <Space size={7}>
+                    <CalendarOutlined style={{ color: "#c6a15b", fontSize: 13 }} />
+                    <Text type="secondary" style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {moment.utc(record.voucherDate).local().format("YYYY-MMM-DD")}
+                    </Text>
+                </Space>
+            ),
             sorter: (a, b) =>
                 dayjs(a.voucherDate).unix() - dayjs(b.voucherDate).unix(),
             filters: [
@@ -243,15 +249,23 @@ function AcVouchers() {
             title: "Type",
             dataIndex: "voucherType.name",
             key: "voucherType.name",
-            render: (_: any, record: IAcVoucher) => record.voucherType.name,
+            render: (_: any, record: IAcVoucher) => (
+                <span className="brfc-status brfc-status--neutral">
+                    <span className="brfc-status__dot" />
+                    {record.voucherType.name}
+                </span>
+            ),
         },
 
         {
             title: "Amount",
             dataIndex: "amount",
             key: "amount",
+            align: "right",
             render: (_: any, record: IAcVoucher) => (
-                <FormatCurrencyWithSymbol amount={record.amount} />
+                <span className="brfc-amount">
+                    <FormatCurrencyWithSymbol amount={record.amount} />
+                </span>
             ),
             sorter: (a, b) => a.amount - b.amount,
         },
@@ -259,12 +273,14 @@ function AcVouchers() {
             title: "Reference",
             dataIndex: "collection",
             key: "collectionCode",
-            render: (_: any, record: IAcVoucher) =>
-                record.collection
+            render: (_: any, record: IAcVoucher) => {
+                const ref = record.collection
                     ? record.collection.transactionId
                     : record.billPayment
                     ? record.billPayment.code
-                    : "",
+                    : "";
+                return ref ? <span className="brfc-chip">{ref}</span> : <Text type="secondary">—</Text>;
+            },
         },
 
         // {
@@ -395,28 +411,52 @@ function AcVouchers() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
+    const canManage =
+        loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
+
     return (
-        <div style={{ padding: isMobile ? '16px' : '24px', minHeight: '100vh' }}>
-            <Row>
-                <Col span={24}>
-                    <div>
-                        <Title level={3} style={{ fontSize: isMobile ? '18px' : '24px' }}>Voucher</Title>
-                        <Table
-                            loading={tableLoadingSpin}
-                            size={isMobile ? "small" : "middle"}
-                            pagination={{
-                                showTotal: (total) => `Total ${total} records`,
-                                showSizeChanger: !isMobile,
-                                showQuickJumper: !isMobile,
-                                size: isMobile ? "small" : "default",
-                            }}
-                            dataSource={acVouchers}
-                            columns={acVoucherColumns}
-                            scroll={{ 
-                                x: isMobile ? 600 : "max-content",
-                                y: isMobile ? "60vh" : undefined
-                            }}
-                        />
+        <div className="brfc-page" style={{ padding: isMobile ? "16px 0" : "4px 0" }}>
+            {/* Page header */}
+            <div className="brfc-page-header">
+                <Title level={2} style={{ margin: 0, lineHeight: 1.1, fontSize: isMobile ? "20px" : undefined }}>
+                    Vouchers
+                </Title>
+                {canManage && (
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                            setModalState("CREATE");
+                            showModal();
+                        }}
+                    >
+                        New Voucher
+                    </Button>
+                )}
+            </div>
+
+            {/* Gold divider under the header */}
+            <div className="brfc-gold-divider" />
+
+            <Table
+                loading={tableLoadingSpin}
+                size={isMobile ? "small" : "middle"}
+                rowKey="id"
+                className="brfc-club-table"
+                style={{ borderRadius: 10, overflow: "hidden" }}
+                pagination={{
+                    showTotal: (total) => `Total ${total} records`,
+                    showSizeChanger: !isMobile,
+                    showQuickJumper: !isMobile,
+                    size: isMobile ? "small" : "default",
+                }}
+                dataSource={acVouchers}
+                columns={acVoucherColumns}
+                scroll={{
+                    x: isMobile ? 600 : "max-content",
+                    y: isMobile ? "60vh" : undefined,
+                }}
+            />
 
                         <Modal
                             title="Monthly Voucher"
@@ -542,9 +582,6 @@ function AcVouchers() {
                                 </div>
                             </Spin>
                         </Modal>
-                    </div>
-                </Col>
-            </Row>
         </div>
     );
 }

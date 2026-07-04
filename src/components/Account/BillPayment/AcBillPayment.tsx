@@ -1,22 +1,20 @@
 import {
-    CheckCircleTwoTone,
-    EditTwoTone,
+    EditOutlined,
     SearchOutlined,
+    PlusOutlined,
+    CalendarOutlined,
 } from "@ant-design/icons";
 import {
     Button,
-    Col,
     DatePicker,
     Form,
     Input,
     InputNumber,
     InputRef,
     Modal,
-    Row,
     Select,
     Space,
     Spin,
-    TableColumnsType,
     Typography,
 } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
@@ -31,6 +29,7 @@ import IAcBillPayment from "../../../interfaces/IAcBillPayment";
 import ICostType from "../../../interfaces/ICostType";
 import axiosApi from "../../../state/api/axiosBase";
 import AcBillPaymentGraph from "./AcBillPaymentGraph";
+import "../../../theme/clubTable.css";
 const { Text } = Typography;
 
 function AcBillPayment() {
@@ -211,19 +210,29 @@ function AcBillPayment() {
             dataIndex: "code",
             key: "code",
             ...getColumnSearchProps("code"),
+            render: (code: string) =>
+                code ? <span className="brfc-chip">{code}</span> : <Text type="secondary">—</Text>,
         },
         {
             title: "Voucher",
             dataIndex: "voucherCode",
             key: "voucherCode",
             ...getColumnSearchProps("voucherCode"),
+            render: (code: string) =>
+                code ? <span className="brfc-chip">{code}</span> : <Text type="secondary">—</Text>,
         },
         {
             title: "Date",
             dataIndex: "paymentDate",
             key: "paymentDate",
-            render: (_, record) =>
-                dayjs(record.paymentDate).format("DD-MMM-YYYY"),
+            render: (_, record) => (
+                <Space size={7}>
+                    <CalendarOutlined style={{ color: "#c6a15b", fontSize: 13 }} />
+                    <Text type="secondary" style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {dayjs(record.paymentDate).format("DD-MMM-YYYY")}
+                    </Text>
+                </Space>
+            ),
             // showSorterTooltip: { target: 'full-header' },
             sorter: (a, b) =>
                 dayjs(a.paymentDate).unix() - dayjs(b.paymentDate).unix(),
@@ -253,15 +262,26 @@ function AcBillPayment() {
             title: "Cost Type",
             dataIndex: "costType.name",
             key: "costType.name",
-            render: (_: any, record: IAcBillPayment) => record.costType?.name,
+            render: (_: any, record: IAcBillPayment) =>
+                record.costType?.name ? (
+                    <span className="brfc-status brfc-status--neutral">
+                        <span className="brfc-status__dot" />
+                        {record.costType.name}
+                    </span>
+                ) : (
+                    <Text type="secondary">—</Text>
+                ),
         },
         Table.EXPAND_COLUMN,
         {
             title: "Amount",
             dataIndex: "amount",
             key: "amount",
+            align: "right",
             render: (_: any, record: IAcBillPayment) => (
-                <FormatCurrencyWithSymbol amount={record.amount} />
+                <span className="brfc-amount">
+                    <FormatCurrencyWithSymbol amount={record.amount} />
+                </span>
             ),
             sorter: (a, b) => a.amount - b.amount,
         },
@@ -269,11 +289,14 @@ function AcBillPayment() {
             title: "Action",
             key: "action",
             render: (_: any, record: IAcBillPayment) => (
-                <Space size="middle">
-                    <a onClick={() => updateAction(record.id)}>
-                        <EditTwoTone />
-                    </a>
-                </Space>
+                <Button
+                    size="small"
+                    icon={<EditOutlined />}
+                    className="brfc-act-btn"
+                    onClick={() => updateAction(record.id)}
+                >
+                    Edit
+                </Button>
             ),
         },
     ];
@@ -384,35 +407,42 @@ function AcBillPayment() {
             });
     };
 
+    const canManage =
+        loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
+
     return (
-        <>
-            <Row>
-                <Col md={24}>
-                    <div>
-                        <Row align="middle" justify="space-between">
-                            <Title level={3}>Bill Payment</Title>
-                            {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
-                                <Button type="primary" onClick={showModal}>
-                                    Create
-                                </Button>
-                            )}
-                        </Row>
-                        {acBillPayments.length > 0 && (
-                            <AcBillPaymentGraph
-                                acBillPayments={acBillPayments}
-                            />
-                        )}
-                        <Table
-                            loading={tableLoadingSpin}
-                            size="small"
-                            dataSource={acBillPayments}
-                            columns={acBillPaymentColumns}
-                            scroll={{ x: "max-content" }}
-                            showSorterTooltip={{ target: "sorter-icon" }}
-                            pagination={{
-                                showTotal: (total) => `Total ${total} records`,
-                            }}
-                        />
+        <div className="brfc-page">
+            {/* Page header */}
+            <div className="brfc-page-header">
+                <Title level={2} style={{ margin: 0, lineHeight: 1.1 }}>Bill Payments</Title>
+                {canManage && (
+                    <Button type="primary" icon={<PlusOutlined />} onClick={showModal}>
+                        New Bill Payment
+                    </Button>
+                )}
+            </div>
+
+            {/* Gold divider under the header */}
+            <div className="brfc-gold-divider" />
+
+            {acBillPayments.length > 0 && (
+                <AcBillPaymentGraph acBillPayments={acBillPayments} />
+            )}
+
+            <Table
+                loading={tableLoadingSpin}
+                size="small"
+                rowKey="id"
+                className="brfc-club-table"
+                style={{ borderRadius: 10, overflow: "hidden", marginTop: 16 }}
+                dataSource={acBillPayments}
+                columns={acBillPaymentColumns}
+                scroll={{ x: "max-content" }}
+                showSorterTooltip={{ target: "sorter-icon" }}
+                pagination={{
+                    showTotal: (total) => `Total ${total} records`,
+                }}
+            />
 
 <Modal
   title="Bill Payment"
@@ -535,11 +565,7 @@ function AcBillPayment() {
     </div>
   </Spin>
 </Modal>
-
-                    </div>
-                </Col>
-            </Row>
-        </>
+        </div>
     );
 }
 

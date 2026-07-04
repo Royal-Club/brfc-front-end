@@ -60,6 +60,18 @@
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
+/* Gold divider under the hero — matches the rest of the app */
+.club-rules-divider {
+  height: 2px;
+  border-radius: 2px;
+  margin: 16px 0 4px;
+  background: linear-gradient(
+    90deg,
+    var(--cr-primary, #c6a15b) 0%,
+    rgba(198, 161, 91, 0) 60%
+  );
+}
+
 .club-rules-hero-subtitle.ant-typography {
   color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
@@ -84,11 +96,27 @@
 }
 
 .club-rules-count.ant-typography {
-  color: var(--cr-text-secondary, rgba(255, 255, 255, 0.55));
+  color: var(--cr-gold-soft, #d8bc84);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.8px;
+}
+
+/* Gold primary buttons (Add Rule, FAB, empty-state) — scoped to the page so
+   the modal's OK button keeps the default look. */
+.club-rules-page .ant-btn-primary {
+  background: linear-gradient(135deg, var(--cr-gold-soft, #d8bc84) 0%, var(--cr-primary, #c6a15b) 100%);
+  border-color: transparent;
+  color: var(--cr-navy-deep, #0e1830);
+  font-weight: 700;
+}
+
+.club-rules-page .ant-btn-primary:hover,
+.club-rules-page .ant-btn-primary:focus {
+  background: linear-gradient(135deg, #e7d3a6 0%, var(--cr-gold-soft, #d8bc84) 100%) !important;
+  border-color: transparent !important;
+  color: var(--cr-navy-deep, #0e1830) !important;
 }
 
 /* ---------- Rule cards ---------- */
@@ -127,14 +155,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: var(--cr-primary-bg, rgba(24, 144, 255, 0.15));
-  color: var(--cr-primary, #1890ff);
+  background: linear-gradient(135deg, var(--cr-gold-soft, #d8bc84) 0%, var(--cr-primary, #c6a15b) 100%);
+  color: var(--cr-navy-deep, #0e1830);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1;
+  box-shadow: 0 2px 6px rgba(198, 161, 91, 0.35);
 }
 
 .club-rules-text.ant-typography {

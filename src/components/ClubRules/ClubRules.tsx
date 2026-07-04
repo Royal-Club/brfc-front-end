@@ -22,6 +22,7 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import Title from "antd/es/typography/Title";
 import { PlusOutlined, EditOutlined } from "@ant-design/icons";
 import clubRulesCover from "../../assets/club-rules-cover.png";
+import { club } from "../../theme/clubTheme";
 import "./ClubRules.css";
 
 const { Text } = Typography;
@@ -52,8 +53,11 @@ export default function ClubRules() {
         "--cr-surface": token.colorBgElevated,
         "--cr-surface-hover": token.colorFillQuaternary,
         "--cr-border": token.colorBorderSecondary,
-        "--cr-primary": token.colorPrimary,
-        "--cr-primary-bg": token.colorPrimaryBg,
+        // Club identity — champagne gold accent instead of the generic blue.
+        "--cr-primary": club.gold,
+        "--cr-primary-bg": "rgba(198, 161, 91, 0.15)",
+        "--cr-gold-soft": club.goldSoft,
+        "--cr-navy-deep": club.navyDeep,
         "--cr-text": token.colorText,
         "--cr-text-secondary": token.colorTextSecondary,
         "--cr-radius": `${token.borderRadiusLG}px`,
@@ -121,6 +125,8 @@ export default function ClubRules() {
                     </Text>
                 </div>
             </div>
+
+            <div className="club-rules-divider" />
 
             <div className="club-rules-wrapper">
                 <div className="club-rules-bar">
