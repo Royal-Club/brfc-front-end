@@ -1,5 +1,4 @@
 import { Table, Select, Button, Space, Typography, Card, Avatar, theme } from "antd";
-import { TrophyOutlined } from "@ant-design/icons";
 import { useMemo, useState } from "react";
 import { useGetPlayerStatisticsQuery } from "../../state/features/statistics/statisticsSlice";
 import { useGetTournamentSessionsQuery, useGetTournamentsByYearQuery } from "../../state/features/tournaments/tournamentsSlice";
@@ -7,6 +6,7 @@ import { useGetPlayersQuery } from "../../state/features/player/playerSlice";
 import type { ColumnsType } from "antd/es/table";
 import { IPlayerStatisticsData } from "../../state/features/statistics/statisticsTypes";
 import { API_URL } from "../../settings";
+import { club, kicker, scoreNum } from "../../theme/clubTheme";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -24,7 +24,6 @@ const PlayerStatistics: React.FC = () => {
             colorTextSecondary,
             colorBorderSecondary,
             colorFillTertiary,
-            colorFillSecondary,
             colorSuccess,
             colorInfo,
             colorWarning,
@@ -65,9 +64,9 @@ const PlayerStatistics: React.FC = () => {
     // zero so real contributions stand out. Optional accent color per column.
     const statCell = (value: number, color?: string) =>
         value === 0 ? (
-            <span style={{ color: colorTextSecondary }}>0</span>
+            <span style={{ color: colorTextSecondary, ...scoreNum }}>0</span>
         ) : (
-            <span style={{ color: color || colorText, fontWeight: 700, fontSize: 15 }}>
+            <span style={{ color: color || colorText, fontWeight: 700, fontSize: 15, ...scoreNum }}>
                 {value}
             </span>
         );
@@ -88,7 +87,9 @@ const PlayerStatistics: React.FC = () => {
                             size={44}
                             style={{
                                 flexShrink: 0,
-                                backgroundColor: "#1890ff",
+                                backgroundColor: club.navySoft,
+                                color: club.goldSoft,
+                                border: `2px solid ${club.gold}`,
                                 fontWeight: 700,
                             }}
                         >
@@ -135,7 +136,7 @@ const PlayerStatistics: React.FC = () => {
             key: "goalsAndAssists",
             width: 100,
             align: "center",
-            render: (record: IPlayerStatisticsData) => statCell(record.statistics.goalsAndAssists),
+            render: (record: IPlayerStatisticsData) => statCell(record.statistics.goalsAndAssists, club.gold),
             sorter: (a, b) => a.statistics.goalsAndAssists - b.statistics.goalsAndAssists,
         },
         {
@@ -171,29 +172,30 @@ const PlayerStatistics: React.FC = () => {
 
     return (
         <Card style={{ margin: 16 }}>
+            <div style={{ marginBottom: 16 }}>
+                <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>Season Leaderboard</div>
+                <Title level={3} style={{ margin: 0, lineHeight: 1.1 }}>
+                    Player Statistics
+                </Title>
+                <Text type="secondary">Goals, assists and disciplinary records across tournaments</Text>
+            </div>
+
+            {/* Gold divider under the header */}
             <div
                 style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    marginBottom: 20,
+                    height: 2,
+                    borderRadius: 2,
+                    marginBottom: 18,
+                    background: `linear-gradient(90deg, ${club.gold} 0%, rgba(198,161,91,0) 60%)`,
                 }}
-            >
-                <TrophyOutlined style={{ fontSize: 24, color: "#faad14" }} />
-                <div>
-                    <Title level={3} style={{ margin: 0 }}>
-                        Player Statistics
-                    </Title>
-                    <Text type="secondary">Goals, assists and disciplinary records across tournaments</Text>
-                </div>
-            </div>
+            />
 
             {/* Filter bar */}
             <div
                 style={{
                     background: colorFillTertiary,
                     border: `1px solid ${colorBorderSecondary}`,
-                    borderRadius: 8,
+                    borderRadius: 10,
                     padding: 12,
                     marginBottom: 20,
                 }}
@@ -262,15 +264,38 @@ const PlayerStatistics: React.FC = () => {
                 {/* Zebra rows for readability + remove AntD's active-sort column
                     tint so columns don't look randomly banded. */}
                 <style>{`
+                    /* Navy header with gold underline — matches the club matchday theme */
+                    .player-stats-table .ant-table-thead > tr > th {
+                        background: #14213D !important;
+                        color: #F5F7FA !important;
+                        font-weight: 700;
+                        letter-spacing: 0.3px;
+                        border-bottom: 2px solid #C6A15B !important;
+                    }
+                    .player-stats-table .ant-table-thead > tr > th::before {
+                        display: none !important;
+                    }
+                    .player-stats-table .ant-table-thead > tr > th.ant-table-cell-fix-left,
+                    .player-stats-table .ant-table-thead > tr > th.ant-table-cell-fix-right {
+                        background: #14213D !important;
+                    }
+                    .player-stats-table .ant-table-thead th.ant-table-column-has-sorters:hover {
+                        background: #1B2A4A !important;
+                    }
+                    .player-stats-table .ant-table-thead .ant-table-column-sorter {
+                        color: rgba(245, 247, 250, 0.55);
+                    }
                     .player-stats-table .ant-table-tbody > tr:nth-child(even) > td {
                         background: ${colorFillTertiary};
                     }
                     .player-stats-table .ant-table-tbody > tr.ant-table-row:hover > td {
-                        background: ${colorFillSecondary} !important;
+                        background: rgba(198, 161, 91, 0.1) !important;
                     }
-                    .player-stats-table td.ant-table-column-sort,
-                    .player-stats-table th.ant-table-column-sort {
+                    .player-stats-table td.ant-table-column-sort {
                         background: transparent !important;
+                    }
+                    .player-stats-table th.ant-table-column-sort {
+                        background: #14213D !important;
                     }
                 `}</style>
                 <Table
