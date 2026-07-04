@@ -110,9 +110,9 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
     ]),
     getItem("Finance", "financeSubMenu", <DollarOutlined />, [
       getItem("Configuration", "ConfigurationSubMenu", null, [
-        getItem("Voucher Types", "/ac/voucher-types"),
-        getItem("AC Natures", "/ac/natures"),
-        getItem("Chart of Account", "/ac/charts"),
+        getItem("Voucher Types", "/ac/voucher-types", null, undefined, undefined, !isUserAdmin),
+        getItem("AC Natures", "/ac/natures", null, undefined, undefined, !isUserAdmin),
+        getItem("Chart of Account", "/ac/charts", null, undefined, undefined, !isUserAdmin),
       ]),
       getItem("Collections (+)", "/ac/collections"),
       getItem("Bill Payment (-)", "/ac/bill-payments"),
