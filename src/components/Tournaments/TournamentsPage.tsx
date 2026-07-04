@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
-  Skeleton, Alert, Typography, Space, Card, Tag,
+  Skeleton, Alert, Typography, Space, Card,
   Row, Col, Pagination, Input, Segmented,
 } from "antd";
 import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
@@ -13,18 +13,22 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { showBdLocalTime } from "../../utils/utils";
 import { CalendarOutlined, EnvironmentOutlined, SearchOutlined, TrophyOutlined } from "@ant-design/icons";
 import { canManageTournaments } from "../../utils/roleUtils";
+import { club, scoreNum } from "../../theme/clubTheme";
+import "./tournament.css";
 
 const { Title, Text } = Typography;
 
-const STATUS_CONFIG: Record<string, { color: string; label: string; tagColor: string }> = {
-  UPCOMING:  { color: "#1677ff", label: "Upcoming",  tagColor: "blue"    },
-  ONGOING:   { color: "#52c41a", label: "Ongoing",   tagColor: "green"   },
-  CONCLUDED: { color: "#595959", label: "Concluded", tagColor: "default" },
-  COMPLETED: { color: "#595959", label: "Concluded", tagColor: "default" },
+// Status palette drawn from the club identity so cards read as one matchday product.
+// Upcoming = gold (the next fixture to highlight), Ongoing = pitch green, Concluded = muted.
+const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
+  UPCOMING:  { color: club.gold,  label: "Upcoming"  },
+  ONGOING:   { color: club.pitch, label: "Ongoing"   },
+  CONCLUDED: { color: "#8792A8",  label: "Concluded" },
+  COMPLETED: { color: "#8792A8",  label: "Concluded" },
 };
 
 const getStatusConfig = (status?: string) =>
-  (status && STATUS_CONFIG[status]) || { color: "#d9d9d9", label: status || "Unknown", tagColor: "default" };
+  (status && STATUS_CONFIG[status]) || { color: "#8792A8", label: status || "Unknown" };
 
 const TournamentsPage: React.FC = () => {
   const loginInfo = useSelector(selectLoginInfo);
@@ -110,10 +114,14 @@ const TournamentsPage: React.FC = () => {
     <Space direction="vertical" size="middle" style={{ width: "100%" }}>
 
       {/* Page header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0" }}>
-        <Title style={{ margin: 0 }}>Tournaments</Title>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", padding: "8px 0 4px" }}>
+        <Title style={{ margin: 0, lineHeight: 1.1 }}>Tournaments</Title>
         {canManage && <CreateTournament />}
       </div>
+
+      {/* Gold divider under the header */}
+      <div style={{ height: 2, background: `linear-gradient(90deg, ${club.gold} 0%, rgba(198,161,91,0) 60%)`, borderRadius: 2 }} />
+
 
       {/* Compact filter bar + search */}
       <Row gutter={[12, 12]} align="middle">
@@ -138,9 +146,17 @@ const TournamentsPage: React.FC = () => {
       {/* Card grid */}
       <div style={{ minHeight: "calc(100vh - 280px)" }}>
       {filteredTournaments.length === 0 ? (
-        <Card style={{ textAlign: "center", padding: "48px 0" }}>
-          <TrophyOutlined style={{ fontSize: 48, opacity: 0.25, display: "block", marginBottom: 12 }} />
-          <Text type="secondary">No tournaments found.</Text>
+        <Card
+          style={{
+            textAlign: "center",
+            padding: "48px 0",
+            background: club.panel,
+            border: `1px solid ${club.panelBorder}`,
+            borderRadius: 14,
+          }}
+        >
+          <TrophyOutlined style={{ fontSize: 48, color: club.gold, opacity: 0.45, display: "block", marginBottom: 12 }} />
+          <Text style={{ color: club.textMuted }}>No tournaments found.</Text>
         </Card>
       ) : (
         <Row gutter={[16, 16]}>
@@ -151,12 +167,14 @@ const TournamentsPage: React.FC = () => {
             return (
               <Col key={t.id} xs={24} sm={12} xl={8}>
                 <Card
-                  className="tournament-grid-card"
-                  hoverable={!inactive}
-                  styles={{ body: { padding: "16px" } }}
+                  className={`tournament-grid-card${!inactive ? " tournament-grid-card--active" : ""}`}
+                  styles={{ body: { padding: 0 } }}
                   style={{
-                    borderTop: `3px solid ${inactive ? "#555" : conf.color}`,
-                    opacity: inactive ? 0.55 : 1,
+                    background: club.panel,
+                    border: `1px solid ${club.panelBorder}`,
+                    borderRadius: 14,
+                    overflow: "hidden",
+                    opacity: inactive ? 0.5 : 1,
                     height: "100%",
                     cursor: !inactive ? "pointer" : "default",
                   }}
@@ -166,58 +184,68 @@ const TournamentsPage: React.FC = () => {
                     }
                   }}
                 >
-                  {/* Row 1: status badge + action menu */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                    <Tag
-                      style={{
-                        margin: 0,
-                        fontSize: 11,
-                        padding: "1px 8px",
-                        borderRadius: 20,
-                        background: inactive ? "rgba(128,128,128,0.1)" : `${conf.color}18`,
-                        border: `1px solid ${inactive ? "#555" : conf.color}55`,
-                        color: inactive ? "#888" : conf.color,
-                        fontWeight: 500,
-                      }}
+                  {/* Status accent strip */}
+                  <div style={{ height: 3, background: inactive ? "#555" : conf.color }} />
+
+                  <div style={{ padding: 16 }}>
+                    {/* Row 1: status badge + action menu */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: 0.4,
+                          textTransform: "uppercase",
+                          lineHeight: "18px",
+                          padding: "2px 10px",
+                          borderRadius: 999,
+                          background: `${conf.color}22`,
+                          border: `1px solid ${conf.color}59`,
+                          color: conf.color,
+                        }}
+                      >
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: conf.color }} />
+                        {conf.label}
+                      </span>
+                      {t.tournamentDate && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <TournamentsActionDropdown
+                            record={t}
+                            onMenuClick={handleMenuClick}
+                            tournamentId={t.id}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Row 2: tournament name */}
+                    <Text
+                      strong
+                      ellipsis={{ tooltip: t.name }}
+                      style={{ fontSize: 16, display: "block", lineHeight: 1.3, marginBottom: 14, color: club.textPrimary }}
                     >
-                      {conf.label}
-                    </Tag>
-                    {t.tournamentDate && (
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <TournamentsActionDropdown
-                          record={t}
-                          onMenuClick={handleMenuClick}
-                          tournamentId={t.id}
-                        />
-                      </div>
-                    )}
+                      {t.name}
+                    </Text>
+
+                    {/* Row 3: date + venue */}
+                    <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                      <Space size={8}>
+                        <CalendarOutlined style={{ color: club.gold, fontSize: 13, flexShrink: 0 }} />
+                        <Text style={{ fontSize: 12.5, color: club.textMuted, ...scoreNum }}>
+                          {t.tournamentDate ? showBdLocalTime(t.tournamentDate) : "—"}
+                        </Text>
+                      </Space>
+                      <Space size={8}>
+                        <EnvironmentOutlined style={{ color: club.gold, fontSize: 13, flexShrink: 0 }} />
+                        <Text style={{ fontSize: 12.5, color: club.textMuted }} ellipsis={{ tooltip: t.venueName }}>
+                          {t.venueName || "—"}
+                        </Text>
+                      </Space>
+                    </Space>
                   </div>
-
-                  {/* Row 2: tournament name */}
-                  <Text
-                    strong
-                    ellipsis={{ tooltip: t.name }}
-                    style={{ fontSize: 15, display: "block", lineHeight: 1.3, marginBottom: 12 }}
-                  >
-                    {t.name}
-                  </Text>
-
-                  {/* Row 3: date + venue */}
-                  <Space direction="vertical" size={6} style={{ width: "100%" }}>
-                    <Space size={7}>
-                      <CalendarOutlined style={{ color: conf.color, fontSize: 12, flexShrink: 0 }} />
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        {t.tournamentDate ? showBdLocalTime(t.tournamentDate) : "—"}
-                      </Text>
-                    </Space>
-                    <Space size={7}>
-                      <EnvironmentOutlined style={{ color: "#52c41a", fontSize: 12, flexShrink: 0 }} />
-                      <Text type="secondary" style={{ fontSize: 12 }} ellipsis={{ tooltip: t.venueName }}>
-                        {t.venueName || "—"}
-                      </Text>
-                    </Space>
-                  </Space>
-
                 </Card>
               </Col>
             );
