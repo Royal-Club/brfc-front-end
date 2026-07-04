@@ -21,7 +21,10 @@ import {
   Avatar,
   Form,
   Select,
-  Segmented
+  Segmented,
+  Pagination,
+  Spin,
+  Empty
 } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import IPlayer from "../../interfaces/IPlayer";
@@ -33,7 +36,8 @@ import { ColumnsType } from "antd/es/table";
 import { useResetPlayerPasswordMutation } from "../../state/features/auth/authSlice";
 import { useGetRolesQuery, useAssignRolesMutation } from "../../state/features/roles/rolesSlice";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
-import { club, kicker, scoreNum } from "../../theme/clubTheme";
+import { club, scoreNum } from "../../theme/clubTheme";
+import useIsMobile from "../../hooks/useIsMobile";
 import "./Players.css";
 
 const { Title, Text } = Typography;
@@ -54,6 +58,9 @@ function Players() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredPlayers, setFilteredPlayers] = useState<IPlayer[]>([]);
   const [activeTabKey, setActiveTabKey] = useState("all");
+  const isMobile = useIsMobile(576);
+  const [mobilePage, setMobilePage] = useState(1);
+  const mobilePageSize = 8;
 
   // Add these new states for password form validation
   const [passwordError, setPasswordError] = useState("");
@@ -422,12 +429,134 @@ function Players() {
     </span>
   );
 
+  const isAdmin = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
+  const isSuperAdmin = loginInfo.roles.includes("SUPERADMIN");
+
+  // Mobile-only list: each player as a stacked card so contact info, roles and
+  // actions are all visible without the horizontal table scroll.
+  const renderMobilePlayers = () => {
+    if (isLoading) {
+      return (
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <Spin />
+        </div>
+      );
+    }
+    if (!filteredPlayers.length) {
+      return <Empty description="No players found" />;
+    }
+    const start = (mobilePage - 1) * mobilePageSize;
+    const paged = filteredPlayers.slice(start, start + mobilePageSize);
+    return (
+      <>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {paged.map((record) => (
+            <div key={record.id} className="brfc-player-mcard">
+              <div className="brfc-player-mcard__top">
+                <Avatar
+                  src={toAbsolutePlayerPhotoUrl(record.photoUrl) || undefined}
+                  size={44}
+                  style={{
+                    flexShrink: 0,
+                    backgroundColor: record.active ? club.navySoft : "rgba(128,128,128,0.15)",
+                    color: club.goldSoft,
+                    border: `2px solid ${record.active ? club.gold : "rgba(128,128,128,0.35)"}`,
+                    fontWeight: 600,
+                  }}
+                >
+                  {getInitials(record.name || "")}
+                </Avatar>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Text strong style={{ display: "block", lineHeight: 1.3 }} ellipsis>
+                    {record.name}
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 12 }} ellipsis>
+                    {record.email}
+                  </Text>
+                </div>
+                <span className={`brfc-status brfc-status--${record.active ? "active" : "inactive"}`}>
+                  <span className="brfc-status__dot" />
+                  {record.active ? "Active" : "Inactive"}
+                </span>
+              </div>
+
+              <div className="brfc-player-mcard__meta">
+                <Space size={7}>
+                  <SkypeOutlined style={{ color: club.gold, fontSize: 13 }} />
+                  <Text type="secondary" style={{ fontSize: 13 }}>{record.skypeId || "—"}</Text>
+                </Space>
+                <Space size={7}>
+                  <PhoneOutlined style={{ color: club.gold, fontSize: 13 }} />
+                  <Text type="secondary" style={{ fontSize: 13, ...scoreNum }}>{record.mobileNo || "—"}</Text>
+                </Space>
+                <Space size={7}>
+                  <span style={{ color: club.gold, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4 }}>ID</span>
+                  <span className="brfc-empid">{record.employeeId || "—"}</span>
+                </Space>
+              </div>
+
+              <Space size={[4, 4]} wrap style={{ marginTop: 8 }}>
+                {record.roles && record.roles.length > 0 ? (
+                  record.roles.map((role) => (
+                    <span key={role.id} className="brfc-role-tag">{role.name}</span>
+                  ))
+                ) : (
+                  <span className="brfc-role-tag brfc-role-tag--empty">No Roles</span>
+                )}
+              </Space>
+
+              {isAdmin && (
+                <Space size={6} wrap style={{ marginTop: 10 }}>
+                  <Button
+                    size="small"
+                    icon={<EditOutlined />}
+                    className="brfc-act-btn brfc-act-btn--gold"
+                    onClick={() => navigate(`/players/${record.id}`)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="small"
+                    icon={<LockOutlined />}
+                    className="brfc-act-btn"
+                    onClick={() => showPasswordModal(record)}
+                  >
+                    Reset
+                  </Button>
+                  {isSuperAdmin && (
+                    <Button
+                      size="small"
+                      icon={<SafetyCertificateOutlined />}
+                      className="brfc-act-btn brfc-act-btn--green"
+                      onClick={() => showRolesModal(record)}
+                    >
+                      Set Roles
+                    </Button>
+                  )}
+                </Space>
+              )}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+          <Pagination
+            current={mobilePage}
+            pageSize={mobilePageSize}
+            total={filteredPlayers.length}
+            size="small"
+            showLessItems
+            onChange={setMobilePage}
+          />
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="player-list-card">
       {/* Page header */}
       <div className="player-header-row">
         <div style={{ minWidth: 0 }}>
-          <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>Squad Registry</div>
           <Title level={3} className="player-title" style={{ margin: 0, lineHeight: 1.1 }}>Players</Title>
         </div>
         <div className="player-search-actions">
@@ -470,34 +599,38 @@ function Players() {
         />
       </div>
 
-      <Table
-        loading={isLoading}
-        dataSource={filteredPlayers}
-        columns={playersColumn}
-        pagination={{
-          showTotal: (total, range) => window.innerWidth < 768 ? `${range[0]}-${range[1]} of ${total}` : `Total ${total} records`,
-          pageSize: 9,
-          showSizeChanger: window.innerWidth >= 768,
-          pageSizeOptions: ['10', '20', '50'],
-          responsive: true,
-          showLessItems: window.innerWidth < 768,
-          size: window.innerWidth < 768 ? 'small' : 'default'
-        }}
-        rowKey="id"
-        scroll={{ x: "max-content" }}
-        style={{
-          borderRadius: 10,
-          overflow: 'hidden'
-        }}
-        size="small"
-        className="compact-table brfc-players-table"
-      />
+      {isMobile ? (
+        renderMobilePlayers()
+      ) : (
+        <Table
+          loading={isLoading}
+          dataSource={filteredPlayers}
+          columns={playersColumn}
+          pagination={{
+            showTotal: (total, range) => window.innerWidth < 768 ? `${range[0]}-${range[1]} of ${total}` : `Total ${total} records`,
+            pageSize: 9,
+            showSizeChanger: window.innerWidth >= 768,
+            pageSizeOptions: ['10', '20', '50'],
+            responsive: true,
+            showLessItems: window.innerWidth < 768,
+            size: window.innerWidth < 768 ? 'small' : 'default'
+          }}
+          rowKey="id"
+          scroll={{ x: "max-content" }}
+          style={{
+            borderRadius: 10,
+            overflow: 'hidden'
+          }}
+          size="small"
+          className="compact-table brfc-players-table"
+        />
+      )}
 
       {/* Updated Reset Password modal */}
       <Modal
         title={
           <Space align="center">
-            <LockTwoTone twoToneColor="#1890ff" style={{ fontSize: 20 }} />
+            <LockTwoTone twoToneColor="#c6a15b" style={{ fontSize: 20 }} />
             <span style={{ fontSize: 16 }}>Reset Password for <strong>{selectedPlayer?.name}</strong></span>
           </Space>
         }

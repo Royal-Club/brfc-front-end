@@ -181,7 +181,7 @@ function AcBillPayment() {
         ),
         filterIcon: (filtered: any) => (
             <SearchOutlined
-                style={{ color: filtered ? "#1890ff" : undefined }}
+                style={{ color: filtered ? "#c6a15b" : undefined }}
             />
         ),
         onFilter: (value: any, record: any) =>

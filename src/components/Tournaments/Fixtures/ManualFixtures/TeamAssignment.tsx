@@ -631,7 +631,7 @@ export default function TeamAssignment({
     <Modal
       title={
         <Space>
-          <UserAddOutlined style={{ fontSize: 20, color: "#1890ff" }} />
+          <UserAddOutlined style={{ fontSize: 20, color: "#c6a15b" }} />
           <span style={{ fontSize: 18, fontWeight: 600 }}>
             Assign Teams to {isDirectKnockout ? (round?.roundName || "Round") : (group?.groupName || "Group")}
           </span>
@@ -911,7 +911,7 @@ export default function TeamAssignment({
                     <Card
                       size="small"
                       style={{
-                        borderColor: "#1890ff",
+                        borderColor: "#c6a15b",
                       }}
                     >
                       <Space>
@@ -971,7 +971,7 @@ export default function TeamAssignment({
                           isDisabled
                             ? "#d9d9d9"
                             : selectedTeamIds.includes(team.teamId)
-                            ? "#1890ff"
+                            ? "#c6a15b"
                             : "#d9d9d9"
                         }`,
                         borderRadius: 6,

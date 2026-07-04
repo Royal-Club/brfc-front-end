@@ -29,6 +29,30 @@
   background: linear-gradient(90deg, #C6A15B 0%, rgba(198, 161, 91, 0) 60%);
 }
 
+/* Mobile-only player card (shown below 576px instead of the table) */
+.brfc-player-mcard {
+  border: 1px solid rgba(198, 161, 91, 0.22);
+  border-left: 3px solid #c6a15b;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: rgba(198, 161, 91, 0.04);
+}
+
+.brfc-player-mcard__top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brfc-player-mcard__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(198, 161, 91, 0.15);
+}
+
 .player-search-actions {
   display: flex;
   gap: 8px;

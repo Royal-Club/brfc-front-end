@@ -169,7 +169,7 @@ function GroupNode({ data, selected }: GroupNodeProps) {
                         {team.isPlaceholder ? (
                           <ClockCircleOutlined style={{ color: "#faad14", fontSize: 12 }} />
                         ) : (
-                          <TeamOutlined style={{ color: "#1890ff", fontSize: 12 }} />
+                          <TeamOutlined style={{ color: "#c6a15b", fontSize: 12 }} />
                         )}
                         <Text style={{ fontSize: 11 }}>
                           {team.teamName || team.placeholderName || "TBD"}

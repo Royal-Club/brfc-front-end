@@ -72,7 +72,7 @@
 }
 
 :global(.ant-switch-checked) {
-  background: linear-gradient(135deg, #1890ff, #096dd9) !important;
+  background: linear-gradient(135deg, #c6a15b, #a8863f) !important;
 }
 
 :global(.ant-switch:not(.ant-switch-checked)) {

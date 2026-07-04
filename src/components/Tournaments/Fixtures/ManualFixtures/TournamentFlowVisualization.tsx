@@ -387,9 +387,9 @@ export default function TournamentFlowVisualization({
           targetHandle: "left", // Connect to left side of current round
           type: "smoothstep",
           animated: true,
-          style: { stroke: "#1890ff", strokeWidth: 3 }, // Make edges larger
+          style: { stroke: "#c6a15b", strokeWidth: 3 }, // Make edges larger
           label: "Advance",
-          labelStyle: { fontSize: 12, fill: "#1890ff" },
+          labelStyle: { fontSize: 12, fill: "#c6a15b" },
         });
       }
     });

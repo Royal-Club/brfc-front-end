@@ -169,10 +169,10 @@ export default function DirectKnockoutTeamManagement({
                       style={{
                         cursor: "pointer",
                         backgroundColor: selectedTeams.includes(team.teamId)
-                          ? "#e6f7ff"
+                          ? "rgba(198, 161, 91, 0.14)"
                           : "transparent",
                         border: selectedTeams.includes(team.teamId)
-                          ? "1px solid #1890ff"
+                          ? "1px solid #c6a15b"
                           : "1px solid transparent",
                         borderRadius: 4,
                         marginBottom: 4,
@@ -259,9 +259,9 @@ export default function DirectKnockoutTeamManagement({
                               style={{
                                 ...provided.draggableProps.style,
                                 marginBottom: 8,
-                                backgroundColor: snapshot.isDragging ? "#e6f7ff" : "#fafafa",
+                                backgroundColor: snapshot.isDragging ? "rgba(198, 161, 91, 0.14)" : "#fafafa",
                                 border: snapshot.isDragging
-                                  ? "2px dashed #1890ff"
+                                  ? "2px dashed #c6a15b"
                                   : "1px solid #d9d9d9",
                                 borderRadius: 4,
                                 padding: "12px 16px",

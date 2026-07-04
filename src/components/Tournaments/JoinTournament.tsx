@@ -111,7 +111,7 @@ export default function JoinTournament() {
         return (
           <Space size={8}>
             <Avatar size={30} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
-              style={{ backgroundColor: photoUrl ? undefined : (isMe ? token.colorPrimary : "#1890ff"), flexShrink: 0 }} />
+              style={{ backgroundColor: photoUrl ? undefined : (isMe ? token.colorPrimary : "#14213d"), flexShrink: 0 }} />
             <Space size={4}>
               <Text strong style={{ fontSize: 14 }}>{r.playerName}</Text>
               {isMe      && <StarFilled style={{ color: "#faad14", fontSize: 11 }} />}
@@ -526,7 +526,7 @@ export default function JoinTournament() {
                     {/* Identity + status */}
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                       <Avatar size={36} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
-                        style={{ backgroundColor: photoUrl ? undefined : (isMe ? token.colorPrimary : "#1890ff"), flexShrink: 0 }} />
+                        style={{ backgroundColor: photoUrl ? undefined : (isMe ? token.colorPrimary : "#14213d"), flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <Space size={5} align="center" wrap>
                           <Text strong style={{ fontSize: 14 }}>{r.playerName}</Text>

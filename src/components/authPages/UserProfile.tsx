@@ -46,6 +46,7 @@ import { useGetPlayerStatisticsQuery } from "../../state/features/statistics/sta
 import { showBdLocalTime } from "../../utils/utils";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import useIsMobile from "../../hooks/useIsMobile";
+import { club } from "../../theme/clubTheme";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -385,7 +386,7 @@ export default function UserProfile() {
                         mode="left"
                         style={{ marginTop: 20 }}
                         items={goalkeepingHistoryData.content.map((record, index) => ({
-                            dot: <TrophyOutlined style={{ color: "#faad14" }} />,
+                            dot: <TrophyOutlined style={{ color: club.gold }} />,
                             children: (
                                 <div
                                     style={{
@@ -434,11 +435,11 @@ export default function UserProfile() {
                         padding: isMobile ? "24px 16px 28px" : "32px 32px",
                         boxShadow: "inset 0 -50px 90px rgba(0,0,0,0.38)",
                         background: `
-                            radial-gradient(130% 100% at 50% -25%, rgba(255,255,255,0.09), transparent 55%),
-                            radial-gradient(circle at 16% 28%, rgba(105, 192, 255, 0.28), transparent 45%),
-                            radial-gradient(circle at 88% 115%, rgba(250, 173, 20, 0.16), transparent 45%),
+                            radial-gradient(130% 100% at 50% -25%, rgba(255,255,255,0.08), transparent 55%),
+                            radial-gradient(circle at 16% 28%, rgba(198, 161, 91, 0.26), transparent 45%),
+                            radial-gradient(circle at 88% 115%, rgba(198, 161, 91, 0.14), transparent 45%),
                             repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 14px),
-                            linear-gradient(120deg, #0a1c26 0%, #123240 45%, #1c4a59 100%)
+                            linear-gradient(120deg, ${club.navySoft} 0%, ${club.navy} 55%, ${club.navyDeep} 100%)
                         `,
                     }}
                 >
@@ -466,8 +467,7 @@ export default function UserProfile() {
                             right: 0,
                             bottom: 0,
                             height: 3,
-                            background:
-                                "linear-gradient(90deg, #faad14 0%, #69c0ff 45%, transparent 90%)",
+                            background: `linear-gradient(90deg, ${club.gold} 0%, ${club.goldSoft} 45%, transparent 90%)`,
                         }}
                     />
 
@@ -487,7 +487,7 @@ export default function UserProfile() {
                                 position: "relative",
                                 padding: 3,
                                 borderRadius: "50%",
-                                background: "linear-gradient(135deg, #faad14, #69c0ff)",
+                                background: `linear-gradient(135deg, ${club.gold}, ${club.goldSoft})`,
                                 boxShadow: "0 10px 30px rgba(0,0,0,0.45)",
                                 flexShrink: 0,
                             }}
@@ -509,7 +509,7 @@ export default function UserProfile() {
                                         height: 18,
                                         borderRadius: "50%",
                                         background: "#52c41a",
-                                        border: "3px solid #0b1f2a",
+                                        border: `3px solid ${club.navyDeep}`,
                                     }}
                                 />
                             )}
@@ -555,8 +555,8 @@ export default function UserProfile() {
                                         style={{
                                             padding: "3px 12px",
                                             borderRadius: 20,
-                                            background: "#faad14",
-                                            color: "#1f1f1f",
+                                            background: club.gold,
+                                            color: club.navyDeep,
                                             fontWeight: 700,
                                             fontSize: 12,
                                             letterSpacing: 0.3,
@@ -591,10 +591,10 @@ export default function UserProfile() {
                             flexWrap: "wrap",
                             width: isMobile ? "100%" : undefined,
                         }}>
-                            {heroStat("Matches", myStats?.matchesPlayed ?? 0, "#ffffff")}
-                            {heroStat("Goals", myStats?.goalsScored ?? 0, "#95de64")}
-                            {heroStat("Assists", myStats?.assists ?? 0, "#69c0ff")}
-                            {heroStat("G+A", myStats?.goalsAndAssists ?? 0, "#d3adf7")}
+                            {heroStat("Matches", myStats?.matchesPlayed ?? 0, club.gold)}
+                            {heroStat("Goals", myStats?.goalsScored ?? 0, club.pitch)}
+                            {heroStat("Assists", myStats?.assists ?? 0, club.goldSoft)}
+                            {heroStat("G+A", myStats?.goalsAndAssists ?? 0, "#ffffff")}
                         </div>
                     </div>
                 </div>

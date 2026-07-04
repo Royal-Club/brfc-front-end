@@ -1,12 +1,13 @@
-import { Table, Select, Button, Space, Typography, Card, Avatar, theme } from "antd";
+import { Table, Select, Button, Space, Typography, Card, Avatar, theme, Pagination, Spin, Empty } from "antd";
 import { useMemo, useState } from "react";
+import useIsMobile from "../../hooks/useIsMobile";
 import { useGetPlayerStatisticsQuery } from "../../state/features/statistics/statisticsSlice";
 import { useGetTournamentSessionsQuery, useGetTournamentsByYearQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { useGetPlayersQuery } from "../../state/features/player/playerSlice";
 import type { ColumnsType } from "antd/es/table";
 import { IPlayerStatisticsData } from "../../state/features/statistics/statisticsTypes";
 import { API_URL } from "../../settings";
-import { club, kicker, scoreNum } from "../../theme/clubTheme";
+import { club, scoreNum } from "../../theme/clubTheme";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -17,6 +18,7 @@ const PlayerStatistics: React.FC = () => {
     const [position, setPosition] = useState<string | undefined>(undefined);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(10);
+    const isMobile = useIsMobile(576);
 
     const {
         token: {
@@ -70,6 +72,139 @@ const PlayerStatistics: React.FC = () => {
                 {value}
             </span>
         );
+
+    // Compact stat tile used by the mobile card view — label above a bold,
+    // color-accented number (dimmed at zero, matching the desktop cells).
+    const statChip = (label: string, value: number, color?: string) => (
+        <div
+            style={{
+                textAlign: "center",
+                padding: "8px 4px",
+                borderRadius: 8,
+                background: colorFillTertiary,
+                border: `1px solid ${colorBorderSecondary}`,
+            }}
+        >
+            <div
+                style={{
+                    fontSize: 17,
+                    fontWeight: 700,
+                    lineHeight: 1.1,
+                    color: value === 0 ? colorTextSecondary : color || colorText,
+                    ...scoreNum,
+                }}
+            >
+                {value}
+            </div>
+            <div
+                style={{
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                    color: colorTextSecondary,
+                    marginTop: 2,
+                }}
+            >
+                {label}
+            </div>
+        </div>
+    );
+
+    // Mobile-only leaderboard: one stacked card per player so every stat is
+    // visible without the horizontal table scroll.
+    const renderMobileCards = () => {
+        const rows = data?.content || [];
+        if (isLoading) {
+            return (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                    <Spin />
+                </div>
+            );
+        }
+        if (rows.length === 0) {
+            return <Empty description="No player statistics found" />;
+        }
+        const start = (currentPage - 1) * pageSize;
+        const paged = rows.slice(start, start + pageSize);
+        return (
+            <>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {paged.map((record, idx) => {
+                        const initial = record.playerName?.charAt(0)?.toUpperCase() || "?";
+                        const s = record.statistics;
+                        return (
+                            <div
+                                key={record.playerId}
+                                style={{
+                                    border: `1px solid ${colorBorderSecondary}`,
+                                    borderRadius: 12,
+                                    padding: 12,
+                                    background: colorFillTertiary,
+                                    borderLeft: `3px solid ${club.gold}`,
+                                }}
+                            >
+                                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                                    <div
+                                        style={{
+                                            ...scoreNum,
+                                            fontSize: 13,
+                                            fontWeight: 700,
+                                            color: club.goldSoft,
+                                            minWidth: 22,
+                                        }}
+                                    >
+                                        #{start + idx + 1}
+                                    </div>
+                                    <Avatar
+                                        src={photoById[record.playerId]}
+                                        size={44}
+                                        style={{
+                                            flexShrink: 0,
+                                            backgroundColor: club.navySoft,
+                                            color: club.goldSoft,
+                                            border: `2px solid ${club.gold}`,
+                                            fontWeight: 700,
+                                        }}
+                                    >
+                                        {initial}
+                                    </Avatar>
+                                    <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                                        <Text strong style={{ fontSize: 14 }} ellipsis>
+                                            {record.playerName}
+                                        </Text>
+                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                            {record.position || "—"}
+                                        </Text>
+                                    </div>
+                                </div>
+                                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                                    {statChip("Matches", s.matchesPlayed)}
+                                    {statChip("Goals", s.goalsScored, colorSuccess)}
+                                    {statChip("Assists", s.assists, colorInfo)}
+                                    {statChip("G+A", s.goalsAndAssists, club.gold)}
+                                    {statChip("Yellow", s.yellowCards, colorWarning)}
+                                    {statChip("Red", s.redCards, colorError)}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+                    <Pagination
+                        current={currentPage}
+                        pageSize={pageSize}
+                        total={rows.length}
+                        size="small"
+                        showSizeChanger
+                        onChange={(page, newPageSize) => {
+                            setCurrentPage(page);
+                            if (newPageSize !== pageSize) setPageSize(newPageSize);
+                        }}
+                    />
+                </div>
+            </>
+        );
+    };
 
     const columns: ColumnsType<IPlayerStatisticsData> = [
         {
@@ -173,7 +308,6 @@ const PlayerStatistics: React.FC = () => {
     return (
         <Card style={{ margin: 16 }}>
             <div style={{ marginBottom: 16 }}>
-                <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>Season Leaderboard</div>
                 <Title level={3} style={{ margin: 0, lineHeight: 1.1 }}>
                     Player Statistics
                 </Title>
@@ -260,6 +394,9 @@ const PlayerStatistics: React.FC = () => {
                 </Space>
             </div>
 
+            {isMobile ? (
+                renderMobileCards()
+            ) : (
             <div className="player-stats-table">
                 {/* Zebra rows for readability + remove AntD's active-sort column
                     tint so columns don't look randomly banded. */}
@@ -319,6 +456,7 @@ const PlayerStatistics: React.FC = () => {
                     size="middle"
                 />
             </div>
+            )}
         </Card>
     );
 };

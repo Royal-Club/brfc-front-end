@@ -37,10 +37,10 @@ function TeamNode({ data, selected }: TeamNodeProps) {
               ? "2px dashed #faad14"
               : "1px dashed #faad14"
             : selected
-            ? "2px solid #1890ff"
+            ? "2px solid #c6a15b"
             : "1px solid #d9d9d9",
           borderRadius: 6,
-          boxShadow: selected ? "0 3px 10px rgba(24, 144, 255, 0.3)" : "0 1px 4px rgba(0,0,0,0.1)",
+          boxShadow: selected ? "0 3px 10px rgba(198, 161, 91, 0.35)" : "0 1px 4px rgba(0,0,0,0.1)",
           cursor: "pointer",
           backgroundColor: isPlaceholder ? "#fffbe6" : "#ffffff",
         }}
@@ -52,7 +52,7 @@ function TeamNode({ data, selected }: TeamNodeProps) {
             {isPlaceholder ? (
               <QuestionCircleOutlined style={{ color: "#faad14" }} />
             ) : (
-              <UserOutlined style={{ color: "#1890ff" }} />
+              <UserOutlined style={{ color: "#c6a15b" }} />
             )}
             <Text
               strong={!isPlaceholder}

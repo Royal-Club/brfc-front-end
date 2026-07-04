@@ -247,7 +247,7 @@ export default function RoundManagement({
     <Modal
       title={
         <Space>
-          <TrophyOutlined style={{ fontSize: 20, color: "#1890ff" }} />
+          <TrophyOutlined style={{ fontSize: 20, color: "#c6a15b" }} />
           <span style={{ fontSize: 18, fontWeight: 600 }}>
             {isEditing ? "Edit Round" : "Create New Round"}
           </span>

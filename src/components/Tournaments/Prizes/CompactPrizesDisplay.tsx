@@ -212,7 +212,7 @@ export default function CompactPrizesDisplay({
           <div>
             <Divider orientation="left">
               <Space>
-                <TeamOutlined style={{ color: "#1890ff", fontSize: 20 }} />
+                <TeamOutlined style={{ color: "#c6a15b", fontSize: 20 }} />
                 <Text strong style={{ fontSize: 17, color: token.colorText }}>
                   Team Awards ({teamPrizes.length})
                 </Text>

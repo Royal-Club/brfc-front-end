@@ -98,7 +98,7 @@ export default function TournamentListPanel({
                       ? "rgba(24, 144, 255, 0.12)"
                       : "transparent",
                     borderLeft: isSelected
-                      ? "3px solid #1890ff"
+                      ? "3px solid #c6a15b"
                       : "3px solid transparent",
                     borderBottom: "1px solid rgba(255,255,255,0.06)",
                     transition: "background 0.15s",
@@ -124,7 +124,7 @@ export default function TournamentListPanel({
                         strong={isSelected}
                         style={{
                           fontSize: 13,
-                          color: isSelected ? "#1890ff" : undefined,
+                          color: isSelected ? "#c6a15b" : undefined,
                           wordBreak: "break-word",
                         }}
                       >

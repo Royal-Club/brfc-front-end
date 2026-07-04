@@ -272,7 +272,7 @@ export default function StatisticsTab({ tournamentId, isActive }: StatisticsTabP
         <Avatar
           size="small"
           style={{
-            backgroundColor: index < 3 ? "#52c41a" : "#1890ff",
+            backgroundColor: index < 3 ? "#52c41a" : "#14213d",
             fontWeight: "bold",
           }}
         >
@@ -353,7 +353,7 @@ export default function StatisticsTab({ tournamentId, isActive }: StatisticsTabP
       width: 70,
       align: "center",
       render: (points: number) => (
-        <Text strong style={{ fontSize: 16, color: "#1890ff" }}>
+        <Text strong style={{ fontSize: 16, color: "#c6a15b" }}>
           {points}
         </Text>
       ),

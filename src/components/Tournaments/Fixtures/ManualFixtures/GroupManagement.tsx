@@ -145,7 +145,7 @@ export default function GroupManagement({
     <Modal
       title={
         <Space>
-          <TeamOutlined style={{ fontSize: 20, color: "#1890ff" }} />
+          <TeamOutlined style={{ fontSize: 20, color: "#c6a15b" }} />
           <span style={{ fontSize: 18, fontWeight: 600 }}>
             {isEditing ? "Edit Group" : "Create New Group"}
           </span>

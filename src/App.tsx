@@ -15,6 +15,7 @@ import PasswordResetPage from "./components/authPages/PasswordResetPage";
 import { useSelector } from "react-redux";
 import { selectResetPassword } from "./state/slices/loginInfoSlice";
 import AppFooter from "./components/CommonAtoms/AppFooter";
+import { club } from "./theme/clubTheme";
 
 function App() {
     const [collapsed, setCollapsed] = useState(false);
@@ -106,8 +107,13 @@ function App() {
                     ? theme.darkAlgorithm
                     : theme.defaultAlgorithm,
                 token: {
-                    // Basic colors
-                    colorPrimary: isDarkMode ? "#1890ff" : "#1890ff",
+                    // Basic colors — club brand primary (champagne gold reads on the
+                    // dark UI, deep navy reads on the light UI). Text on solid brand
+                    // fills flips so gold buttons get dark text and navy buttons white.
+                    colorPrimary: isDarkMode ? club.gold : club.navy,
+                    colorTextLightSolid: isDarkMode ? club.navyDeep : "#ffffff",
+                    colorLink: isDarkMode ? club.goldSoft : club.navy,
+                    colorLinkHover: isDarkMode ? club.gold : club.navySoft,
                     colorBgContainer: isDarkMode ? "#141414" : "#ffffff",
                     colorText: isDarkMode ? "#ffffff" : "#000000",
                     colorTextSecondary: isDarkMode ? "#a6a6a6" : "#595959",
@@ -135,15 +141,29 @@ function App() {
                         colorText: isDarkMode ? "#ffffff" : "#000000",
                     },
                     Menu: {
-                        colorItemBg: isDarkMode ? "#141414" : "#ffffff",
-                        colorSubItemBg: isDarkMode ? "#000000" : "#fafafa",
-                        colorItemBgActive: isDarkMode ? "#177ddc" : "#e6f7ff",
-                        colorItemBgHover: isDarkMode ? "#177ddc" : "#f5f5f5",
+                        // Dark sidebar — club navy panel with clearly readable
+                        // light text and a gold "selected" pill (navy text on gold).
+                        darkItemBg: club.navyDeep,
+                        darkSubMenuItemBg: "#0A1526",
+                        darkPopupBg: club.navy,
+                        darkItemColor: "rgba(245, 247, 250, 0.78)",
+                        darkItemHoverColor: "#ffffff",
+                        darkItemHoverBg: "rgba(198, 161, 91, 0.14)",
+                        darkItemSelectedBg: club.gold,
+                        darkItemSelectedColor: club.navyDeep,
+                        darkGroupTitleColor: "rgba(245, 247, 250, 0.45)",
+                        darkItemDisabledColor: "rgba(245, 247, 250, 0.28)",
+                        // Light sidebar counterpart.
+                        itemColor: "rgba(20, 33, 61, 0.85)",
+                        itemHoverColor: club.navy,
+                        itemHoverBg: "rgba(20, 33, 61, 0.06)",
+                        itemSelectedBg: "rgba(198, 161, 91, 0.18)",
+                        itemSelectedColor: club.navy,
                     },
                     Button: {
-                        colorPrimary: isDarkMode ? "#1890ff" : "#1890ff",
-                        colorPrimaryHover: isDarkMode ? "#40a9ff" : "#40a9ff",
-                        colorPrimaryActive: isDarkMode ? "#096dd9" : "#096dd9",
+                        colorPrimary: isDarkMode ? club.gold : club.navy,
+                        colorPrimaryHover: isDarkMode ? club.goldSoft : club.navySoft,
+                        colorPrimaryActive: isDarkMode ? club.gold : club.navyDeep,
                     },
                     Input: {
                         colorBgContainer: isDarkMode ? "#1f1f1f" : "#ffffff",

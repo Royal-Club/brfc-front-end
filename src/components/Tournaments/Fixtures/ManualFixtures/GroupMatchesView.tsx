@@ -245,7 +245,7 @@ export default function GroupMatchesView({
     <Card
       title={
         <Space>
-          <TrophyOutlined style={{ color: "#1890ff" }} />
+          <TrophyOutlined style={{ color: "#c6a15b" }} />
           <span>Matches in {groupName || "Group"}</span>
         </Space>
       }
@@ -289,7 +289,7 @@ export default function GroupMatchesView({
       ) : (
         <>
           <Space style={{ marginBottom: 16, width: "100%" }} wrap>
-            <Badge count={stats.total} showZero color="#1890ff">
+            <Badge count={stats.total} showZero color="#14213d">
               <Tag>Total Matches</Tag>
             </Badge>
             <Badge count={stats.scheduled} showZero color="blue">

@@ -365,7 +365,7 @@ function ResultCard({
                 style={{
                   background:
                     "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
-                  color: "#1890ff",
+                  color: "#14213d",
                   fontWeight: 800,
                   fontSize: 11,
                   flexShrink: 0,
@@ -423,7 +423,7 @@ function ResultCard({
                 style={{
                   background:
                     "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
-                  color: "#1890ff",
+                  color: "#14213d",
                   fontWeight: 800,
                   fontSize: 11,
                   flexShrink: 0,
@@ -471,7 +471,7 @@ function ResultCard({
                   style={{
                     background:
                       "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
-                    color: "#1890ff",
+                    color: "#14213d",
                     fontWeight: 800,
                     fontSize: 24,
                     boxShadow: "0 10px 24px rgba(0,0,0,0.22)",
@@ -532,7 +532,7 @@ function ResultCard({
                   style={{
                     background:
                       "linear-gradient(180deg, #ffffff 0%, #ececec 100%)",
-                    color: "#1890ff",
+                    color: "#14213d",
                     fontWeight: 800,
                     fontSize: 24,
                     boxShadow: "0 10px 24px rgba(0,0,0,0.22)",

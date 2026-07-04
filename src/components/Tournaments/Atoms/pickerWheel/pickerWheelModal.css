@@ -19,7 +19,7 @@
 
 /* Style for checked state */
 .square-radio .ant-radio-checked .ant-radio-inner {
-    border-color: #1890ff !important;
+    border-color: #c6a15b !important;
     background-color: white !important;
 }
 
@@ -31,7 +31,7 @@
     left: 50% !important;
     transform: translate(-00%, -9%) !important;
     font-size: 11px !important;
-    color: #1890ff !important;
+    color: #c6a15b !important;
     border: none !important;
     width: auto !important;
     height: 16px !important;

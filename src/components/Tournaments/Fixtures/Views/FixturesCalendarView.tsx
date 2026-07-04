@@ -138,7 +138,7 @@ export default function FixturesCalendarView({
           {(fixture.matchStatus === "ONGOING" ||
             fixture.matchStatus === "PAUSED" ||
             fixture.matchStatus === "COMPLETED") && (
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#1890ff", marginBottom: 12 }}>
+            <div style={{ fontSize: 24, fontWeight: "bold", color: "#c6a15b", marginBottom: 12 }}>
               {fixture.homeTeamScore} - {fixture.awayTeamScore}
             </div>
           )}

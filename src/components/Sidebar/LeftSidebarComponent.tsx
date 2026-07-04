@@ -220,6 +220,8 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
           left: isMobile && collapsed ? '-260px' : '0',
           zIndex: isMobile ? 1000 : 'auto',
           transition: isMobile ? 'left 0.2s ease-in-out' : 'all 0.2s ease-in-out',
+          // Match the menu's navy so logo + nav + footer read as one panel.
+          background: isDarkMode ? "#0E1830" : undefined,
         }}
         trigger={null}
         collapsible
