@@ -43,8 +43,11 @@ import axiosApi from "../../state/api/axiosBase";
 import { usePresignPlayerPhotoUploadMutation } from "../../state/features/player/playerSlice";
 import { validatePlayerPhoto, compressPlayerPhoto, toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import { normalizeErrorMessage } from "../../utils/normalizeErrorMessage";
+import { club } from "../../theme/clubTheme";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+
+const goldIcon = { color: club.gold };
 
 function Player() {
     const loginInfo = useSelector(selectLoginInfo);
@@ -257,10 +260,22 @@ function Player() {
                     ]}
                 />
                 
-                <Title level={2} style={{ marginBottom: 24 }}>
-                    {id ? 'Edit Player Information' : 'Create New Player'}
-                </Title>
-                
+                <div style={{ marginBottom: 8 }}>
+                    <Title level={2} style={{ margin: 0, lineHeight: 1.1 }}>
+                        {id ? 'Edit Player Information' : 'Create New Player'}
+                    </Title>
+                </div>
+
+                {/* Gold divider under the header */}
+                <div
+                    style={{
+                        height: 2,
+                        borderRadius: 2,
+                        marginBottom: 20,
+                        background: `linear-gradient(90deg, ${club.gold} 0%, rgba(198,161,91,0) 60%)`,
+                    }}
+                />
+
                 <Form
                     layout="vertical"
                     name="realEstateConfigForm"
@@ -272,25 +287,42 @@ function Player() {
                 >
                     <Row gutter={[16, 16]} style={{ margin: 0 }}>
                         <Col xs={24}>
-                            <Card 
+                            <Card
                                 title={<div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <TeamOutlined style={{ marginRight: 8, fontSize: '18px' }} />
+                                    <TeamOutlined style={{ marginRight: 8, fontSize: '18px', color: club.gold }} />
                                     <span>Player Information</span>
                                 </div>}
                                 bordered={true}
-                                style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
+                                styles={{ header: { borderBottom: `1px solid ${club.panelBorder}` } }}
+                                style={{ borderRadius: 14, overflow: 'hidden', borderTop: `3px solid ${club.gold}`, boxShadow: '0 2px 12px rgba(0,0,0,0.18)' }}
                             >
                                 <Spin spinning={playerLoading}>
                                     <Row gutter={[16, 16]}>
                                         {/* Photo upload section */}
                                         <Col xs={24} style={{ marginBottom: 8 }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                                            <div style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 16,
+                                                padding: "14px 16px",
+                                                borderRadius: 12,
+                                                border: `1px solid ${club.panelBorder}`,
+                                                background: "rgba(198, 161, 91, 0.05)",
+                                                flexWrap: "wrap",
+                                            }}>
                                                 <Avatar
                                                     size={80}
                                                     src={photoPreviewUrl || undefined}
                                                     icon={!photoPreviewUrl ? <UserOutlined /> : undefined}
-                                                    style={{ border: "2px solid #d9d9d9", flexShrink: 0 }}
+                                                    style={{
+                                                        border: `2px solid ${club.gold}`,
+                                                        color: club.goldSoft,
+                                                        backgroundColor: club.navySoft,
+                                                        flexShrink: 0,
+                                                    }}
                                                 />
+                                                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                                                 <Upload
                                                     accept="image/jpeg,image/png,image/webp"
                                                     showUploadList={false}
@@ -338,6 +370,11 @@ function Player() {
                                                         Remove
                                                     </Button>
                                                 )}
+                                                </div>
+                                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                                    JPG, PNG or WebP · square image recommended
+                                                </Text>
+                                                </div>
                                             </div>
                                         </Col>
                                         <Col md={12} lg={8}>
@@ -346,10 +383,10 @@ function Player() {
                                                 label="Name"
                                                 rules={[requiredFieldRule("Name")]}
                                             >
-                                                <Input 
-                                                    prefix={<UserOutlined style={{ color: '#bfbfbf' }} />} 
-                                                    placeholder="Player's full name" 
-                                                    size="middle"
+                                                <Input
+                                                    prefix={<UserOutlined style={goldIcon} />}
+                                                    placeholder="Player's full name"
+                                                    size="large"
                                                 />
                                             </Form.Item>
                                         </Col>
@@ -366,7 +403,7 @@ function Player() {
                                                 ]}
                                             >
                                                 <Input
-                                                    prefix={<MailOutlined style={{ color: '#bfbfbf' }} />}
+                                                    prefix={<MailOutlined style={goldIcon} />}
                                                     placeholder="Email address"
                                                     size="large"
                                                 />
@@ -382,7 +419,7 @@ function Player() {
                                                     style={{ width: "100%" }}
                                                     placeholder="Employee ID number"
                                                     size="large"
-                                                    prefix={<IdcardOutlined style={{ color: '#bfbfbf' }} />}
+                                                    prefix={<IdcardOutlined style={goldIcon} />}
                                                 />
                                             </Form.Item>
                                         </Col>
@@ -393,7 +430,7 @@ function Player() {
                                                 rules={[requiredFieldRule("Skype Id")]}
                                             >
                                                 <Input 
-                                                    prefix={<SkypeOutlined style={{ color: '#bfbfbf' }} />} 
+                                                    prefix={<SkypeOutlined style={goldIcon} />} 
                                                     placeholder="Skype username" 
                                                     size="large"
                                                 />
@@ -405,7 +442,7 @@ function Player() {
                                                 label="Mobile Number"
                                             >
                                                 <Input 
-                                                    prefix={<PhoneOutlined style={{ color: '#bfbfbf' }} />} 
+                                                    prefix={<PhoneOutlined style={goldIcon} />} 
                                                     placeholder="Contact phone number" 
                                                     size="large"
                                                 />
@@ -418,10 +455,10 @@ function Player() {
                                                 rules={[requiredFieldRule("Playing Position")]}
                                                 initialValue={"UNASSIGNED"}
                                             >
-                                                <Select 
+                                                <Select
                                                     placeholder="Select a position"
                                                     size="large"
-                                                    suffixIcon={<EnvironmentOutlined />}
+                                                    suffixIcon={<EnvironmentOutlined style={goldIcon} />}
                                                 >
                                                     {footballPositions.map(
                                                         (position) => (
@@ -484,7 +521,15 @@ function Player() {
                                                                 type="primary"
                                                                 htmlType="submit"
                                                                 size="large"
-                                                                style={{ minWidth: 120 }}
+                                                                style={{
+                                                                    minWidth: 120,
+                                                                    fontWeight: 700,
+                                                                    letterSpacing: 0.3,
+                                                                    background: `linear-gradient(135deg, ${club.goldSoft} 0%, ${club.gold} 100%)`,
+                                                                    border: "none",
+                                                                    color: club.navyDeep,
+                                                                    boxShadow: "0 2px 10px rgba(198, 161, 91, 0.35)",
+                                                                }}
                                                             >
                                                                 {formSubmitButtonText}
                                                             </Button>
