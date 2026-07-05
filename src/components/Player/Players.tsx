@@ -291,6 +291,12 @@ function Players() {
     return password && confirmPassword && password === confirmPassword;
   };
 
+  // Treat empty strings, whitespace and placeholder dashes as "no data"
+  const hasText = (value?: string | null) => {
+    const trimmed = value?.trim();
+    return !!trimmed && trimmed !== "—" && trimmed !== "-";
+  };
+
   // Get initials from player name for avatar
   const getInitials = (name: string) => {
     if (!name) return "U";
@@ -329,14 +335,21 @@ function Players() {
       key: "contactInfo",
       render: (_, record: IPlayer) => (
         <Space direction="vertical" size={4}>
-          <Space size={7}>
-            <SkypeOutlined style={{ color: club.gold, fontSize: 13 }} />
-            <Text type="secondary" style={{ fontSize: 13 }}>{record.skypeId || "—"}</Text>
-          </Space>
-          <Space size={7}>
-            <PhoneOutlined style={{ color: club.gold, fontSize: 13 }} />
-            <Text type="secondary" style={{ fontSize: 13, ...scoreNum }}>{record.mobileNo || "—"}</Text>
-          </Space>
+          {hasText(record.skypeId) && (
+            <Space size={7}>
+              <SkypeOutlined style={{ color: club.gold, fontSize: 13 }} />
+              <Text type="secondary" style={{ fontSize: 13 }}>{record.skypeId}</Text>
+            </Space>
+          )}
+          {hasText(record.mobileNo) && (
+            <Space size={7}>
+              <PhoneOutlined style={{ color: club.gold, fontSize: 13 }} />
+              <Text type="secondary" style={{ fontSize: 13, ...scoreNum }}>{record.mobileNo}</Text>
+            </Space>
+          )}
+          {!hasText(record.skypeId) && !hasText(record.mobileNo) && (
+            <Text type="secondary" style={{ fontSize: 13 }}>—</Text>
+          )}
         </Space>
       ),
     },
@@ -481,14 +494,18 @@ function Players() {
               </div>
 
               <div className="brfc-player-mcard__meta">
-                <Space size={7}>
-                  <SkypeOutlined style={{ color: club.gold, fontSize: 13 }} />
-                  <Text type="secondary" style={{ fontSize: 13 }}>{record.skypeId || "—"}</Text>
-                </Space>
-                <Space size={7}>
-                  <PhoneOutlined style={{ color: club.gold, fontSize: 13 }} />
-                  <Text type="secondary" style={{ fontSize: 13, ...scoreNum }}>{record.mobileNo || "—"}</Text>
-                </Space>
+                {hasText(record.skypeId) && (
+                  <Space size={7}>
+                    <SkypeOutlined style={{ color: club.gold, fontSize: 13 }} />
+                    <Text type="secondary" style={{ fontSize: 13 }}>{record.skypeId}</Text>
+                  </Space>
+                )}
+                {hasText(record.mobileNo) && (
+                  <Space size={7}>
+                    <PhoneOutlined style={{ color: club.gold, fontSize: 13 }} />
+                    <Text type="secondary" style={{ fontSize: 13, ...scoreNum }}>{record.mobileNo}</Text>
+                  </Space>
+                )}
                 <Space size={7}>
                   <span style={{ color: club.gold, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4 }}>ID</span>
                   <span className="brfc-empid">{record.employeeId || "—"}</span>

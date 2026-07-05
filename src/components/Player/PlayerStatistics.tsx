@@ -334,9 +334,16 @@ const PlayerStatistics: React.FC = () => {
                     marginBottom: 20,
                 }}
             >
-                <Space wrap>
+                <div
+                    style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 10,
+                        alignItems: "center",
+                    }}
+                >
                     <Select
-                        style={{ width: 150 }}
+                        style={{ width: isMobile ? "100%" : 150 }}
                         placeholder="Select Season"
                         value={selectedSeason}
                         onChange={handleSeasonChange}
@@ -352,7 +359,7 @@ const PlayerStatistics: React.FC = () => {
                     </Select>
 
                     <Select
-                        style={{ width: 200 }}
+                        style={{ width: isMobile ? "100%" : 200 }}
                         placeholder="Select Tournament"
                         value={selectedTournament}
                         onChange={setSelectedTournament}
@@ -369,7 +376,7 @@ const PlayerStatistics: React.FC = () => {
                     </Select>
 
                     <Select
-                        style={{ width: 200 }}
+                        style={{ width: isMobile ? "100%" : 200 }}
                         placeholder="Filter by Position"
                         value={position}
                         onChange={setPosition}
@@ -390,8 +397,13 @@ const PlayerStatistics: React.FC = () => {
                         <Option value="LEFT_WING_FORWARD">Left Wing/Forward</Option>
                     </Select>
 
-                    <Button onClick={handleReset}>Reset Filters</Button>
-                </Space>
+                    <Button
+                        onClick={handleReset}
+                        style={{ width: isMobile ? "100%" : undefined }}
+                    >
+                        Reset Filters
+                    </Button>
+                </div>
             </div>
 
             {isMobile ? (
