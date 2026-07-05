@@ -34,6 +34,8 @@ const { Text } = Typography;
 
 function AcBillPayment() {
     const loginInfo = useSelector(selectLoginInfo);
+    const canManage =
+        loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
 
     const [tableLoadingSpin, setTableSpinLoading] = useState(false);
     const [costTypeApiLoading, setCostTypeApiLoading] = useState(false);
@@ -285,20 +287,24 @@ function AcBillPayment() {
             ),
             sorter: (a, b) => a.amount - b.amount,
         },
-        {
-            title: "Action",
-            key: "action",
-            render: (_: any, record: IAcBillPayment) => (
-                <Button
-                    size="small"
-                    icon={<EditOutlined />}
-                    className="brfc-act-btn"
-                    onClick={() => updateAction(record.id)}
-                >
-                    Edit
-                </Button>
-            ),
-        },
+        ...(canManage
+            ? [
+                  {
+                      title: "Action",
+                      key: "action",
+                      render: (_: any, record: IAcBillPayment) => (
+                          <Button
+                              size="small"
+                              icon={<EditOutlined />}
+                              className="brfc-act-btn"
+                              onClick={() => updateAction(record.id)}
+                          >
+                              Edit
+                          </Button>
+                      ),
+                  },
+              ]
+            : []),
     ];
 
     const modalFormSubmit = async () => {
@@ -406,9 +412,6 @@ function AcBillPayment() {
                 setModalSpinLoading(false);
             });
     };
-
-    const canManage =
-        loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
 
     return (
         <div className="brfc-page">

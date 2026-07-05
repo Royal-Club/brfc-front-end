@@ -31,6 +31,8 @@ const { Text } = Typography;
 
 function AcCollection() {
     const loginInfo = useSelector(selectLoginInfo);
+    const canManage =
+        loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
     const searchInput = useRef<InputRef>(null);
     const [tableLoadingSpin, setTableSpinLoading] = useState(false);
     const [playerApiLoading, setPlayerApiLoading] = useState(false);
@@ -308,20 +310,24 @@ function AcCollection() {
             ),
             sorter: (a, b) => a.amount - b.amount,
         },
-        {
-            title: "Action",
-            key: "action",
-            render: (_: any, record: IAcCollection) => (
-                <Button
-                    size="small"
-                    icon={<EditOutlined />}
-                    className="brfc-act-btn"
-                    onClick={() => updateAction(record.id)}
-                >
-                    Edit
-                </Button>
-            ),
-        },
+        ...(canManage
+            ? [
+                  {
+                      title: "Action",
+                      key: "action",
+                      render: (_: any, record: IAcCollection) => (
+                          <Button
+                              size="small"
+                              icon={<EditOutlined />}
+                              className="brfc-act-btn"
+                              onClick={() => updateAction(record.id)}
+                          >
+                              Edit
+                          </Button>
+                      ),
+                  },
+              ]
+            : []),
     ];
 
     const onChangeDate: DatePickerProps["onChange"] = (date, dateString) => {
@@ -459,9 +465,6 @@ function AcCollection() {
                 setModalSpinLoading(false);
             });
     };
-
-    const canManage =
-        loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
 
     return (
         <div className="brfc-page">
