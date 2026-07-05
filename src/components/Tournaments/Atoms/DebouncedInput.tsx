@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Input } from "antd";
 import debounce from "lodash/debounce";
-import { isDisabled } from "@testing-library/user-event/dist/utils";
 
 interface DebouncedInputProps {
     placeholder?: string;
@@ -9,14 +8,21 @@ interface DebouncedInputProps {
     onChange: (value: string) => void;
     value?: string; // Add the `value` prop to the interface
     isDisabled?: boolean;
+    className?: string;
+    /** Render a multi-line auto-sizing textarea that grows up to `maxRows` lines. */
+    autoSize?: boolean;
+    maxRows?: number;
 }
 
 const DebouncedInput: React.FC<DebouncedInputProps> = ({
     placeholder = "Enter text...",
     debounceDuration = 500,
     onChange,
-    value: controlledValue, 
+    value: controlledValue,
     isDisabled = false,
+    className,
+    autoSize = false,
+    maxRows = 2,
 }) => {
     const [value, setValue] = useState(controlledValue || "");
 
@@ -31,24 +37,43 @@ const DebouncedInput: React.FC<DebouncedInputProps> = ({
         [onChange, debounceDuration]
     );
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
         const newValue = e.target.value;
         setValue(newValue);
         debouncedOnChange(newValue);
     };
 
+    const sharedStyle = {
+        border: "none",
+        outline: "none",
+        borderBottom: "1px solid #ccc",
+        borderRadius: 0,
+    };
+
+    if (autoSize) {
+        return (
+            <Input.TextArea
+                className={className}
+                placeholder={placeholder}
+                value={value}
+                onChange={handleChange}
+                disabled={isDisabled}
+                autoSize={{ minRows: 1, maxRows }}
+                style={{ ...sharedStyle, resize: "none" }}
+            />
+        );
+    }
+
     return (
         <Input
+            className={className}
             placeholder={placeholder}
             value={value}
             onChange={handleChange}
             disabled={isDisabled}
-            style={{ 
-                border :"none",
-                outline:"none",
-                borderBottom: "1px solid #ccc",
-                borderRadius: 0,
-             }}
+            style={sharedStyle}
         />
     );
 };

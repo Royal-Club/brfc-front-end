@@ -2,10 +2,9 @@ import React, { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Select, Typography, Space, Skeleton, Input, Grid, theme, Card,
-  Row, Col, Button, Table, Segmented, Avatar, Tag, Divider, Progress,
+  Row, Col, Button, Segmented, Avatar, Tag, Divider, Progress,
   Modal, List,
 } from "antd";
-import type { ColumnsType } from "antd/es/table/interface";
 import useJoinTournament from "../../hooks/useJoinTournament";
 import { TournamentPlayerInfoType } from "../../state/features/tournaments/tournamentTypes";
 import DebouncedInput from "./Atoms/DebouncedInput";
@@ -89,91 +88,6 @@ export default function JoinTournament() {
         filteredTableData:       sorted.map(p => ({ ...p, key: p.playerId })) as TableRow[],
       };
     }, [players, searchTerm, participationFilter, sortBy, loginInfo.userId]);
-
-  const columns: ColumnsType<TableRow> = [
-    {
-      title: "ID",
-      key: "employeeId",
-      width: 80,
-      align: "center",
-      render: (_, r) => (
-        <Text strong style={{ fontSize: 13, color: r.playerId === Number(loginInfo.userId) ? token.colorPrimary : token.colorText }}>
-          {r.employeeId}
-        </Text>
-      ),
-    },
-    {
-      title: "Player",
-      key: "player",
-      render: (_, r) => {
-        const isMe = r.playerId === Number(loginInfo.userId);
-        const photoUrl = toAbsolutePlayerPhotoUrl(r.photoUrl);
-        return (
-          <Space size={8}>
-            <Avatar size={30} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
-              style={{ backgroundColor: photoUrl ? undefined : (isMe ? token.colorPrimary : "#14213d"), flexShrink: 0 }} />
-            <Space size={4}>
-              <Text strong style={{ fontSize: 14 }}>{r.playerName}</Text>
-              {isMe      && <StarFilled style={{ color: "#faad14", fontSize: 11 }} />}
-              {r.isCaptain && <Tag color="gold" style={{ margin: 0, fontSize: 10, padding: "0 4px", lineHeight: "18px" }}>C</Tag>}
-            </Space>
-          </Space>
-        );
-      },
-    },
-    {
-      title: "Status",
-      key: "participationStatus",
-      width: 160,
-      render: (_, r) =>
-        r.participationStatus === true  ? <Tag color="success">Participating</Tag>     :
-        r.participationStatus === false ? <Tag color="error">Not Participating</Tag>   :
-                                          <Tag color="warning">Pending</Tag>,
-    },
-    {
-      title: "Action",
-      key: "action",
-      width: 120,
-      render: (_, r) => {
-        const canEdit =
-          loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") ||
-          r.playerId === Number(loginInfo.userId);
-        return (
-          <Select
-            value={r.participationStatus === true ? "true" : r.participationStatus === false ? "false" : "Select"}
-            onChange={v => handleUpdate(r.playerId, editedComments[r.playerId] ?? r.comments ?? "", v === "true")}
-            disabled={isUpdating || !canEdit}
-            style={{ width: "100%" }}
-            size="small"
-          >
-            <Option value="true"><Space><CheckCircleOutlined style={{ color: "#52c41a" }} />Yes</Space></Option>
-            <Option value="false"><Space><CloseCircleOutlined style={{ color: "#ff4d4f" }} />No</Space></Option>
-          </Select>
-        );
-      },
-    },
-    {
-      title: "Comments",
-      key: "comments",
-      render: (_, r) => {
-        const canEdit =
-          loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") ||
-          r.playerId === Number(loginInfo.userId);
-        return (
-          <DebouncedInput
-            isDisabled={!canEdit}
-            placeholder="Add your comments here..."
-            debounceDuration={1000}
-            onChange={value => {
-              setEditedComments(prev => ({ ...prev, [r.playerId]: value }));
-              handleUpdate(r.playerId, value, r.participationStatus);
-            }}
-            value={editedComments[r.playerId] ?? r.comments ?? ""}
-          />
-        );
-      },
-    },
-  ];
 
   const myStatusColor = statusBorderColor(loggedInPlayer?.participationStatus);
 
@@ -466,12 +380,20 @@ export default function JoinTournament() {
           </Col>
           <Col xs={24} sm={12} style={{ display: "flex", justifyContent: screens.sm ? "flex-end" : "flex-start" }}>
             <Space size={8} wrap>
-              <Select value={sortBy} onChange={setSortBy} size="small" style={{ width: 130 }}>
+              <Select
+                className="jt-part-select"
+                popupClassName="jt-part-dropdown"
+                value={sortBy}
+                onChange={setSortBy}
+                size="small"
+                style={{ width: 130 }}
+              >
                 <Option value="name">Sort by Name</Option>
                 <Option value="employeeId">Sort by ID</Option>
                 <Option value="status">Sort by Status</Option>
               </Select>
               <Segmented
+                className="jt-part-segmented"
                 size="small"
                 value={participationFilter}
                 onChange={v => setParticipationFilter(v as ParticipationFilter)}
@@ -514,67 +436,136 @@ export default function JoinTournament() {
                   loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") ||
                   isMe;
                 const photoUrl = toAbsolutePlayerPhotoUrl(r.photoUrl);
-                const statusTag =
-                  r.participationStatus === true  ? <Tag color="success">Participating</Tag>   :
-                  r.participationStatus === false ? <Tag color="error">Not Participating</Tag> :
-                                                    <Tag color="warning">Pending</Tag>;
                 return (
                   <div
                     key={r.key}
-                    className={isMe ? "jt-mplayer-card jt-mplayer-card--me" : "jt-mplayer-card"}
+                    style={{
+                      border: `1px solid ${club.panelBorder}`,
+                      borderRadius: 12,
+                      padding: 12,
+                      background: `linear-gradient(160deg, ${club.navySoft} 0%, ${club.navy} 55%, ${club.navyDeep} 100%)`,
+                      borderLeft: `3px solid ${isMe ? token.colorPrimary : club.gold}`,
+                      boxShadow: "0 2px 10px rgba(0, 0, 0, 0.35)",
+                    }}
                   >
-                    {/* Identity + status */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                      <Avatar size={36} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
-                        style={{ backgroundColor: photoUrl ? undefined : (isMe ? token.colorPrimary : "#14213d"), flexShrink: 0 }} />
+                    {/* Compact single row: identity + participation select */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <Avatar size={40} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
+                        style={{
+                          flexShrink: 0,
+                          backgroundColor: photoUrl ? undefined : club.navySoft,
+                          color: club.goldSoft,
+                          border: `2px solid ${isMe ? token.colorPrimary : club.gold}`,
+                          fontWeight: 700,
+                        }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <Space size={5} align="center" wrap>
-                          <Text strong style={{ fontSize: 14 }}>{r.playerName}</Text>
+                          <Text strong style={{ fontSize: 14 }} ellipsis>{r.playerName}</Text>
                           {isMe && <StarFilled style={{ color: "#faad14", fontSize: 11 }} />}
                           {r.isCaptain && <Tag color="gold" style={{ margin: 0, fontSize: 10, padding: "0 4px", lineHeight: "18px" }}>C</Tag>}
                         </Space>
-                        <div>
-                          <Text type="secondary" style={{ fontSize: 12 }}>ID: {r.employeeId}</Text>
-                        </div>
+                        <Text type="secondary" style={{ fontSize: 12, display: "block" }}>ID: {r.employeeId}</Text>
                       </div>
-                      {statusTag}
-                    </div>
 
-                    {/* Action — participation only (comments hidden on mobile) */}
-                    <Select
-                      value={r.participationStatus === true ? "true" : r.participationStatus === false ? "false" : "Select"}
-                      onChange={v => handleUpdate(r.playerId, editedComments[r.playerId] ?? r.comments ?? "", v === "true")}
-                      disabled={isUpdating || !canEdit}
-                      style={{ width: "100%" }}
-                      size="small"
-                    >
-                      <Option value="true"><Space><CheckCircleOutlined style={{ color: "#52c41a" }} />Yes</Space></Option>
-                      <Option value="false"><Space><CloseCircleOutlined style={{ color: "#ff4d4f" }} />No</Space></Option>
-                    </Select>
+                      {/* Action — participation only (comments hidden on mobile) */}
+                      <Select
+                        className="jt-part-select"
+                        popupClassName="jt-part-dropdown"
+                        value={r.participationStatus === true ? "true" : r.participationStatus === false ? "false" : "Select"}
+                        onChange={v => handleUpdate(r.playerId, editedComments[r.playerId] ?? r.comments ?? "", v === "true")}
+                        disabled={isUpdating || !canEdit}
+                        style={{ width: 92, flexShrink: 0 }}
+                        size="small"
+                      >
+                        <Option value="true"><Space><CheckCircleOutlined style={{ color: "#52c41a" }} />Yes</Space></Option>
+                        <Option value="false"><Space><CloseCircleOutlined style={{ color: "#ff4d4f" }} />No</Space></Option>
+                      </Select>
+                    </div>
                   </div>
                 );
               })}
             </Space>
           )
+        ) : filteredTableData.length === 0 ? (
+          <Text type="secondary">No players found</Text>
         ) : (
-          <Table
-            className="jt-participants-table"
-            columns={columns}
-            dataSource={filteredTableData}
-            size="middle"
-            bordered
-            pagination={{
-              pageSize: 25,
-              showSizeChanger: true,
-              showTotal: (total, range) => `${range[0]}–${range[1]} of ${total} players`,
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+              gap: 12,
             }}
-            scroll={{ x: "max-content" }}
-            loading={isUpdating}
-            locale={{ emptyText: "No players found" }}
-            rowClassName={r =>
-              r.playerId === Number(loginInfo.userId) ? "logged-in-player-row" : ""
-            }
-          />
+          >
+            {filteredTableData.map(r => {
+              const isMe = r.playerId === Number(loginInfo.userId);
+              const canEdit =
+                loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") ||
+                isMe;
+              const photoUrl = toAbsolutePlayerPhotoUrl(r.photoUrl);
+              return (
+                <div
+                  key={r.key}
+                  style={{
+                    border: `1px solid ${club.panelBorder}`,
+                    borderRadius: 10,
+                    padding: 10,
+                    background: `linear-gradient(160deg, ${club.navySoft} 0%, ${club.navy} 55%, ${club.navyDeep} 100%)`,
+                    borderLeft: `3px solid ${isMe ? token.colorPrimary : club.gold}`,
+                    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.35)",
+                  }}
+                >
+                  {/* Identity */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <Avatar size={34} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
+                      style={{
+                        flexShrink: 0,
+                        backgroundColor: photoUrl ? undefined : club.navySoft,
+                        color: club.goldSoft,
+                        border: `2px solid ${isMe ? token.colorPrimary : club.gold}`,
+                        fontWeight: 700,
+                      }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Space size={4} align="center">
+                        <Text strong style={{ fontSize: 13 }} ellipsis>{r.playerName}</Text>
+                        {isMe && <StarFilled style={{ color: "#faad14", fontSize: 10 }} />}
+                        {r.isCaptain && <Tag color="gold" style={{ margin: 0, fontSize: 9, padding: "0 3px", lineHeight: "16px" }}>C</Tag>}
+                      </Space>
+                      <Text type="secondary" style={{ fontSize: 11, display: "block" }}>ID: {r.employeeId}</Text>
+                    </div>
+                  </div>
+
+                  {/* Participation select */}
+                  <Select
+                    className="jt-part-select"
+                    popupClassName="jt-part-dropdown"
+                    value={r.participationStatus === true ? "true" : r.participationStatus === false ? "false" : "Select"}
+                    onChange={v => handleUpdate(r.playerId, editedComments[r.playerId] ?? r.comments ?? "", v === "true")}
+                    disabled={isUpdating || !canEdit}
+                    style={{ width: "100%", marginBottom: 8 }}
+                    size="small"
+                  >
+                    <Option value="true"><Space><CheckCircleOutlined style={{ color: "#52c41a" }} />Yes</Space></Option>
+                    <Option value="false"><Space><CloseCircleOutlined style={{ color: "#ff4d4f" }} />No</Space></Option>
+                  </Select>
+
+                  {/* Comments */}
+                  <DebouncedInput
+                    className="jt-part-comment"
+                    isDisabled={!canEdit}
+                    placeholder="Comment..."
+                    debounceDuration={1000}
+                    autoSize
+                    maxRows={2}
+                    onChange={value => {
+                      setEditedComments(prev => ({ ...prev, [r.playerId]: value }));
+                      handleUpdate(r.playerId, value, r.participationStatus);
+                    }}
+                    value={editedComments[r.playerId] ?? r.comments ?? ""}
+                  />
+                </div>
+              );
+            })}
+          </div>
         )}
       </Card>
 

@@ -460,6 +460,117 @@
     box-shadow: 0 2px 10px rgba(198, 161, 91, 0.18);
 }
 
+/* ── Participation Yes/No select — themed for the navy card ──────── */
+.jt-part-select .ant-select-selector {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(198, 161, 91, 0.30) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.jt-part-select:not(.ant-select-disabled):hover .ant-select-selector {
+    border-color: rgba(198, 161, 91, 0.60) !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+}
+
+.jt-part-select.ant-select-focused .ant-select-selector {
+    border-color: #C6A15B !important;
+    box-shadow: 0 0 0 2px rgba(198, 161, 91, 0.18) !important;
+}
+
+.jt-part-select .ant-select-selection-item {
+    color: #F5F7FA !important;
+    font-weight: 600;
+}
+
+.jt-part-select .ant-select-arrow {
+    color: rgba(216, 188, 132, 0.85);
+}
+
+.jt-part-select.ant-select-disabled .ant-select-selector {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+.jt-part-select.ant-select-disabled .ant-select-selection-item {
+    color: rgba(245, 247, 250, 0.55) !important;
+}
+
+/* Dropdown popup — dark navy to match the trigger */
+.jt-part-dropdown {
+    background: #14213D !important;
+    border: 1px solid rgba(198, 161, 91, 0.30) !important;
+}
+
+.jt-part-dropdown .ant-select-item {
+    color: #F5F7FA;
+}
+
+.jt-part-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled),
+.jt-part-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background: rgba(198, 161, 91, 0.16) !important;
+}
+
+/* ── Comment field — same subtle boxed style as the select ──────── */
+.jt-part-comment.ant-input,
+.jt-part-comment .ant-input {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(198, 161, 91, 0.20) !important;
+    border-bottom: 1px solid rgba(198, 161, 91, 0.20) !important;
+    border-radius: 8px !important;
+    color: #F5F7FA !important;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.jt-part-comment.ant-input:hover,
+.jt-part-comment .ant-input:hover {
+    border-color: rgba(198, 161, 91, 0.45) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.jt-part-comment.ant-input:focus,
+.jt-part-comment.ant-input-focused,
+.jt-part-comment .ant-input:focus {
+    border-color: #C6A15B !important;
+    box-shadow: 0 0 0 2px rgba(198, 161, 91, 0.16) !important;
+}
+
+.jt-part-comment.ant-input::placeholder,
+.jt-part-comment .ant-input::placeholder {
+    color: rgba(245, 247, 250, 0.35) !important;
+}
+
+/* ── Participation filter segmented — gold thumb on navy track ───── */
+.jt-part-segmented.ant-segmented {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(198, 161, 91, 0.30);
+    border-radius: 8px;
+    padding: 2px;
+}
+
+.jt-part-segmented .ant-segmented-item {
+    color: rgba(245, 247, 250, 0.65);
+    border-radius: 6px !important;
+    transition: color 0.2s ease;
+}
+
+.jt-part-segmented .ant-segmented-item:hover:not(.ant-segmented-item-selected) {
+    color: #F5F7FA;
+}
+
+.jt-part-segmented .ant-segmented-item-selected {
+    background: linear-gradient(135deg, #D8BC84 0%, #C6A15B 100%) !important;
+    color: #0E1830 !important;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(198, 161, 91, 0.35);
+}
+
+.jt-part-segmented .ant-segmented-thumb {
+    background: linear-gradient(135deg, #D8BC84 0%, #C6A15B 100%) !important;
+    border-radius: 6px !important;
+}
+
 /* Participants table — navy header with gold underline (matches dashboard) */
 .jt-participants-table .ant-table-thead > tr > th {
     background: #14213D !important;
