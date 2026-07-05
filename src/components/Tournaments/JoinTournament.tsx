@@ -142,10 +142,10 @@ export default function JoinTournament() {
         {/* ── Card 1: Match Summary ── */}
         <Col xs={24} md={12} lg={8}>
           <Card className="jt-card jt-card--panel" style={{ height: "100%" }}
-            styles={{ body: { padding: "16px 18px 16px" } }}>
+            styles={{ body: { padding: "12px 18px" } }}>
 
             {/* Matchday header: name + date */}
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ marginBottom: 10 }}>
               <div style={{ ...kicker, color: club.gold, marginBottom: 2 }}>⚽ Matchday</div>
               <Title level={4} style={{ margin: "0 0 2px", lineHeight: 1.15, color: club.textPrimary }}>
                 {nextTournament?.tournamentName}
@@ -174,7 +174,7 @@ export default function JoinTournament() {
                         background: `${color}22`,
                         border: `1px solid ${color}45`,
                         borderRadius: 8,
-                        padding: "10px 4px",
+                        padding: "8px 4px",
                         textAlign: "center",
                         cursor: clickable ? "pointer" : "default",
                         transition: "all 0.2s ease",
@@ -199,7 +199,7 @@ export default function JoinTournament() {
 
             {/* Participation progress */}
             {players.length > 0 && (
-              <div style={{ marginTop: 16 }}>
+              <div style={{ marginTop: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                   <Text style={{ ...kicker, fontSize: 10, color: club.goldSoft }}>Squad Filled</Text>
                   <Text style={{ fontSize: 12, color: club.textPrimary, ...scoreNum }}>
@@ -223,10 +223,10 @@ export default function JoinTournament() {
         {loggedInPlayer ? (
           <Col xs={24} md={12} lg={8}>
             <Card className="jt-card jt-card--panel jt-card--primary" style={{ height: "100%" }}
-              styles={{ body: { padding: "16px 18px" } }}>
+              styles={{ body: { padding: "12px 18px" } }}>
 
               {/* Identity row */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                 <Avatar
                   size={46}
                   src={toAbsolutePlayerPhotoUrl(loggedInPlayer.photoUrl)}
@@ -247,7 +247,7 @@ export default function JoinTournament() {
                 </div>
               </div>
 
-              <Divider style={{ margin: "8px 0", borderColor: club.panelBorder }} />
+              <Divider style={{ margin: "6px 0", borderColor: club.panelBorder }} />
 
               {/* Participation question */}
               <Text style={{ ...kicker, display: "block", fontSize: 10, color: club.goldSoft, marginBottom: 8 }}>
@@ -305,10 +305,10 @@ export default function JoinTournament() {
         {/* ── Card 3: Your Team ── */}
         <Col xs={24} md={12} lg={8}>
           <Card className="jt-card jt-card--panel jt-team-card" style={{ height: "100%" }}
-            styles={{ body: { padding: "16px 18px", height: "100%", display: "flex", flexDirection: "column" } }}>
+            styles={{ body: { padding: "12px 18px", height: "100%", display: "flex", flexDirection: "column" } }}>
 
             {/* Header row: title + compact status badge */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <Space size={6} align="center">
                 <TrophyOutlined style={{ fontSize: 15, color: club.gold }} />
                 <Text style={{ ...kicker, fontSize: 11, color: club.goldSoft }}>Your Team</Text>
@@ -348,8 +348,8 @@ export default function JoinTournament() {
 
             <Button icon={<TeamOutlined />} block
               style={{
-                marginTop: 12,
-                height: 40,
+                marginTop: 10,
+                height: 38,
                 fontWeight: 700,
                 letterSpacing: 0.3,
                 background: `linear-gradient(135deg, ${club.goldSoft} 0%, ${club.gold} 100%)`,
