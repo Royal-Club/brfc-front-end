@@ -540,33 +540,17 @@ export default function JoinTournament() {
                       {statusTag}
                     </div>
 
-                    {/* Action + comments */}
-                    <Row gutter={8} align="middle">
-                      <Col span={9}>
-                        <Select
-                          value={r.participationStatus === true ? "true" : r.participationStatus === false ? "false" : "Select"}
-                          onChange={v => handleUpdate(r.playerId, editedComments[r.playerId] ?? r.comments ?? "", v === "true")}
-                          disabled={isUpdating || !canEdit}
-                          style={{ width: "100%" }}
-                          size="small"
-                        >
-                          <Option value="true"><Space><CheckCircleOutlined style={{ color: "#52c41a" }} />Yes</Space></Option>
-                          <Option value="false"><Space><CloseCircleOutlined style={{ color: "#ff4d4f" }} />No</Space></Option>
-                        </Select>
-                      </Col>
-                      <Col span={15}>
-                        <DebouncedInput
-                          isDisabled={!canEdit}
-                          placeholder="Add your comments..."
-                          debounceDuration={1000}
-                          onChange={value => {
-                            setEditedComments(prev => ({ ...prev, [r.playerId]: value }));
-                            handleUpdate(r.playerId, value, r.participationStatus);
-                          }}
-                          value={editedComments[r.playerId] ?? r.comments ?? ""}
-                        />
-                      </Col>
-                    </Row>
+                    {/* Action — participation only (comments hidden on mobile) */}
+                    <Select
+                      value={r.participationStatus === true ? "true" : r.participationStatus === false ? "false" : "Select"}
+                      onChange={v => handleUpdate(r.playerId, editedComments[r.playerId] ?? r.comments ?? "", v === "true")}
+                      disabled={isUpdating || !canEdit}
+                      style={{ width: "100%" }}
+                      size="small"
+                    >
+                      <Option value="true"><Space><CheckCircleOutlined style={{ color: "#52c41a" }} />Yes</Space></Option>
+                      <Option value="false"><Space><CloseCircleOutlined style={{ color: "#ff4d4f" }} />No</Space></Option>
+                    </Select>
                   </div>
                 );
               })}
