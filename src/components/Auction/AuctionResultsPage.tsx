@@ -1,11 +1,95 @@
-import React from "react";
-import { Card, Table, Typography, Row, Col, Statistic, Tag, Collapse, Empty, Spin, Space, Alert } from "antd";
-import { TrophyOutlined, WarningOutlined } from "@ant-design/icons";
+import React, { useState } from "react";
+import { Typography, Row, Col, Empty, Spin, Space, Alert } from "antd";
+import { TrophyOutlined, WarningOutlined, CrownOutlined, DownOutlined, RightOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import { useGetAuctionResultsQuery, useGetAuctionSessionQuery } from "../../state/features/auction/auctionSlice";
-import { AuctionPlayerResponse, TeamSquadResponse } from "../../state/features/auction/auctionTypes";
+import { TeamSquadResponse, AuctionPlayerResponse } from "../../state/features/auction/auctionTypes";
+import { AuctionPage, AuctionHeader, StatTile, StatusPill, SignedTile, PanelCard, metaMuted, ac } from "./AuctionAtoms";
 
 const { Title, Text } = Typography;
+
+const taka = (v?: number) => `৳${(v ?? 0).toLocaleString()}`;
+
+const moneyChip = (label: string, color: string) => (
+  <span
+    style={{
+      fontSize: 11,
+      fontWeight: 700,
+      color,
+      background: `${color}22`,
+      border: `1px solid ${color}59`,
+      borderRadius: 999,
+      padding: "2px 10px",
+      whiteSpace: "nowrap",
+    }}
+  >
+    {label}
+  </span>
+);
+
+const TeamSquadCard: React.FC<{ squad: TeamSquadResponse }> = ({ squad }) => {
+  const [open, setOpen] = useState(true);
+  const players = squad.players ?? [];
+
+  return (
+    <PanelCard accent={ac.gold} bodyStyle={{ padding: 0 }}>
+      {/* Header (click to toggle) */}
+      <div
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          cursor: "pointer",
+          padding: "12px 14px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          {open ? <DownOutlined style={{ color: ac.textMuted, fontSize: 12 }} /> : <RightOutlined style={{ color: ac.textMuted, fontSize: 12 }} />}
+          <Text strong ellipsis style={{ color: ac.textPrimary, fontSize: 15 }}>{squad.teamName}</Text>
+          <span style={metaMuted}>· {squad.ownerName}</span>
+        </div>
+        <Space size={6} wrap>
+          {moneyChip(`Spent ${taka(squad.totalSpent)}`, ac.gold)}
+          {moneyChip(`Left ${taka(squad.remainingBudget)}`, ac.pitch)}
+          {moneyChip(`${players.length} players`, ac.info)}
+        </Space>
+      </div>
+
+      {/* Squad body */}
+      {open && (
+        <div style={{ padding: "0 12px 12px" }}>
+          <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "0 0 12px" }} />
+          {players.length === 0 ? (
+            <Text style={{ color: ac.textMuted }}>No players bought.</Text>
+          ) : (
+            <Row gutter={[12, 12]}>
+              {players.map((p: AuctionPlayerResponse, i: number) => (
+                <Col xs={24} xl={12} key={p.id}>
+                  <SignedTile
+                    index={i + 1}
+                    name={p.playerName}
+                    photoUrl={p.photoUrl}
+                    category={p.category}
+                    price={p.finalPrice}
+                    meta={
+                      <>
+                        {p.playerType && <span style={metaMuted}>{p.playerType}</span>}
+                        <span style={metaMuted}>Base {taka(p.basePrice)}</span>
+                      </>
+                    }
+                  />
+                </Col>
+              ))}
+            </Row>
+          )}
+        </div>
+      )}
+    </PanelCard>
+  );
+};
 
 const AuctionResultsPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
@@ -14,8 +98,8 @@ const AuctionResultsPage: React.FC = () => {
   const { data: session } = useGetAuctionSessionQuery(tid);
   const isInProgress = session && session.status !== "COMPLETED" && session.status !== "NOT_STARTED";
 
-  if (isLoading) return <Spin size="large" />;
-  if (!results) return <Empty description="No auction results available" />;
+  if (isLoading) return <Spin size="large" style={{ display: "block", margin: "100px auto" }} />;
+  if (!results) return <Empty description="No auction results available" style={{ marginTop: 80 }} />;
 
   const stats = results.stats;
   const soldCount = (results.teamSquads ?? []).reduce((acc, s) => acc + (s.players?.length ?? 0), 0);
@@ -23,17 +107,14 @@ const AuctionResultsPage: React.FC = () => {
   const totalPlayers = soldCount + unsoldCount;
   const totalSpent = (results.teamSquads ?? []).reduce((acc, s) => acc + (s.totalSpent ?? 0), 0);
 
-  const playerColumns = [
-    { title: "Player", dataIndex: "playerName", key: "playerName" },
-    { title: "Category", dataIndex: "category", key: "category", render: (v: string) => <Tag>{v?.replace("_", " ")}</Tag> },
-    { title: "Type", dataIndex: "playerType", key: "playerType", render: (v: string) => <Tag color={v === "OUTSIDE" ? "purple" : "default"}>{v}</Tag> },
-    { title: "Base Price", dataIndex: "basePrice", key: "basePrice", render: (v: number) => `৳${v?.toLocaleString()}` },
-    { title: "Sold Price", dataIndex: "finalPrice", key: "finalPrice", render: (v: number) => v ? `৳${v?.toLocaleString()}` : "—" },
-  ];
-
   return (
-    <div style={{ padding: 16 }}>
-      <Title level={3}><TrophyOutlined /> Auction Results - {results.tournamentName}</Title>
+    <AuctionPage maxWidth={1180}>
+      <AuctionHeader
+        icon={<TrophyOutlined />}
+        title={`Auction Results — ${results.tournamentName}`}
+        backTo="/auction"
+        actions={session?.status ? <StatusPill status={session.status} /> : undefined}
+      />
 
       {isInProgress && (
         <Alert
@@ -42,58 +123,72 @@ const AuctionResultsPage: React.FC = () => {
           icon={<WarningOutlined />}
           message="Auction is still in progress"
           description="These are partial results. Final results will be available once the auction is completed."
-          style={{ marginBottom: 16 }}
         />
       )}
 
       {/* Stats */}
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={4}><Card><Statistic title="Total Players" value={totalPlayers} /></Card></Col>
-        <Col span={4}><Card><Statistic title="Sold" value={soldCount} /></Card></Col>
-        <Col span={4}><Card><Statistic title="Unsold" value={unsoldCount} /></Card></Col>
-        <Col span={4}><Card><Statistic title="Total Spent" value={totalSpent} prefix="৳" /></Card></Col>
-        <Col span={8}>
-          {stats?.mostExpensivePlayerName && (
-            <Card>
-              <Statistic
-                title="Most Expensive"
-                value={stats.mostExpensivePrice ?? 0}
-                prefix="৳"
-                suffix={<Text type="secondary">({stats.mostExpensivePlayerName})</Text>}
-              />
-            </Card>
-          )}
-        </Col>
+      <Row gutter={[12, 12]}>
+        <Col xs={12} md={6}><StatTile label="Total Players" value={totalPlayers} accent={ac.info} /></Col>
+        <Col xs={12} md={6}><StatTile label="Sold" value={soldCount} accent={ac.pitch} /></Col>
+        <Col xs={12} md={6}><StatTile label="Unsold" value={unsoldCount} accent={ac.red} /></Col>
+        <Col xs={12} md={6}><StatTile label="Total Spent" value={taka(totalSpent)} accent={ac.gold} /></Col>
+        {stats?.mostExpensivePlayerName && (
+          <Col xs={24}>
+            <StatTile
+              label="Most Expensive Signing"
+              accent={ac.gold}
+              icon={<CrownOutlined />}
+              value={
+                <span>
+                  {taka(stats.mostExpensivePrice)}{" "}
+                  <Text style={{ fontSize: 14, color: ac.textMuted, fontWeight: 500 }}>
+                    · {stats.mostExpensivePlayerName}
+                  </Text>
+                </span>
+              }
+            />
+          </Col>
+        )}
       </Row>
 
       {/* Team Squads */}
-      <Title level={4}>Team Squads</Title>
-      <Collapse>
+      <Title level={4} style={{ margin: "8px 0 0" }}>Team Squads</Title>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {(results.teamSquads ?? []).map((squad: TeamSquadResponse) => (
-          <Collapse.Panel
-            key={squad.teamId}
-            header={
-              <Space>
-                <Text strong>{squad.teamName}</Text>
-                <Tag>Owner: {squad.ownerName}</Tag>
-                <Tag color="green">Spent: ৳{squad.totalSpent?.toLocaleString()}</Tag>
-                <Tag color="blue">Remaining: ৳{squad.remainingBudget?.toLocaleString()}</Tag>
-                <Tag>{squad.players.length} players</Tag>
-              </Space>
-            }
-          >
-            <Table dataSource={squad.players} columns={playerColumns} rowKey="id" pagination={false} size="small" />
-          </Collapse.Panel>
+          <TeamSquadCard key={squad.teamId} squad={squad} />
         ))}
-      </Collapse>
+      </div>
 
       {/* Unsold Players */}
       {(results.unsoldPlayers ?? []).length > 0 && (
-        <Card title="Unsold Players" style={{ marginTop: 24 }}>
-        <Table dataSource={results.unsoldPlayers ?? []} columns={playerColumns} rowKey="id" pagination={false} size="small" />
-        </Card>
+        <>
+          <Title level={4} style={{ margin: "8px 0 0" }}>Unsold Players</Title>
+          <PanelCard bodyStyle={{ padding: 12 }}>
+            <Row gutter={[12, 12]}>
+              {(results.unsoldPlayers ?? []).map((p: AuctionPlayerResponse, i: number) => (
+                <Col xs={24} xl={12} key={p.id}>
+                  <SignedTile
+                    index={i + 1}
+                    name={p.playerName}
+                    photoUrl={p.photoUrl}
+                    category={p.category}
+                    price={p.basePrice}
+                    priceLabel="Base"
+                    priceColor={ac.textMuted}
+                    meta={
+                      <>
+                        {p.playerType && <span style={metaMuted}>{p.playerType}</span>}
+                        {p.playingPosition && <span style={metaMuted}>{p.playingPosition}</span>}
+                      </>
+                    }
+                  />
+                </Col>
+              ))}
+            </Row>
+          </PanelCard>
+        </>
       )}
-    </div>
+    </AuctionPage>
   );
 };
 

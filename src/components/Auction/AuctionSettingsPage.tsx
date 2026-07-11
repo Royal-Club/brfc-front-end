@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
-import { Card, Form, InputNumber, Switch, Button, Typography, Spin, message, Input, Alert } from "antd";
+import { Form, InputNumber, Switch, Button, Spin, message, Input, Alert, DatePicker } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 import { useParams } from "react-router-dom";
 import {
   useGetAuctionSettingsQuery,
@@ -8,8 +10,7 @@ import {
   useGetAuctionSessionQuery,
 } from "../../state/features/auction/auctionSlice";
 import { AuctionSettingsRequest } from "../../state/features/auction/auctionTypes";
-
-const { Title } = Typography;
+import { AuctionPage, AuctionHeader, FormCard, StatusPill } from "./AuctionAtoms";
 
 const AuctionSettingsPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
@@ -24,17 +25,26 @@ const AuctionSettingsPage: React.FC = () => {
 
   useEffect(() => {
     if (settings) {
-      form.setFieldsValue(settings);
+      form.setFieldsValue({
+        ...settings,
+        // DatePicker needs a dayjs value, not the ISO string from the API.
+        scheduledStartTime: settings.scheduledStartTime ? dayjs(settings.scheduledStartTime) : undefined,
+      });
     }
   }, [settings, form]);
 
-  const onFinish = async (values: AuctionSettingsRequest) => {
+  const onFinish = async (values: any) => {
+    const body: AuctionSettingsRequest = {
+      ...values,
+      // Convert the dayjs value back to an ISO string (or null to clear it).
+      scheduledStartTime: values.scheduledStartTime ? values.scheduledStartTime.toISOString() : null,
+    };
     try {
       if (settings) {
-        await updateSettings({ tournamentId: tid, body: values }).unwrap();
+        await updateSettings({ tournamentId: tid, body }).unwrap();
         message.success("Settings updated");
       } else {
-        await createSettings({ tournamentId: tid, body: values }).unwrap();
+        await createSettings({ tournamentId: tid, body }).unwrap();
         message.success("Settings created");
       }
     } catch (err: any) {
@@ -42,11 +52,18 @@ const AuctionSettingsPage: React.FC = () => {
     }
   };
 
-  if (isLoading) return <Spin size="large" />;
+  if (isLoading) return <Spin size="large" style={{ display: "block", margin: "100px auto" }} />;
 
   return (
-    <Card style={{ maxWidth: 700, margin: "0 auto" }}>
-      <Title level={3}>Auction Settings</Title>
+    <AuctionPage maxWidth={720}>
+      <AuctionHeader
+        icon={<SettingOutlined />}
+        title="Auction Settings"
+        subtitle="Budget, timer, bid increment and squad rules for this tournament."
+        backTo="/auction"
+        actions={session?.status ? <StatusPill status={session.status} /> : undefined}
+      />
+      <FormCard>
       {isLive && (
         <Alert
           type="warning"
@@ -66,6 +83,18 @@ const AuctionSettingsPage: React.FC = () => {
         timerExtensionSeconds: 15,
         extendIfBidWithinLastSeconds: 10,
       }}>
+        <Form.Item
+          name="scheduledStartTime"
+          label="Scheduled Start Time"
+          tooltip="Optional. Shown publicly in the Match Center as a countdown before the auction goes live."
+        >
+          <DatePicker
+            showTime
+            format="DD MMM YYYY, hh:mm A"
+            style={{ width: "100%" }}
+            placeholder="Pick when the auction will start (optional)"
+          />
+        </Form.Item>
         <Form.Item name="teamBudget" label="Team Budget" rules={[{ required: true }]}>
           <InputNumber style={{ width: "100%" }} min={1} />
         </Form.Item>
@@ -99,7 +128,8 @@ const AuctionSettingsPage: React.FC = () => {
           </Button>
         </Form.Item>
       </Form>
-    </Card>
+      </FormCard>
+    </AuctionPage>
   );
 };
 

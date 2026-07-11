@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
   Card, Table, Tag, Button, Space, Modal, Input, Typography, Select,
-  message, InputNumber, Badge, Tabs, Tooltip, Row, Col, Statistic, Empty
+  message, InputNumber, Tabs, Tooltip, Row, Col, Empty
 } from "antd";
 import {
   CheckCircleOutlined, CloseCircleOutlined, PlusCircleOutlined,
@@ -17,8 +17,9 @@ import {
 } from "../../state/features/auction/auctionSlice";
 import { AuctionRegistrationResponse, AuctionPlayerCategory } from "../../state/features/auction/auctionTypes";
 import { useParams } from "react-router-dom";
+import { AuctionPage, AuctionHeader, StatTile, StatusPill, ac } from "./AuctionAtoms";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const CATEGORY_OPTIONS: { value: AuctionPlayerCategory; label: string; defaultPrice: number }[] = [
   { value: "ICON", label: "⭐ Icon", defaultPrice: 30000 },
@@ -172,12 +173,8 @@ const AuctionAdminApprovalPage: React.FC = () => {
       title: "Status",
       key: "status",
       render: (_: any, r: AuctionRegistrationResponse) => {
-        if (r.inAuctionPool) return <Badge status="success" text="In Pool ✓" />;
-        switch (r.approvalStatus) {
-          case "PENDING": return <Tag color="orange" icon={<ClockCircleOutlined />}>Pending</Tag>;
-          case "APPROVED": return <Tag color="blue" icon={<CheckCircleOutlined />}>Approved</Tag>;
-          case "REJECTED": return <Tag color="red" icon={<CloseCircleOutlined />}>Rejected</Tag>;
-        }
+        if (r.inAuctionPool) return <StatusPill status="SOLD" label="In Pool" />;
+        return <StatusPill status={r.approvalStatus} />;
       },
     },
     {
@@ -260,15 +257,20 @@ const AuctionAdminApprovalPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 16 }}>
-      <Title level={4}><TeamOutlined /> Player Registrations</Title>
+    <AuctionPage maxWidth={1180}>
+      <AuctionHeader
+        icon={<TeamOutlined />}
+        title="Player Registrations"
+        subtitle="Review, approve and add registered players to the auction pool."
+        backTo="/auction"
+      />
 
       {/* Stats row */}
-      <Row gutter={16} style={{ marginBottom: 20 }}>
-        <Col><Card size="small"><Statistic title="Pending" value={pending} valueStyle={{ color: "#faad14" }} /></Card></Col>
-        <Col><Card size="small"><Statistic title="Approved" value={approved} valueStyle={{ color: "#1677ff" }} /></Card></Col>
-        <Col><Card size="small"><Statistic title="In Pool" value={inPool} valueStyle={{ color: "#52c41a" }} /></Card></Col>
-        <Col><Card size="small"><Statistic title="Rejected" value={rejected} valueStyle={{ color: "#ff4d4f" }} /></Card></Col>
+      <Row gutter={[12, 12]}>
+        <Col xs={12} sm={6}><StatTile label="Pending" value={pending} accent={ac.amber} icon={<ClockCircleOutlined />} /></Col>
+        <Col xs={12} sm={6}><StatTile label="Approved" value={approved} accent={ac.info} icon={<CheckCircleOutlined />} /></Col>
+        <Col xs={12} sm={6}><StatTile label="In Pool" value={inPool} accent={ac.pitch} icon={<TeamOutlined />} /></Col>
+        <Col xs={12} sm={6}><StatTile label="Rejected" value={rejected} accent={ac.red} icon={<CloseCircleOutlined />} /></Col>
       </Row>
 
       <Card>
@@ -315,7 +317,7 @@ const AuctionAdminApprovalPage: React.FC = () => {
           onChange={e => setRejectReason(e.target.value)}
         />
       </Modal>
-    </div>
+    </AuctionPage>
   );
 };
 

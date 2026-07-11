@@ -18,6 +18,7 @@ export interface AuctionSettingsRequest {
   timerExtensionSeconds?: number;
   extendIfBidWithinLastSeconds?: number;
   minRoleRequirements?: string;
+  scheduledStartTime?: string;
 }
 
 export interface AuctionRegistrationRequest {
@@ -70,6 +71,7 @@ export interface AuctionSettingsResponse {
   extendIfBidWithinLastSeconds: number;
   minRoleRequirements?: string;
   auctionStatus: AuctionStatus;
+  scheduledStartTime?: string;
 }
 
 export interface AuctionRegistrationResponse {
@@ -104,6 +106,7 @@ export interface AuctionPlayerResponse {
   playerId: number;
   playerName: string;
   playerEmail?: string;
+  photoUrl?: string;
   playingPosition?: FootballPosition;
   playerType: AuctionPlayerType;
   category: AuctionPlayerCategory;

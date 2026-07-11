@@ -7,6 +7,7 @@ import {
   IGetMatchStatisticsResponse,
   IGetPlayerTournamentStatisticsResponse,
   IGetPlayerStatisticsResponse,
+  IGetPlayerMatchHistoryResponse,
 } from "./statisticsTypes";
 
 const apiWithTags = apiSlice.enhanceEndpoints({
@@ -145,6 +146,20 @@ export const statisticsApi = apiWithTags.injectEndpoints({
       },
       providesTags: ["statistics"],
     }),
+
+    /**
+     * A player's full match-by-match history across all tournaments (newest first)
+     */
+    getPlayerMatchHistory: builder.query<
+      IGetPlayerMatchHistoryResponse,
+      { playerId: number }
+    >({
+      query: ({ playerId }) => ({
+        url: `/statistics/players/${playerId}/match-history`,
+        method: "GET",
+      }),
+      providesTags: ["statistics"],
+    }),
   }),
 });
 
@@ -156,5 +171,6 @@ export const {
   useGetMatchStatisticsQuery,
   useGetPlayerTournamentStatisticsQuery,
   useGetPlayerStatisticsQuery,
+  useGetPlayerMatchHistoryQuery,
   useAggregateTournamentStatisticsMutation,
 } = statisticsApi;

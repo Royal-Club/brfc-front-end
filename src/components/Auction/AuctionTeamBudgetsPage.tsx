@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Table, Button, Space, Modal, Form, InputNumber, Typography, message, Select, Input, Divider, Tag, Empty, Popconfirm } from "antd";
+import { Table, Button, Space, Modal, Form, InputNumber, Typography, message, Select, Input, Divider, Tag, Empty, Popconfirm, Alert, Row, Col } from "antd";
 import { PlusOutlined, TeamOutlined, UserOutlined, DollarOutlined, DeleteOutlined } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import {
@@ -12,8 +12,11 @@ import {
 } from "../../state/features/auction/auctionSlice";
 import { useGetPlayersQuery } from "../../state/features/player/playerSlice";
 import { TeamBudgetResponse } from "../../state/features/auction/auctionTypes";
+import { AuctionPage, AuctionHeader, StatTile, ac } from "./AuctionAtoms";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
+
+const taka = (v?: number) => `৳${(v ?? 0).toLocaleString()}`;
 
 const AuctionTeamBudgetsPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
@@ -141,33 +144,53 @@ const AuctionTeamBudgetsPage: React.FC = () => {
     },
   ];
 
+  const totalBudget = (budgets ?? []).reduce((a, b) => a + (b.totalBudget || 0), 0);
+  const totalSpent = (budgets ?? []).reduce((a, b) => a + (b.totalSpent || 0), 0);
+  const totalRemaining = (budgets ?? []).reduce((a, b) => a + (b.remainingBudget || 0), 0);
+
   return (
-    <Card>
-      <Space style={{ justifyContent: "space-between", width: "100%", marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>
-          <TeamOutlined /> Team Budgets & Owners
-        </Title>
-        <Space>
-          <Button icon={<PlusOutlined />} onClick={() => setNewTeamModal(true)}>
-            Create New Team
-          </Button>
-          <Button type="primary" icon={<DollarOutlined />} onClick={() => { setModal({ visible: true }); form.resetFields(); }}>
-            Assign Team Budget
-          </Button>
-        </Space>
-      </Space>
+    <AuctionPage maxWidth={1180}>
+      <AuctionHeader
+        icon={<TeamOutlined />}
+        title="Team Budgets & Owners"
+        subtitle="Create teams, assign owners and budgets before the live auction."
+        backTo="/auction"
+        actions={
+          <>
+            <Button icon={<PlusOutlined />} onClick={() => setNewTeamModal(true)}>
+              Create New Team
+            </Button>
+            <Button type="primary" icon={<DollarOutlined />} onClick={() => { setModal({ visible: true }); form.resetFields(); }}>
+              Assign Team Budget
+            </Button>
+          </>
+        }
+      />
+
+      {budgets && budgets.length > 0 && (
+        <Row gutter={[12, 12]}>
+          <Col xs={12} md={6}><StatTile label="Teams" value={budgets.length} accent={ac.info} /></Col>
+          <Col xs={12} md={6}><StatTile label="Total Budget" value={taka(totalBudget)} accent={ac.gold} /></Col>
+          <Col xs={12} md={6}><StatTile label="Total Spent" value={taka(totalSpent)} accent={ac.red} /></Col>
+          <Col xs={12} md={6}><StatTile label="Remaining" value={taka(totalRemaining)} accent={ac.pitch} /></Col>
+        </Row>
+      )}
 
       {/* Info banner */}
-      <Card size="small" style={{ marginBottom: 16, background: "#f0f5ff", border: "1px solid #adc6ff" }}>
-        <Text>
-          <strong>How it works:</strong> 1) Create teams → 2) Assign an owner (captain who bids) and budget to each team → 3) Start the live auction!
-        </Text>
-      </Card>
+      <Alert
+        type="info"
+        showIcon
+        message={
+          <Text>
+            <strong>How it works:</strong> 1) Create teams → 2) Assign an owner (captain who bids) and budget to each team → 3) Start the live auction!
+          </Text>
+        }
+      />
 
       {budgets && budgets.length === 0 ? (
         <Empty description="No teams set up yet. Create teams and assign budgets to get started." />
       ) : (
-        <Table dataSource={budgets} columns={columns} rowKey="id" loading={isLoading} pagination={false} />
+        <Table dataSource={budgets} columns={columns} rowKey="id" loading={isLoading} pagination={false} scroll={{ x: 800 }} />
       )}
 
       {/* Create/Edit Team Budget Modal */}
@@ -256,7 +279,7 @@ const AuctionTeamBudgetsPage: React.FC = () => {
           </Text>
         </Space>
       </Modal>
-    </Card>
+    </AuctionPage>
   );
 };
 

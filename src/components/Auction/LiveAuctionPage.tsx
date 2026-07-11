@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Card, Row, Col, Button, Space, Typography, Tag, Table,
-  message, Alert, Empty, Badge, Divider, Progress, Statistic, Modal, Tooltip
+  Card, Row, Col, Button, Space, Typography, Tag, Table, Avatar,
+  message, Alert, Empty, Divider, Progress, Modal, Tooltip
 } from "antd";
 import {
   PlayCircleOutlined, PauseCircleOutlined, StepForwardOutlined,
   DollarOutlined, CloseCircleOutlined, UndoOutlined, TeamOutlined,
   TrophyOutlined, ThunderboltOutlined, ClockCircleOutlined, EyeOutlined,
-  WifiOutlined, DisconnectOutlined, ReloadOutlined, UnorderedListOutlined
+  ReloadOutlined, UnorderedListOutlined
 } from "@ant-design/icons";
 import { useParams } from "react-router-dom";
 import {
@@ -33,6 +33,8 @@ import { AuctionPlayerCategory, AuctionPlayerResponse, AuctionWebSocketMessage, 
 import { useAuctionWebSocket } from "../../hooks/useAuctionWebSocket";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import { GoldDivider, StatusPill, StatTile, SignedTile, CategoryPill, metaMuted, teamChip, ac, scoreNum, kicker } from "./AuctionAtoms";
+import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 
 const { Title, Text } = Typography;
 
@@ -43,6 +45,15 @@ const CATEGORY_COLOR: Record<AuctionPlayerCategory, string> = {
 const fmt = (n?: number) => n != null ? `৳${n.toLocaleString()}` : "—";
 const hasRole = (roles: string[] | undefined, role: string) =>
   !!roles?.some(r => r === role || r === `ROLE_${role}`);
+
+// Navy broadcast panel shell used across the live board.
+const boardPanel: React.CSSProperties = {
+  background: ac.panel,
+  border: `1px solid ${ac.panelBorder}`,
+  borderRadius: 14,
+  overflow: "hidden",
+};
+
 
 const LiveAuctionPage: React.FC = () => {
   const { tournamentId } = useParams<{ tournamentId: string }>();
@@ -64,11 +75,13 @@ const LiveAuctionPage: React.FC = () => {
   });
 
   const [pollingActive, setPollingActive] = useState(true);
-  const { data: dashboard, refetch, isLoading } = useGetAuctionDashboardQuery(tid, {
-    pollingInterval: pollingActive ? 5000 : 0,
+  // WebSocket push is the primary update signal; polling is only a slow fallback
+  // in case the socket drops, so it runs at a relaxed interval to avoid load.
+  const { data: dashboard, refetch: refetchDashboard, isLoading } = useGetAuctionDashboardQuery(tid, {
+    pollingInterval: pollingActive ? 20000 : 0,
   });
-  const { data: allAuctionPlayers = [] } = useGetAuctionPlayersQuery(tid, {
-    pollingInterval: pollingActive ? 5000 : 0,
+  const { data: allAuctionPlayers = [], refetch: refetchPlayers } = useGetAuctionPlayersQuery(tid, {
+    pollingInterval: pollingActive ? 20000 : 0,
   });
   const { data: auctionSettings } = useGetAuctionSettingsQuery(tid);
 
@@ -120,9 +133,17 @@ const LiveAuctionPage: React.FC = () => {
   }, [dashboard?.session?.status]);
 
   // --- WebSocket ---
-  const onWsMessage = useCallback((msg: AuctionWebSocketMessage) => {
-    refetch();
-  }, [refetch]);
+  // Coalesce bursts of socket events (e.g. rapid bids from many owners) into a
+  // single dashboard/players refetch so one bid doesn't trigger a reload storm.
+  const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onWsMessage = useCallback((_msg: AuctionWebSocketMessage) => {
+    if (refetchTimer.current) clearTimeout(refetchTimer.current);
+    refetchTimer.current = setTimeout(() => {
+      refetchDashboard();
+      refetchPlayers();
+    }, 300);
+  }, [refetchDashboard, refetchPlayers]);
+  useEffect(() => () => { if (refetchTimer.current) clearTimeout(refetchTimer.current); }, []);
   const { connected } = useAuctionWebSocket({ tournamentId: tid, onMessage: onWsMessage, enabled: true });
 
   // --- Mutations ---
@@ -170,173 +191,195 @@ const LiveAuctionPage: React.FC = () => {
   ];
 
   // Timer color
-  const timerColor = secondsLeft > 30 ? "#52c41a" : secondsLeft > 10 ? "#faad14" : "#ff4d4f";
+  const timerColor = secondsLeft > 30 ? ac.pitch : secondsLeft > 10 ? ac.amber : ac.red;
   const timerPercent = session?.currentTimerEndsAt
     ? Math.min(100, (secondsLeft / 120) * 100)
     : 0;
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
 
-  const statusBadge = () => {
-    switch (session?.status) {
-      case "RUNNING": return <Badge status="processing" text="LIVE" />;
-      case "PAUSED": return <Badge status="warning" text="PAUSED" />;
-      case "COMPLETED": return <Badge status="success" text="COMPLETED" />;
-      default: return <Badge status="default" text="NOT STARTED" />;
-    }
-  };
+  // Current-player hero details
+  const heroPhoto = currentPlayer?.photoUrl ? toAbsolutePlayerPhotoUrl(currentPlayer.photoUrl) : undefined;
+  const heroInitials = currentPlayer
+    ? currentPlayer.playerName.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()
+    : "";
+  const heroPosition =
+    currentPlayer && currentPlayer.playingPosition && String(currentPlayer.playingPosition) !== "UNASSIGNED"
+      ? String(currentPlayer.playingPosition).replace(/_/g, " ")
+      : "Player";
 
-  if (isLoading) return <Card loading />;
+  if (isLoading) return <Card loading style={{ maxWidth: 1180, margin: "24px auto" }} />;
 
   return (
-    <div style={{ padding: 12 }}>
+    <div style={{ maxWidth: 1360, margin: "0 auto", width: "100%" }}>
       {/* ── Header ─────────────────────────────────── */}
-      <Row justify="space-between" align="middle" style={{ marginBottom: 12 }}>
-        <Col>
-          <Space size="large">
-            <Title level={4} style={{ margin: 0 }}><TrophyOutlined /> Live Auction</Title>
-            {statusBadge()}
-            <Text type="secondary">Round {session?.roundNumber ?? 1}</Text>
-            <Text type="secondary">
-              Remaining: {dashboard?.remainingCount ?? 0} | Sold: {dashboard?.soldCount ?? 0} | Unsold: {dashboard?.unsoldCount ?? 0}
-            </Text>
-            <Badge color={connected ? "green" : "red"} text={connected ? "Live" : "Reconnecting..."} />
-            <Button
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={() => setUnsoldModal(true)}
-            >
-              Unsold ({dashboard?.unsoldPlayers?.length ?? 0})
-            </Button>
-            <Button
-              size="small"
-              icon={<UnorderedListOutlined />}
-              onClick={() => setRemainingModal(true)}
-            >
-              Remaining ({remainingPlayers.length})
-            </Button>
-          </Space>
-        </Col>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", padding: "4px 0" }}>
+        <Space size="middle" wrap>
+          <Title level={3} style={{ margin: 0, display: "flex", alignItems: "center", gap: 10 }}>
+            <TrophyOutlined style={{ color: ac.gold }} /> Live Auction
+          </Title>
+          <StatusPill status={session?.status || "NOT_STARTED"} />
+          <span
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700,
+              letterSpacing: 0.4, textTransform: "uppercase", padding: "2px 10px", borderRadius: 999,
+              background: `${connected ? ac.pitch : ac.red}22`, border: `1px solid ${connected ? ac.pitch : ac.red}59`,
+              color: connected ? ac.pitch : ac.red,
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: connected ? ac.pitch : ac.red }} />
+            {connected ? "Live" : "Reconnecting…"}
+          </span>
+        </Space>
 
-        {/* Admin controls */}
-        {isAdmin && (
-          <Col>
-            <Space wrap>
-              {(!session || session.status === "COMPLETED") && (
-                <Tooltip title={teamBudgets.length === 0 ? "Add at least one team budget before starting the auction" : undefined}>
-                  <Button
-                    type="primary"
-                    icon={<PlayCircleOutlined />}
-                    onClick={() => run(() => startAuction(tid).unwrap(), "Auction started!")}
-                    loading={starting}
-                    disabled={teamBudgets.length === 0}
-                  >
-                    Start Auction
-                  </Button>
-                </Tooltip>
-              )}
-              {session?.status === "RUNNING" && (
-                <>
-                  <Button icon={<PauseCircleOutlined />} onClick={() => run(() => pauseAuction(tid).unwrap())}>Pause</Button>
-                  <Button type="primary" icon={<StepForwardOutlined />} onClick={() => run(() => nextPlayer(tid).unwrap())} loading={loadingNext}>Next</Button>
-                  <Button onClick={() => run(() => nextPlayerRandom(tid).unwrap())} loading={loadingRandom}>🎲 Random</Button>
-                  {currentPlayer && (
-                    <>
-                      <Button type="primary" icon={<DollarOutlined />} style={{ background: "#52c41a", borderColor: "#52c41a" }}
-                        onClick={() => run(() => markSold(tid).unwrap(), "Player sold!")}
-                        disabled={!currentPlayer.currentBid}>
-                        Sell
-                      </Button>
-                      <Button danger icon={<CloseCircleOutlined />} onClick={() => run(() => markUnsold(tid).unwrap(), "Marked unsold")}>
-                        Unsold
-                      </Button>
-                      <Button icon={<CloseCircleOutlined />} onClick={() => run(() => skipPlayer(tid).unwrap())}>Skip</Button>
-                      <Tooltip title="Reset bids and restart timer for this player">
-                        <Button icon={<ReloadOutlined />} onClick={() => run(() => restartBidding(tid).unwrap(), "Bidding restarted!")}>Restart Timer</Button>
-                      </Tooltip>
-                    </>
-                  )}
-                  <Button icon={<UndoOutlined />} onClick={() => run(() => undoLastSale(tid).unwrap(), "Sale undone!")}>Undo</Button>
-                </>
-              )}
-              {session?.status === "PAUSED" && (
-                <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => run(() => resumeAuction(tid).unwrap())}>Resume</Button>
-              )}
-              {session && session.status !== "NOT_STARTED" && session.status !== "COMPLETED" && (
-                <Tooltip title={(dashboard?.unsoldPlayers?.length ?? 0) === 0 ? "No unsold players" : undefined}>
-                  <Button
-                    danger
-                    disabled={(dashboard?.unsoldPlayers?.length ?? 0) === 0}
-                    onClick={() => run(() => startUnsoldRound(tid).unwrap(), "Re-auction started!")}
-                  >
-                    Re-auction Unsold ({dashboard?.unsoldPlayers?.length ?? 0})
-                  </Button>
-                </Tooltip>
-              )}
-              {session && session.status !== "NOT_STARTED" && session.status !== "COMPLETED" && (
-                <Button
-                  danger
-                  type="primary"
-                  icon={<CloseCircleOutlined />}
-                  onClick={() =>
-                    Modal.confirm({
-                      title: "End Auction?",
-                      content: "This will mark the auction as COMPLETED and notify all participants. This cannot be undone.",
-                      okText: "End Auction",
-                      okButtonProps: { danger: true },
-                      cancelText: "Cancel",
-                      onOk: () => run(() => endAuction(tid).unwrap(), "Auction ended!"),
-                    })
-                  }
-                >
-                  End Auction
-                </Button>
-              )}
-            </Space>
-          </Col>
-        )}
+        <Space wrap>
+          <Button size="small" icon={<EyeOutlined />} onClick={() => setUnsoldModal(true)}>
+            Unsold ({dashboard?.unsoldPlayers?.length ?? 0})
+          </Button>
+          <Button size="small" icon={<UnorderedListOutlined />} onClick={() => setRemainingModal(true)}>
+            Remaining ({remainingPlayers.length})
+          </Button>
+        </Space>
+      </div>
+
+      <GoldDivider style={{ margin: "10px 0 14px" }} />
+
+      {/* ── Stat strip ─────────────────────────────── */}
+      <Row gutter={[12, 12]} style={{ marginBottom: 14 }}>
+        <Col xs={6}><StatTile label="Round" value={session?.roundNumber ?? 1} accent={ac.gold} /></Col>
+        <Col xs={6}><StatTile label="Remaining" value={dashboard?.remainingCount ?? 0} accent={ac.info} /></Col>
+        <Col xs={6}><StatTile label="Sold" value={dashboard?.soldCount ?? 0} accent={ac.pitch} /></Col>
+        <Col xs={6}><StatTile label="Unsold" value={dashboard?.unsoldCount ?? 0} accent={ac.red} /></Col>
       </Row>
 
-      <Row gutter={12}>
+      {/* ── Admin controls ─────────────────────────── */}
+      {isAdmin && (
+        <Card size="small" style={{ marginBottom: 14 }}>
+          <Space wrap>
+            {(!session || session.status === "COMPLETED") && (
+              <Tooltip title={teamBudgets.length === 0 ? "Add at least one team budget before starting the auction" : undefined}>
+                <Button
+                  type="primary"
+                  icon={<PlayCircleOutlined />}
+                  onClick={() => run(() => startAuction(tid).unwrap(), "Auction started!")}
+                  loading={starting}
+                  disabled={teamBudgets.length === 0}
+                >
+                  Start Auction
+                </Button>
+              </Tooltip>
+            )}
+            {session?.status === "RUNNING" && (
+              <>
+                <Button icon={<PauseCircleOutlined />} onClick={() => run(() => pauseAuction(tid).unwrap())}>Pause</Button>
+                <Button type="primary" icon={<StepForwardOutlined />} onClick={() => run(() => nextPlayer(tid).unwrap())} loading={loadingNext}>Next</Button>
+                <Button onClick={() => run(() => nextPlayerRandom(tid).unwrap())} loading={loadingRandom}>🎲 Random</Button>
+                {currentPlayer && (
+                  <>
+                    <Button type="primary" icon={<DollarOutlined />} style={{ background: ac.pitch, borderColor: ac.pitch }}
+                      onClick={() => run(() => markSold(tid).unwrap(), "Player sold!")}
+                      disabled={!currentPlayer.currentBid}>
+                      Sell
+                    </Button>
+                    <Button danger icon={<CloseCircleOutlined />} onClick={() => run(() => markUnsold(tid).unwrap(), "Marked unsold")}>
+                      Unsold
+                    </Button>
+                    <Button icon={<CloseCircleOutlined />} onClick={() => run(() => skipPlayer(tid).unwrap())}>Skip</Button>
+                    <Tooltip title="Reset bids and restart timer for this player">
+                      <Button icon={<ReloadOutlined />} onClick={() => run(() => restartBidding(tid).unwrap(), "Bidding restarted!")}>Restart Timer</Button>
+                    </Tooltip>
+                  </>
+                )}
+                <Button icon={<UndoOutlined />} onClick={() => run(() => undoLastSale(tid).unwrap(), "Sale undone!")}>Undo</Button>
+              </>
+            )}
+            {session?.status === "PAUSED" && (
+              <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => run(() => resumeAuction(tid).unwrap())}>Resume</Button>
+            )}
+            {session && session.status !== "NOT_STARTED" && session.status !== "COMPLETED" && (
+              <Tooltip title={(dashboard?.unsoldPlayers?.length ?? 0) === 0 ? "No unsold players" : undefined}>
+                <Button
+                  danger
+                  disabled={(dashboard?.unsoldPlayers?.length ?? 0) === 0}
+                  onClick={() => run(() => startUnsoldRound(tid).unwrap(), "Re-auction started!")}
+                >
+                  Re-auction Unsold ({dashboard?.unsoldPlayers?.length ?? 0})
+                </Button>
+              </Tooltip>
+            )}
+            {session && session.status !== "NOT_STARTED" && session.status !== "COMPLETED" && (
+              <Button
+                danger
+                type="primary"
+                icon={<CloseCircleOutlined />}
+                onClick={() =>
+                  Modal.confirm({
+                    title: "End Auction?",
+                    content: "This will mark the auction as COMPLETED and notify all participants. This cannot be undone.",
+                    okText: "End Auction",
+                    okButtonProps: { danger: true },
+                    cancelText: "Cancel",
+                    onOk: () => run(() => endAuction(tid).unwrap(), "Auction ended!"),
+                  })
+                }
+              >
+                End Auction
+              </Button>
+            )}
+          </Space>
+        </Card>
+      )}
+
+      <Row gutter={[12, 12]}>
         {/* ── Left: Team Budgets ───────────────────── */}
         <Col xs={24} md={5}>
-          <Card title={<><TeamOutlined /> Teams</>} size="small" bodyStyle={{ padding: 8 }}>
-            {teamBudgets.length === 0 ? <Empty description="No teams" /> : (
-              teamBudgets.map(tb => (
-                <div
-                  key={tb.teamId}
-                  onClick={() => setSquadModal({ open: true, team: tb })}
-                  style={{
-                    padding: "8px 10px", marginBottom: 6, borderRadius: 6,
-                    background: tb.ownerId === myUserId ? "#1a2a1a" : "#1a1a2e",
-                    border: tb.ownerId === myUserId ? "1px solid #52c41a" : "1px solid #2a2a3a",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Row justify="space-between">
-                    <Text strong style={{ fontSize: 13 }}>{tb.teamName}</Text>
-                    {tb.ownerId === myUserId && <Tag color="green" style={{ fontSize: 10 }}>YOU</Tag>}
-                  </Row>
-                  <Row justify="space-between">
-                    <Text type="secondary" style={{ fontSize: 11 }}>{tb.playersBought} players</Text>
-                    <Text style={{ fontSize: 12, color: tb.remainingBudget < 10000 ? "#ff4d4f" : "#52c41a" }}>
-                      {fmt(tb.remainingBudget)}
-                    </Text>
-                  </Row>
-                  <Progress
-                    percent={Math.round((tb.remainingBudget / tb.totalBudget) * 100)}
-                    showInfo={false}
-                    strokeColor={tb.remainingBudget < 10000 ? "#ff4d4f" : "#52c41a"}
-                    size="small"
-                    style={{ marginBottom: 0, marginTop: 2 }}
-                  />
-                  <Text type="secondary" style={{ fontSize: 10, marginTop: 2, display: "block" }}>
-                    <EyeOutlined /> View squad
-                  </Text>
-                </div>
-              ))
-            )}
-          </Card>
+          <div style={boardPanel}>
+            <div style={{ padding: "10px 14px", borderBottom: `1px solid ${ac.panelBorder}`, ...kicker, color: ac.goldSoft }}>
+              <TeamOutlined /> Teams
+            </div>
+            <div style={{ padding: 8 }}>
+              {teamBudgets.length === 0 ? <Empty description={<Text style={{ color: ac.textMuted }}>No teams</Text>} image={Empty.PRESENTED_IMAGE_SIMPLE} /> : (
+                teamBudgets.map(tb => {
+                  const mine = tb.ownerId === myUserId;
+                  const low = tb.remainingBudget < 10000;
+                  return (
+                    <div
+                      key={tb.teamId}
+                      onClick={() => setSquadModal({ open: true, team: tb })}
+                      style={{
+                        padding: "8px 10px", marginBottom: 6, borderRadius: 8,
+                        background: mine ? "rgba(46,158,91,0.14)" : ac.tileBg,
+                        border: mine ? `1px solid ${ac.pitch}` : ac.tileBorder,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Row justify="space-between" align="middle">
+                        <Text strong style={{ fontSize: 13, color: ac.textPrimary }}>{tb.teamName}</Text>
+                        {mine && <Tag color="green" style={{ fontSize: 10, margin: 0 }}>YOU</Tag>}
+                      </Row>
+                      <Row justify="space-between" align="middle">
+                        <Text style={{ fontSize: 11, color: ac.textMuted }}>{tb.playersBought} players</Text>
+                        <Text style={{ fontSize: 12, ...scoreNum, color: low ? ac.red : ac.pitch }}>
+                          {fmt(tb.remainingBudget)}
+                        </Text>
+                      </Row>
+                      <Progress
+                        percent={Math.round((tb.remainingBudget / tb.totalBudget) * 100)}
+                        showInfo={false}
+                        strokeColor={low ? ac.red : ac.pitch}
+                        trailColor="rgba(255,255,255,0.12)"
+                        size="small"
+                        style={{ marginBottom: 0, marginTop: 2 }}
+                      />
+                      <Text style={{ fontSize: 10, marginTop: 2, display: "block", color: ac.textMuted }}>
+                        <EyeOutlined /> View squad
+                      </Text>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </Col>
 
         {/* ── Center: Current Player + Timer + Bid ── */}
@@ -378,192 +421,253 @@ const LiveAuctionPage: React.FC = () => {
           )}
 
           {currentPlayer && (
-            <Card
-              style={{ textAlign: "center" }}
-              bodyStyle={{ padding: "20px 24px" }}
-            >
-              {/* Grade */}
-              <Tag color={CATEGORY_COLOR[currentPlayer.category]} style={{ fontSize: 14, padding: "4px 12px", marginBottom: 12 }}>
-                {currentPlayer.category.replace("_", " ")}
-              </Tag>
-
-              {/* Player name */}
-              <Title level={2} style={{ margin: "0 0 4px" }}>{currentPlayer.playerName}</Title>
-              <Text type="secondary">{currentPlayer.playerEmail} • {currentPlayer.playingPosition || "Player"}</Text>
-
-              <Divider style={{ margin: "16px 0" }} />
-
-              {/* Current bid or base price */}
-              <Row justify="center" gutter={32} style={{ marginBottom: 16 }}>
-                <Col>
-                  <Statistic title="Base Price" value={currentPlayer.basePrice} prefix="৳" />
-                </Col>
-                <Col>
-                  <Statistic
-                    title={currentPlayer.currentHighestTeamName ? `Leading: ${currentPlayer.currentHighestTeamName}` : "Current Bid"}
-                    value={currentPlayer.currentBid ?? currentPlayer.basePrice}
-                    prefix="৳"
-                    valueStyle={{ color: currentPlayer.currentBid ? "#52c41a" : undefined, fontSize: 32 }}
-                  />
-                </Col>
-              </Row>
-
-              {/* Countdown timer */}
-              {session?.status === "RUNNING" && session?.currentTimerEndsAt && secondsLeft > 0 && (
-                <div style={{ margin: "0 auto 20px", maxWidth: 260 }}>
-                  <div style={{
-                    fontSize: 52, fontWeight: "bold", color: timerColor,
-                    lineHeight: 1, letterSpacing: 4,
-                    transition: "color 0.5s",
-                  }}>
-                    <ClockCircleOutlined style={{ fontSize: 28, marginRight: 8, verticalAlign: "middle" }} />
-                    {mm}:{ss}
-                  </div>
-                  <Progress
-                    percent={timerPercent}
-                    showInfo={false}
-                    strokeColor={timerColor}
-                    style={{ marginTop: 8 }}
-                  />
-                  {secondsLeft <= 10 && secondsLeft > 0 && (
-                    <Text style={{ color: "#ff4d4f", fontWeight: "bold" }}>⚠️ Timer almost up!</Text>
-                  )}
-                </div>
-              )}
-
-              {/* Timer expired — player still on screen, admin decides */}
-              {session?.status === "RUNNING" && !session?.currentTimerEndsAt && (
-                <div style={{ margin: "0 auto 16px", maxWidth: 320, textAlign: "center" }}>
-                  <Tag color="volcano" style={{ fontSize: 15, padding: "6px 18px", borderRadius: 20 }}>
-                    <ClockCircleOutlined /> Time's Up!
-                  </Tag>
-                  {isAdmin
-                    ? <div style={{ marginTop: 8 }}><Text type="secondary">Click <Text strong>Sell</Text> to confirm or <Text strong>Unsold</Text> to pass.</Text></div>
-                    : <div style={{ marginTop: 8 }}><Text type="secondary">Waiting for admin decision...</Text></div>
-                  }
-                </div>
-              )}
-
-              {/* Bid section — shown to all TEAM_OWNERs */}
-              {canParticipateInBidding && (
-                <>
-                  {myTeam ? (
-                    <>
-                      {/* Bid buttons — only while timer is actively running */}
-                      {session?.status === "RUNNING" && session?.currentTimerEndsAt && secondsLeft > 0 ? (
-                        <Space size="middle" style={{ marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
-                          {bidAmounts.map((amt, i) => {
-                            const canAfford = amt <= myTeam.remainingBudget;
-                            const bgColors = ["#1677ff", "#7c3aed", "#be123c"];
-                            return (
-                              <Button
-                                key={i}
-                                type="primary"
-                                size="large"
-                                icon={<ThunderboltOutlined />}
-                                onClick={() => handleBid(amt)}
-                                loading={bidding}
-                                disabled={!canAfford}
-                                style={{
-                                  minWidth: 110,
-                                  background: canAfford ? bgColors[i] : "#333",
-                                  borderColor: canAfford ? bgColors[i] : "#555",
-                                  color: canAfford ? "#fff" : "#666",
-                                  cursor: canAfford ? "pointer" : "not-allowed",
-                                  opacity: canAfford ? 1 : 0.5,
-                                }}
-                              >
-                                {fmt(amt)}
-                              </Button>
-                            );
-                          })}
-                        </Space>
-                      ) : (
-                        session?.status === "RUNNING" && !session?.currentTimerEndsAt && (
-                          <Tag color="default" style={{ marginTop: 8 }}>Bidding closed — time expired</Tag>
-                        )
+            <div style={{ ...boardPanel, textAlign: "center", position: "relative" }}>
+              {/* Gold "on the block" accent strip */}
+              <div style={{ height: 3, background: `linear-gradient(90deg, ${ac.gold}, ${ac.goldSoft})` }} />
+              {/* Soft spotlight behind the player */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 3,
+                  left: 0,
+                  right: 0,
+                  height: 140,
+                  background: "radial-gradient(ellipse at 50% 0%, rgba(198,161,91,0.16), transparent 72%)",
+                  pointerEvents: "none",
+                }}
+              />
+              <div style={{ padding: "14px 20px 16px", position: "relative" }}>
+                {/* Identity row: photo + name/meta side by side (compact) */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, textAlign: "left", flexWrap: "wrap" }}>
+                  <Avatar
+                    size={72}
+                    src={heroPhoto}
+                    style={{
+                      flexShrink: 0,
+                      border: `2px solid ${ac.gold}`,
+                      boxShadow: "0 6px 18px rgba(198,161,91,0.3)",
+                      background: "rgba(198,161,91,0.14)",
+                      color: ac.goldSoft,
+                      fontSize: 26,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {heroInitials}
+                  </Avatar>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ ...kicker, color: ac.goldSoft, fontSize: 10, marginBottom: 4 }}>On The Block</div>
+                    <Title level={3} style={{ margin: 0, color: ac.textPrimary, lineHeight: 1.15 }}>{currentPlayer.playerName}</Title>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                      <CategoryPill category={currentPlayer.category} />
+                      <Text style={{ color: ac.textMuted, fontSize: 12, fontWeight: 600 }}>{heroPosition}</Text>
+                      {currentPlayer.playerEmail && (
+                        <Text style={{ color: ac.textMuted, fontSize: 12 }}>· {currentPlayer.playerEmail}</Text>
                       )}
-                      <div style={{ marginTop: 10 }}>
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                          Your budget: <Text strong style={{ color: myTeam.remainingBudget < 10000 ? "#ff4d4f" : "#52c41a" }}>
-                            {fmt(myTeam.remainingBudget)}
-                          </Text> remaining • {myTeam.playersBought} player(s) bought
-                        </Text>
-                      </div>
-                    </>
-                  ) : (
-                    <Alert
-                      type="warning"
-                      message="No team budget registered for you in this auction."
-                      description="Ask the admin to set up your team budget to enable bidding."
-                      style={{ marginTop: 12 }}
-                      showIcon
+                    </div>
+                  </div>
+                </div>
+
+                <Divider style={{ margin: "12px 0", borderColor: "rgba(255,255,255,0.1)" }} />
+
+                {/* Base price + current bid — compact scoreboard tiles */}
+                <div style={{ display: "flex", justifyContent: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+                  <div style={{ background: ac.tileBg, border: ac.tileBorder, borderRadius: 10, padding: "8px 18px", minWidth: 130 }}>
+                    <div style={{ ...kicker, color: ac.textMuted, fontSize: 9 }}>Base Price</div>
+                    <div style={{ ...scoreNum, fontSize: 20, fontWeight: 800, color: ac.textPrimary }}>{fmt(currentPlayer.basePrice)}</div>
+                  </div>
+                  <div
+                    style={{
+                      background: currentPlayer.currentBid ? "rgba(46,158,91,0.14)" : ac.tileBg,
+                      border: `1px solid ${currentPlayer.currentBid ? ac.pitch : "rgba(255,255,255,0.09)"}`,
+                      borderRadius: 10,
+                      padding: "8px 18px",
+                      minWidth: 150,
+                    }}
+                  >
+                    <div style={{ ...kicker, color: ac.textMuted, fontSize: 9 }}>
+                      {currentPlayer.currentHighestTeamName ? `Leading · ${currentPlayer.currentHighestTeamName}` : "Current Bid"}
+                    </div>
+                    <div style={{ ...scoreNum, fontSize: 28, fontWeight: 900, color: currentPlayer.currentBid ? ac.pitch : ac.goldSoft }}>
+                      {fmt(currentPlayer.currentBid ?? currentPlayer.basePrice)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Countdown timer */}
+                {session?.status === "RUNNING" && session?.currentTimerEndsAt && secondsLeft > 0 && (
+                  <div style={{ margin: "0 auto 14px", maxWidth: 240 }}>
+                    <div style={{
+                      ...scoreNum, fontSize: 38, fontWeight: 900, color: timerColor,
+                      lineHeight: 1, letterSpacing: 3, transition: "color 0.5s",
+                    }}>
+                      <ClockCircleOutlined style={{ fontSize: 22, marginRight: 8, verticalAlign: "middle" }} />
+                      {mm}:{ss}
+                    </div>
+                    <Progress
+                      percent={timerPercent}
+                      showInfo={false}
+                      strokeColor={timerColor}
+                      trailColor="rgba(255,255,255,0.12)"
+                      size="small"
+                      style={{ marginTop: 6 }}
                     />
-                  )}
-                </>
-              )}
-            </Card>
+                  </div>
+                )}
+
+                {/* Timer expired — player still on screen, admin decides */}
+                {session?.status === "RUNNING" && !session?.currentTimerEndsAt && (
+                  <div style={{ margin: "0 auto 12px", maxWidth: 320, textAlign: "center" }}>
+                    <Tag color="volcano" style={{ fontSize: 13, padding: "3px 14px", borderRadius: 20 }}>
+                      <ClockCircleOutlined /> Time's Up!
+                    </Tag>
+                    {isAdmin
+                      ? <div style={{ marginTop: 8 }}><Text style={{ color: ac.textMuted }}>Click <Text strong style={{ color: ac.textPrimary }}>Sell</Text> to confirm or <Text strong style={{ color: ac.textPrimary }}>Unsold</Text> to pass.</Text></div>
+                      : <div style={{ marginTop: 8 }}><Text style={{ color: ac.textMuted }}>Waiting for admin decision...</Text></div>
+                    }
+                  </div>
+                )}
+
+                {/* Bid section — shown to all TEAM_OWNERs */}
+                {canParticipateInBidding && (
+                  <>
+                    {myTeam ? (
+                      <>
+                        {/* Bid buttons — only while timer is actively running */}
+                        {session?.status === "RUNNING" && session?.currentTimerEndsAt && secondsLeft > 0 ? (
+                          <>
+                            <Space size="middle" style={{ marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
+                              {bidAmounts.map((amt, i) => {
+                                const canAfford = amt <= myTeam.remainingBudget;
+                                return (
+                                  <Button
+                                    key={i}
+                                    type="primary"
+                                    size="middle"
+                                    icon={<ThunderboltOutlined />}
+                                    onClick={() => handleBid(amt)}
+                                    loading={bidding}
+                                    disabled={!canAfford}
+                                    style={{ minWidth: 108, ...scoreNum }}
+                                  >
+                                    {fmt(amt)}
+                                  </Button>
+                                );
+                              })}
+                            </Space>
+                            {/* Explain why bidding is unavailable instead of silently disabling */}
+                            {bidAmounts[0] > myTeam.remainingBudget && (
+                              <Alert
+                                type="warning"
+                                showIcon
+                                style={{ marginTop: 12, textAlign: "left" }}
+                                message="Not enough budget to bid on this player"
+                                description={`The minimum bid is ${fmt(bidAmounts[0])} but your team has only ${fmt(myTeam.remainingBudget)} left. Ask the admin to raise your team budget, or this player is out of your range.`}
+                              />
+                            )}
+                            {bidAmounts[0] <= myTeam.remainingBudget && myTeam.playersBought >= (auctionSettings?.maxSquadSize ?? Infinity) && (
+                              <Alert
+                                type="warning"
+                                showIcon
+                                style={{ marginTop: 12, textAlign: "left" }}
+                                message="Squad is full"
+                                description={`Your team has reached the maximum squad size (${auctionSettings?.maxSquadSize}). You cannot bid for more players.`}
+                              />
+                            )}
+                          </>
+                        ) : (
+                          session?.status === "RUNNING" && !session?.currentTimerEndsAt && (
+                            <Tag color="default" style={{ marginTop: 8 }}>Bidding closed — time expired</Tag>
+                          )
+                        )}
+                        <div style={{ marginTop: 12 }}>
+                          <Text style={{ fontSize: 12, color: ac.textMuted }}>
+                            Your budget: <Text strong style={{ ...scoreNum, color: myTeam.remainingBudget < 10000 ? ac.red : ac.pitch }}>
+                              {fmt(myTeam.remainingBudget)}
+                            </Text> remaining • {myTeam.playersBought} player(s) bought
+                          </Text>
+                        </div>
+                      </>
+                    ) : (
+                      <Alert
+                        type="warning"
+                        message="No team budget registered for you in this auction."
+                        description="Ask the admin to set up your team budget to enable bidding."
+                        style={{ marginTop: 12, textAlign: "left" }}
+                        showIcon
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
           )}
         </Col>
 
         {/* ── Right: Live Bid Feed ─────────────────── */}
         <Col xs={24} md={5}>
-          <Card
-            title={<><DollarOutlined /> Bid Feed</>}
-            size="small"
-            bodyStyle={{ padding: 8, maxHeight: 500, overflowY: "auto" }}
-          >
-            {bids.length === 0 ? (
-              <Empty description="No bids yet" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            ) : (
-              [...bids].reverse().map((bid: BidResponse) => (
-                <div key={bid.id} style={{
-                  padding: "8px 10px",
-                  marginBottom: 6,
-                  borderRadius: 6,
-                  background: bid.isWinning ? "#1a2e1a" : "#1a1a1a",
-                  border: bid.isWinning ? "1px solid #52c41a" : "1px solid #2a2a2a",
-                }}>
-                  <Row justify="space-between">
-                    <Text strong style={{ fontSize: 13 }}>{bid.teamName}</Text>
-                    <Text style={{ color: "#52c41a", fontWeight: "bold" }}>{fmt(bid.bidAmount)}</Text>
-                  </Row>
-                  <Text type="secondary" style={{ fontSize: 11 }}>{bid.bidderName}</Text>
-                  {bid.isWinning && <Tag color="green" style={{ float: "right", fontSize: 10, marginTop: 2 }}>Leading</Tag>}
-                </div>
-              ))
-            )}
-          </Card>
+          <div style={boardPanel}>
+            <div style={{ padding: "10px 14px", borderBottom: `1px solid ${ac.panelBorder}`, ...kicker, color: ac.goldSoft }}>
+              <DollarOutlined /> Bid Feed
+            </div>
+            <div style={{ padding: 8, maxHeight: 520, overflowY: "auto" }}>
+              {bids.length === 0 ? (
+                <Empty description={<Text style={{ color: ac.textMuted }}>No bids yet</Text>} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              ) : (
+                [...bids].reverse().map((bid: BidResponse) => (
+                  <div key={bid.id} style={{
+                    padding: "8px 10px",
+                    marginBottom: 6,
+                    borderRadius: 8,
+                    background: bid.isWinning ? "rgba(46,158,91,0.16)" : ac.tileBg,
+                    border: bid.isWinning ? `1px solid ${ac.pitch}` : ac.tileBorder,
+                  }}>
+                    <Row justify="space-between" align="middle">
+                      <Text strong style={{ fontSize: 13, color: ac.textPrimary }}>{bid.teamName}</Text>
+                      <Text style={{ color: ac.pitch, fontWeight: "bold", ...scoreNum }}>{fmt(bid.bidAmount)}</Text>
+                    </Row>
+                    <Text style={{ fontSize: 11, color: ac.textMuted }}>{bid.bidderName}</Text>
+                    {bid.isWinning && <Tag color="green" style={{ float: "right", fontSize: 10, marginTop: 2 }}>Leading</Tag>}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </Col>
       </Row>
 
-      {/* ── Sold Players Table ───────────────────── */}
+      {/* ── Sold Players board ───────────────────── */}
       {soldPlayers.length > 0 && (
-        <Card title={<><TrophyOutlined /> Sold Players ({soldPlayers.length})</>} style={{ marginTop: 12 }} size="small">
-          <Table
-            dataSource={soldPlayers}
-            rowKey="id"
-            pagination={false}
-            size="small"
-            scroll={{ x: 600, y: 200 }}
-            columns={[
-              { title: "#", key: "idx", render: (_: any, __: any, i: number) => i + 1, width: 40 },
-              { title: "Player", dataIndex: "playerName", key: "name", render: (v: string) => <Text strong>{v}</Text> },
-              {
-                title: "Grade", dataIndex: "category", key: "cat",
-                render: (c: AuctionPlayerCategory) => <Tag color={CATEGORY_COLOR[c]}>{c.replace("_", " ")}</Tag>
-              },
-              { title: "Base", dataIndex: "basePrice", key: "base", render: fmt },
-              { title: "Sold For", dataIndex: "finalPrice", key: "sold", render: (v: number) => <Text style={{ color: "#52c41a" }}>{fmt(v)}</Text> },
-              { title: "Team", dataIndex: "soldToTeamName", key: "team", render: (v?: string) => <Tag>{v || "—"}</Tag> },
-            ]}
-          />
-        </Card>
+        <div style={{ ...boardPanel, marginTop: 14 }}>
+          <div style={{ padding: "10px 14px", borderBottom: `1px solid ${ac.panelBorder}`, ...kicker, color: ac.goldSoft, display: "flex", alignItems: "center", gap: 8 }}>
+            <TrophyOutlined /> Sold Players ({soldPlayers.length})
+          </div>
+          <div style={{ padding: 12 }}>
+            <Row gutter={[12, 12]}>
+              {soldPlayers.map((p: AuctionPlayerResponse, i: number) => (
+                <Col xs={24} sm={12} xl={8} key={p.id}>
+                  <SignedTile
+                    index={i + 1}
+                    name={p.playerName}
+                    photoUrl={p.photoUrl}
+                    category={p.category}
+                    price={p.finalPrice}
+                    meta={
+                      <>
+                        <span style={metaMuted}>Base {fmt(p.basePrice)}</span>
+                        {p.soldToTeamName && <span style={teamChip}>{p.soldToTeamName}</span>}
+                      </>
+                    }
+                  />
+                </Col>
+              ))}
+            </Row>
+          </div>
+        </div>
       )}
 
-      {/* ── Unsold Players Modal ─────────────────── */}
+      {/* ── Remaining Players Modal ──────────────── */}
       <Modal
-        title={<Space><UnorderedListOutlined style={{ color: "#1677ff" }} /><span>Remaining Players ({remainingPlayers.length})</span></Space>}
+        title={<Space><UnorderedListOutlined style={{ color: ac.info }} /><span>Remaining Players ({remainingPlayers.length})</span></Space>}
         open={remainingModal}
         onCancel={() => setRemainingModal(false)}
         footer={null}
@@ -596,7 +700,7 @@ const LiveAuctionPage: React.FC = () => {
                 title: "Status",
                 dataIndex: "status",
                 width: 120,
-                render: (s: string) => <Tag color={s === "ON_AUCTION" ? "orange" : "blue"}>{s.replace("_", " ")}</Tag>,
+                render: (s: string) => <StatusPill status={s} />,
               },
               { title: "Position", dataIndex: "playingPosition", render: (v?: string) => v || "—" },
               { title: "Base Price", dataIndex: "basePrice", width: 130, render: fmt },
@@ -626,7 +730,7 @@ const LiveAuctionPage: React.FC = () => {
       </Modal>
 
       <Modal
-        title={<Space><CloseCircleOutlined style={{ color: "#ff4d4f" }} /><span>Unsold Players ({dashboard?.unsoldPlayers?.length ?? 0})</span></Space>}
+        title={<Space><CloseCircleOutlined style={{ color: ac.red }} /><span>Unsold Players ({dashboard?.unsoldPlayers?.length ?? 0})</span></Space>}
         open={unsoldModal}
         onCancel={() => setUnsoldModal(false)}
         footer={null}
@@ -677,7 +781,7 @@ const LiveAuctionPage: React.FC = () => {
       {/* ── Team Squad Modal ─────────────────────── */}
       <Modal
         title={
-          <Space>
+          <Space wrap>
             <TeamOutlined />
             <span>{squadModal.team?.teamName} — Squad</span>
             <Tag color="blue">{squadModal.team?.playersBought ?? 0} players</Tag>
@@ -693,40 +797,46 @@ const LiveAuctionPage: React.FC = () => {
           const teamPlayers = soldPlayers.filter(
             (p: AuctionPlayerResponse) => p.soldToTeamId === squadModal.team?.teamId
           );
+          const total = teamPlayers.reduce((sum, p) => sum + (p.finalPrice ?? 0), 0);
           return teamPlayers.length === 0 ? (
             <Empty description="No players bought yet" />
           ) : (
-            <Table
-              dataSource={teamPlayers}
-              rowKey="id"
-              size="small"
-              pagination={false}
-              columns={[
-                { title: "#", key: "idx", render: (_: any, __: any, i: number) => i + 1, width: 40 },
-                { title: "Player", dataIndex: "playerName", render: (v: string) => <Text strong>{v}</Text> },
-                {
-                  title: "Grade", dataIndex: "category",
-                  render: (c: AuctionPlayerCategory) => <Tag color={CATEGORY_COLOR[c]}>{c.replace("_", " ")}</Tag>
-                },
-                { title: "Position", dataIndex: "playingPosition", render: (v?: string) => v || "—" },
-                { title: "Base", dataIndex: "basePrice", render: fmt },
-                {
-                  title: "Sold For", dataIndex: "finalPrice",
-                  render: (v: number) => <Text strong style={{ color: "#52c41a" }}>{fmt(v)}</Text>
-                },
-              ]}
-              summary={(data) => {
-                const total = data.reduce((sum, p) => sum + (p.finalPrice ?? 0), 0);
-                return (
-                  <Table.Summary.Row>
-                    <Table.Summary.Cell index={0} colSpan={5}><Text strong>Total Spent</Text></Table.Summary.Cell>
-                    <Table.Summary.Cell index={1}>
-                      <Text strong style={{ color: "#52c41a" }}>{fmt(total)}</Text>
-                    </Table.Summary.Cell>
-                  </Table.Summary.Row>
-                );
-              }}
-            />
+            <div style={{ ...boardPanel, padding: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {teamPlayers.map((p: AuctionPlayerResponse, i: number) => (
+                  <SignedTile
+                    key={p.id}
+                    index={i + 1}
+                    name={p.playerName}
+                    photoUrl={p.photoUrl}
+                    category={p.category}
+                    price={p.finalPrice}
+                    meta={
+                      <>
+                        {p.playingPosition && <span style={metaMuted}>{p.playingPosition}</span>}
+                        <span style={metaMuted}>Base {fmt(p.basePrice)}</span>
+                      </>
+                    }
+                  />
+                ))}
+              </div>
+              {/* Total spent bar */}
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  background: "rgba(198,161,91,0.12)",
+                  border: `1px solid ${ac.panelBorder}`,
+                }}
+              >
+                <span style={{ ...kicker, color: ac.goldSoft }}>Total Spent</span>
+                <span style={{ ...scoreNum, color: ac.pitch, fontWeight: 800, fontSize: 18 }}>{fmt(total)}</span>
+              </div>
+            </div>
           );
         })()}
       </Modal>

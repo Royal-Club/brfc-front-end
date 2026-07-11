@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Card,
     Col,
@@ -30,6 +30,7 @@ import {
     LockOutlined,
     EditOutlined,
     TrophyOutlined,
+    HistoryOutlined,
 } from "@ant-design/icons";
 import "./authStyles.css";
 import companyLogo from "../../assets/logo.png";
@@ -42,7 +43,7 @@ import {
     useGetPlayerPositionsQuery,
     useGetMyGoalkeepingHistoryQuery,
 } from "../../state/features/player/playerSlice";
-import { useGetPlayerStatisticsQuery } from "../../state/features/statistics/statisticsSlice";
+import { useGetPlayerStatisticsQuery, useGetPlayerMatchHistoryQuery } from "../../state/features/statistics/statisticsSlice";
 import { showBdLocalTime } from "../../utils/utils";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import useIsMobile from "../../hooks/useIsMobile";
@@ -88,6 +89,16 @@ export default function UserProfile() {
         data: goalkeepingHistoryData,
         isLoading: isLoadingGoalkeeping,
     } = useGetMyGoalkeepingHistoryQuery();
+
+    // Match-by-match history for this player (newest first).
+    const {
+        data: matchHistoryData,
+        isLoading: isLoadingHistory,
+    } = useGetPlayerMatchHistoryQuery(
+        { playerId: Number(loginInfo?.userId) },
+        { skip: !loginInfo?.userId }
+    );
+    const [showAllHistory, setShowAllHistory] = useState(false);
 
     // Real aggregate stats for this player (across all tournaments).
     const { data: statsData } = useGetPlayerStatisticsQuery({ limit: 300 });
@@ -240,6 +251,20 @@ export default function UserProfile() {
         </div>
     );
 
+    const history = matchHistoryData?.content ?? [];
+    const record = history.reduce(
+        (acc, m) => {
+            if (m.result === "WIN") acc.w += 1;
+            else if (m.result === "DRAW") acc.d += 1;
+            else acc.l += 1;
+            return acc;
+        },
+        { w: 0, d: 0, l: 0 }
+    );
+    const visibleHistory = showAllHistory ? history : history.slice(0, 10);
+    const resultColor = (r: string) => (r === "WIN" ? club.pitch : r === "LOSS" ? "#E0736B" : "#8792A8");
+    const resultLetter = (r: string) => (r === "WIN" ? "W" : r === "LOSS" ? "L" : "D");
+
     const tabItems = [
         {
             key: "edit",
@@ -363,6 +388,217 @@ export default function UserProfile() {
                         Update Password
                     </Button>
                 </Form>
+            ),
+        },
+        {
+            key: "history",
+            label: (
+                <span>
+                    <HistoryOutlined /> Match History
+                </span>
+            ),
+            children: isLoadingHistory ? (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                    <Spin />
+                </div>
+            ) : history.length === 0 ? (
+                <Empty description="No match history yet" />
+            ) : (
+                <div>
+                    {/* Summary + recent form */}
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 12,
+                            flexWrap: "wrap",
+                            marginBottom: 16,
+                        }}
+                    >
+                        <Space size={16} wrap>
+                            <Text type="secondary">
+                                Played <Text strong>{history.length}</Text> matches
+                            </Text>
+                            <Space size={6}>
+                                <Tag color="green">{record.w}W</Tag>
+                                <Tag>{record.d}D</Tag>
+                                <Tag color="red">{record.l}L</Tag>
+                            </Space>
+                        </Space>
+                        <Space size={6} align="center">
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                Recent form
+                            </Text>
+                            {history.slice(0, 5).map((m, i) => (
+                                <span
+                                    key={i}
+                                    title={`${m.result} vs ${m.opponentTeamName ?? ""}`}
+                                    style={{
+                                        width: 24,
+                                        height: 24,
+                                        borderRadius: 6,
+                                        background: resultColor(m.result),
+                                        color: "#fff",
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                >
+                                    {resultLetter(m.result)}
+                                </span>
+                            ))}
+                        </Space>
+                    </div>
+
+                    {/* Match log — scoreboard cards */}
+                    {visibleHistory.map((m, idx) => {
+                        const rc = resultColor(m.result);
+                        const contrib = [
+                            m.goalsScored > 0 && { icon: "⚽", n: m.goalsScored, label: "Goals" },
+                            m.assists > 0 && { icon: "🅰️", n: m.assists, label: "Assists" },
+                            m.yellowCards > 0 && { icon: "🟨", n: m.yellowCards, label: "Yellow" },
+                            m.redCards > 0 && { icon: "🟥", n: m.redCards, label: "Red" },
+                        ].filter(Boolean) as { icon: string; n: number; label: string }[];
+
+                        return (
+                            <div
+                                key={`${m.matchId}-${idx}`}
+                                className="match-history-row"
+                                style={{
+                                    display: "flex",
+                                    alignItems: "stretch",
+                                    border: `1px solid ${colorBorderSecondary}`,
+                                    borderRadius: 12,
+                                    marginBottom: 10,
+                                    overflow: "hidden",
+                                    background: colorBgContainer,
+                                }}
+                            >
+                                {/* Result accent bar */}
+                                <div style={{ width: 4, background: rc, flexShrink: 0 }} />
+
+                                <div style={{ flex: 1, padding: "12px 16px", minWidth: 0 }}>
+                                    {/* Scoreboard line: team — score — opponent */}
+                                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                        <span
+                                            style={{
+                                                width: 30,
+                                                height: 30,
+                                                borderRadius: "50%",
+                                                background: rc,
+                                                color: "#fff",
+                                                fontWeight: 800,
+                                                fontSize: 13,
+                                                display: "inline-flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            {resultLetter(m.result)}
+                                        </span>
+                                        {/* Your team (highlighted gold + marker dot) */}
+                                        <div
+                                            style={{
+                                                flex: 1,
+                                                minWidth: 0,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "flex-end",
+                                                gap: 6,
+                                            }}
+                                        >
+                                            <Text strong ellipsis style={{ fontSize: 15, color: club.gold }}>
+                                                {m.teamName || "My Team"}
+                                            </Text>
+                                            <span
+                                                title="Your team"
+                                                style={{ width: 7, height: 7, borderRadius: "50%", background: club.gold, flexShrink: 0 }}
+                                            />
+                                        </div>
+                                        <span
+                                            style={{
+                                                fontVariantNumeric: "tabular-nums",
+                                                fontFeatureSettings: '"tnum"',
+                                                fontSize: 17,
+                                                fontWeight: 800,
+                                                color: rc,
+                                                background: `${rc}1f`,
+                                                border: `1px solid ${rc}59`,
+                                                borderRadius: 8,
+                                                padding: "2px 12px",
+                                                minWidth: 62,
+                                                textAlign: "center",
+                                                flexShrink: 0,
+                                            }}
+                                        >
+                                            {m.teamScore} - {m.opponentScore}
+                                        </span>
+                                        <Text
+                                            ellipsis
+                                            style={{ flex: 1, fontSize: 15, color: colorTextSecondary }}
+                                        >
+                                            {m.opponentTeamName || "—"}
+                                        </Text>
+                                    </div>
+
+                                    {/* Meta + contributions */}
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            gap: 10,
+                                            marginTop: 8,
+                                            flexWrap: "wrap",
+                                            paddingLeft: 42,
+                                        }}
+                                    >
+                                        <Text type="secondary" style={{ fontSize: 12 }}>
+                                            {m.tournamentName ? `${m.tournamentName} · ` : ""}
+                                            {showBdLocalTime(m.matchDate)}
+                                        </Text>
+                                        {contrib.length > 0 && (
+                                            <Space size={6} wrap>
+                                                {contrib.map((c) => (
+                                                    <span
+                                                        key={c.label}
+                                                        title={c.label}
+                                                        style={{
+                                                            fontSize: 12,
+                                                            fontWeight: 600,
+                                                            padding: "1px 8px",
+                                                            borderRadius: 6,
+                                                            background: colorFillTertiary,
+                                                        }}
+                                                    >
+                                                        {c.icon} {c.n}
+                                                    </span>
+                                                ))}
+                                                {m.minutesPlayed > 0 && (
+                                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                                        {m.minutesPlayed}&apos;
+                                                    </Text>
+                                                )}
+                                            </Space>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {history.length > 10 && (
+                        <div style={{ textAlign: "center", marginTop: 8 }}>
+                            <Button type="link" onClick={() => setShowAllHistory((v) => !v)}>
+                                {showAllHistory ? "Show less" : `Show all ${history.length} matches`}
+                            </Button>
+                        </div>
+                    )}
+                </div>
             ),
         },
         {
