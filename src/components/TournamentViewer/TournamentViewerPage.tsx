@@ -7,6 +7,7 @@ import {
   CheckCircleOutlined,
   DownOutlined,
   EnvironmentOutlined,
+  FireOutlined,
   HomeOutlined,
   LoginOutlined,
   NodeIndexOutlined,
@@ -15,6 +16,7 @@ import {
   UnorderedListOutlined,
 } from "@ant-design/icons";
 import ViewerHomeTab from "./ViewerHomeTab";
+import ViewerAuctionTab from "./ViewerAuctionTab";
 import ViewerFixturesTab from "./ViewerFixturesTab";
 import ViewerResultsTab from "./ViewerResultsTab";
 import ViewerTableTab from "./ViewerTableTab";
@@ -75,12 +77,14 @@ const isValidViewerTab = (
   tabKey: string | null,
   hasRules: boolean,
   isLoggedIn: boolean,
+  hasAuction: boolean = false,
 ) => {
   if (!tabKey) return false;
 
   return (
     ["home", "fixtures", "roadmap", "results", "table", "stats", "players"].includes(tabKey) ||
     (tabKey === "rules" && hasRules) ||
+    (tabKey === "auction" && hasAuction) ||
     (tabKey === "login" && !isLoggedIn)
   );
 };
@@ -133,6 +137,7 @@ export default function TournamentViewerPage({
     { skip: !selectedId },
   );
   const hasRules = Boolean(summaryData?.content?.[0]?.rules?.trim());
+  const hasAuction = Boolean(selectedTournament?.auctionMode);
 
   useEffect(() => {
     if (!selectedId) {
@@ -142,9 +147,9 @@ export default function TournamentViewerPage({
 
     const storedTab = getStoredViewerTab(selectedId);
     setActiveTab(
-      isValidViewerTab(storedTab, hasRules, isLoggedIn) ? storedTab! : "home",
+      isValidViewerTab(storedTab, hasRules, isLoggedIn, hasAuction) ? storedTab! : "home",
     );
-  }, [selectedId, hasRules, isLoggedIn]);
+  }, [selectedId, hasRules, isLoggedIn, hasAuction]);
 
   useEffect(() => {
     if (tournaments.length === 0) {
@@ -168,9 +173,10 @@ export default function TournamentViewerPage({
   const handleSelect = (id: number) => {
     setSelectedId(id);
 
+    const pickedHasAuction = Boolean(tournaments.find((t) => t.id === id)?.auctionMode);
     const storedTab = getStoredViewerTab(id);
     setActiveTab(
-      isValidViewerTab(storedTab, hasRules, isLoggedIn) ? storedTab! : "home",
+      isValidViewerTab(storedTab, hasRules, isLoggedIn, pickedHasAuction) ? storedTab! : "home",
     );
   };
 
@@ -200,6 +206,20 @@ export default function TournamentViewerPage({
             children: selectedId ? (
               <ViewerRulesTab tournamentId={selectedId} />
             ) : null,
+          },
+        ]
+      : []),
+    ...(hasAuction
+      ? [
+          {
+            key: "auction",
+            label: (
+              <span>
+                <FireOutlined style={{ marginRight: 6 }} />
+                Auction
+              </span>
+            ),
+            children: selectedId ? <ViewerAuctionTab tournamentId={selectedId} /> : null,
           },
         ]
       : []),

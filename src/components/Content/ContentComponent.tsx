@@ -46,6 +46,16 @@ import Venue from "../Venue/Venue";
 import ContentOutlet from "./ContentOutlet";
 import ClubRules from "../ClubRules/ClubRules";
 import MatchDetailsPage from "../Tournaments/Fixtures/MatchDetailsPage";
+import {
+  AuctionHubPage,
+  AuctionRegistrationPage,
+  AuctionAdminApprovalPage,
+  AuctionSettingsPage,
+  AuctionPlayerPoolPage,
+  AuctionTeamBudgetsPage,
+  LiveAuctionPage,
+  AuctionResultsPage,
+} from "../Auction";
 import TournamentViewerPage from "../TournamentViewer/TournamentViewerPage";
 import companyLogo from "../../assets/logo.png";
 import AppFooter from "../CommonAtoms/AppFooter";
@@ -484,6 +494,16 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             {/* <Route path="ac/vouchers/:id" element={<AcVoucher />} /> */}
 
                             <Route path="club-rules" element={<ClubRules />} />
+
+                            {/* Auction Routes */}
+                            <Route path="auction" element={<AuctionHubPage />} />
+                            <Route path="auction/register/:tournamentId" element={<AuctionRegistrationPage />} />
+                            <Route path="auction/registrations/:tournamentId" element={<AuctionAdminApprovalPage />} />
+                            <Route path="auction/settings/:tournamentId" element={<AuctionSettingsPage />} />
+                            <Route path="auction/players/:tournamentId" element={<AuctionPlayerPoolPage />} />
+                            <Route path="auction/team-budgets/:tournamentId" element={<AuctionTeamBudgetsPage />} />
+                            <Route path="auction/live/:tournamentId" element={<LiveAuctionPage />} />
+                            <Route path="auction/results/:tournamentId" element={<AuctionResultsPage />} />
                         </Route>
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>

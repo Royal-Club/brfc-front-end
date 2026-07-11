@@ -14,6 +14,7 @@ import LoginPage from "./components/authPages/LoginPage";
 import PasswordResetPage from "./components/authPages/PasswordResetPage";
 import { useSelector } from "react-redux";
 import { selectResetPassword } from "./state/slices/loginInfoSlice";
+import { AuctionRegistrationPage } from "./components/Auction";
 import AppFooter from "./components/CommonAtoms/AppFooter";
 import { club } from "./theme/clubTheme";
 
@@ -39,6 +40,26 @@ function App() {
             ? setIsDarkMode(false)
             : setIsDarkMode(true);
     }, []);
+
+    // Public route: Auction Registration (no login required)
+    const isPublicAuctionRoute = location.pathname.startsWith("/auction/register/");
+
+    if (!user?.token && isPublicAuctionRoute) {
+        return (
+            <ConfigProvider
+                theme={{
+                    algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+                    token: { colorPrimary: "#1890ff" },
+                }}
+            >
+                <Layout className={isDarkMode ? "dark-mode" : "light-mode"} style={{ minHeight: "100vh" }}>
+                    <Routes>
+                        <Route path="auction/register/:tournamentId" element={<AuctionRegistrationPage />} />
+                    </Routes>
+                </Layout>
+            </ConfigProvider>
+        );
+    }
 
     if (!user?.token) {
         return (

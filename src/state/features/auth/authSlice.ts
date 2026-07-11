@@ -64,6 +64,7 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
                     playerPosition?: string;
                     employeeId: string;
                     playingPosition?: string;
+                    profilePhoto?: string;
                 };
             }
         >({

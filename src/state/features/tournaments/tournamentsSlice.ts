@@ -25,6 +25,7 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         tournamentName: string;
         tournamentDate: string | Date;
         venueId: number;
+        auctionMode?: boolean;
         defaultTournament?: boolean;
         season?: string;
         description?: string;
@@ -32,10 +33,10 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         roadmapImageUrl?: string;
       }
     >({
-      query: ({ tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
+      query: ({ tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
         url: "tournaments",
         method: "POST",
-        body: { tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules, roadmapImageUrl },
+        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl },
       }),
       invalidatesTags: ["tournaments"],
     }),
@@ -53,6 +54,7 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         tournamentName: string;
         tournamentDate: string | Date;
         venueId: number;
+        auctionMode?: boolean;
         defaultTournament?: boolean;
         season?: string;
         description?: string;
@@ -60,10 +62,10 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         roadmapImageUrl?: string;
       }
     >({
-      query: ({ id, tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
+      query: ({ id, tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
         url: `tournaments/${id}`,
         method: "PUT",
-        body: { tournamentName, tournamentDate, venueId, defaultTournament, season, description, rules, roadmapImageUrl },
+        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl },
       }),
       invalidatesTags: ["tournaments"],
     }),

@@ -102,3 +102,28 @@ export interface IGetPlayerStatisticsResponse {
   message: string;
   content: IPlayerStatisticsData[];
 }
+
+export interface IPlayerMatchHistory {
+  matchId: number;
+  matchDate: string;
+  tournamentName?: string;
+  teamId?: number;
+  teamName?: string;
+  opponentTeamName?: string;
+  teamScore: number;
+  opponentScore: number;
+  result: "WIN" | "DRAW" | "LOSS";
+  goalsScored: number;
+  assists: number;
+  yellowCards: number;
+  redCards: number;
+  minutesPlayed: number;
+}
+
+export interface IGetPlayerMatchHistoryResponse {
+  timeStamp: number;
+  statusCode: number;
+  status: string;
+  message: string;
+  content: IPlayerMatchHistory[];
+}

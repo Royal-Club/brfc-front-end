@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Skeleton, Alert, Typography, Space, Card,
-  Row, Col, Pagination, Input, Segmented,
+  Row, Col, Pagination, Input, Segmented, Button,
 } from "antd";
 import { useGetTournamentsQuery } from "../../state/features/tournaments/tournamentsSlice";
 import { IoTournamentSingleSummaryType } from "../../state/features/tournaments/tournamentTypes";
@@ -11,7 +11,7 @@ import CreateTournament from "./Atoms/CreateTournamentModal";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { showBdLocalTime } from "../../utils/utils";
-import { CalendarOutlined, EnvironmentOutlined, SearchOutlined, TrophyOutlined } from "@ant-design/icons";
+import { CalendarOutlined, EnvironmentOutlined, SearchOutlined, ThunderboltOutlined, TrophyOutlined } from "@ant-design/icons";
 import { canManageTournaments } from "../../utils/roleUtils";
 import { club, scoreNum } from "../../theme/clubTheme";
 import "./tournament.css";
@@ -57,6 +57,10 @@ const TournamentsPage: React.FC = () => {
   const handleMenuClick = (e: any, record: IoTournamentSingleSummaryType) => {
     if (e.key === "join") {
       navigate(`/tournaments/join-tournament/${record.id}`);
+    } else if (e.key === "auction-register") {
+      navigate(`/auction/register/${record.id}`);
+    } else if (e.key === "auction-live") {
+      navigate(`/auction/live/${record.id}`);
     } else if (e.key === "team-building" || e.key === "fixtures") {
       navigate(`/tournaments/team-building/${record.id}`);
     } else if (e.type === "click" && record.activeStatus) {
@@ -245,6 +249,19 @@ const TournamentsPage: React.FC = () => {
                         </Text>
                       </Space>
                     </Space>
+
+                    {/* Auction entry point for auction-mode tournaments */}
+                    {t.auctionMode && (
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<ThunderboltOutlined />}
+                        style={{ marginTop: 14, width: "100%" }}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/auction/register/${t.id}`); }}
+                      >
+                        Auction
+                      </Button>
+                    )}
                   </div>
                 </Card>
               </Col>
