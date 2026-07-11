@@ -49,7 +49,7 @@ export default function PreviewTab({
         <Row justify="space-between" align="middle">
           <Col>
             <Space>
-              <TrophyOutlined style={{ fontSize: 24, color: "#1890ff" }} />
+              <TrophyOutlined style={{ fontSize: 24, color: "#c6a15b" }} />
               <div>
                 <Title level={4} style={{ margin: 0 }}>
                   {tournamentStructure.tournamentName}

@@ -1,10 +1,22 @@
-import { Col, Row } from "antd";
+import { Typography } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import { useEffect, useState } from "react";
 import IAcNature from "../../../interfaces/IAcNature";
 import { AcNatureType } from "../../Enum/AcNatureType";
 import { useGetAcNatureListQuery } from "../../../state/features/account/accountSlice";
+import "../../../theme/clubTable.css";
+
+const { Text } = Typography;
+
+// Accounting natures mapped to pill tones: income = green, expense = red,
+// asset = gold, liability = neutral.
+const NATURE_TONE: Record<string, string> = {
+    INCOME: "active",
+    EXPENSE: "inactive",
+    ASSET: "gold",
+    LIABILITY: "neutral",
+};
 
 function AcNature() {
     const { data, isLoading } = useGetAcNatureListQuery();
@@ -42,49 +54,53 @@ function AcNature() {
             dataIndex: "name",
             key: "name",
             sorter: (a, b) => a.name.localeCompare(b.name),
+            render: (name: string) => <Text strong>{name}</Text>,
         },
         {
             title: "Code",
             dataIndex: "code",
             key: "code",
             sorter: (a, b) => a.code - b.code,
+            render: (code: number) => <span className="brfc-chip">{code}</span>,
         },
         {
             title: "Type",
             dataIndex: "type",
             key: "type",
-            render: (_: any, record: IAcNature) => {
-                return getEnumValue(record.type);
-            },
+            render: (_: any, record: IAcNature) => (
+                <span className={`brfc-status brfc-status--${NATURE_TONE[record.type] || "neutral"}`}>
+                    <span className="brfc-status__dot" />
+                    {getEnumValue(record.type)}
+                </span>
+            ),
             sorter: (a, b) => a.type.localeCompare(b.type),
         },
-        // {
-        //     title: "Description",
-        //     dataIndex: "description",
-        //     key: "description",
-        // },
     ];
 
     return (
-        <>
-            <Row>
-                <Col md={24}>
-                    <div>
-                        <Title level={3}>Account Natures</Title>
-                        <Table
-                            loading={isLoading}
-                            size="small"
-                            dataSource={acNatures}
-                            columns={acNatureColumns}
-                            pagination={{
-                                showTotal: (total) => `Total ${total} records`,
-                            }}
-                            scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
-                        />
-                    </div>
-                </Col>
-            </Row>
-        </>
+        <div className="brfc-page">
+            {/* Page header */}
+            <div className="brfc-page-header">
+                <Title level={2} style={{ margin: 0, lineHeight: 1.1 }}>Account Natures</Title>
+            </div>
+
+            {/* Gold divider under the header */}
+            <div className="brfc-gold-divider" />
+
+            <Table
+                loading={isLoading}
+                size="small"
+                rowKey="id"
+                className="brfc-club-table"
+                style={{ borderRadius: 10, overflow: "hidden" }}
+                dataSource={acNatures}
+                columns={acNatureColumns}
+                pagination={{
+                    showTotal: (total) => `Total ${total} records`,
+                }}
+                scroll={{ x: "max-content" }}
+            />
+        </div>
     );
 }
 

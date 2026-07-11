@@ -48,7 +48,7 @@ export default function CanvasBuilder({
       icon: <AppstoreOutlined style={{ fontSize: 24 }} />,
       label: "Round",
       type: "round",
-      color: "#1890ff",
+      color: "#c6a15b",
     },
     {
       id: "toolbar-group",
@@ -214,7 +214,7 @@ export default function CanvasBuilder({
                 top: item.position.y,
                 padding: 16,
                 background: "white",
-                border: "2px solid #1890ff",
+                border: "2px solid #14213d",
                 borderRadius: 8,
                 cursor: "move",
                 minWidth: 150,

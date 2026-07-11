@@ -6,8 +6,14 @@ import type { ColumnsType } from "antd/lib/table"; // Import Ant Design's column
 
 export default function GoalKeeperDrawer({
   tournamentId,
+  triggerClassName,
+  triggerStyle,
+  triggerIcon,
 }: {
   tournamentId: number;
+  triggerClassName?: string;
+  triggerStyle?: React.CSSProperties;
+  triggerIcon?: React.ReactNode;
 }) {
   const {
     data: tournamentGoalKeeperList,
@@ -82,10 +88,13 @@ export default function GoalKeeperDrawer({
     <>
       <Button
         onClick={showDrawer}
+        className={triggerClassName}
+        icon={triggerIcon}
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          ...triggerStyle,
         }}
       >
         Goalkeeper Records

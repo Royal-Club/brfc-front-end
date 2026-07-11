@@ -1,7 +1,8 @@
 import React from 'react';
 import { Statistic, StatisticProps } from 'antd';
 import CountUp from 'react-countup';
-import styles from './DashboardComponent.module.css';
+import { club, kicker, scoreNum } from '../../theme/clubTheme';
+import useIsMobile from '../../hooks/useIsMobile';
 
 const formatter: StatisticProps["formatter"] = (value) => (
   <CountUp end={value as number} separator="," />
@@ -10,67 +11,88 @@ const formatter: StatisticProps["formatter"] = (value) => (
 interface AnalyticsCardProps {
   title: string;
   value: number;
-  backgroundColor: string;
-  textColor: string;
-  valueColor: string;
+  accentColor: string;
   icon: React.ReactNode;
-  iconColor: string;
 }
 
 const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
   title,
   value,
-  backgroundColor,
-  textColor,
-  valueColor,
+  accentColor,
   icon,
-  iconColor
 }) => {
-  const isMobile = window.innerWidth <= 576;
+  const isMobile = useIsMobile();
 
   return (
-    <div 
-      className={`${styles.analyticsCard} ${isMobile ? styles.mobile : styles.desktop}`} 
+    <div
       style={{
-        background: backgroundColor,
-        border: '1px solid rgba(0, 0, 0, 0.06)',
-        borderRadius: '12px',
-        padding: '20px',
         position: 'relative',
-        minHeight: '120px',
+        background: club.panel,
+        border: `1px solid ${club.panelBorder}`,
+        borderRadius: 14,
+        padding: isMobile ? '16px 16px 16px 18px' : '18px 22px 18px 24px',
+        minHeight: isMobile ? 96 : 122,
         display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between'
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 16,
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.35)',
+        overflow: 'hidden',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 8px 22px rgba(0, 0, 0, 0.45)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.35)';
       }}
     >
-      <div>
-        <div style={{ 
-          color: textColor, 
-          fontSize: isMobile ? '16px' : '18px',
-          fontWeight: '600',
-          marginBottom: '8px'
-        }}>
-          {isMobile ? title.split(' ').pop() : title}
+      {/* Top accent bar in the metric's colour */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          height: 3,
+          background: `linear-gradient(90deg, ${accentColor} 0%, ${accentColor}00 90%)`,
+        }}
+      />
+
+      <div style={{ minWidth: 0 }}>
+        <div style={{ ...kicker, color: club.goldSoft, marginBottom: 12 }}>
+          {title}
         </div>
         <Statistic
           value={value}
           precision={2}
-          valueStyle={{ 
-            color: valueColor, 
-            fontSize: isMobile ? '22px' : '32px',
-            fontWeight: 'bold',
-            lineHeight: 1
+          prefix={<span style={{ fontSize: isMobile ? 13 : 16, color: 'rgba(255,255,255,0.55)', marginRight: 5, fontWeight: 600 }}>৳</span>}
+          valueStyle={{
+            color: '#F5F7FA',
+            fontSize: isMobile ? 24 : 32,
+            fontWeight: 800,
+            lineHeight: 1,
+            letterSpacing: -0.8,
+            ...scoreNum,
           }}
           formatter={formatter}
-          suffix={<span style={{ fontSize: isMobile ? '18px' : '24px', color: valueColor }}>৳</span>}
         />
       </div>
+
       <div style={{
-        position: 'absolute',
-        bottom: '16px',
-        right: '16px',
-        fontSize: '32px',
-        color: iconColor,
+        background: 'rgba(255,255,255,0.06)',
+        border: `1px solid ${accentColor}55`,
+        borderRadius: 12,
+        width: isMobile ? 42 : 50,
+        height: isMobile ? 42 : 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        fontSize: isMobile ? 19 : 23,
+        color: accentColor,
       }}>
         {icon}
       </div>

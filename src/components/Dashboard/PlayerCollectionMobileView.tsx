@@ -1,8 +1,9 @@
 import React from 'react';
-import { theme, Tooltip, Select } from 'antd';
+import { Tooltip, Select } from 'antd';
 import { PlayerMetric } from '../../interfaces/IPlayerCollectionMetrics';
 import { CalendarOutlined } from '@ant-design/icons';
 import styles from './PlayerCollectionMetricsTable.module.css';
+import { club } from '../../theme/clubTheme';
 
 const { Option } = Select;
 
@@ -34,7 +35,6 @@ const PlayerCollectionMobileView: React.FC<PlayerCollectionMobileViewProps> = ({
   onYearChange,
   isLoading = false
 }) => {
-  const { token } = theme.useToken();
   const themeClass = isDarkMode ? styles.darkTheme : styles.lightTheme;
 
   return (
@@ -42,7 +42,7 @@ const PlayerCollectionMobileView: React.FC<PlayerCollectionMobileViewProps> = ({
       {/* Integrated Legend with Year Selector */}
       <div className={styles.integratedLegend}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <CalendarOutlined style={{ fontSize: 14, color: token.colorPrimary }} />
+          <CalendarOutlined style={{ fontSize: 14, color: club.gold }} />
           <Select
             size="small"
             style={{ width: 80, marginRight: 16 }}

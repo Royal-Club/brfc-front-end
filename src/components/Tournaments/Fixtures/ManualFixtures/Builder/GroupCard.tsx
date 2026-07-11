@@ -114,7 +114,7 @@ export default function GroupCard({
               <HolderOutlined style={{ fontSize: 16, color: "#999" }} />
             </div>
             <Text strong>{group.groupName}</Text>
-            <Badge count={group.teams.length} showZero color="#1890ff" />
+            <Badge count={group.teams.length} showZero color="#14213d" />
           </Space>
 
           <Space size={4}>

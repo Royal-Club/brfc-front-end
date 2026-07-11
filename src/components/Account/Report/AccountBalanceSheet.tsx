@@ -1,9 +1,10 @@
-import { Col, Row } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import { useEffect, useState } from "react";
 import IBalanceSheetReport from "../../../interfaces/IBalanceSheetReport";
 import { useGetAcBalanceSheetListQuery } from "../../../state/features/account/accountSlice";
+import { amountCell, natureTone } from "../../../utils/acFormat";
+import "../../../theme/clubTable.css";
 
 function AccountBalanceSheet() {
     const { data, isLoading, refetch } = useGetAcBalanceSheetListQuery();
@@ -36,52 +37,67 @@ function AccountBalanceSheet() {
             title: "Nature Type",
             dataIndex: "natureType",
             key: "natureType",
+            render: (type: string) => (
+                <span className={`brfc-status brfc-status--${natureTone(type)}`}>
+                    <span className="brfc-status__dot" />
+                    {type}
+                </span>
+            ),
         },
         {
             title: "Total Debit",
             dataIndex: "totalDebit",
             key: "totalDebit",
-            render: (value: number) => value.toFixed(2), // Formatting the number
+            align: "right",
+            render: (value: number) => amountCell(value),
         },
         {
             title: "Total Credit",
             dataIndex: "totalCredit",
             key: "totalCredit",
-            render: (value: number) => value.toFixed(2), // Formatting the number
+            align: "right",
+            render: (value: number) => amountCell(value),
         },
         {
             title: "Balance",
             dataIndex: "balance",
             key: "balance",
-            render: (value: number) => value.toFixed(2), // Formatting the number
+            align: "right",
+            render: (value: number) => amountCell(value, true),
         },
     ];
 
     return (
-        <div style={{ padding: isMobile ? '16px' : '24px', minHeight: '100vh' }}>
-            <Row>
-                <Col span={24}>
-                    <div>
-                        <Title level={3} style={{ fontSize: isMobile ? '18px' : '24px' }}>Balance Sheet</Title>
-                        <Table
-                            loading={isLoading}
-                            size={isMobile ? "small" : "middle"}
-                            dataSource={balanceSheet}
-                            columns={balanceSheetColumns}
-                            pagination={{
-                                showTotal: (total) => `Total ${total} records`,
-                                showSizeChanger: !isMobile,
-                                showQuickJumper: !isMobile,
-                                size: isMobile ? "small" : "default",
-                            }}
-                            scroll={{ 
-                                x: isMobile ? 600 : "max-content",
-                                y: isMobile ? "60vh" : undefined
-                            }}
-                        />
-                    </div>
-                </Col>
-            </Row>
+        <div className="brfc-page" style={{ padding: isMobile ? "16px 0" : "4px 0" }}>
+            {/* Page header */}
+            <div className="brfc-page-header">
+                <Title level={2} style={{ margin: 0, lineHeight: 1.1, fontSize: isMobile ? "20px" : undefined }}>
+                    Balance Sheet
+                </Title>
+            </div>
+
+            {/* Gold divider under the header */}
+            <div className="brfc-gold-divider" />
+
+            <Table
+                loading={isLoading}
+                size={isMobile ? "small" : "middle"}
+                rowKey="natureType"
+                className="brfc-club-table"
+                style={{ borderRadius: 10, overflow: "hidden" }}
+                dataSource={balanceSheet}
+                columns={balanceSheetColumns}
+                pagination={{
+                    showTotal: (total) => `Total ${total} records`,
+                    showSizeChanger: !isMobile,
+                    showQuickJumper: !isMobile,
+                    size: isMobile ? "small" : "default",
+                }}
+                scroll={{
+                    x: isMobile ? 600 : "max-content",
+                    y: isMobile ? "60vh" : undefined,
+                }}
+            />
         </div>
     );
 }

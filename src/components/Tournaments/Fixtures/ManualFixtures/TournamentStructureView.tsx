@@ -330,7 +330,7 @@ export default function TournamentStructureView({
           <Tag color={getStatusColor(group.status)}>
             {getStatusIcon(group.status)} {group.status}
           </Tag>
-          <Badge count={group.teams.length} showZero style={{ backgroundColor: "#1890ff" }} />
+          <Badge count={group.teams.length} showZero style={{ backgroundColor: "#14213d" }} />
         </Space>
       }
       extra={

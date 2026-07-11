@@ -67,7 +67,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                                 <Badge
                                     count={player.jerseyNumber}
                                     style={{
-                                        backgroundColor: "#1890ff",
+                                        backgroundColor: "#14213d",
                                         fontWeight: "bold",
                                     }}
                                 />
@@ -109,7 +109,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                         <Badge
                             count={player.jerseyNumber}
                             style={{
-                                backgroundColor: "#1890ff",
+                                backgroundColor: "#14213d",
                                 fontWeight: "bold",
                             }}
                         />

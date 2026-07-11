@@ -4,71 +4,50 @@
 }
 
 .tableData :global(.ant-table-thead > tr > th) {
-  color: var(--ant-color-text) ;
-  font-weight: 600 ;
-  border-bottom: 2px solid var(--ant-color-primary-border) ;
+  color: #F5F7FA ;
+  font-weight: 700 ;
+  border-bottom: 2px solid #C6A15B ;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-/* Light theme header */
-.lightTheme :global(.ant-table-thead > tr > th) {
-  background: #F0F2F5 ;
-}
-
-/* Dark theme header */
-.darkTheme :global(.ant-table-thead > tr > th) {
-  background: #000000 ;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Header Year Select */
-.headerYearSelect {
-  font-size: 10px !important;
+/* Club navy header in both themes (with gold underline above) */
+.lightTheme :global(.ant-table-thead > tr > th),
+.darkTheme :global(.ant-table-thead > tr > th) {
+  background: #14213D ;
 }
 
-.headerYearSelect :global(.ant-select-selector) {
-  height: 22px !important;
-  min-height: 22px !important;
-  padding: 0 4px !important;
-  border: 1px solid var(--ant-color-primary-border) !important;
-  background: var(--ant-color-bg-container) !important;
-  border-radius: 4px !important;
-  font-size: 10px !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+/* Keep sort-hover from washing the navy header to a light grey */
+.tableData :global(.ant-table-thead > tr > th.ant-table-column-has-sorters:hover) {
+  background: #1B2A4A ;
 }
 
-.headerYearSelect :global(.ant-select-selection-item) {
-  line-height: 20px !important;
-  font-weight: 600 !important;
-  color: var(--ant-color-primary) !important;
-  padding: 0 !important;
-  font-size: 10px !important;
+.tableData :global(.ant-table-thead .ant-table-column-sorter) {
+  color: rgba(245, 247, 250, 0.55) ;
 }
 
-.headerYearSelect :global(.ant-select-arrow) {
-  color: var(--ant-color-primary) !important;
-  font-size: 8px !important;
+/* Total / summary row — scoreboard footer */
+.tableData :global(.ant-table-summary) {
+  background: rgba(198, 161, 91, 0.08);
 }
 
-.headerYearSelect:hover :global(.ant-select-selector) {
-  border-color: var(--ant-color-primary-hover) !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+.tableData :global(.ant-table-summary > tr > td) {
+  border-top: 2px solid rgba(198, 161, 91, 0.45) ;
+  color: #D8BC84 ;
+  font-weight: 700 ;
 }
 
-/* Dark theme support for header select */
-.darkTheme .headerYearSelect :global(.ant-select-selector) {
-  background: #1f1f1f !important;
-  border-color: var(--ant-color-primary-border) !important;
+/* Filter buttons — selected state uses club gold instead of blue */
+.styledRadioGroup :global(.ant-radio-button-wrapper-checked) {
+  background: #C6A15B !important;
+  border-color: #C6A15B !important;
+  color: #0E1830 !important;
 }
 
-.darkTheme .headerYearSelect :global(.ant-select-selection-item) {
-  color: var(--ant-color-primary) !important;
-}
-
-/* Light theme support for header select */
-.lightTheme .headerYearSelect :global(.ant-select-selector) {
-  background: var(--ant-color-bg-container) !important;
+.styledRadioGroup :global(.ant-radio-button-wrapper-checked:hover) {
+  background: #D8BC84 !important;
+  border-color: #D8BC84 !important;
+  color: #0E1830 !important;
 }
 
 /* Remove the shadow that causes gaps */
@@ -236,22 +215,6 @@
     justify-content: center ;
     min-width: 100% ;
   }
-  
-  .headerYearSelect {
-    width: 85px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 11px !important;
-    padding: 0 6px !important;
-    height: 26px !important;
-    min-height: 26px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 24px !important;
-    font-size: 11px !important;
-  }
 }
 
 /* Mobile Table Border Theming - Only apply on mobile */
@@ -321,7 +284,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--ant-color-primary) 0%, var(--ant-color-primary-active) 100%);
+  background: linear-gradient(90deg, #D8BC84 0%, #C6A15B 100%);
 }
 
 .compactPlayerHeader {
@@ -350,12 +313,12 @@
 }
 
 .compactPlayerIndex {
-  background: linear-gradient(135deg, var(--ant-color-primary) 0%, var(--ant-color-primary-active) 100%);
-  color: white;
+  background: linear-gradient(135deg, #D8BC84 0%, #C6A15B 100%);
+  color: #0E1830;
   padding: 3px 8px;
   border-radius: 12px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   min-width: 24px;
   text-align: center;
@@ -444,14 +407,14 @@
 }
 
 .compactMonthItem.monthCurrent {
-  border-color: var(--ant-color-primary);
-  background: linear-gradient(135deg, var(--ant-color-primary-bg) 0%, var(--ant-color-primary-bg-hover) 100%);
+  border-color: #C6A15B;
+  background: linear-gradient(135deg, rgba(198, 161, 91, 0.16) 0%, rgba(198, 161, 91, 0.28) 100%);
 }
 
 .compactMonthItem.monthCurrent .compactMonthIndicator {
-  background: #1890ff;
+  background: #C6A15B;
   border-color: var(--ant-color-bg-container);
-  box-shadow: 0 0 0 1px rgba(24, 144, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.35), 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .compactMonthItem.monthEmpty .compactMonthIndicator {
@@ -468,7 +431,7 @@
   height: 28px !important;
   min-height: 28px !important;
   padding: 0 8px !important;
-  border: 1px solid var(--ant-color-primary-border) !important;
+  border: 1px solid rgba(198, 161, 91, 0.45) !important;
   background: var(--ant-color-bg-container) !important;
   border-radius: 6px !important;
   font-size: 12px !important;
@@ -478,29 +441,29 @@
 .mobileCardYearSelect :global(.ant-select-selection-item) {
   line-height: 26px !important;
   font-weight: 600 !important;
-  color: var(--ant-color-primary) !important;
+  color: #C6A15B !important;
   padding: 0 !important;
   font-size: 12px !important;
 }
 
 .mobileCardYearSelect :global(.ant-select-arrow) {
-  color: var(--ant-color-primary) !important;
+  color: #C6A15B !important;
   font-size: 10px !important;
 }
 
 .mobileCardYearSelect:hover :global(.ant-select-selector) {
-  border-color: var(--ant-color-primary-hover) !important;
+  border-color: rgba(216, 188, 132, 0.7) !important;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18) !important;
 }
 
 /* Dark theme support for mobile card year select */
 .darkTheme .mobileCardYearSelect :global(.ant-select-selector) {
   background: #1f1f1f !important;
-  border-color: var(--ant-color-primary-border) !important;
+  border-color: rgba(198, 161, 91, 0.45) !important;
 }
 
 .darkTheme .mobileCardYearSelect :global(.ant-select-selection-item) {
-  color: var(--ant-color-primary) !important;
+  color: #C6A15B !important;
 }
 
 /* Light theme support for mobile card year select */
@@ -650,9 +613,9 @@
 }
 
 .darkTheme .compactMonthItem.monthCurrent .compactMonthIndicator {
-  background: #1890ff;
+  background: #C6A15B;
   border-color: #1f1f1f;
-  box-shadow: 0 0 0 1px rgba(24, 144, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .darkTheme .compactMonthItem.monthEmpty .compactMonthIndicator {
@@ -660,45 +623,7 @@
   border-color: #1f1f1f;
 }
 
-/* Mobile responsive adjustments for larger selectors */
-@media (max-width: 768px) {
-  .headerYearSelect {
-    width: 85px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 11px !important;
-    padding: 0 6px !important;
-    height: 26px !important;
-    min-height: 26px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 24px !important;
-    font-size: 11px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .headerYearSelect {
-    width: 75px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 10px !important;
-    height: 24px !important;
-    min-height: 24px !important;
-    padding: 0 4px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 22px !important;
-    font-size: 10px !important;
-  }
-}
-
-  
-  .table {
+.table {
     padding: 16px;
   }
   
@@ -750,7 +675,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--ant-color-primary) 0%, var(--ant-color-primary-active) 100%);
+  background: linear-gradient(90deg, #D8BC84 0%, #C6A15B 100%);
 }
 
 .playerHeader {
@@ -769,12 +694,12 @@
 }
 
 .playerIndex {
-  background: linear-gradient(135deg, var(--ant-color-primary) 0%, var(--ant-color-primary-active) 100%);
-  color: white;
+  background: linear-gradient(135deg, #D8BC84 0%, #C6A15B 100%);
+  color: #0E1830;
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
@@ -861,14 +786,14 @@
 }
 
 .monthCurrent {
-  border-color: var(--ant-color-primary);
-  background: linear-gradient(135deg, var(--ant-color-primary-bg) 0%, var(--ant-color-primary-bg-hover) 100%);
+  border-color: #C6A15B;
+  background: linear-gradient(135deg, rgba(198, 161, 91, 0.16) 0%, rgba(198, 161, 91, 0.28) 100%);
 }
 
 .monthCurrent .monthIndicator {
-  background: #1890ff;
+  background: #C6A15B;
   border-color: var(--ant-color-bg-container);
-  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.3), 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .monthEmpty .monthIndicator {
@@ -929,8 +854,8 @@
 }
 
 .legendDot.current {
-  background: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.15);
+  background: #C6A15B;
+  box-shadow: 0 0 0 2px rgba(198, 161, 91, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .legendDot.empty {
@@ -955,9 +880,9 @@
 }
 
 .darkTheme .monthCurrent .monthIndicator {
-  background: #1890ff;
+  background: #C6A15B;
   border-color: #1f1f1f;
-  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 3px rgba(198, 161, 91, 0.3), 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .darkTheme .monthEmpty .monthIndicator {
@@ -976,9 +901,9 @@
 }
 
 .darkTheme .legendDot.current {
-  background: #1890ff;
+  background: #C6A15B;
   border-color: #1f1f1f;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 2px rgba(198, 161, 91, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .darkTheme .legendDot.empty {
@@ -1068,7 +993,7 @@
   height: 28px !important;
   min-height: 28px !important;
   padding: 0 8px !important;
-  border: 1px solid var(--ant-color-primary-border) !important;
+  border: 1px solid rgba(198, 161, 91, 0.45) !important;
   background: var(--ant-color-bg-container) !important;
   border-radius: 6px !important;
   font-size: 12px !important;
@@ -1078,29 +1003,29 @@
 .mobileCardYearSelect :global(.ant-select-selection-item) {
   line-height: 26px !important;
   font-weight: 600 !important;
-  color: var(--ant-color-primary) !important;
+  color: #C6A15B !important;
   padding: 0 !important;
   font-size: 12px !important;
 }
 
 .mobileCardYearSelect :global(.ant-select-arrow) {
-  color: var(--ant-color-primary) !important;
+  color: #C6A15B !important;
   font-size: 10px !important;
 }
 
 .mobileCardYearSelect:hover :global(.ant-select-selector) {
-  border-color: var(--ant-color-primary-hover) !important;
+  border-color: rgba(216, 188, 132, 0.7) !important;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18) !important;
 }
 
 /* Dark theme support for mobile card year select */
 .darkTheme .mobileCardYearSelect :global(.ant-select-selector) {
   background: #1f1f1f !important;
-  border-color: var(--ant-color-primary-border) !important;
+  border-color: rgba(198, 161, 91, 0.45) !important;
 }
 
 .darkTheme .mobileCardYearSelect :global(.ant-select-selection-item) {
-  color: var(--ant-color-primary) !important;
+  color: #C6A15B !important;
 }
 
 /* Light theme support for mobile card year select */
@@ -1108,42 +1033,7 @@
   background: var(--ant-color-bg-container) !important;
 }
 
-/* Mobile responsive adjustments */
-@media (max-width: 768px) {
-  .headerYearSelect {
-    width: 85px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 11px !important;
-    padding: 0 6px !important;
-    height: 26px !important;
-    min-height: 26px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 24px !important;
-    font-size: 11px !important;
-  }
-}
-
 @media (max-width: 480px) {
-  .headerYearSelect {
-    width: 75px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selector) {
-    font-size: 10px !important;
-    height: 24px !important;
-    min-height: 24px !important;
-    padding: 0 4px !important;
-  }
-  
-  .headerYearSelect :global(.ant-select-selection-item) {
-    line-height: 22px !important;
-    font-size: 10px !important;
-  }
-  
   .mobileCardYearSelect {
     width: 70px !important;
   }

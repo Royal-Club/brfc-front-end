@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Table, Select, Space, Radio, Button, theme, Tooltip, Card, Row, Col, Typography } from "antd";
+import { Table, Select, Space, Radio, Button, theme, Tooltip, Card, Row, Col, Typography, Tag } from "antd";
 import { 
   TableOutlined, 
   AppstoreOutlined, 
@@ -23,6 +23,7 @@ import { useGetPlayerCollectionMetricsQuery } from "../../state/features/account
 import { PlayerMetric } from "../../interfaces/IPlayerCollectionMetrics";
 import PlayerCollectionMobileView from "./PlayerCollectionMobileView";
 import styles from "./PlayerCollectionMetricsTable.module.css";
+import { club, scoreNum } from "../../theme/clubTheme";
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -151,62 +152,11 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
 
   const columns: ColumnsType<TableRow> = [
     {
-      title: (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          minWidth: 80
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <CalendarOutlined style={{ fontSize: 10, color: token.colorPrimary }} />
-            <span style={{ 
-              fontSize: 11,
-              display: window.innerWidth <= 768 ? 'none' : 'inline'
-            }}>
-              Year
-            </span>
-          </div>
-          <Select
-            size="small"
-            style={{ width: window.innerWidth <= 768 ? 85 : 70 }}
-            value={selectedYear || undefined}
-            onChange={handleYearChange}
-            loading={isLoading}
-            disabled={isLoading}
-            dropdownStyle={{ minWidth: 60 }}
-            className={styles.headerYearSelect}
-          >
-            {years.map((year: number) => (
-              <Option key={year} value={year}>
-                {year}
-              </Option>
-            ))}
-          </Select>
-        </div>
-      ),
-      dataIndex: "year",
-      key: "year",
-      fixed: "left",
-      width: window.innerWidth <= 576 ? 90 : 110,
-      align: "center",
-      render: () => selectedYear,
-      onCell: () => ({ 
-        style: { 
-          minWidth: window.innerWidth <= 576 ? 85 : 105,
-          textAlign: 'center',
-          fontWeight: 600,
-          color: token.colorPrimary,
-          fontSize: 12
-        } 
-      }),
-    },
-    {
       title: "Name",
       dataIndex: "playerName",
       key: "playerName",
       fixed: "left",
-      width: window.innerWidth <= 576 ? 100 : (window.innerWidth <= 768 ? 120 : 200),
+      width: window.innerWidth <= 576 ? 110 : (window.innerWidth <= 768 ? 150 : 220),
       sorter: (a, b) => a.playerName.localeCompare(b.playerName),
       sortOrder: sortField === "playerName" ? sortOrder : null,
       render: (text: string) => {
@@ -309,66 +259,69 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
 
   return (
     <Card
-      style={{ 
-        borderRadius: 16, 
-        border: `1px solid ${token.colorBorder}`,
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-        background: `linear-gradient(135deg, ${token.colorBgContainer} 0%, ${token.colorFillQuaternary} 100%)`,
-        transition: 'all 0.3s ease',
+      style={{
+        borderRadius: 14,
+        border: `1px solid ${club.panelBorder}`,
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.35)',
+        background: club.panel,
+        transition: 'box-shadow 0.2s ease',
         overflow: 'hidden'
       }}
       styles={{
         body: { padding: 0 }
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.12)';
+        e.currentTarget.style.boxShadow = '0 8px 22px rgba(0, 0, 0, 0.45)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+        e.currentTarget.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.35)';
       }}
     >
-      {/* Header Section */}
-      <div style={{ 
-        background: `linear-gradient(90deg, ${token.colorInfo}15 0%, ${token.colorInfo}08 100%)`,
+      {/* Toolbar */}
+      <div style={{
         padding: '16px 20px',
-        borderBottom: `1px solid ${token.colorBorder}`
+        borderBottom: `1px solid ${club.panelBorder}`
       }}>
-        <Row gutter={[16, 8]} align="middle">
+        <Row gutter={[12, 8]} align="middle">
           <Col xs={24} md={12}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                background: token.colorInfo,
-                borderRadius: '50%',
-                width: 32,
-                height: 32,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <BarChartOutlined style={{ fontSize: 16, color: 'white' }} />
-              </div>
-              <Title level={4} style={{ 
-                margin: 0, 
-                color: token.colorText, 
-                fontSize: 18,
-                fontWeight: '600'
-              }}>
-                Player Collection Metrics
+            <Space align="center" size={10}>
+              <span style={{ width: 4, height: 20, borderRadius: 2, background: club.gold }} />
+              <BarChartOutlined style={{ fontSize: 15, color: club.gold }} />
+              <Title level={5} style={{ margin: 0, fontWeight: 700, color: club.textPrimary }}>
+                Monthly Contributions
               </Title>
-            </div>
+              <Tag style={{ background: `${club.gold}22`, borderColor: `${club.gold}55`, color: club.goldSoft, ...scoreNum }}>
+                {dataSource.length}
+              </Tag>
+            </Space>
           </Col>
-          
+
           <Col xs={24} md={12}>
-            <Space 
-              wrap 
+            <Space
+              wrap
               align="center"
-              style={{ 
-                width: "100%", 
+              style={{
+                width: "100%",
                 justifyContent: window.innerWidth <= 768 ? "center" : "flex-end",
                 alignItems: "center",
                 gap: 12
               }}
             >
+              <Select
+                size="middle"
+                style={{ width: 90 }}
+                value={selectedYear || undefined}
+                onChange={handleYearChange}
+                loading={isLoading}
+                disabled={isLoading}
+                suffixIcon={<CalendarOutlined style={{ fontSize: 12, color: club.gold }} />}
+              >
+                {years.map((year: number) => (
+                  <Option key={year} value={year}>
+                    {year}
+                  </Option>
+                ))}
+              </Select>
               <Radio.Group
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
@@ -502,13 +455,10 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
               summary={() => (
                 <Table.Summary.Row>
                   <Table.Summary.Cell index={0} align="center">
-                    Total
-                  </Table.Summary.Cell>
-                  <Table.Summary.Cell index={1} align="center">
-                    <b>{dataSource.length}</b>
+                    <b>Total ({dataSource.length})</b>
                   </Table.Summary.Cell>
                   {monthlyTotals.map((total, idx) => (
-                    <Table.Summary.Cell key={monthNames[idx]} index={idx + 2} align="center">
+                    <Table.Summary.Cell key={monthNames[idx]} index={idx + 1} align="center">
                       <b>{total > 0 ? total.toFixed(0) : ""}</b>
                     </Table.Summary.Cell>
                   ))}

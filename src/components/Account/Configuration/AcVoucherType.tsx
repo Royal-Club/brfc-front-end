@@ -1,10 +1,12 @@
-import { Col, Row } from "antd";
+import { Typography } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import { useEffect, useState } from "react";
 import IAcVoucherType from "../../../interfaces/IAcVoucherType";
-import { CheckCircleOutlined, CheckCircleTwoTone } from "@ant-design/icons";
 import { useGetAcVoucherTypeListQuery } from "../../../state/features/account/accountSlice";
+import "../../../theme/clubTable.css";
+
+const { Text } = Typography;
 
 function AcVoucherType() {
     const { data, isLoading } = useGetAcVoucherTypeListQuery();
@@ -28,59 +30,63 @@ function AcVoucherType() {
             dataIndex: "name",
             key: "name",
             sorter: (a, b) => a.name.localeCompare(b.name),
+            render: (name: string) => <Text strong>{name}</Text>,
         },
         {
             title: "Alias",
             dataIndex: "alias",
             key: "alias",
+            render: (alias: string) =>
+                alias ? <span className="brfc-chip">{alias}</span> : <Text type="secondary">—</Text>,
         },
         {
             title: "Description",
             dataIndex: "description",
             key: "description",
+            render: (description: string) => <Text type="secondary">{description || "—"}</Text>,
         },
         {
-            title: "Default?",
+            title: "Default",
             dataIndex: "default",
             key: "default",
-            render: (_: any, record: IAcVoucherType) => {
-                if (record.default) {
-                    return (
-                        <span>
-                            <CheckCircleTwoTone twoToneColor="#52c41a" /> Yes
-                        </span>
-                    );
-                } else {
-                    return (
-                        <span>
-                            <CheckCircleOutlined /> No
-                        </span>
-                    );
-                }
-            },
+            align: "center",
+            width: 120,
+            render: (_: any, record: IAcVoucherType) =>
+                record.default ? (
+                    <span className="brfc-status brfc-status--gold">
+                        <span className="brfc-status__dot" />
+                        Default
+                    </span>
+                ) : (
+                    <Text type="secondary">—</Text>
+                ),
         },
     ];
 
     return (
-        <>
-            <Row>
-                <Col md={24}>
-                    <div>
-                        <Title level={3}>Voucher Type</Title>
-                        <Table
-                            loading={isLoading}
-                            size="small"
-                            pagination={{
-                                showTotal: (total) => `Total ${total} records`,
-                            }}
-                            dataSource={acVoucherTypes}
-                            columns={acVoucherTypeColumns}
-                            scroll={{ x: "max-content" }} // Enables horizontal scrolling on smaller screens
-                        />
-                    </div>
-                </Col>
-            </Row>
-        </>
+        <div className="brfc-page">
+            {/* Page header */}
+            <div className="brfc-page-header">
+                <Title level={2} style={{ margin: 0, lineHeight: 1.1 }}>Voucher Types</Title>
+            </div>
+
+            {/* Gold divider under the header */}
+            <div className="brfc-gold-divider" />
+
+            <Table
+                loading={isLoading}
+                size="small"
+                rowKey="id"
+                className="brfc-club-table"
+                style={{ borderRadius: 10, overflow: "hidden" }}
+                pagination={{
+                    showTotal: (total) => `Total ${total} records`,
+                }}
+                dataSource={acVoucherTypes}
+                columns={acVoucherTypeColumns}
+                scroll={{ x: "max-content" }}
+            />
+        </div>
     );
 }
 

@@ -65,6 +65,24 @@
     transition: all 0.2s ease-in-out;
 }
 
+/*
+ * Active-branch parent titles: when a leaf is selected, Ant reuses the leaf's
+ * "selected color" (navy, meant for text on the gold pill) on the ancestor
+ * submenu titles too — which sit on the navy panel and would vanish. Force the
+ * open/active parent titles to gold so the whole branch stays legible.
+ */
+.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title,
+.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-title-content,
+.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title .anticon,
+.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+    color: #c6a15b !important;
+}
+
+.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title:hover,
+.ant-menu-dark .ant-menu-submenu-selected > .ant-menu-submenu-title:hover .ant-menu-title-content {
+    color: #d8bc84 !important;
+}
+
 /* User dropdown improvements */
 .ant-dropdown-menu {
     border-radius: 12px !important;
@@ -214,7 +232,7 @@
 }
 
 .ant-switch-checked {
-    background: linear-gradient(135deg, #1890ff, #096dd9) !important;
+    background: linear-gradient(135deg, #c6a15b, #a8863f) !important;
 }
 
 .ant-switch:not(.ant-switch-checked) {

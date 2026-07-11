@@ -1,7 +1,6 @@
-import { EditTwoTone, SearchOutlined } from "@ant-design/icons";
+import { EditOutlined, SearchOutlined, PlusOutlined, CalendarOutlined } from "@ant-design/icons";
 import {
     Button,
-    Col,
     DatePicker,
     DatePickerProps,
     Form,
@@ -9,13 +8,13 @@ import {
     InputNumber,
     InputRef,
     Modal,
-    Row,
     Select,
     Space,
     Spin,
     Typography,
 } from "antd";
 import dayjs from "dayjs";
+import "../../../theme/clubTable.css";
 
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
@@ -28,10 +27,12 @@ import axiosApi from "../../../state/api/axiosBase";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 import FormatCurrencyWithSymbol from "../../Util/FormatCurrencyWithSymbol";
 import PlayerMonthlyAmountChart from "./PlayerMonthlyAmountChart";
-const { Text, Link } = Typography;
+const { Text } = Typography;
 
 function AcCollection() {
     const loginInfo = useSelector(selectLoginInfo);
+    const canManage =
+        loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
     const searchInput = useRef<InputRef>(null);
     const [tableLoadingSpin, setTableSpinLoading] = useState(false);
     const [playerApiLoading, setPlayerApiLoading] = useState(false);
@@ -200,7 +201,7 @@ function AcCollection() {
         ),
         filterIcon: (filtered: any) => (
             <SearchOutlined
-                style={{ color: filtered ? "#1890ff" : undefined }}
+                style={{ color: filtered ? "#c6a15b" : undefined }}
             />
         ),
         onFilter: (value: any, record: any) =>
@@ -223,12 +224,21 @@ function AcCollection() {
             dataIndex: "transactionId",
             key: "transactionId",
             ...getColumnSearchProps("transactionId"),
+            render: (trx: string) =>
+                trx ? <span className="brfc-chip">{trx}</span> : <Text type="secondary">—</Text>,
         },
         {
             title: "Date",
             dataIndex: "date",
             key: "date",
-            render: (_, record) => dayjs(record.date).format("YYYY-MMM-DD"),
+            render: (_, record) => (
+                <Space size={7}>
+                    <CalendarOutlined style={{ color: "#c6a15b", fontSize: 13 }} />
+                    <Text type="secondary" style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {dayjs(record.date).format("YYYY-MMM-DD")}
+                    </Text>
+                </Space>
+            ),
             sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
             filters: getUniqueYears().map((year) => ({
                 text: year.toString(),
@@ -242,8 +252,9 @@ function AcCollection() {
             title: "Month Of Payment",
             dataIndex: "monthOfPayment",
             key: "monthOfPayment",
-            render: (_, record) =>
-                dayjs(record.monthOfPayment).format("MMM YYYY"),
+            render: (_, record) => (
+                <Text type="secondary">{dayjs(record.monthOfPayment).format("MMM YYYY")}</Text>
+            ),
             sorter: (a, b) =>
                 dayjs(a.monthOfPayment).unix() - dayjs(b.monthOfPayment).unix(),
             filters: getUniqueMonths().map((month) => ({
@@ -271,8 +282,11 @@ function AcCollection() {
             title: "Amount",
             dataIndex: "amount",
             key: "amount",
+            align: "right",
             render: (_: any, record: IAcCollection) => (
-                <FormatCurrencyWithSymbol amount={record.amount} />
+                <span className="brfc-amount">
+                    <FormatCurrencyWithSymbol amount={record.amount} />
+                </span>
             ),
             sorter: (a, b) => a.amount - b.amount,
         },
@@ -281,27 +295,39 @@ function AcCollection() {
             dataIndex: "voucherCode",
             key: "voucherCode",
             ...getColumnSearchProps("voucherCode"),
+            render: (code: string) =>
+                code ? <span className="brfc-chip">{code}</span> : <Text type="secondary">—</Text>,
         },
         {
             title: "Total Amount",
             dataIndex: "totalAmount",
             key: "totalAmount",
+            align: "right",
             render: (_: any, record: IAcCollection) => (
-                <FormatCurrencyWithSymbol amount={record.totalAmount} />
+                <span className="brfc-amount" style={{ color: "#c6a15b" }}>
+                    <FormatCurrencyWithSymbol amount={record.totalAmount} />
+                </span>
             ),
             sorter: (a, b) => a.amount - b.amount,
         },
-        {
-            title: "Action",
-            key: "action",
-            render: (_: any, record: IAcCollection) => (
-                <Space size="middle">
-                    <a onClick={() => updateAction(record.id)}>
-                        <EditTwoTone />
-                    </a>
-                </Space>
-            ),
-        },
+        ...(canManage
+            ? [
+                  {
+                      title: "Action",
+                      key: "action",
+                      render: (_: any, record: IAcCollection) => (
+                          <Button
+                              size="small"
+                              icon={<EditOutlined />}
+                              className="brfc-act-btn"
+                              onClick={() => updateAction(record.id)}
+                          >
+                              Edit
+                          </Button>
+                      ),
+                  },
+              ]
+            : []),
     ];
 
     const onChangeDate: DatePickerProps["onChange"] = (date, dateString) => {
@@ -441,55 +467,49 @@ function AcCollection() {
     };
 
     return (
-        <>
-            <Row>
-                <Col md={24}>
-                    <div>
-                        <Row align="bottom" justify="space-between">
-                            <Col>
-                                <Title level={3}>Payment Collections</Title>
-                            </Col>
-                            <Col>
-                                {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
-                                    <Space>
-                                        <Button
-                                            type="primary"
-                                            onClick={showModal}
-                                        >
-                                            Create
-                                        </Button>
-                                        <Button
-                                            type="primary"
-                                            onClick={showModalForMultiple}
-                                        >
-                                            Create(s)
-                                        </Button>
-                                    </Space>
-                                )}
-                            </Col>
-                        </Row>
-                      {acCollections &&  <PlayerMonthlyAmountChart
-                            acCollections={acCollections}
-                        />}
-                        <Table
-                            loading={tableLoadingSpin}
-                            size="small"
-                            dataSource={acCollections}
-                            columns={acCollectionColumns}
-                            expandable={{
-                                expandedRowRender: (record) => (
-                                    <p style={{ margin: 0 }}>
-                                        {record.allPayersName}
-                                    </p>
-                                ),
-                                rowExpandable: (record) =>
-                                    record.players.length > 1,
-                            }}
-                            pagination={{
-                                showTotal: (total) => `Total ${total} records`,
-                            }}
-                            scroll={{ x: "max-content" }}
-                        />
+        <div className="brfc-page">
+            {/* Page header */}
+            <div className="brfc-page-header">
+                <Title level={2} style={{ margin: 0, lineHeight: 1.1 }}>Payment Collections</Title>
+                {canManage && (
+                    <Space>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={showModal}>
+                            New Collection
+                        </Button>
+                        <Button icon={<PlusOutlined />} onClick={showModalForMultiple}>
+                            Bulk Collect
+                        </Button>
+                    </Space>
+                )}
+            </div>
+
+            {/* Gold divider under the header */}
+            <div className="brfc-gold-divider" />
+
+            {acCollections && <PlayerMonthlyAmountChart acCollections={acCollections} />}
+
+            <Table
+                loading={tableLoadingSpin}
+                size="small"
+                rowKey="id"
+                className="brfc-club-table"
+                style={{ borderRadius: 10, overflow: "hidden", marginTop: 16 }}
+                dataSource={acCollections}
+                columns={acCollectionColumns}
+                expandable={{
+                    expandedRowRender: (record) => (
+                        <p style={{ margin: 0 }}>
+                            {record.allPayersName}
+                        </p>
+                    ),
+                    rowExpandable: (record) =>
+                        record.players.length > 1,
+                }}
+                pagination={{
+                    showTotal: (total) => `Total ${total} records`,
+                }}
+                scroll={{ x: "max-content" }}
+            />
 
                         <Modal
                             title="Payment Collection"
@@ -677,10 +697,7 @@ function AcCollection() {
                                 </div>
                             </Spin>
                         </Modal>
-                    </div>
-                </Col>
-            </Row>
-        </>
+        </div>
     );
 }
 
