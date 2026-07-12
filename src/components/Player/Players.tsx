@@ -1,5 +1,6 @@
 import {
   EditOutlined,
+  EyeOutlined,
   LockOutlined,
   LockTwoTone,
   PlusOutlined,
@@ -388,19 +389,31 @@ function Players() {
     },
   ];
 
-  const playersColumn: ColumnsType<IPlayer> = (loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN"))
-    ? [
-        ...CommonColumns,
-        {
-          title: "Action",
-          key: "action",
-          render: (_: any, record: IPlayer) => (
-            <Space size={6} className="mobile-action-buttons" wrap>
+  const canManagePlayers = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
+
+  const playersColumn: ColumnsType<IPlayer> = [
+    ...CommonColumns,
+    {
+      title: "Action",
+      key: "action",
+      render: (_: any, record: IPlayer) => (
+        <Space size={6} className="mobile-action-buttons" wrap>
+          {/* Anyone can view a player's read-only profile */}
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            className="brfc-act-btn"
+            onClick={() => navigate(`/players/${record.id}`)}
+          >
+            View
+          </Button>
+          {canManagePlayers && (
+            <>
               <Button
                 size="small"
                 icon={<EditOutlined />}
                 className="brfc-act-btn brfc-act-btn--gold"
-                onClick={() => navigate(`/players/${record.id}`)}
+                onClick={() => navigate(`/players/${record.id}/edit`)}
               >
                 Edit
               </Button>
@@ -412,21 +425,22 @@ function Players() {
               >
                 Reset
               </Button>
-              {loginInfo.roles.includes("SUPERADMIN") && (
-                <Button
-                  size="small"
-                  icon={<SafetyCertificateOutlined />}
-                  className="brfc-act-btn brfc-act-btn--green"
-                  onClick={() => showRolesModal(record)}
-                >
-                  Set Roles
-                </Button>
-              )}
-            </Space>
-          ),
-        },
-      ]
-    : CommonColumns;
+            </>
+          )}
+          {loginInfo.roles.includes("SUPERADMIN") && (
+            <Button
+              size="small"
+              icon={<SafetyCertificateOutlined />}
+              className="brfc-act-btn brfc-act-btn--green"
+              onClick={() => showRolesModal(record)}
+            >
+              Set Roles
+            </Button>
+          )}
+        </Space>
+      ),
+    },
+  ];
 
   // Calculate tab counts
   const allCount = playersData?.content?.length || 0;
@@ -522,36 +536,46 @@ function Players() {
                 )}
               </Space>
 
-              {isAdmin && (
-                <Space size={6} wrap style={{ marginTop: 10 }}>
-                  <Button
-                    size="small"
-                    icon={<EditOutlined />}
-                    className="brfc-act-btn brfc-act-btn--gold"
-                    onClick={() => navigate(`/players/${record.id}`)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="small"
-                    icon={<LockOutlined />}
-                    className="brfc-act-btn"
-                    onClick={() => showPasswordModal(record)}
-                  >
-                    Reset
-                  </Button>
-                  {isSuperAdmin && (
+              <Space size={6} wrap style={{ marginTop: 10 }}>
+                <Button
+                  size="small"
+                  icon={<EyeOutlined />}
+                  className="brfc-act-btn"
+                  onClick={() => navigate(`/players/${record.id}`)}
+                >
+                  View
+                </Button>
+                {isAdmin && (
+                  <>
                     <Button
                       size="small"
-                      icon={<SafetyCertificateOutlined />}
-                      className="brfc-act-btn brfc-act-btn--green"
-                      onClick={() => showRolesModal(record)}
+                      icon={<EditOutlined />}
+                      className="brfc-act-btn brfc-act-btn--gold"
+                      onClick={() => navigate(`/players/${record.id}/edit`)}
                     >
-                      Set Roles
+                      Edit
                     </Button>
-                  )}
-                </Space>
-              )}
+                    <Button
+                      size="small"
+                      icon={<LockOutlined />}
+                      className="brfc-act-btn"
+                      onClick={() => showPasswordModal(record)}
+                    >
+                      Reset
+                    </Button>
+                  </>
+                )}
+                {isSuperAdmin && (
+                  <Button
+                    size="small"
+                    icon={<SafetyCertificateOutlined />}
+                    className="brfc-act-btn brfc-act-btn--green"
+                    onClick={() => showRolesModal(record)}
+                  >
+                    Set Roles
+                  </Button>
+                )}
+              </Space>
             </div>
           ))}
         </div>

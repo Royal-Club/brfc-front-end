@@ -20,6 +20,7 @@ import {
     theme,
 } from "antd";
 import { useSelector } from "react-redux";
+import { useParams, useNavigate } from "react-router-dom";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import {
     UserOutlined,
@@ -55,6 +56,18 @@ const { Option } = Select;
 export default function UserProfile() {
     const loginInfo = useSelector(selectLoginInfo);
     const isMobile = useIsMobile(576);
+
+    // When rendered at /players/:id we view that player read-only; at /profile
+    // (no :id) we view our own profile with edit capabilities.
+    const { id: routeId } = useParams();
+    const navigate = useNavigate();
+    const ownId = Number(loginInfo?.userId);
+    const viewingId = routeId ? Number(routeId) : ownId;
+    const isOwn = !routeId || viewingId === ownId;
+    const profileQueryId = routeId ?? loginInfo?.userId;
+    const isAdmin = (loginInfo?.roles || []).some(
+        (r) => r === "ADMIN" || r === "SUPERADMIN"
+    );
     const {
         token: {
             colorTextSecondary,
@@ -71,15 +84,15 @@ export default function UserProfile() {
         data: playerProfileData,
         isLoading,
         refetch,
-    } = useGetUserProfileQuery({ id: loginInfo?.userId }, { skip: !loginInfo?.userId });
+    } = useGetUserProfileQuery({ id: profileQueryId }, { skip: !profileQueryId });
 
     const profile = playerProfileData?.content;
 
     // Resolve the player's photo: prefer the profile's own photoUrl, fall back
-    // to the synced store image. Coerce empty strings to undefined so the
-    // Avatar shows the icon instead of trying to load an empty src.
+    // to the synced store image (only when viewing our own profile). Coerce empty
+    // strings to undefined so the Avatar shows the icon instead of an empty src.
     const avatarSrc =
-        toAbsolutePlayerPhotoUrl(profile?.photoUrl) || loginInfo.image || undefined;
+        toAbsolutePlayerPhotoUrl(profile?.photoUrl) || (isOwn ? loginInfo.image : undefined) || undefined;
 
     const { data: playerPositions } = useGetPlayerPositionsQuery();
     const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
@@ -95,8 +108,8 @@ export default function UserProfile() {
         data: matchHistoryData,
         isLoading: isLoadingHistory,
     } = useGetPlayerMatchHistoryQuery(
-        { playerId: Number(loginInfo?.userId) },
-        { skip: !loginInfo?.userId }
+        { playerId: viewingId },
+        { skip: !viewingId }
     );
     const [showAllHistory, setShowAllHistory] = useState(false);
 
@@ -104,9 +117,8 @@ export default function UserProfile() {
     const { data: statsData } = useGetPlayerStatisticsQuery({ limit: 300 });
     const myStats = useMemo(
         () =>
-            statsData?.content?.find((s) => s.playerId === Number(loginInfo?.userId))
-                ?.statistics,
-        [statsData, loginInfo?.userId]
+            statsData?.content?.find((s) => s.playerId === viewingId)?.statistics,
+        [statsData, viewingId]
     );
 
     const [profileForm] = Form.useForm();
@@ -767,15 +779,17 @@ export default function UserProfile() {
                             >
                                 {profile?.name || loginInfo.username}
                             </Title>
-                            <div
-                                style={{
-                                    color: "rgba(255,255,255,0.6)",
-                                    fontSize: 13,
-                                    marginTop: 2,
-                                }}
-                            >
-                                {profile?.email || loginInfo.email}
-                            </div>
+                            {isOwn && (
+                                <div
+                                    style={{
+                                        color: "rgba(255,255,255,0.6)",
+                                        fontSize: 13,
+                                        marginTop: 2,
+                                    }}
+                                >
+                                    {profile?.email || loginInfo.email}
+                                </div>
+                            )}
                             <div
                                 style={{
                                     display: "flex",
@@ -801,21 +815,31 @@ export default function UserProfile() {
                                         {profile.playingPosition}
                                     </span>
                                 )}
-                                {loginInfo?.roles?.filter(Boolean).map((r) => (
-                                    <span
-                                        key={r}
-                                        style={{
-                                            padding: "3px 12px",
-                                            borderRadius: 20,
-                                            background: "rgba(255,255,255,0.14)",
-                                            border: "1px solid rgba(255,255,255,0.25)",
-                                            color: "#ffffff",
-                                            fontSize: 12,
-                                        }}
+                                {isOwn &&
+                                    loginInfo?.roles?.filter(Boolean).map((r) => (
+                                        <span
+                                            key={r}
+                                            style={{
+                                                padding: "3px 12px",
+                                                borderRadius: 20,
+                                                background: "rgba(255,255,255,0.14)",
+                                                border: "1px solid rgba(255,255,255,0.25)",
+                                                color: "#ffffff",
+                                                fontSize: 12,
+                                            }}
+                                        >
+                                            {r}
+                                        </span>
+                                    ))}
+                                {!isOwn && isAdmin && (
+                                    <Button
+                                        size="small"
+                                        icon={<EditOutlined />}
+                                        onClick={() => navigate(`/players/${routeId}/edit`)}
                                     >
-                                        {r}
-                                    </span>
-                                ))}
+                                        Edit
+                                    </Button>
+                                )}
                             </div>
                         </div>
 
@@ -843,10 +867,10 @@ export default function UserProfile() {
                             <Skeleton active paragraph={{ rows: 4 }} />
                         ) : (
                             <>
-                                {infoRow(<MailOutlined />, "Email", profile?.email || loginInfo.email)}
-                                {infoRow(<PhoneOutlined />, "Mobile", profile?.mobileNo)}
+                                {isOwn && infoRow(<MailOutlined />, "Email", profile?.email || loginInfo.email)}
+                                {isOwn && infoRow(<PhoneOutlined />, "Mobile", profile?.mobileNo)}
                                 {infoRow(<IdcardOutlined />, "Employee ID", profile?.employeeId)}
-                                {infoRow(<MessageOutlined />, "Skype", profile?.skypeId)}
+                                {isOwn && infoRow(<MessageOutlined />, "Skype", profile?.skypeId)}
 
                                 <div
                                     style={{
@@ -877,7 +901,10 @@ export default function UserProfile() {
 
                 <Col xs={24} md={16}>
                     <Card>
-                        <Tabs defaultActiveKey="edit" items={tabItems} />
+                        <Tabs
+                            defaultActiveKey={isOwn ? "edit" : "history"}
+                            items={tabItems.filter((t) => isOwn || t.key === "history")}
+                        />
                     </Card>
                 </Col>
             </Row>

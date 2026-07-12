@@ -435,9 +435,11 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             />
                             <Route path="/profile" element={<UserProfile />} />
                             <Route path="/player" element={<Player />} />
+                            {/* Any logged-in user can view a player's read-only profile */}
+                            <Route path="/players/:id" element={<UserProfile />} />
                             {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) && (
                                 <Route
-                                    path="/players/:id"
+                                    path="/players/:id/edit"
                                     element={<Player />}
                                 />
                             )}
