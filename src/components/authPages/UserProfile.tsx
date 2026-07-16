@@ -21,6 +21,7 @@ import {
 } from "antd";
 import { useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import {
     UserOutlined,
@@ -32,6 +33,7 @@ import {
     EditOutlined,
     TrophyOutlined,
     HistoryOutlined,
+    WalletOutlined,
 } from "@ant-design/icons";
 import "./authStyles.css";
 import companyLogo from "../../assets/logo.png";
@@ -45,8 +47,10 @@ import {
     useGetMyGoalkeepingHistoryQuery,
 } from "../../state/features/player/playerSlice";
 import { useGetPlayerStatisticsQuery, useGetPlayerMatchHistoryQuery } from "../../state/features/statistics/statisticsSlice";
+import { useGetPlayerPaymentsQuery } from "../../state/features/account/playerPaymentsSlice";
 import { showBdLocalTime } from "../../utils/utils";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
+import FormatCurrencyWithSymbol from "../Util/FormatCurrencyWithSymbol";
 import useIsMobile from "../../hooks/useIsMobile";
 import { club } from "../../theme/clubTheme";
 
@@ -112,6 +116,18 @@ export default function UserProfile() {
         { skip: !viewingId }
     );
     const [showAllHistory, setShowAllHistory] = useState(false);
+
+    // Payment history for this player (newest month first). The backend only lets
+    // a player read their own payments; admins may read anyone's — so skip the
+    // fetch for a non-admin viewing someone else's profile.
+    const canViewPayments = isOwn || isAdmin;
+    const {
+        data: paymentsData,
+        isLoading: isLoadingPayments,
+    } = useGetPlayerPaymentsQuery(
+        { playerId: viewingId },
+        { skip: !viewingId || !canViewPayments }
+    );
 
     // Real aggregate stats for this player (across all tournaments).
     const { data: statsData } = useGetPlayerStatisticsQuery({ limit: 300 });
@@ -276,6 +292,18 @@ export default function UserProfile() {
     const visibleHistory = showAllHistory ? history : history.slice(0, 10);
     const resultColor = (r: string) => (r === "WIN" ? club.pitch : r === "LOSS" ? "#E0736B" : "#8792A8");
     const resultLetter = (r: string) => (r === "WIN" ? "W" : r === "LOSS" ? "L" : "D");
+
+    // Payments — newest month first, plus a running total for the summary line.
+    const payments = useMemo(() => {
+        const rows = [...(paymentsData?.content ?? [])];
+        return rows.sort(
+            (a, b) => new Date(b.monthOfPayment).getTime() - new Date(a.monthOfPayment).getTime()
+        );
+    }, [paymentsData]);
+    const totalPaid = useMemo(
+        () => payments.reduce((sum, p) => sum + (p.amount ?? 0), 0),
+        [payments]
+    );
 
     const tabItems = [
         {
@@ -614,6 +642,115 @@ export default function UserProfile() {
             ),
         },
         {
+            key: "payments",
+            label: (
+                <span>
+                    <WalletOutlined /> Payments
+                </span>
+            ),
+            children: isLoadingPayments ? (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                    <Spin />
+                </div>
+            ) : payments.length === 0 ? (
+                <Empty description="No payment history yet" />
+            ) : (
+                <div>
+                    {/* Summary line */}
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: 12,
+                            flexWrap: "wrap",
+                            marginBottom: 16,
+                        }}
+                    >
+                        <Text type="secondary">
+                            <Text strong>{payments.length}</Text>{" "}
+                            {payments.length === 1 ? "payment" : "payments"} recorded
+                        </Text>
+                        <Space size={6} align="center">
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                Total paid
+                            </Text>
+                            <Text strong style={{ fontSize: 15, color: club.gold }}>
+                                <FormatCurrencyWithSymbol amount={totalPaid} />
+                            </Text>
+                        </Space>
+                    </div>
+
+                    {/* Payment log — one card per collection */}
+                    {payments.map((p) => (
+                        <div
+                            key={p.collectionId}
+                            style={{
+                                display: "flex",
+                                alignItems: "stretch",
+                                border: `1px solid ${colorBorderSecondary}`,
+                                borderRadius: 12,
+                                marginBottom: 10,
+                                overflow: "hidden",
+                                background: colorBgContainer,
+                            }}
+                        >
+                            {/* Accent bar */}
+                            <div style={{ width: 4, background: club.pitch, flexShrink: 0 }} />
+
+                            <div style={{ flex: 1, padding: "12px 16px", minWidth: 0 }}>
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        gap: 12,
+                                        flexWrap: "wrap",
+                                    }}
+                                >
+                                    <Text strong style={{ fontSize: 15 }}>
+                                        {dayjs(p.monthOfPayment).format("MMMM YYYY")}
+                                    </Text>
+                                    <span
+                                        style={{
+                                            fontVariantNumeric: "tabular-nums",
+                                            fontFeatureSettings: '"tnum"',
+                                            fontSize: 16,
+                                            fontWeight: 800,
+                                            color: club.pitch,
+                                        }}
+                                    >
+                                        <FormatCurrencyWithSymbol amount={p.amount} />
+                                    </span>
+                                </div>
+
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        gap: 10,
+                                        marginTop: 6,
+                                        flexWrap: "wrap",
+                                    }}
+                                >
+                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                        Paid {showBdLocalTime(p.date)}
+                                        {p.description ? ` · ${p.description}` : ""}
+                                    </Text>
+                                    {p.transactionId && (
+                                        <Tag style={{ margin: 0, fontSize: 11 }}>
+                                            {p.transactionId}
+                                        </Tag>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ),
+        },
+        {
             key: "goalkeeping",
             label: (
                 <span>
@@ -903,7 +1040,12 @@ export default function UserProfile() {
                     <Card>
                         <Tabs
                             defaultActiveKey={isOwn ? "edit" : "history"}
-                            items={tabItems.filter((t) => isOwn || t.key === "history")}
+                            items={tabItems.filter(
+                                (t) =>
+                                    isOwn ||
+                                    t.key === "history" ||
+                                    (t.key === "payments" && canViewPayments)
+                            )}
                         />
                     </Card>
                 </Col>
