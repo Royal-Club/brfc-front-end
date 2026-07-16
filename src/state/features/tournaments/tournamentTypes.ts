@@ -115,6 +115,32 @@ export interface TournamentGoalKeeperHistoryInfoType extends BasicResType {
     };
 }
 
+export type GoalKeeperCategoryType = "REGULAR" | "LAST_GK" | "NEW";
+
+export interface GoalKeeperPriorityPlayerType {
+    priority: number;
+    category: GoalKeeperCategoryType;
+    playerId: number;
+    playerName: string;
+    employeeId: string;
+    playAsGkDates: string[]; // Format: dd-MM-yy
+    totalTournamentParticipations: number;
+    activeTournamentCount: number;
+    participationFrequency: number; // percentage
+    totalGoalKeeperTournaments: number;
+    lastGoalKeeperDate: string | null;
+    lastPlayedTournamentDate: string | null; // Format: dd-MM-yy
+}
+
+export interface GoalKeeperQueueResType extends BasicResType {
+    content: {
+        tournamentId: number;
+        tournamentName: string;
+        tournamentDate: string;
+        goalKeeperPriorityQueue: GoalKeeperPriorityPlayerType[];
+    };
+}
+
 export interface LatestTournamentWithUserStatusType extends BasicResType {
     content: {
         tournament: {

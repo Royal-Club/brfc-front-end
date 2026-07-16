@@ -4,6 +4,7 @@ import {
   getSingleTournamentInfoType,
   IoTournamentSummaryResType,
   NextTournamentResType,
+  GoalKeeperQueueResType,
   TournamentGoalKeeperHistoryInfoType,
   TournamentGoalKeeperInfoType,
   TournamentPlayerInfoType,
@@ -179,6 +180,14 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
       }),
       providesTags: ["tournaments"],
     }),
+    getGoalKeeperPriorityQueue: builder.query<
+      GoalKeeperQueueResType,
+      { tournamentId: number }
+    >({
+      query: ({ tournamentId }) =>
+        `players/goalkeeper-queue?tournamentId=${tournamentId}`,
+      providesTags: ["tournaments"],
+    }),
     getLatestTournamentWithUserStatus: builder.query<
       LatestTournamentWithUserStatusType,
       void
@@ -222,6 +231,7 @@ export const {
   useGetTournamentSummaryQuery,
   useGetTournamentGoalKeeperListQuery,
   useGetTournamentGoalkeeperHistoryListQuery,
+  useGetGoalKeeperPriorityQueueQuery,
   useGetLatestTournamentWithUserStatusQuery,
   useGetTournamentSessionsQuery,
   useGetTournamentsByYearQuery,

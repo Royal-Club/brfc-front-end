@@ -13,6 +13,7 @@ import CreateTeamComponent from "./Atoms/CreateTeamComponent";
 import PlayerCard from "./Atoms/PlayerCard";
 import TeamCard from "./Atoms/TeamCard";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
+import GoalKeeperPriorityDrawer from "./Atoms/GoalKeeperPriorityDrawer";
 import { useSelector, useDispatch } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { RootState } from "../../state/store";
@@ -230,6 +231,7 @@ function SingleTournament() {
               )}
               {isAdmin && <PickerWheelModal teams={teams} />}
               <GoalKeeperDrawer tournamentId={tournamentId} />
+              <GoalKeeperPriorityDrawer tournamentId={tournamentId} />
               <Button onClick={handleExportTeams}>
                 <FileExcelOutlined />
                 Export
