@@ -72,6 +72,12 @@ export const canManageClubRules = (userRoles: string[]): boolean => {
   return isAdmin(userRoles);
 };
 
+// Coordinators publish match plans and formations, so they manage the resource
+// library alongside admins. Mirrored by @PreAuthorize on the backend.
+export const canManageResources = (userRoles: string[]): boolean => {
+  return hasAnyRole(userRoles, ["ADMIN", "SUPERADMIN", "COORDINATOR"]);
+};
+
 export const canManageVenues = (userRoles: string[]): boolean => {
   return isAdmin(userRoles);
 };

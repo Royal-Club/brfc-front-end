@@ -45,6 +45,8 @@ import TournamentsPage from "../Tournaments/TournamentsPage";
 import Venue from "../Venue/Venue";
 import ContentOutlet from "./ContentOutlet";
 import ClubRules from "../ClubRules/ClubRules";
+import ResourcesPage from "../Resources/ResourcesPage";
+import ResourceDetailPage from "../Resources/ResourceDetailPage";
 import MatchDetailsPage from "../Tournaments/Fixtures/MatchDetailsPage";
 import {
   AuctionHubPage,
@@ -496,6 +498,10 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             {/* <Route path="ac/vouchers/:id" element={<AcVoucher />} /> */}
 
                             <Route path="club-rules" element={<ClubRules />} />
+
+                            {/* Resource Library */}
+                            <Route path="resources" element={<ResourcesPage />} />
+                            <Route path="resources/:slug" element={<ResourceDetailPage />} />
 
                             {/* Auction Routes */}
                             <Route path="auction" element={<AuctionHubPage />} />

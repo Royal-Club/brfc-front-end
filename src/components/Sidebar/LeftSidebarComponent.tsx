@@ -7,6 +7,7 @@ import {
     PieChartOutlined,
     ProjectOutlined,
     RadarChartOutlined,
+    ReadOutlined,
     TrophyOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
@@ -84,8 +85,12 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   } = theme.useToken();
 
   // Root path renders the Dashboard, so highlight the Dashboard item there.
-  const selectedKey =
+  const currentPath =
     location.pathname === "/" ? "/dashboard" : location.pathname;
+  // A resource detail page keeps its library entry highlighted.
+  const selectedKey = currentPath.startsWith("/resources/")
+    ? "/resources"
+    : currentPath;
   const [isMobile, setIsMobile] = useState(false);
   const [openKeys, setOpenKeys] = useState<string[]>(() =>
     getAncestorKeys(selectedKey)
@@ -133,6 +138,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
       getItem("Tournaments", "/tournaments"),
     ]),
     getItem("Club Rules", "/club-rules", <BookOutlined />),
+    getItem("Resources", "/resources", <ReadOutlined />),
     getItem("Auction", "/auction", <FireOutlined />),
   ];
 
