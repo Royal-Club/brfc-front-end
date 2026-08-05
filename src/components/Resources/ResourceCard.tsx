@@ -38,7 +38,7 @@ export default function ResourceCard({ resource, language, onOpen }: ResourceCar
                 }
             }}
         >
-            <div className="resource-card-cover">
+            <div className={`resource-card-cover${coverUrl ? ' has-cover' : ''}`}>
                 {coverUrl ? (
                     <img src={coverUrl} alt={title} loading="lazy" />
                 ) : (
@@ -49,9 +49,11 @@ export default function ResourceCard({ resource, language, onOpen }: ResourceCar
                 )}
 
                 <div className="resource-card-badges">
-                    <Tag color={typeMeta.color} style={{ marginInlineEnd: 0 }}>
-                        {typeMeta.label}
-                    </Tag>
+                    {!coverUrl && (
+                        <Tag color={typeMeta.color} style={{ marginInlineEnd: 0 }}>
+                            {typeMeta.label}
+                        </Tag>
+                    )}
                     {resource.status !== "PUBLISHED" && (
                         <Tag
                             color={RESOURCE_STATUS_META[resource.status].color}
