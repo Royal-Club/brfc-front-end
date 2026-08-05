@@ -5,6 +5,7 @@ import {
     Card,
     Dropdown,
     Menu,
+    Modal,
     Popconfirm,
     Space,
     Typography,
@@ -15,7 +16,8 @@ import { Droppable, Draggable } from "react-beautiful-dnd";
 import PlayerCard from "./PlayerCard";
 import EditPlayerDetailsModal from "./EditPlayerDetailsModal";
 import { Team, Player } from "../tournamentTypes";
-import { MoreOutlined, UploadOutlined } from "@ant-design/icons";
+import { LayoutOutlined, MoreOutlined, UploadOutlined } from "@ant-design/icons";
+import TeamFormationPanel from "../Formation/TeamFormationPanel";
 import DoubleClickTextInputField from "../../CommonAtoms/DoubleClickTextInputField";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
@@ -57,6 +59,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
     const canManage = canManageTeams(loginInfo.roles);
 
     const [editModalVisible, setEditModalVisible] = useState(false);
+    const [formationModalVisible, setFormationModalVisible] = useState(false);
     const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
     const logoInputId = `team-logo-input-${team.teamId}`;
@@ -123,8 +126,21 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                 }
                             />
                         </Space>
-                        {canManage && (
-                            <Space>
+                        <Space>
+                            {/* Open to everyone — captains edit, the rest read. */}
+                            <Button
+                                title="Line-up"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    // The card header is a dropdown trigger for
+                                    // managers; don't open both at once.
+                                    e.stopPropagation();
+                                    setFormationModalVisible(true);
+                                }}
+                                icon={<LayoutOutlined />}
+                            />
+                            {canManage && (
+                                <>
                                 <Button
                                     onClick={(e) => {
                                         e.preventDefault();
@@ -150,8 +166,9 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                     onClick={(e) => e.preventDefault()}
                                     icon={<MoreOutlined />}
                                 />
-                            </Space>
-                        )}
+                                </>
+                            )}
+                        </Space>
                     </Space>
                 </Dropdown>
             }
@@ -281,6 +298,17 @@ const TeamCard: React.FC<TeamCardProps> = ({
                     );
                 }}
             />
+            <Modal
+                open={formationModalVisible}
+                onCancel={() => setFormationModalVisible(false)}
+                footer={null}
+                width={720}
+                destroyOnClose
+                title={`${team.teamName} — line-up`}
+            >
+                {/* Mounted only while open so the pitch measures a laid-out box. */}
+                {formationModalVisible && <TeamFormationPanel teamId={team.teamId} />}
+            </Modal>
         </Card>
     );
 };

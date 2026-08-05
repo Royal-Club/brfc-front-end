@@ -18,6 +18,7 @@ import { canConductMatches } from "../../../utils/roleUtils";
 import MatchEventTimeline from "./MatchEventTimeline";
 import QuickEventRecorder from "./QuickEventRecorder";
 import ElectricTeamBanner from "./ElectricTeamBanner";
+import MatchFormationsPanel from "../Formation/MatchFormationsPanel";
 const { useToken } = theme;
 
 export default function MatchDetailsPage() {
@@ -99,7 +100,14 @@ export default function MatchDetailsPage() {
               ),
             },
 
-            // Second Tab: Live Control & Events (Admin/Coordinator Only)
+            // Second Tab: Line-ups — read-only unless you captain one of the teams
+            {
+              key: "formations",
+              label: "Line-ups",
+              children: <MatchFormationsPanel matchId={match.id} />,
+            },
+
+            // Third Tab: Live Control & Events (Admin/Coordinator Only)
             ...(canConduct
               ? [
                   {

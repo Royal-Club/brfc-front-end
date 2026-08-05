@@ -10,6 +10,7 @@ import {
     positionLabel,
 } from "../../../utils/playerStatsUtils";
 import { club, kicker, scoreNum } from "../../../theme/clubTheme";
+import PitchCanvas from "../Formation/PitchCanvas";
 
 const { Text } = Typography;
 
@@ -96,81 +97,7 @@ const BestXiPitch: React.FC<BestXiPitchProps> = ({
             )}
 
             {/* Pitch — vertical, own goal at the bottom. */}
-            <div
-                style={{
-                    position: "relative",
-                    width: "100%",
-                    maxWidth: 620,
-                    margin: "0 auto",
-                    aspectRatio: isMobile ? "3 / 4" : "4 / 5",
-                    borderRadius: 14,
-                    overflow: "hidden",
-                    background:
-                        "repeating-linear-gradient(0deg, #2E9E5B 0 8%, #2A9153 8% 16%)",
-                    border: `2px solid ${club.panelBorder}`,
-                    boxShadow: "inset 0 0 60px rgba(0,0,0,0.35)",
-                }}
-            >
-                {/* Pitch markings */}
-                <div
-                    style={{
-                        position: "absolute",
-                        inset: "2.5%",
-                        border: "2px solid rgba(255,255,255,0.45)",
-                        borderRadius: 6,
-                        pointerEvents: "none",
-                    }}
-                />
-                <div
-                    style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "2.5%",
-                        right: "2.5%",
-                        height: 2,
-                        background: "rgba(255,255,255,0.45)",
-                        pointerEvents: "none",
-                    }}
-                />
-                <div
-                    style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        width: "22%",
-                        aspectRatio: "1",
-                        transform: "translate(-50%, -50%)",
-                        border: "2px solid rgba(255,255,255,0.45)",
-                        borderRadius: "50%",
-                        pointerEvents: "none",
-                    }}
-                />
-                {/* Penalty areas */}
-                <div
-                    style={{
-                        position: "absolute",
-                        bottom: "2.5%",
-                        left: "22%",
-                        right: "22%",
-                        height: "14%",
-                        border: "2px solid rgba(255,255,255,0.45)",
-                        borderBottom: "none",
-                        pointerEvents: "none",
-                    }}
-                />
-                <div
-                    style={{
-                        position: "absolute",
-                        top: "2.5%",
-                        left: "22%",
-                        right: "22%",
-                        height: "14%",
-                        border: "2px solid rgba(255,255,255,0.45)",
-                        borderTop: "none",
-                        pointerEvents: "none",
-                    }}
-                />
-
+            <PitchCanvas aspectRatio={isMobile ? "3 / 4" : "4 / 5"}>
                 {picks.map((pick) => {
                     if (!pick.player) return null;
                     const s = pick.player.statistics;
@@ -262,7 +189,7 @@ const BestXiPitch: React.FC<BestXiPitchProps> = ({
                         </Tooltip>
                     );
                 })}
-            </div>
+            </PitchCanvas>
 
             {showBench && bench.length > 0 && (
                 <div style={{ marginTop: 18 }}>

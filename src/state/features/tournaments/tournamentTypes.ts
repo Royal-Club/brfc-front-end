@@ -13,6 +13,8 @@ export interface IoTournamentSingleSummaryType {
     description?: string;
     rules?: string;
     roadmapImageUrl?: string;
+    /** Players per side, keeper included — drives the line-up presets. */
+    teamSize?: number;
 }
 
 export interface getSingleTournamentInfoType extends BasicResType {

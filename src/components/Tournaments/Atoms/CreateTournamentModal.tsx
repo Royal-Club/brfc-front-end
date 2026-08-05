@@ -27,6 +27,10 @@ import {
     usePresignRoadmapImageUploadMutation,
 } from "../../../state/features/tournaments/tournamentsSlice";
 import { IoTournamentSingleSummaryType } from "../../../state/features/tournaments/tournamentTypes";
+import {
+    DEFAULT_TEAM_SIZE,
+    SUPPORTED_TEAM_SIZES,
+} from "../Formation/formationPresets";
 import { toAbsoluteLogoUrl } from "../../TournamentViewer/teamLogoUtils";
 import { validateImageFile, compressImage } from "../../../utils/imageUploadUtils";
 
@@ -53,6 +57,7 @@ interface FormValues {
     season?: string;
     description?: string;
     rules?: string;
+    teamSize?: number;
 }
 
 export default function CreateTournament({
@@ -98,6 +103,7 @@ export default function CreateTournament({
             season: values.season,
             description: values.description,
             rules: values.rules,
+            teamSize: values.teamSize ?? DEFAULT_TEAM_SIZE,
             roadmapImageUrl,
         };
 
@@ -196,6 +202,7 @@ export default function CreateTournament({
                     (venue: any) => venue.name === tournamentData.venueName
                 )?.id,
                 auctionMode: tournamentData.auctionMode || false,
+                teamSize: tournamentData.teamSize ?? DEFAULT_TEAM_SIZE,
             });
             setRoadmapImageUrl(tournamentData.roadmapImageUrl);
         }
@@ -316,6 +323,19 @@ export default function CreateTournament({
                                 ))}
                             </Select>
                         </Form.Item>
+                        <Form.Item
+                            name="teamSize"
+                            label="Players Per Side"
+                            extra="Sets how many places a team line-up has, keeper included"
+                        >
+                            <Select
+                                options={SUPPORTED_TEAM_SIZES.map((size) => ({
+                                    value: size,
+                                    label: `${size} a side`,
+                                }))}
+                            />
+                        </Form.Item>
+
                         <Form.Item
                             name="auctionMode"
                             label="Auction Mode"

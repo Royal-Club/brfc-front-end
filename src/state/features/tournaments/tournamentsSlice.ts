@@ -32,12 +32,13 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         description?: string;
         rules?: string;
         roadmapImageUrl?: string;
+        teamSize?: number;
       }
     >({
-      query: ({ tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
+      query: ({ tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl, teamSize }) => ({
         url: "tournaments",
         method: "POST",
-        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl },
+        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl, teamSize },
       }),
       invalidatesTags: ["tournaments"],
     }),
@@ -61,12 +62,13 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         description?: string;
         rules?: string;
         roadmapImageUrl?: string;
+        teamSize?: number;
       }
     >({
-      query: ({ id, tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl }) => ({
+      query: ({ id, tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl, teamSize }) => ({
         url: `tournaments/${id}`,
         method: "PUT",
-        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl },
+        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl, teamSize },
       }),
       invalidatesTags: ["tournaments"],
     }),
