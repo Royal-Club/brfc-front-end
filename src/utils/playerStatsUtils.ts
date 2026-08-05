@@ -29,8 +29,47 @@ export const POSITION_LABEL: Record<string, string> = {
     LEFT_WING_FORWARD: "Left Wing/Forward",
 };
 
-export const positionLabel = (position?: string | null): string =>
-    (position && POSITION_LABEL[position]) || "Unassigned";
+/**
+ * Description back to enum key, e.g. "CENTER BACK" -> CENTER_BACK_1. Both
+ * centre-back slots share a description; the first wins, which is harmless
+ * because they resolve to the same position group.
+ */
+const DESCRIPTION_TO_KEY: Record<string, string> = Object.entries(
+    POSITION_LABEL
+).reduce<Record<string, string>>((map, [key, label]) => {
+    const description = label.toUpperCase();
+    if (!map[description]) map[description] = key;
+    return map;
+}, {});
+
+/**
+ * Resolves a position to its `FootballPosition` key.
+ *
+ * Filters are sent to the API as enum names (`STRIKER`), but the statistics
+ * endpoints return the human description (`"Striker"`) while the attendance
+ * endpoint returns the enum name — so both forms reach the UI and both have to
+ * resolve.
+ */
+export const positionKey = (position?: string | null): string | undefined => {
+    const raw = position?.trim();
+    if (!raw) return undefined;
+
+    const upper = raw.toUpperCase();
+    if (POSITION_LABEL[upper]) return upper;
+
+    // "Right Wing/Forward" -> RIGHT_WING_FORWARD
+    const underscored = upper.replace(/[\s/]+/g, "_");
+    if (POSITION_LABEL[underscored]) return underscored;
+
+    return DESCRIPTION_TO_KEY[upper];
+};
+
+export const positionLabel = (position?: string | null): string => {
+    const key = positionKey(position);
+    if (key) return POSITION_LABEL[key];
+    // Show an unrecognised value as-is rather than mislabelling it.
+    return position?.trim() || "Unassigned";
+};
 
 const POSITION_GROUP: Record<string, PositionGroup> = {
     GOALKEEPER: "GK",
@@ -47,8 +86,10 @@ const POSITION_GROUP: Record<string, PositionGroup> = {
 };
 
 /** Unassigned/unknown positions fall back to midfield, the neutral slot. */
-export const positionGroup = (position?: string | null): PositionGroup =>
-    (position && POSITION_GROUP[position]) || "MID";
+export const positionGroup = (position?: string | null): PositionGroup => {
+    const key = positionKey(position);
+    return (key && POSITION_GROUP[key]) || "MID";
+};
 
 export const GROUP_LABEL: Record<PositionGroup, string> = {
     GK: "Goalkeeper",
