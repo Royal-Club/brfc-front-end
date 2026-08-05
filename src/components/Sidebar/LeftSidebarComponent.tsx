@@ -1,5 +1,6 @@
 import {
     BookOutlined,
+    CrownOutlined,
     DollarOutlined,
     EyeOutlined,
     FireOutlined,
@@ -49,6 +50,8 @@ const ROUTE_ANCESTORS: Record<string, string[]> = {
   "/player": ["setupSubMenu"],
   "/players": ["setupSubMenu"],
   "/player-statistics": ["setupSubMenu"],
+  "/player-comparison": ["setupSubMenu"],
+  "/player-attendance": ["setupSubMenu"],
   "/ac/voucher-types": ["financeSubMenu", "ConfigurationSubMenu"],
   "/ac/natures": ["financeSubMenu", "ConfigurationSubMenu"],
   "/ac/charts": ["financeSubMenu", "ConfigurationSubMenu"],
@@ -113,7 +116,10 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
       ),
       getItem("Player List", "/players"),
       getItem("Player Statistics", "/player-statistics"),
+      getItem("Compare Players", "/player-comparison"),
+      getItem("Attendance", "/player-attendance"),
     ]),
+    getItem("Hall of Fame", "/hall-of-fame", <CrownOutlined />),
     getItem("Finance", "financeSubMenu", <DollarOutlined />, [
       getItem("Configuration", "ConfigurationSubMenu", null, [
         getItem("Voucher Types", "/ac/voucher-types", null, undefined, undefined, !isUserAdmin),

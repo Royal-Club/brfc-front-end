@@ -5,6 +5,7 @@ import {
   FireOutlined,
   ReloadOutlined,
   RiseOutlined,
+  StarOutlined,
   StopOutlined,
   UserOutlined,
   WarningOutlined,
@@ -20,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { selectLoginInfo } from "../../../state/slices/loginInfoSlice";
 import type { IPlayerStatisticsData } from "../../../state/features/statistics/statisticsTypes";
 import { toAbsolutePlayerPhotoUrl } from "../../../utils/playerPhotoUtils";
+import BestXiPitch from "./BestXiPitch";
 
 const { Text, Title } = Typography;
 
@@ -527,6 +529,28 @@ export default function StatsLeaderboardPanel({
               onNavigate={handleNavigateToMatch}
               showCompletedMatchesHelp={false}
             />
+          ),
+        },
+        {
+          key: "team-of-the-tournament",
+          label: "Team of the Tournament",
+          children: (
+            <Card
+              size="small"
+              title={
+                <Space>
+                  <StarOutlined style={{ color: "#d4af37", fontSize: 18 }} />
+                  <Text strong>Team of the Tournament</Text>
+                </Space>
+              }
+            >
+              <BestXiPitch
+                rows={playerStatisticsQuery.data?.content}
+                loading={
+                  playerStatisticsQuery.isLoading || playerStatisticsQuery.isFetching
+                }
+              />
+            </Card>
           ),
         },
       ]}

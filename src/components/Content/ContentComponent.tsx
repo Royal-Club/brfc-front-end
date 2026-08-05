@@ -39,6 +39,9 @@ import Dashboard from "../Dashboard/DashboardComponent";
 import Player from "../Player/Player";
 import Players from "../Player/Players";
 import PlayerStatistics from "../Player/PlayerStatistics";
+import PlayerComparison from "../Player/PlayerComparison";
+import PlayerAttendance from "../Player/PlayerAttendance";
+import HallOfFame from "../Player/HallOfFame";
 import JoinTournament from "../Tournaments/JoinTournament";
 import SingleTournament from "../Tournaments/SingleTournament";
 import TournamentsPage from "../Tournaments/TournamentsPage";
@@ -447,6 +450,9 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             )}
                             <Route path="/players" element={<Players />} />
                             <Route path="/player-statistics" element={<PlayerStatistics />} />
+                            <Route path="/player-comparison" element={<PlayerComparison />} />
+                            <Route path="/player-attendance" element={<PlayerAttendance />} />
+                            <Route path="/hall-of-fame" element={<HallOfFame />} />
                             <Route
                                 path="/tournaments"
                                 element={<TournamentsPage />}
