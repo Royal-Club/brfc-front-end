@@ -40,8 +40,40 @@ interface FormationBoardProps {
 /** How far, in pitch percent, a dropped player can land from a slot and still take it. */
 const DROP_RADIUS = 22;
 
-const starterSlotsOf = (formation: ITeamFormation): ITeamFormationSlot[] =>
-    formation.slots.filter((slot) => slot.isStarter);
+/**
+ * The starting places, with any the sheet is missing filled in from the preset.
+ *
+ * A line-up saved before the server stopped deleting a place along with the
+ * player who left the squad can be a position or two short of its shape. Slot
+ * indices survive that, so the preset says which ones went; everything stored
+ * is kept exactly as it is.
+ */
+const starterSlotsOf = (formation: ITeamFormation): ITeamFormationSlot[] => {
+    const stored = formation.slots.filter((slot) => slot.isStarter);
+    const layout = presetSlots(formation.teamSize, formation.presetName);
+    const byIndex = new Map(stored.map((slot) => [slot.slotIndex, slot]));
+    if (!layout.length || layout.every((preset) => byIndex.has(preset.slotIndex))) {
+        return stored;
+    }
+
+    const inLayout = new Set(layout.map((preset) => preset.slotIndex));
+    return [
+        ...layout.map(
+            (preset) =>
+                byIndex.get(preset.slotIndex) ?? {
+                    slotIndex: preset.slotIndex,
+                    positionGroup: preset.positionGroup,
+                    slotLabel: preset.slotLabel,
+                    x: preset.x,
+                    y: preset.y,
+                    isStarter: true,
+                    teamPlayerId: null,
+                }
+        ),
+        // Kept rather than dropped: a captain may have places beyond the shape.
+        ...stored.filter((slot) => !inLayout.has(slot.slotIndex)),
+    ];
+};
 
 /** Copies a squad member's display fields onto a slot, or clears them. */
 const withPlayer = (
