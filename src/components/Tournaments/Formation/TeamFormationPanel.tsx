@@ -17,7 +17,14 @@ interface TeamFormationPanelProps {
  * admins can edit it; everyone else sees it read-only.
  */
 const TeamFormationPanel: React.FC<TeamFormationPanelProps> = ({ teamId }) => {
-    const { data, isLoading, isFetching } = useTeamDefaultFormationQuery({ teamId });
+    // Always re-read on open. Tag invalidation covers the squad changes made in
+    // this app, but a line-up carries its squad inside it and can go stale for
+    // reasons no tag knows about — another admin's edit, a sleeping laptop — and
+    // a captain picking from a squad that no longer exists is worth one request.
+    const { data, isLoading, isFetching } = useTeamDefaultFormationQuery(
+        { teamId },
+        { refetchOnMountOrArgChange: true }
+    );
     const [saveFormation, { isLoading: saving }] = useSaveTeamDefaultFormationMutation();
 
     const handleSave = useCallback(

@@ -22,7 +22,12 @@ interface MatchFormationsPanelProps {
  */
 const MatchFormationsPanel: React.FC<MatchFormationsPanelProps> = ({ matchId }) => {
     const isMobile = useIsMobile(992);
-    const { data, isLoading, isFetching } = useMatchFormationsQuery({ matchId });
+    // Re-read on open for the same reason as the team default panel: the squad
+    // travels inside the line-up, so a cached one can be out of date.
+    const { data, isLoading, isFetching } = useMatchFormationsQuery(
+        { matchId },
+        { refetchOnMountOrArgChange: true }
+    );
     const [saveFormation, { isLoading: saving }] = useSaveMatchTeamFormationMutation();
     const [resetFormation, { isLoading: resetting }] = useResetMatchTeamFormationMutation();
     const [activeTeamId, setActiveTeamId] = useState<number | null>(null);
