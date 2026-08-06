@@ -16,8 +16,10 @@ import {
   AuctionResultResponse,
 } from "./auctionTypes";
 
+// "teamFormation" is owned by teamFormationSlice: selling a player puts them in
+// a team's squad, and a line-up carries its squad inside its own payload.
 const apiWithTags = apiSlice.enhanceEndpoints({
-  addTagTypes: ["auctionSettings", "auctionRegistrations", "auctionPlayers", "teamBudgets", "auctionSession", "auctionDashboard", "auctionResults", "auctionBids"],
+  addTagTypes: ["auctionSettings", "auctionRegistrations", "auctionPlayers", "teamBudgets", "auctionSession", "auctionDashboard", "auctionResults", "auctionBids", "teamFormation"],
 });
 
 export const auctionApi = apiWithTags.injectEndpoints({
@@ -245,7 +247,8 @@ export const auctionApi = apiWithTags.injectEndpoints({
         url: `tournaments/${tournamentId}/auction/session/mark-sold`,
         method: "POST",
       }),
-      invalidatesTags: ["auctionSession", "auctionDashboard", "auctionPlayers", "teamBudgets"],
+      // A sale signs the player to the winning team.
+      invalidatesTags: ["auctionSession", "auctionDashboard", "auctionPlayers", "teamBudgets", "teamFormation"],
     }),
     markUnsold: builder.mutation<AuctionSessionResponse, number>({
       query: (tournamentId) => ({
@@ -259,7 +262,8 @@ export const auctionApi = apiWithTags.injectEndpoints({
         url: `tournaments/${tournamentId}/auction/session/undo-last-sale`,
         method: "POST",
       }),
-      invalidatesTags: ["auctionSession", "auctionDashboard", "auctionPlayers", "teamBudgets"],
+      // ...and undoing one takes them back out again.
+      invalidatesTags: ["auctionSession", "auctionDashboard", "auctionPlayers", "teamBudgets", "teamFormation"],
     }),
     startUnsoldRound: builder.mutation<AuctionSessionResponse, number>({
       query: (tournamentId) => ({

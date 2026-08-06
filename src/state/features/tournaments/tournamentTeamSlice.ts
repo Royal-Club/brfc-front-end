@@ -5,8 +5,11 @@ import {
     TournamentPlayerInfoType,
 } from "./tournamentTypes";
 
+// "teamFormation" is owned by teamFormationSlice, but a line-up carries its
+// team's squad inside its own payload — so anything that changes who is in a
+// team leaves the cached line-up stale until it is invalidated here too.
 const apiWithTags = apiSlice.enhanceEndpoints({
-    addTagTypes: ["tournamentTeam"],
+    addTagTypes: ["tournamentTeam", "teamFormation"],
 });
 
 export const tournamentTeamApi = apiWithTags.injectEndpoints({
@@ -32,7 +35,8 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
                 method: "POST",
                 body: { id: teamId, teamName, tournamentId, logoKey },
             }),
-            invalidatesTags: ["tournamentTeam"],
+            // The name and crest are shown on the line-up too.
+            invalidatesTags: ["tournamentTeam", "teamFormation"],
         }),
 
         presignTeamLogoUpload: builder.mutation<
@@ -55,7 +59,7 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
                 url: `teams/${teamId}`,
                 method: "DELETE",
             }),
-            invalidatesTags: ["tournamentTeam"],
+            invalidatesTags: ["tournamentTeam", "teamFormation"],
         }),
 
         playerListToAddToTeam: builder.query<
@@ -100,7 +104,7 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
                     body,
                 };
             },
-            invalidatesTags: ["tournamentTeam"],
+            invalidatesTags: ["tournamentTeam", "teamFormation"],
         }),
 
         updatePlayerInTeam: builder.mutation<
@@ -134,7 +138,8 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
                     body,
                 };
             },
-            invalidatesTags: ["tournamentTeam"],
+            // Shirt number, position and captaincy all show on the pitch tokens.
+            invalidatesTags: ["tournamentTeam", "teamFormation"],
         }),
         removePlayerFromTeam: builder.mutation<
             BasicResType,
@@ -145,7 +150,7 @@ export const tournamentTeamApi = apiWithTags.injectEndpoints({
                 method: "DELETE",
                 body: { teamId, playerId },
             }),
-            invalidatesTags: ["tournamentTeam"],
+            invalidatesTags: ["tournamentTeam", "teamFormation"],
         }),
     }),
 });
