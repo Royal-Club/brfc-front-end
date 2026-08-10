@@ -41,7 +41,7 @@ export default function RsvpPage() {
     const preview = data?.content;
 
     useEffect(() => {
-        document.title = "Confirm your answer | Royal Club Football";
+        document.title = "Confirm your answer | Royal Football Club";
     }, []);
 
     const handleConfirm = async () => {
