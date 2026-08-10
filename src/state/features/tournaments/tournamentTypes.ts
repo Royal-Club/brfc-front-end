@@ -15,6 +15,8 @@ export interface IoTournamentSingleSummaryType {
     roadmapImageUrl?: string;
     /** Players per side, keeper included — drives the line-up presets. */
     teamSize?: number;
+    /** When false, invitation and reminder emails are suppressed for this tournament. */
+    emailNotificationEnabled?: boolean;
 }
 
 export interface getSingleTournamentInfoType extends BasicResType {

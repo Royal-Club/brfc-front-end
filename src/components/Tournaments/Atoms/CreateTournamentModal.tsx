@@ -54,6 +54,7 @@ interface FormValues {
     venueId: number;
     auctionMode: boolean; // Added auctionMode to the form values
     defaultTournament?: boolean;
+    emailNotificationEnabled?: boolean;
     season?: string;
     description?: string;
     rules?: string;
@@ -105,6 +106,9 @@ export default function CreateTournament({
             rules: values.rules,
             teamSize: values.teamSize ?? DEFAULT_TEAM_SIZE,
             roadmapImageUrl,
+            // Send an explicit boolean: the switch is on by default, and an omitted field
+            // would leave the backend guessing.
+            emailNotificationEnabled: values.emailNotificationEnabled !== false,
         };
 
         if (tournamentId) {
@@ -203,6 +207,8 @@ export default function CreateTournament({
                 )?.id,
                 auctionMode: tournamentData.auctionMode || false,
                 teamSize: tournamentData.teamSize ?? DEFAULT_TEAM_SIZE,
+                // Tournaments created before this field existed come back as undefined; treat them as on.
+                emailNotificationEnabled: tournamentData.emailNotificationEnabled !== false,
             });
             setRoadmapImageUrl(tournamentData.roadmapImageUrl);
         }
@@ -241,6 +247,8 @@ export default function CreateTournament({
                         form={form}
                         onFinish={handleCreateOrUpdateTournament}
                         layout="vertical"
+                        // Email notifications ship on; the creator switches them off deliberately.
+                        initialValues={{ emailNotificationEnabled: true }}
                     >
                         <Form.Item
                             name="tournamentName"
@@ -351,6 +359,15 @@ export default function CreateTournament({
                             valuePropName="checked"
                         >
                             <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="emailNotificationEnabled"
+                            label="Email Notification"
+                            valuePropName="checked"
+                            extra="Emails the squad an invitation now, then reminds anyone who has not answered on D-2, D-1 and match day. Push notifications are sent either way."
+                        >
+                            <Switch checkedChildren="On" unCheckedChildren="Off" />
                         </Form.Item>
 
                         <Form.Item

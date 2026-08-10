@@ -15,6 +15,7 @@ import PasswordResetPage from "./components/authPages/PasswordResetPage";
 import { useSelector } from "react-redux";
 import { selectResetPassword } from "./state/slices/loginInfoSlice";
 import { AuctionRegistrationPage } from "./components/Auction";
+import RsvpPage from "./components/Rsvp/RsvpPage";
 import AppFooter from "./components/CommonAtoms/AppFooter";
 import { club } from "./theme/clubTheme";
 
@@ -40,6 +41,26 @@ function App() {
             ? setIsDarkMode(false)
             : setIsDarkMode(true);
     }, []);
+
+    // Public route: RSVP confirmation from an invitation/reminder email.
+    // Checked before the auth branches because the link must work whether or not the
+    // member happens to be logged in — the signed token in the URL is the credential.
+    if (location.pathname.startsWith("/rsvp")) {
+        return (
+            <ConfigProvider
+                theme={{
+                    algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+                    token: { colorPrimary: isDarkMode ? club.gold : club.navy },
+                }}
+            >
+                <Layout className={isDarkMode ? "dark-mode" : "light-mode"} style={{ minHeight: "100vh" }}>
+                    <Routes>
+                        <Route path="/rsvp" element={<RsvpPage />} />
+                    </Routes>
+                </Layout>
+            </ConfigProvider>
+        );
+    }
 
     // Public route: Auction Registration (no login required)
     const isPublicAuctionRoute = location.pathname.startsWith("/auction/register/");

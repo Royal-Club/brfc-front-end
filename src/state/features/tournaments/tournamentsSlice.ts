@@ -33,12 +33,13 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         rules?: string;
         roadmapImageUrl?: string;
         teamSize?: number;
+        emailNotificationEnabled?: boolean;
       }
     >({
-      query: ({ tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl, teamSize }) => ({
+      query: ({ tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl, teamSize, emailNotificationEnabled }) => ({
         url: "tournaments",
         method: "POST",
-        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl, teamSize },
+        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl, teamSize, emailNotificationEnabled },
       }),
       invalidatesTags: ["tournaments"],
     }),
@@ -63,12 +64,13 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
         rules?: string;
         roadmapImageUrl?: string;
         teamSize?: number;
+        emailNotificationEnabled?: boolean;
       }
     >({
-      query: ({ id, tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl, teamSize }) => ({
+      query: ({ id, tournamentName, tournamentDate, venueId, auctionMode, defaultTournament, season, description, rules, roadmapImageUrl, teamSize, emailNotificationEnabled }) => ({
         url: `tournaments/${id}`,
         method: "PUT",
-        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl, teamSize },
+        body: { tournamentName, tournamentDate, venueId, auctionMode: auctionMode || false, defaultTournament, season, description, rules, roadmapImageUrl, teamSize, emailNotificationEnabled },
       }),
       invalidatesTags: ["tournaments"],
     }),
