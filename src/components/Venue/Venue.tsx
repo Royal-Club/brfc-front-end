@@ -17,13 +17,24 @@ import "./Venue.css";
 const { Text } = Typography;
 
 /**
+ * Address fields predate the dedicated map link, so some already hold a pasted Maps URL rather than a
+ * street address.
+ */
+const isLink = (value?: string): boolean =>
+    /^https?:\/\//i.test(value?.trim() ?? "");
+
+/**
  * The link an admin sees in the table and a player taps in the RSVP email: the venue's own Google Maps
- * share link when one is saved, otherwise a Maps search built from the address. Mirrors the fallback the
- * backend applies when it builds the email, so both surfaces point at the same place.
+ * share link, then the address when a link was pasted there instead, and finally a Maps search built
+ * from a street address. Mirrors what the backend does when it builds the email, so both surfaces point
+ * at the same place.
  */
 const resolveMapUrl = (venue: IVenue): string | undefined => {
     if (venue.mapUrl?.trim()) {
         return venue.mapUrl.trim();
+    }
+    if (isLink(venue.address)) {
+        return venue.address.trim();
     }
     if (venue.address?.trim()) {
         return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -103,9 +114,11 @@ function Venue() {
             key: "address",
             render: (_: any, record: IVenue) => {
                 const mapUrl = resolveMapUrl(record);
+                // A link pasted into the address field is shown as the map link below, never as raw text.
+                const readableAddress = isLink(record.address) ? "" : record.address;
                 return (
                     <Space direction="vertical" size={2}>
-                        <Text type="secondary">{record.address || "—"}</Text>
+                        <Text type="secondary">{readableAddress || "—"}</Text>
                         {mapUrl && (
                             <a
                                 href={mapUrl}
