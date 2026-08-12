@@ -16,6 +16,23 @@ import "./Venue.css";
 
 const { Text } = Typography;
 
+/**
+ * The link an admin sees in the table and a player taps in the RSVP email: the venue's own Google Maps
+ * share link when one is saved, otherwise a Maps search built from the address. Mirrors the fallback the
+ * backend applies when it builds the email, so both surfaces point at the same place.
+ */
+const resolveMapUrl = (venue: IVenue): string | undefined => {
+    if (venue.mapUrl?.trim()) {
+        return venue.mapUrl.trim();
+    }
+    if (venue.address?.trim()) {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            venue.address.trim()
+        )}`;
+    }
+    return undefined;
+};
+
 function Venue() {
     const loginInfo = useSelector(selectLoginInfo);
     const { data: venues, isLoading: tableLoadingSpin } = useGetVanuesQuery();
@@ -56,6 +73,7 @@ function Venue() {
         venueForm.setFieldsValue({
             name: "",
             address: "",
+            mapUrl: "",
             activeStatus: true,
         });
     };
@@ -83,9 +101,24 @@ function Venue() {
             title: "Address",
             dataIndex: "address",
             key: "address",
-            render: (address: string) => (
-                <Text type="secondary">{address || "—"}</Text>
-            ),
+            render: (_: any, record: IVenue) => {
+                const mapUrl = resolveMapUrl(record);
+                return (
+                    <Space direction="vertical" size={2}>
+                        <Text type="secondary">{record.address || "—"}</Text>
+                        {mapUrl && (
+                            <a
+                                href={mapUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: 12 }}
+                            >
+                                <EnvironmentOutlined /> View on map
+                            </a>
+                        )}
+                    </Space>
+                );
+            },
         },
         {
             title: "Status",
@@ -130,6 +163,7 @@ function Venue() {
                 createVenue({
                     name: venueForm.getFieldValue("name"),
                     address: venueForm.getFieldValue("address"),
+                    mapUrl: venueForm.getFieldValue("mapUrl")?.trim() || null,
                 })
                     .unwrap()
                     .then((response: any) => {
@@ -148,6 +182,7 @@ function Venue() {
                     id: venueId,
                     name: venueForm.getFieldValue("name"),
                     address: venueForm.getFieldValue("address"),
+                    mapUrl: venueForm.getFieldValue("mapUrl")?.trim() || null,
                 })
                     .unwrap()
                     .then((response: any) => {
@@ -178,6 +213,7 @@ function Venue() {
         venueForm.setFieldsValue({
             name: singleVenue?.name,
             address: singleVenue?.address,
+            mapUrl: singleVenue?.mapUrl ?? "",
             activeStatus: singleVenue?.active,
         });
 
@@ -252,6 +288,20 @@ function Venue() {
                                             label="Address"
                                         >
                                             <Input.TextArea />
+                                        </Form.Item>
+                                        <Form.Item
+                                            name="mapUrl"
+                                            label="Google Maps Link"
+                                            extra="Optional. Open the ground in Google Maps, tap Share, and paste the link here. Players get it as a tappable button in the tournament invitation email. Leave it empty and we will search Maps for the address instead."
+                                            rules={[
+                                                {
+                                                    type: "url",
+                                                    message:
+                                                        "Paste a full link starting with https://",
+                                                },
+                                            ]}
+                                        >
+                                            <Input placeholder="https://maps.app.goo.gl/..." />
                                         </Form.Item>
                                     </Form>
                                 </div>
