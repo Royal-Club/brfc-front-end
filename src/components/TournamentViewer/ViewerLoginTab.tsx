@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button, Checkbox, Form, Input, message } from "antd";
 import { EyeInvisibleOutlined, EyeOutlined } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setAllData, setImage } from "../../state/slices/loginInfoSlice";
 import { useLoginMutation } from "../../state/features/auth/authSlice";
@@ -98,12 +99,17 @@ export default function ViewerLoginTab() {
             </Form.Item>
 
             <Form.Item className={styles.rememberRow}>
-              <Checkbox
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              >
-                Remember me
-              </Checkbox>
+              <div className={styles.rememberRowInner}>
+                <Checkbox
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                >
+                  Remember me
+                </Checkbox>
+                <Link to="/forgot-password" className={styles.forgotLink}>
+                  Forgot password?
+                </Link>
+              </div>
             </Form.Item>
 
             <Form.Item className={styles.submitRow}>

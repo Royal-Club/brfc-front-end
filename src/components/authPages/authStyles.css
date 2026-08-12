@@ -254,7 +254,22 @@
 }
 
 .checkbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 25px;
+}
+
+.forgot-password-link {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e3c72;
+    white-space: nowrap;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
 }
 
 .login-btn {

@@ -6,7 +6,7 @@ import {
     UserOutlined,
     LockOutlined,
 } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setAllData, setImage } from "../../state/slices/loginInfoSlice";
 import { useLoginMutation } from "../../state/features/auth/authSlice";
@@ -303,6 +303,9 @@ const LoginPage: React.FC = () => {
                             >
                                 Enable Auto Login
                             </Checkbox>
+                            <Link to="/forgot-password" className="forgot-password-link">
+                                Forgot password?
+                            </Link>
                         </div>
 
                         <Button

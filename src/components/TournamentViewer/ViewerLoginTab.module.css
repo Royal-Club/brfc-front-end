@@ -156,6 +156,19 @@
   margin-bottom: 14px;
 }
 
+/* Checkbox left, recovery link right — the link has to be reachable without hunting for it. */
+.rememberRowInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.forgotLink {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
 .submitRow {
   margin-bottom: 0;
 }

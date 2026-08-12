@@ -12,6 +12,8 @@ import { useAuthHook } from "./hooks/useAuthHook";
 import { checkTockenValidity } from "./utils/utils";
 import LoginPage from "./components/authPages/LoginPage";
 import PasswordResetPage from "./components/authPages/PasswordResetPage";
+import ForgotPasswordPage from "./components/authPages/ForgotPasswordPage";
+import PasswordResetLinkPage from "./components/authPages/PasswordResetLinkPage";
 import { useSelector } from "react-redux";
 import { selectResetPassword } from "./state/slices/loginInfoSlice";
 import { AuctionRegistrationPage } from "./components/Auction";
@@ -56,6 +58,31 @@ function App() {
                 <Layout className={isDarkMode ? "dark-mode" : "light-mode"} style={{ minHeight: "100vh" }}>
                     <Routes>
                         <Route path="/rsvp" element={<RsvpPage />} />
+                    </Routes>
+                </Layout>
+            </ConfigProvider>
+        );
+    }
+
+    // Public routes: emailed password recovery. Checked before the auth branches for the same
+    // reason as /rsvp — someone who cannot sign in has to reach these, and a stale session must
+    // not swallow the reset link either. Note /password-reset is the emailed-link page and is a
+    // different thing from PasswordResetPage below, which is the forced change after a login.
+    const isPasswordRecoveryRoute =
+        location.pathname.startsWith("/forgot-password") ||
+        location.pathname.startsWith("/password-reset");
+
+    if (isPasswordRecoveryRoute) {
+        return (
+            <ConfigProvider
+                theme={{
+                    algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+                }}
+            >
+                <Layout className={isDarkMode ? "dark-mode" : "light-mode"} style={{ minHeight: "100vh" }}>
+                    <Routes>
+                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                        <Route path="/password-reset" element={<PasswordResetLinkPage />} />
                     </Routes>
                 </Layout>
             </ConfigProvider>
