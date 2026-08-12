@@ -17,56 +17,69 @@ import {
     Empty,
     Spin,
 } from "antd";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { useAuthHook } from "../../hooks/useAuthHook";
 import { useGetUserProfileQuery } from "../../state/features/auth/authSlice";
 import { selectLoginInfo, setImage } from "../../state/slices/loginInfoSlice";
 import { API_URL } from "../../settings";
-import AcBillPayment from "../Account/BillPayment/AcBillPayment";
-import AcCollection from "../Account/Collection/AcCollection";
-import AcChart from "../Account/Configuration/AcChart";
-import AcNature from "../Account/Configuration/AcNature";
-import AcVoucherType from "../Account/Configuration/AcVoucherType";
-import AccountBalanceSheet from "../Account/Report/AccountBalanceSheet";
-import AccountBalanceSummary from "../Account/Report/AccountBalanceSummary";
-import AccountsReport from "../Account/Report/AccountReport";
-import AcVouchers from "../Account/Voucher/AcVouchers";
-import UserProfile from "../authPages/UserProfile";
 import SettingsModal from "../CommonAtoms/SettingsModal";
-import Dashboard from "../Dashboard/DashboardComponent";
-import Player from "../Player/Player";
-import Players from "../Player/Players";
-import PlayerStatistics from "../Player/PlayerStatistics";
-import PlayerComparison from "../Player/PlayerComparison";
-import PlayerAttendance from "../Player/PlayerAttendance";
-import HallOfFame from "../Player/HallOfFame";
-import JoinTournament from "../Tournaments/JoinTournament";
-import SingleTournament from "../Tournaments/SingleTournament";
-import TournamentsPage from "../Tournaments/TournamentsPage";
-import Venue from "../Venue/Venue";
 import ContentOutlet from "./ContentOutlet";
-import ClubRules from "../ClubRules/ClubRules";
-import ResourcesPage from "../Resources/ResourcesPage";
-import ResourceDetailPage from "../Resources/ResourceDetailPage";
-import MatchDetailsPage from "../Tournaments/Fixtures/MatchDetailsPage";
-import {
-  AuctionHubPage,
-  AuctionRegistrationPage,
-  AuctionAdminApprovalPage,
-  AuctionSettingsPage,
-  AuctionPlayerPoolPage,
-  AuctionTeamBudgetsPage,
-  LiveAuctionPage,
-  AuctionResultsPage,
-} from "../Auction";
 import TournamentViewerPage from "../TournamentViewer/TournamentViewerPage";
 import companyLogo from "../../assets/logo.png";
 import AppFooter from "../CommonAtoms/AppFooter";
 import type { MenuProps } from "antd";
 import { useGetMyGoalkeepingHistoryQuery } from "../../state/features/player/playerSlice";
 import { showBdLocalTime } from "../../utils/utils";
+
+/*
+ * Route components are loaded on demand.
+ *
+ * These were static imports, which meant every visitor — including someone who only wanted the
+ * public fixtures list, or who had not logged in at all — downloaded the accounting screens, the
+ * auction module and the reporting charts before the login form could paint. Each lazy() below
+ * becomes its own chunk, fetched the first time its route is opened and cached after that.
+ *
+ * ContentOutlet and SettingsModal stay eager: they are the shell around the routes rather than
+ * destinations, so deferring them would only add a spinner to every navigation.
+ */
+const AcBillPayment = lazy(() => import("../Account/BillPayment/AcBillPayment"));
+const AcCollection = lazy(() => import("../Account/Collection/AcCollection"));
+const AcChart = lazy(() => import("../Account/Configuration/AcChart"));
+const AcNature = lazy(() => import("../Account/Configuration/AcNature"));
+const AcVoucherType = lazy(() => import("../Account/Configuration/AcVoucherType"));
+const AccountBalanceSheet = lazy(() => import("../Account/Report/AccountBalanceSheet"));
+const AccountBalanceSummary = lazy(() => import("../Account/Report/AccountBalanceSummary"));
+const AccountsReport = lazy(() => import("../Account/Report/AccountReport"));
+const AcVouchers = lazy(() => import("../Account/Voucher/AcVouchers"));
+const UserProfile = lazy(() => import("../authPages/UserProfile"));
+const Dashboard = lazy(() => import("../Dashboard/DashboardComponent"));
+const Player = lazy(() => import("../Player/Player"));
+const Players = lazy(() => import("../Player/Players"));
+const PlayerStatistics = lazy(() => import("../Player/PlayerStatistics"));
+const PlayerComparison = lazy(() => import("../Player/PlayerComparison"));
+const PlayerAttendance = lazy(() => import("../Player/PlayerAttendance"));
+const HallOfFame = lazy(() => import("../Player/HallOfFame"));
+const JoinTournament = lazy(() => import("../Tournaments/JoinTournament"));
+const SingleTournament = lazy(() => import("../Tournaments/SingleTournament"));
+const TournamentsPage = lazy(() => import("../Tournaments/TournamentsPage"));
+const Venue = lazy(() => import("../Venue/Venue"));
+const ClubRules = lazy(() => import("../ClubRules/ClubRules"));
+const ResourcesPage = lazy(() => import("../Resources/ResourcesPage"));
+const ResourceDetailPage = lazy(() => import("../Resources/ResourceDetailPage"));
+const MatchDetailsPage = lazy(() => import("../Tournaments/Fixtures/MatchDetailsPage"));
+
+// Imported from their own files rather than the ../Auction barrel, so one auction screen does not
+// drag the other seven into the same chunk.
+const AuctionHubPage = lazy(() => import("../Auction/AuctionHubPage"));
+const AuctionRegistrationPage = lazy(() => import("../Auction/AuctionRegistrationPage"));
+const AuctionAdminApprovalPage = lazy(() => import("../Auction/AuctionAdminApprovalPage"));
+const AuctionSettingsPage = lazy(() => import("../Auction/AuctionSettingsPage"));
+const AuctionPlayerPoolPage = lazy(() => import("../Auction/AuctionPlayerPoolPage"));
+const AuctionTeamBudgetsPage = lazy(() => import("../Auction/AuctionTeamBudgetsPage"));
+const LiveAuctionPage = lazy(() => import("../Auction/LiveAuctionPage"));
+const AuctionResultsPage = lazy(() => import("../Auction/AuctionResultsPage"));
 
 const { Header, Content } = Layout;
 
@@ -427,6 +440,15 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                         }}
                     >
                         <div style={{ flex: 1 }}>
+                    {/* One boundary for every lazy route: each page arrives as its own chunk, and
+                        this is what shows while that chunk is in flight. */}
+                    <Suspense
+                        fallback={
+                            <div style={{ display: "flex", justifyContent: "center", padding: 64 }}>
+                                <Spin size="large" />
+                            </div>
+                        }
+                    >
                     <Routes>
                         <Route path="/" element={<ContentOutlet />}>
                             <Route index element={<Dashboard isDarkMode={isDarkMode} />} />
@@ -521,6 +543,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                         </Route>
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
+                    </Suspense>
                     {playerProfileData && loginInfo?.userId && (
                         <SettingsModal
                             visible={isModalVisible}

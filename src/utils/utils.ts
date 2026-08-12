@@ -1,5 +1,15 @@
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+/**
+ * xlsx and file-saver are loaded on demand rather than imported at the top.
+ *
+ * This module is imported almost everywhere — including the login page — so a static import put
+ * the whole ~400KB spreadsheet library into the main bundle to serve an Export button most
+ * visitors never press. Webpack splits each `import()` below into its own chunk, fetched on the
+ * first click and cached thereafter.
+ */
+const loadSpreadsheetTools = async () => {
+    const [xlsx, fileSaver] = await Promise.all([import("xlsx"), import("file-saver")]);
+    return { XLSX: xlsx, saveAs: fileSaver.saveAs };
+};
 
 export const showBdLocalTime = (timeString: string) => {
     if (!timeString) return "";
@@ -35,7 +45,9 @@ export const checkTockenValidity = (tokenContent: string) => {
  * @param data - The JSON data to be exported
  * @param filename - The name of the Excel file to be saved
  */
-export function exportToExcel(data: any[], filename: string) {
+export async function exportToExcel(data: any[], filename: string) {
+    const { XLSX, saveAs } = await loadSpreadsheetTools();
+
     // Create a new workbook
     const workbook = XLSX.utils.book_new();
 
@@ -61,7 +73,9 @@ export function exportToExcel(data: any[], filename: string) {
  * @param data - The JSON data to be exported
  * @param filename - The name of the CSV file to be saved
  */
-export function exportToCSV(data: any[], filename: string) {
+export async function exportToCSV(data: any[], filename: string) {
+    const { XLSX, saveAs } = await loadSpreadsheetTools();
+
     // Convert JSON data to CSV
     const worksheet = XLSX.utils.json_to_sheet(data);
     const csv = XLSX.utils.sheet_to_csv(worksheet);
