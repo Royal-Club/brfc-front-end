@@ -32,6 +32,19 @@ export const useAuthHook = () => {
         navigate("/");
     };
 
+    /**
+     * Drops an expired session without treating it as a sign-out.
+     *
+     * Deliberately different from `logout` on two counts: it keeps any remembered credentials,
+     * because a session running out is not the user asking to be forgotten, and it does not
+     * navigate - callers use it during render, where a navigation would be a side effect at the
+     * wrong moment.
+     */
+    const clearSession = () => {
+        localStorage.removeItem("tokenContent");
+        dispatch(removeUser());
+    };
+
     const isAuthenticated = () => {
         return !!loginInfo?.token;
     };
@@ -39,6 +52,7 @@ export const useAuthHook = () => {
     return {
         login,
         logout,
+        clearSession,
         isAuthenticated,
         user: loginInfo,
     };

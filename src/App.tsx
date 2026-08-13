@@ -25,7 +25,7 @@ function App() {
     const [collapsed, setCollapsed] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(true);
 
-    const { login, user } = useAuthHook();
+    const { login, user, clearSession } = useAuthHook();
     const needsPasswordReset = useSelector(selectResetPassword);
     const location = useLocation();
 
@@ -37,6 +37,12 @@ function App() {
         const tokenContent = localStorage.getItem("tokenContent");
         if (tokenContent && checkTockenValidity(tokenContent)) {
             login(tokenContent);
+        } else {
+            // An expired token has to be cleared, not just left unloaded. redux-persist has already
+            // rehydrated loginInfo from a previous visit, and every auth branch below keys off
+            // user.token - so leaving the dead token in the store renders the whole app as if
+            // signed in, and its first API call 401s straight back to here.
+            clearSession();
         }
 
         localStorage.getItem("isDarkMode") === "false"

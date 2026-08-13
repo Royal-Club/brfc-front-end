@@ -31,13 +31,22 @@ export const showBdLocalTime = (timeString: string) => {
 export const checkTockenValidity = (tokenContent: string) => {
     if (!tokenContent) return false;
 
-    const contentData = JSON.parse(tokenContent);
+    try {
+        const contentData = JSON.parse(tokenContent);
 
-    const decodedToken = JSON.parse(atob(contentData.token.split(".")[1]));
-    const now = new Date();
-    const exp = new Date(decodedToken.exp * 1000);
-    if (exp < now) return false;
-    return true;
+        // JWT payloads are base64url; atob only speaks standard base64, so the two URL-safe
+        // characters have to be translated or a perfectly good token reads as corrupt.
+        const payload = contentData.token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const decodedToken = JSON.parse(atob(payload));
+        const now = new Date();
+        const exp = new Date(decodedToken.exp * 1000);
+        if (exp < now) return false;
+        return true;
+    } catch {
+        // Truncated, forged or from an older token format. Unreadable is not valid - and it must
+        // be answered rather than thrown, because this runs during the first render.
+        return false;
+    }
 };
 
 /**
