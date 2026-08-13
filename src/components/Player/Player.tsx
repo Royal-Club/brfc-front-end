@@ -41,7 +41,7 @@ import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import axiosApi from "../../state/api/axiosBase";
 import { usePresignPlayerPhotoUploadMutation } from "../../state/features/player/playerSlice";
-import { validatePlayerPhoto, compressPlayerPhoto, toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
+import { validatePlayerPhoto, compressPlayerPhoto, toAbsolutePlayerPhotoUrl, photoChangeHint } from "../../utils/playerPhotoUtils";
 import { normalizeErrorMessage } from "../../utils/normalizeErrorMessage";
 import { club } from "../../theme/clubTheme";
 
@@ -65,6 +65,9 @@ function Player() {
     const [photoKey, setPhotoKey] = useState<string | null>(null);
     const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
     const [photoUploading, setPhotoUploading] = useState(false);
+    // Set when the backend says this player is inside the 30-day window. Null means they can change
+    // now. Knowing it up front lets us refuse before compressing and uploading, rather than after.
+    const [photoChangeAvailableAt, setPhotoChangeAvailableAt] = useState<string | null>(null);
 
     const tokenContent = localStorage.getItem("tokenContent");
 
@@ -201,6 +204,7 @@ function Player() {
                     setPhotoKey(response.data.content.photoKey);
                     setPhotoPreviewUrl(toAbsolutePlayerPhotoUrl(response.data.content.photoUrl) || null);
                 }
+                setPhotoChangeAvailableAt(response.data.content.photoChangeAvailableAt || null);
                 setPlayerLoading(false);
                 setFormSubmitButtonText("Change");
             })
@@ -327,6 +331,10 @@ function Player() {
                                                     accept="image/jpeg,image/png,image/webp"
                                                     showUploadList={false}
                                                     beforeUpload={async (file) => {
+                                                        if (photoChangeAvailableAt) {
+                                                            message.error(photoChangeHint(photoChangeAvailableAt));
+                                                            return false;
+                                                        }
                                                         const error = validatePlayerPhoto(file);
                                                         if (error) { message.error(error); return false; }
                                                         setPhotoUploading(true);
@@ -347,7 +355,11 @@ function Player() {
                                                             setPhotoPreviewUrl(URL.createObjectURL(compressed));
                                                             message.success("Photo uploaded");
                                                         } catch (err: any) {
-                                                            message.error(err?.message || "Photo upload failed");
+                                                            // RTK Query rejects with {status, data}, not an Error, so err.message is
+                                                            // always undefined here and this used to show a bare "Photo upload failed"
+                                                            // next to the real reason. normalizeErrorMessage reads err.data.message,
+                                                            // which is where the backend's rate-limit explanation actually lives.
+                                                            message.error(normalizeErrorMessage(err, "Photo upload failed"));
                                                         } finally {
                                                             setPhotoUploading(false);
                                                         }
@@ -356,7 +368,7 @@ function Player() {
                                                 >
                                                     <Button
                                                         icon={photoUploading ? <LoadingOutlined /> : <CameraOutlined />}
-                                                        disabled={photoUploading}
+                                                        disabled={photoUploading || !!photoChangeAvailableAt}
                                                     >
                                                         {photoPreviewUrl ? "Change Photo" : "Upload Photo"}
                                                     </Button>
@@ -372,7 +384,9 @@ function Player() {
                                                 )}
                                                 </div>
                                                 <Text type="secondary" style={{ fontSize: 12 }}>
-                                                    JPG, PNG or WebP · square image recommended
+                                                    {photoChangeAvailableAt
+                                                        ? photoChangeHint(photoChangeAvailableAt)
+                                                        : "JPG, PNG or WebP · square image recommended"}
                                                 </Text>
                                                 </div>
                                             </div>

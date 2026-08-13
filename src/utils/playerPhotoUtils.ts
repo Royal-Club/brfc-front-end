@@ -92,6 +92,21 @@ export async function uploadPlayerPhoto(
     }
 }
 
+/**
+ * Explains why the photo button is disabled.
+ *
+ * Profile photos live in a free-tier storage bucket, so the backend allows one change per rolling
+ * 30 days and returns the date the next one unlocks. Saying when they can try again is the whole
+ * point — "not allowed" on its own reads as a bug.
+ */
+export function photoChangeHint(availableAt: string): string {
+    const when = new Date(availableAt);
+    const readable = Number.isNaN(when.getTime())
+        ? availableAt
+        : when.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+    return `Photo can be changed once every 30 days · next change available on ${readable}`;
+}
+
 export function toAbsolutePlayerPhotoUrl(photoUrl?: string | null): string | undefined {
     if (!photoUrl) return undefined;
     if (photoUrl.startsWith("http://") || photoUrl.startsWith("https://")) return photoUrl;
