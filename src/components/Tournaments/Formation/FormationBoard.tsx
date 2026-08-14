@@ -10,8 +10,9 @@ import {
     Space,
     Tag,
     Typography,
+    message,
 } from "antd";
-import { CrownOutlined, UndoOutlined } from "@ant-design/icons";
+import { CrownOutlined, NotificationOutlined, UndoOutlined } from "@ant-design/icons";
 import useIsMobile from "../../../hooks/useIsMobile";
 import { club, kicker, scoreNum } from "../../../theme/clubTheme";
 import { positionLabel } from "../../../utils/playerStatsUtils";
@@ -22,6 +23,11 @@ import type {
     ITeamFormationSlot,
     ITeamSquadPlayer,
 } from "../../../state/features/tournaments/teamFormationSlice";
+import {
+    useTeamFormationPublishStatusQuery,
+    usePublishTeamFormationMutation,
+} from "../../../state/features/tournaments/teamFormationSlice";
+import { normalizeErrorMessage } from "../../../utils/normalizeErrorMessage";
 import { presetSlots } from "./formationPresets";
 import FormationPitch from "./FormationPitch";
 
@@ -115,6 +121,32 @@ const FormationBoard: React.FC<FormationBoardProps> = ({
     // Re-seed whenever the server hands us a different sheet — switching match,
     // or a save coming back — but never while the captain has unsaved edits.
     const formationKey = `${formation.teamId}:${formation.matchId ?? "default"}:${formation.id ?? "new"}`;
+
+    // Publishing applies to the team's default line-up. Match line-ups are a separate sheet and
+    // have no announcement of their own yet, so the controls stay hidden there rather than
+    // implying a match squad has been told something.
+    const showPublishState = editable && formation.saved === true && formation.matchId == null;
+    const { data: publishStatusResponse } = useTeamFormationPublishStatusQuery(
+        { teamId: formation.teamId },
+        { skip: !showPublishState }
+    );
+    const publishStatus = publishStatusResponse?.content;
+    const pendingCount = publishStatus?.pendingPlayers ?? 0;
+    const [publishFormation, { isLoading: publishing }] = usePublishTeamFormationMutation();
+
+    const handlePublish = async () => {
+        try {
+            const result = await publishFormation({ teamId: formation.teamId }).unwrap();
+            const notified = result?.content?.notifiedNow ?? 0;
+            message.success(
+                notified > 0
+                    ? `Line-up published — ${notified} player${notified === 1 ? "" : "s"} notified.`
+                    : "Everyone in this line-up has already been notified."
+            );
+        } catch (err) {
+            message.error(normalizeErrorMessage(err, "Could not publish the line-up."));
+        }
+    };
     useEffect(() => {
         setStarters(starterSlotsOf(formation));
         setPresetName(formation.presetName);
@@ -363,6 +395,26 @@ const FormationBoard: React.FC<FormationBoardProps> = ({
                         {formation.teamSize} a side · {filledCount} of {starters.length} places filled
                         {formation.saved ? "" : " · not saved yet"}
                     </Text>
+                    {/* Saving is a draft and tells nobody, so the board has to say plainly whether
+                        the squad has actually heard — otherwise a captain reasonably assumes it has. */}
+                    {showPublishState && (
+                        <div style={{ marginTop: 6 }}>
+                            <Tag color={publishStatus?.published ? "green" : "default"}>
+                                {publishStatus?.published ? "Published" : "Draft"}
+                            </Tag>
+                            {pendingCount > 0 ? (
+                                <Text type="warning" style={{ fontSize: 12 }}>
+                                    {pendingCount} player{pendingCount === 1 ? "" : "s"} not notified yet
+                                </Text>
+                            ) : (
+                                publishStatus?.published && (
+                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                        All {publishStatus.notifiedPlayers} players notified
+                                    </Text>
+                                )
+                            )}
+                        </div>
+                    )}
                 </div>
                 {/* Scrolls rather than squeezing the header once a squad size
                     offers more shapes than fit across a phone. */}
@@ -454,6 +506,17 @@ const FormationBoard: React.FC<FormationBoardProps> = ({
                     <Button type="primary" loading={saving} disabled={!dirty} onClick={handleSave}>
                         Save line-up
                     </Button>
+                    {showPublishState && (
+                        <Button
+                            icon={<NotificationOutlined />}
+                            loading={publishing}
+                            // Nothing to announce, or unsaved edits that would be announced wrongly.
+                            disabled={pendingCount === 0 || dirty}
+                            onClick={handlePublish}
+                        >
+                            {publishStatus?.published ? "Notify new players" : "Publish line-up"}
+                        </Button>
+                    )}
                     {onResetToDefault && formation.saved && (
                         <Button
                             icon={<UndoOutlined />}

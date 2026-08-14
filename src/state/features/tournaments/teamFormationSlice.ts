@@ -91,6 +91,18 @@ export interface ITeamFormationPayload {
     slots: ITeamFormationSlotPayload[];
 }
 
+/** Publish state of a team's line-up — see GET formations/teams/{id}/publish-status. */
+export interface ILineupPublishStatus {
+    /** True once anyone has ever been told about this line-up. */
+    published: boolean;
+    placedPlayers: number;
+    notifiedPlayers: number;
+    /** Placed but never told — what the Publish button is offering to fix. */
+    pendingPlayers: number;
+    /** Notified by the last publish call specifically; 0 on a repeat press. */
+    notifiedNow: number;
+}
+
 export const teamFormationApi = apiWithTags.injectEndpoints({
     endpoints: (builder) => ({
         teamDefaultFormation: builder.query<TeamFormationResType, { teamId: number }>({
@@ -109,6 +121,36 @@ export const teamFormationApi = apiWithTags.injectEndpoints({
                 url: `formations/teams/${teamId}`,
                 method: "PUT",
                 body,
+            }),
+            invalidatesTags: ["teamFormation"],
+        }),
+
+        /**
+         * Draft/published state for the board. Saving never notifies anyone, so this is what tells
+         * the captain whether the squad has actually been told.
+         */
+        teamFormationPublishStatus: builder.query<
+            { content: ILineupPublishStatus },
+            { teamId: number }
+        >({
+            query: ({ teamId }) => ({
+                url: `formations/teams/${teamId}/publish-status`,
+                method: "GET",
+            }),
+            providesTags: ["teamFormation"],
+        }),
+
+        /**
+         * Announces the saved line-up. Idempotent — only players who have never been told are
+         * notified, so pressing it twice reaches nobody and a swapped-in replacement reaches only them.
+         */
+        publishTeamFormation: builder.mutation<
+            { content: ILineupPublishStatus },
+            { teamId: number }
+        >({
+            query: ({ teamId }) => ({
+                url: `formations/teams/${teamId}/publish`,
+                method: "POST",
             }),
             invalidatesTags: ["teamFormation"],
         }),
@@ -161,6 +203,8 @@ export const teamFormationApi = apiWithTags.injectEndpoints({
 export const {
     useTeamDefaultFormationQuery,
     useSaveTeamDefaultFormationMutation,
+    useTeamFormationPublishStatusQuery,
+    usePublishTeamFormationMutation,
     useMatchTeamFormationQuery,
     useSaveMatchTeamFormationMutation,
     useResetMatchTeamFormationMutation,
