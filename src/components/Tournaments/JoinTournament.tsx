@@ -17,7 +17,7 @@ import {
 import { showBdLocalTime } from "./../../utils/utils";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
-import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
+import GoalKeeperPriorityDrawer from "./Atoms/GoalKeeperPriorityDrawer";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import { club, kicker, scoreNum } from "../../theme/clubTheme";
 import useIsMobile from "../../hooks/useIsMobile";
@@ -330,16 +330,16 @@ export default function JoinTournament() {
               )}
             </div>
 
-            {/* Main focus: Goalkeeper Records */}
+            {/* Main focus: the goalkeeper priority queue. Ranks only the players confirmed for
+                this tournament, so it belongs on the page where people confirm. */}
             <div className="jt-team-focus">
-              <GoalKeeperDrawer
+              <GoalKeeperPriorityDrawer
                 tournamentId={tournamentId}
                 triggerClassName="jt-team-focus-trigger"
-                triggerIcon={<TrophyOutlined />}
               />
               <Text className="jt-team-helper" style={{ color: club.textMuted }}>
                 {loggedInPlayer?.participationStatus === true
-                  ? "You're confirmed — check back here for your team assignment."
+                  ? "You're confirmed — see who's due to keep goal this week."
                   : loggedInPlayer?.participationStatus === false
                   ? "You are currently marked as unavailable for this match."
                   : "Awaiting your response — let us know if you're in."}
