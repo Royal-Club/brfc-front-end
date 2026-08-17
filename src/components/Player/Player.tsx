@@ -32,7 +32,9 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     CameraOutlined,
-    LoadingOutlined
+    LoadingOutlined,
+    TrophyOutlined,
+    StopOutlined
 } from "@ant-design/icons";
 import IFootballPosition from "../../interfaces/IFootballPosition";
 import { API_URL, COMMON_PLAYER_PASSWORD } from "../../settings";
@@ -101,6 +103,10 @@ function Player() {
             playingPosition:
                 playerForm.getFieldValue("playingPosition") || "UNASSIGNED",
             photoKey: photoKey || undefined,
+            // Only sent when editing. New players are in the rotation by default, and the update
+            // endpoint treats an absent value as "leave the current setting alone" - so a form that
+            // never rendered the field cannot silently opt someone back into keeping goal.
+            gkEligible: id ? playerForm.getFieldValue("gkEligible") : undefined,
         };
 
         if (!id) {
@@ -199,6 +205,7 @@ function Player() {
                     employeeId: response.data.content.employeeId,
                     active: response.data.content.active,
                     playingPosition: response.data.content.playingPosition,
+                    gkEligible: response.data.content.gkEligible,
                 });
                 if (response.data.content.photoKey) {
                     setPhotoKey(response.data.content.photoKey);
@@ -514,6 +521,44 @@ function Player() {
                                                                         <span>
                                                                             <CloseCircleOutlined style={{ color: '#ff4d4f', marginRight: 8 }} /> 
                                                                             Inactive
+                                                                        </span>
+                                                                    ),
+                                                                },
+                                                            ]}
+                                                        />
+                                                    </Form.Item>
+                                                </Col>
+                                            )}
+                                        {/* Kept apart from Playing Position on purpose: position is the
+                                            outfield role someone is listed under, not a statement about
+                                            whether they are willing or able to go in goal. */}
+                                        {(loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN")) &&
+                                            formState === "UPDATE" && (
+                                                <Col md={12} lg={8}>
+                                                    <Form.Item
+                                                        name="gkEligible"
+                                                        label="Goalkeeper Rotation"
+                                                        initialValue={true}
+                                                        extra="Turn off only when a player cannot or should not keep goal. They still appear in the priority queue, marked 'Not in rotation', but are never ranked for a turn."
+                                                    >
+                                                        <Select
+                                                            size="large"
+                                                            options={[
+                                                                {
+                                                                    value: true,
+                                                                    label: (
+                                                                        <span>
+                                                                            <TrophyOutlined style={{ color: club.gold, marginRight: 8 }} />
+                                                                            In rotation
+                                                                        </span>
+                                                                    ),
+                                                                },
+                                                                {
+                                                                    value: false,
+                                                                    label: (
+                                                                        <span>
+                                                                            <StopOutlined style={{ color: '#8c8c8c', marginRight: 8 }} />
+                                                                            Not in rotation
                                                                         </span>
                                                                     ),
                                                                 },
