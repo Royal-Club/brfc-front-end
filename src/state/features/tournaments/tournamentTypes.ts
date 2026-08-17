@@ -119,7 +119,8 @@ export interface TournamentGoalKeeperHistoryInfoType extends BasicResType {
     };
 }
 
-export type GoalKeeperCategoryType = "REGULAR" | "LAST_GK" | "NEW";
+/** ELIGIBLE ranks by what's owed; COOLDOWN rested recently; EXEMPT opted out and isn't ranked. */
+export type GoalKeeperCategoryType = "ELIGIBLE" | "COOLDOWN" | "EXEMPT";
 
 export interface GoalKeeperPriorityPlayerType {
     priority: number;
@@ -131,9 +132,17 @@ export interface GoalKeeperPriorityPlayerType {
     totalTournamentParticipations: number;
     activeTournamentCount: number;
     participationFrequency: number; // percentage
-    totalGoalKeeperTournaments: number;
+    totalGoalKeeperTournaments: number; // distinct tournaments; see goalKeeperStints for turns
     lastGoalKeeperDate: string | null;
     lastPlayedTournamentDate: string | null; // Format: dd-MM-yy
+
+    // Ledger. Ranking is by goalKeeperDebt, and the other three are what explain it to a player:
+    // "you've turned up N times, your share of that was X turns, you've served Y".
+    accruedObligation: number;
+    goalKeeperStints: number;
+    goalKeeperDebt: number; // accruedObligation - goalKeeperStints; > 0 means owed a turn
+    attendedTournaments: number;
+    cooldownRemaining: number | null; // tournaments left resting; null unless COOLDOWN
 }
 
 export interface GoalKeeperQueueResType extends BasicResType {
@@ -142,6 +151,14 @@ export interface GoalKeeperQueueResType extends BasicResType {
         tournamentName: string;
         tournamentDate: string;
         goalKeeperPriorityQueue: GoalKeeperPriorityPlayerType[];
+        cooldownTournaments: number;
+        /** How much of the ledger rests on recorded data rather than the configured estimate. */
+        ledgerCoverage: {
+            tournamentsConsidered: number;
+            tournamentsWithRecordedKeepers: number;
+            tournamentsEstimated: number;
+            estimatingMissingSlots: boolean;
+        } | null;
     };
 }
 
