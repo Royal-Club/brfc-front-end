@@ -7,7 +7,9 @@ export type RsvpVoteStatus =
     | "INVALID"
     | "EXPIRED"
     | "TOURNAMENT_CANCELLED"
-    | "TOURNAMENT_STARTED";
+    | "TOURNAMENT_STARTED"
+    /** A coordinator closed the RSVP to pick teams from it; late changes go through them. */
+    | "VOTING_LOCKED";
 
 export interface RsvpVoteContent {
     status: RsvpVoteStatus;

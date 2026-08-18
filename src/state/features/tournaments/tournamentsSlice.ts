@@ -12,6 +12,7 @@ import {
   LatestTournamentWithUserStatusType,
   TournamentSessionsResType,
   TournamentListResType,
+  VotingLockResType,
 } from "./tournamentTypes";
 
 const apiWithTags = apiSlice.enhanceEndpoints({
@@ -132,7 +133,8 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
       {
         tournamentId: number;
         playerId: number;
-        participationStatus: boolean;
+        /** null clears the answer, putting the player back in the pending queue. */
+        participationStatus: boolean | null;
         comments: string;
         tournamentParticipantId?: number;
       }
@@ -156,6 +158,29 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
       }),
       invalidatesTags: ["tournaments"],
     }),
+    getVotingLockState: builder.query<VotingLockResType, { tournamentId: number }>({
+      query: ({ tournamentId }) => `tournaments/${tournamentId}/voting-lock`,
+      providesTags: ["tournaments"],
+    }),
+
+    /** Closes the RSVP and records every silent player as a No. */
+    lockTournamentVoting: builder.mutation<VotingLockResType, { tournamentId: number }>({
+      query: ({ tournamentId }) => ({
+        url: `tournaments/${tournamentId}/voting-lock`,
+        method: "PUT",
+      }),
+      invalidatesTags: ["tournaments"],
+    }),
+
+    /** Reopens the RSVP and returns the auto-recorded No's to pending. */
+    unlockTournamentVoting: builder.mutation<VotingLockResType, { tournamentId: number }>({
+      query: ({ tournamentId }) => ({
+        url: `tournaments/${tournamentId}/voting-lock`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["tournaments"],
+    }),
+
     getTournamentSummary: builder.query<
       TournamentSummeryResType,
       { tournamentId: number }
@@ -232,6 +257,9 @@ export const {
   usePresignRoadmapImageUploadMutation,
   useGetTournamentParticipantsListQuery,
   useAddParticipationToTournamentMutation,
+  useGetVotingLockStateQuery,
+  useLockTournamentVotingMutation,
+  useUnlockTournamentVotingMutation,
   useGetTournamentSummaryQuery,
   useGetTournamentGoalKeeperListQuery,
   useGetTournamentGoalkeeperHistoryListQuery,

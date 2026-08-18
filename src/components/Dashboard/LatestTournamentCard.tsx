@@ -9,7 +9,8 @@ import {
     CheckCircleOutlined,
     CloseCircleOutlined,
     QuestionCircleOutlined,
-    ClockCircleOutlined
+    ClockCircleOutlined,
+    LockOutlined
 } from '@ant-design/icons';
 import {
     useGetLatestTournamentWithUserStatusQuery,
@@ -113,7 +114,22 @@ const LatestTournamentCard: React.FC = () => {
         );
     }
 
-    const { tournament, totalParticipant, remainParticipant, totalPlayer, isUserParticipated } = latestTournamentData.content;
+    const { tournament, totalParticipant, remainParticipant, totalPlayer, isUserParticipated, votingLockedByName, participationSource } = latestTournamentData.content;
+
+    // Two ways the RSVP shuts: the coordinator closes it to pick teams, or kick-off arrives. The
+    // backend rejects both, so the buttons have to reflect it rather than letting people click into
+    // an error toast.
+    const votingLocked = Boolean(tournament.votingLocked);
+    const kickoffPassed = new Date(tournament.tournamentDate).getTime() <= Date.now();
+    const votingClosed = votingLocked || kickoffPassed;
+    const lockContact = votingLockedByName || 'a coordinator';
+    const votingClosedReason = !votingLocked
+        ? 'Kick-off has passed — answers are closed.'
+        // A No the lock wrote is not a decision this member made, and the plain "locked" wording
+        // would leave them staring at an answer they never gave.
+        : participationSource === 'AUTO_LOCK'
+            ? `The team list was locked before you answered, so you are down as not playing. Contact ${lockContact} if you can make it.`
+            : `Team list locked. Contact ${lockContact} to change your answer.`;
 
     const tournamentPlayers = tournamentParticipantsData?.content?.players || [];
     const hasPlayerStatusData = tournamentPlayers.length > 0;
@@ -336,7 +352,7 @@ const LatestTournamentCard: React.FC = () => {
                     flex: isMobile ? '1 1 100%' : undefined,
                 }}>
                     <Text style={{ ...kicker, fontSize: 10, color: club.goldSoft, whiteSpace: 'nowrap' }}>
-                        Your Call
+                        {votingClosed ? 'Your Call — Closed' : 'Your Call'}
                     </Text>
                     <div style={{ display: 'flex', gap: 6 }}>
                         {[
@@ -345,14 +361,16 @@ const LatestTournamentCard: React.FC = () => {
                             { value: 'null', label: 'Later', icon: <QuestionCircleOutlined />, color: token.colorTextSecondary },
                         ].map((opt) => {
                             const active = getParticipationValue() === opt.value;
+                            const disabled = isUpdating || votingClosed;
                             return (
                                 <div
                                     key={opt.value}
                                     role="button"
-                                    tabIndex={isUpdating ? -1 : 0}
-                                    onClick={() => !isUpdating && handleParticipationChange({ target: { value: opt.value } })}
+                                    aria-disabled={disabled}
+                                    tabIndex={disabled ? -1 : 0}
+                                    onClick={() => !disabled && handleParticipationChange({ target: { value: opt.value } })}
                                     onKeyDown={(e) => {
-                                        if (!isUpdating && (e.key === 'Enter' || e.key === ' ')) {
+                                        if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
                                             e.preventDefault();
                                             handleParticipationChange({ target: { value: opt.value } });
                                         }
@@ -367,11 +385,13 @@ const LatestTournamentCard: React.FC = () => {
                                         borderRadius: 8,
                                         fontSize: 12,
                                         fontWeight: 600,
-                                        cursor: isUpdating ? 'not-allowed' : 'pointer',
+                                        cursor: disabled ? 'not-allowed' : 'pointer',
                                         border: `1.5px solid ${active ? opt.color : 'rgba(255,255,255,0.18)'}`,
                                         background: active ? opt.color : 'rgba(255,255,255,0.03)',
                                         color: active ? '#fff' : opt.color,
-                                        opacity: isUpdating ? 0.6 : 1,
+                                        // A locked answer still has to read as *your* answer, so the
+                                        // active pill stays legible while the rest dims out.
+                                        opacity: disabled ? (active ? 0.75 : 0.4) : 1,
                                         transition: 'all 0.2s ease',
                                     }}
                                 >
@@ -381,6 +401,12 @@ const LatestTournamentCard: React.FC = () => {
                             );
                         })}
                     </div>
+                    {votingClosed && (
+                        <Text style={{ fontSize: 11, color: textMuted, display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <LockOutlined style={{ color: club.gold }} />
+                            {votingClosedReason}
+                        </Text>
+                    )}
                 </div>
 
                 {/* Squad fill progress */}

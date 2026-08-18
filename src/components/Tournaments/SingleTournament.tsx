@@ -10,6 +10,7 @@ import { Button, Card, Col, Grid, Row, Space, theme, Typography, Tabs, Tooltip, 
 import useTournamentTeams from "../../hooks/useTournamentTeams";
 import "./tournament.css";
 import CreateTeamComponent from "./Atoms/CreateTeamComponent";
+import VotingLockControl from "./Atoms/VotingLockControl";
 import PlayerCard from "./Atoms/PlayerCard";
 import TeamCard from "./Atoms/TeamCard";
 import GoalKeeperDrawer from "./Atoms/GoalKeeperDrawer";
@@ -222,6 +223,12 @@ function SingleTournament() {
                 flexWrap: screens.xs ? "wrap" : "nowrap",
               }}
             >
+              {isAdmin && (
+                <VotingLockControl
+                  tournamentId={tournamentId}
+                  onChanged={refetchTournament}
+                />
+              )}
               {isAdmin && (
                 <CreateTeamComponent
                   tournamentId={tournamentId}

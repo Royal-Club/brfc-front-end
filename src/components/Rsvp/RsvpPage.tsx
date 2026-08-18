@@ -111,6 +111,7 @@ export default function RsvpPage() {
         "EXPIRED",
         "TOURNAMENT_CANCELLED",
         "TOURNAMENT_STARTED",
+        "VOTING_LOCKED",
     ];
     const outcome = result ?? (blocking.includes(preview.status) ? preview : null);
 
@@ -193,6 +194,8 @@ function titleFor(status: RsvpVoteStatus): string {
             return "Tournament cancelled";
         case "TOURNAMENT_STARTED":
             return "Tournament already started";
+        case "VOTING_LOCKED":
+            return "Team list is locked";
         default:
             return "This link is not valid";
     }

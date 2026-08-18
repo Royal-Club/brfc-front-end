@@ -171,13 +171,44 @@ export interface LatestTournamentWithUserStatusType extends BasicResType {
             venueName: string;
             activeStatus: boolean;
             tournamentStatus: string;
+            /** RSVP closed by a coordinator so teams can be picked from a settled list. */
+            votingLocked?: boolean;
         };
         totalParticipant: number;
         remainParticipant: number;
         totalPlayer: number;
         isUserParticipated: boolean | null;
         tournamentParticipantId?: number;
+        /** Who to contact about a late change. Only sent once locked. */
+        votingLockedByName?: string | null;
+        /**
+         * How the signed-in player's own answer was recorded. `AUTO_LOCK` means they never replied
+         * and the lock recorded a No for them, which is worth saying rather than showing it as
+         * their own choice.
+         */
+        participationSource?: ParticipationSource | null;
     };
+}
+
+/** How a Yes/No came to be recorded. */
+export type ParticipationSource = "SELF_APP" | "SELF_EMAIL" | "ADMIN" | "AUTO_LOCK";
+
+/** State of a tournament's RSVP lock, plus the tallies behind the lock button. */
+export interface VotingLockStateType {
+    tournamentId: number;
+    votingLocked: boolean;
+    lockedById?: number | null;
+    lockedByName?: string | null;
+    lockedAt?: string | null;
+    confirmedCount: number;
+    declinedCount: number;
+    pendingCount: number;
+    /** Players stamped as No by the lock, or returned to pending by the unlock. */
+    autoMarkedCount: number;
+}
+
+export interface VotingLockResType extends BasicResType {
+    content: VotingLockStateType;
 }
 
 export interface TournamentSessionsResType extends BasicResType {
