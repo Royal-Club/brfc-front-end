@@ -37,6 +37,15 @@ export default function useJoinTournament(tournamentId: number) {
             if (player && nextTournament?.content) {
                 const { tournamentId } = nextTournament.content;
 
+                // Nothing actually changed (e.g. tapping "Yes" while already
+                // in) — skip the request instead of re-sending the same state.
+                const isUnchanged =
+                    player.participationStatus === participationStatus &&
+                    (player.comments ?? "") === (comments ?? "");
+                if (isUnchanged) {
+                    return;
+                }
+
                 message.loading({
                     content: "Updating player information...",
                     key: playerId,
