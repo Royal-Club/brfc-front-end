@@ -32,6 +32,10 @@ import AppFooter from "../CommonAtoms/AppFooter";
 import type { MenuProps } from "antd";
 import { useGetMyGoalkeepingHistoryQuery } from "../../state/features/player/playerSlice";
 import { showBdLocalTime } from "../../utils/utils";
+// Not lazy, unlike the routed pages below: the dock is on every page, so a split chunk would be
+// fetched on every page anyway. The heavy part - the room and its socket - is lazily loaded inside
+// it, only once someone opens the panel.
+import TeamChatDock from "../TeamChat/TeamChatDock";
 
 /*
  * Route components are loaded on demand.
@@ -572,6 +576,11 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                     </div>
                 </Content>
             </Layout>
+
+            {/* Outside the Layout so it floats over the page rather than scrolling with it. Renders
+                nothing unless the player is actually in an open room, and stands down on the chat's
+                own full page so two live sockets never run on one subscription. */}
+            {user?.token && <TeamChatDock />}
 
             {/* Goalkeeping History Drawer */}
             <Drawer

@@ -1,0 +1,196 @@
+/* The chat dock: a launcher pinned to the corner of every page, and the panel it opens.
+   Bottom-right rather than bottom-left because the sidebar user card already owns that corner.
+
+   Colours come from the custom properties declared in teamChat.css, which this file shares - the
+   panel and the room inside it are one surface and have to be painted from one palette. */
+
+/* A labelled pill rather than the icon circle this started as. At 40px square it read as the
+   support-chat widget every site has in that corner, which is exactly the thing people have learned
+   not to click - and it gave no clue that the team had a room at all. */
+.team-chat-dock__launcher {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    /* Above page content and antd sticky bits, below modals (1000) so a dialog still covers the
+       dock rather than fighting it. */
+    z-index: 900;
+    height: 48px;
+    padding: 0 20px;
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.team-chat-dock__launcher .anticon {
+    font-size: 18px;
+}
+
+.team-chat-dock {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 900;
+    /* 420 rather than 380: at the narrower size a wrapped sentence broke every three or four words,
+       which is what made the panel hard to read more than the type size did. Still narrow enough to
+       sit over a page without covering it. */
+    width: 420px;
+    /* Tall enough to hold a conversation, never taller than the window it floats in. */
+    height: min(560px, calc(100vh - 120px));
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--chat-surface);
+    border: 1px solid var(--chat-border-gold);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    color: var(--chat-text);
+}
+
+.team-chat-dock__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px 6px 12px;
+    background: var(--chat-surface-raised);
+    border-bottom: 1px solid var(--chat-border);
+    flex-shrink: 0;
+}
+
+/* A button when it opens the room picker and a span when there is nothing to pick, so the reset
+   here has to cover both. Colour is stated, not inherited: the dock floats outside the page content
+   area, so "whatever colour the page uses" is exactly what it cannot borrow - which is how the team
+   name came out near-black on a near-black bar. */
+.team-chat-dock__title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--chat-text);
+    font: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.team-chat-dock__title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.team-chat-dock__actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+/* Same problem as the title: antd text buttons take their colour from the page, and the dock is not
+   on it. */
+.team-chat-dock__actions .ant-btn-text {
+    color: var(--chat-text-muted);
+}
+
+.team-chat-dock__actions .ant-btn-text:hover {
+    color: var(--chat-text);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.team-chat-dock__body {
+    flex: 1;
+    min-height: 0;
+    padding: 8px;
+    overflow: hidden;
+}
+
+/* The room was built to fill a page. Inside the dock it has to give up its reading-width cap and
+   its own scroll bounds, and let the panel decide the height instead. */
+.team-chat-dock__body .team-chat {
+    max-width: none;
+    min-height: 0;
+    height: 100%;
+    gap: 6px;
+}
+
+.team-chat-dock__body .team-chat__messages {
+    max-height: none;
+    min-height: 0;
+    /* Tighter side padding than the full page, so the width goes to the words. */
+    padding: 10px 8px;
+}
+
+/* Room name, member count and file budget already sit in the dock title bar or a click away in the
+   full view; repeating them costs a third of the panel. */
+.team-chat-dock__body .team-chat__header,
+.team-chat-dock__body .team-chat__notice {
+    display: none;
+}
+
+/* The column is narrow enough that the usual 74% leaves bubbles unreadably thin - wide enough that
+   a reply still lands visibly on the other side, but not so narrow that it wraps every few words.
+   The 24px avatar and its gap are inside this, which is why it is not the full 100%. */
+.team-chat-dock__body .team-chat__row {
+    max-width: 92%;
+}
+
+/* Gold ring so a photo reads as a person rather than as a smudge at this size. */
+.team-chat-dock__body .team-chat__row .ant-avatar {
+    border: 1px solid var(--chat-border-gold);
+}
+
+/* Same reason as above: padding the full page can afford is width this column cannot. */
+.team-chat-dock__body .team-chat__bubble {
+    padding: 7px 10px;
+}
+
+.team-chat-dock__body .team-chat__image,
+.team-chat-dock__body .team-chat__image-loading .ant-skeleton-image {
+    /* A shared photo should be a glance and a click, not the entire panel. The lightbox is where it
+       gets looked at properly. */
+    max-width: 160px;
+    max-height: 180px;
+    width: auto;
+}
+
+/* On a phone the panel is the screen; a 420px card floating over a 360px viewport is not a dock,
+   it is a broken modal. */
+@media (max-width: 576px) {
+    .team-chat-dock {
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 85vh;
+        border-radius: 12px 12px 0 0;
+    }
+
+    /* Still labelled on a phone - the same reasoning applies more strongly on a small screen, where
+       an unexplained icon has even less around it to give it meaning. */
+    .team-chat-dock__launcher {
+        right: 16px;
+        bottom: 16px;
+        height: 44px;
+        padding: 0 16px;
+        font-size: 14px;
+    }
+}
+
+/* The launcher sits outside .team-chat-dock, so it cannot read that block custom properties and
+   the club colours are repeated here literally. Gold on navy rather than the app default primary:
+   it is a floating badge on every page, and it should read as the club, not as a stray button. */
+.team-chat-dock__launcher.ant-btn-primary {
+    background: #c6a15b;
+    border-color: #c6a15b;
+    color: #14213d;
+}
+
+.team-chat-dock__launcher.ant-btn-primary:hover,
+.team-chat-dock__launcher.ant-btn-primary:focus {
+    background: #d8bc84;
+    border-color: #d8bc84;
+    color: #14213d;
+}

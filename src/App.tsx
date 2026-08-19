@@ -240,6 +240,15 @@ function App() {
                         colorPrimaryHover: isDarkMode ? club.goldSoft : club.navySoft,
                         colorPrimaryActive: isDarkMode ? club.gold : club.navyDeep,
                     },
+                    Tooltip: {
+                        // The global colorTextLightSolid above is deliberately navy, so that text
+                        // on a solid gold button reads dark. antd reuses that same token for the
+                        // label inside a tooltip - which sits on a dark spotlight, not on gold - so
+                        // in dark mode every tooltip in the app was rendering near-black on
+                        // near-black. Restated here for tooltips alone; the buttons keep theirs.
+                        colorTextLightSolid: "#ffffff",
+                        colorBgSpotlight: club.navySoft,
+                    },
                     Input: {
                         colorBgContainer: isDarkMode ? "#1f1f1f" : "#ffffff",
                         colorBorder: isDarkMode ? "#434343" : "#d9d9d9",

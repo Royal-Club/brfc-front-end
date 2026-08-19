@@ -6,11 +6,14 @@ import apiSlice from "./api/apiSlice";
 import loginInfoSlice from "./slices/loginInfoSlice";
 import manualFixturesUISlice from "./features/manualFixtures/manualFixturesUISlice";
 import tournamentUISlice from "./features/tournaments/tournamentUISlice";
+import teamChatUISlice from "./features/teamChat/teamChatUISlice";
 
 const persistConfig = {
     key: "root",
     version: 1,
     storage: localStorage,
+    // teamChatUI is deliberately absent: which room you had open is a fact about this visit, not a
+    // preference worth restoring over the dashboard at next login.
     whitelist: ["loginInfo", "manualFixturesUI", "tournamentUI"], // Persist these slices
 };
 
@@ -19,6 +22,7 @@ const rootReducer = combineReducers({
     loginInfo: loginInfoSlice,
     manualFixturesUI: manualFixturesUISlice,
     tournamentUI: tournamentUISlice,
+    teamChatUI: teamChatUISlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

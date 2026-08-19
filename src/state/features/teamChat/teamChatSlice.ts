@@ -77,6 +77,20 @@ export const teamChatApi = apiWithTags.injectEndpoints({
             providesTags: ["TeamChatRoom"],
         }),
 
+        /**
+         * Every open room the caller is in, across tournaments.
+         *
+         * <p>What the dock runs on, since it is on screen everywhere and has no tournament in its
+         * URL to scope by. Always an array, empty included - having no open room is the ordinary
+         * state for most of the week, not a failure.
+         */
+        getMyOpenTeamChatRooms: builder.query<ITeamChatRoom[], void>({
+            query: () => "team-chats/my-open-rooms",
+            transformResponse: (response: ApiEnvelope<ITeamChatRoom[]>) =>
+                response.content ?? [],
+            providesTags: ["TeamChatRoom"],
+        }),
+
         getTeamChatRoom: builder.query<ITeamChatRoom, number>({
             query: (teamId) => `team-chats/${teamId}`,
             transformResponse: (response: ApiEnvelope<ITeamChatRoom>) => response.content,
@@ -150,6 +164,7 @@ export const teamChatApi = apiWithTags.injectEndpoints({
 
 export const {
     useGetMyTeamChatRoomQuery,
+    useGetMyOpenTeamChatRoomsQuery,
     useGetTeamChatRoomQuery,
     useGetTeamChatMessagesQuery,
     // Lazy variant for scrolling back: paging older messages is an explicit action, not something

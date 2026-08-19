@@ -1,6 +1,38 @@
 /* Team chat room.
    Sized to fill whatever it is dropped into rather than the viewport, so the same component works
-   as a full page and inside a tournament card. */
+   as a full page and inside the dock. */
+
+/*
+ * The chat paints itself in club navy in both themes, rather than following the page.
+ *
+ * Every colour below is opaque and stated here. The earlier version leaned on translucent overlays
+ * - rgba white over "whatever is behind" - which works only while something predictable is behind
+ * them. The dock floats outside the page content and paints its own background, so those overlays
+ * resolved against the wrong thing and text came out near-black on near-black. A surface that can
+ * be moved has to carry its own palette.
+ *
+ * Committing to one palette in light mode as well is deliberate: the chat reads as its own surface,
+ * the way a messenger panel does, and there is exactly one set of colours to keep legible instead
+ * of two.
+ */
+.team-chat,
+.team-chat-dock,
+.team-chat-page {
+    --chat-surface: #14213d;
+    /* The well the conversation sits in - deeper than the panel, so the list reads as inset. */
+    --chat-surface-deep: #0e1830;
+    /* Anything lifted off the surface: another player's bubble, the title bar, the composer. */
+    --chat-surface-raised: #1b2a4a;
+    /* Your own messages. A lighter blue rather than a gold wash: gold at bubble opacity over navy
+       desaturates to mud, so gold is kept for accents where it stays gold. */
+    --chat-surface-mine: #2b4478;
+    --chat-gold: #c6a15b;
+    --chat-gold-soft: #d8bc84;
+    --chat-text: #f5f7fa;
+    --chat-text-muted: rgba(245, 247, 250, 0.66);
+    --chat-border: rgba(255, 255, 255, 0.11);
+    --chat-border-gold: rgba(198, 161, 91, 0.38);
+}
 
 .team-chat {
     display: flex;
@@ -8,6 +40,14 @@
     height: 100%;
     min-height: 420px;
     gap: 10px;
+    /* Capped and centred. Left to fill a desktop page the column runs past 1600px, which puts the
+       two sides of the conversation so far apart that they read as unrelated and leaves a bubble
+       stranded against each edge. A message column is bounded by what is comfortable to read, not
+       by the window. */
+    max-width: 940px;
+    width: 100%;
+    margin: 0 auto;
+    color: var(--chat-text);
 }
 
 .team-chat__header {
@@ -16,6 +56,25 @@
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
+}
+
+/* Connection state and the room's remaining file budget, kept together on the right of the header. */
+.team-chat__header-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* antd Typography and Badge read their colour from the page theme, which this surface no longer
+   follows. Restated here so they stay legible on navy. */
+.team-chat .ant-typography {
+    color: var(--chat-text);
+}
+
+.team-chat .ant-typography.ant-typography-secondary,
+.team-chat .ant-badge-status-text {
+    color: var(--chat-text-muted);
 }
 
 .team-chat__notice {
@@ -28,23 +87,24 @@
     overflow-y: auto;
     padding: 12px;
     border-radius: 10px;
-    background: rgba(20, 33, 61, 0.04);
+    background: var(--chat-surface-deep);
+    border: 1px solid var(--chat-border);
     display: flex;
     flex-direction: column;
     gap: 10px;
     /* Without a bounded height the list grows forever and the composer walks off the screen. */
     max-height: 60vh;
-}
-
-.dark-mode .team-chat__messages {
-    background: rgba(255, 255, 255, 0.04);
+    /* Enough to hold the empty state and the load-older button without collapsing to nothing. */
+    min-height: 320px;
 }
 
 .team-chat__row {
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    max-width: 82%;
+    /* Narrow enough that a reply is visibly on the other side of the column from what it answers,
+       which is the whole visual grammar of a chat. */
+    max-width: 74%;
 }
 
 .team-chat__row--mine {
@@ -53,47 +113,79 @@
 }
 
 .team-chat__bubble {
-    background: #ffffff;
-    border: 1px solid rgba(20, 33, 61, 0.1);
+    background: var(--chat-surface-raised);
+    border: 1px solid var(--chat-border);
     border-radius: 12px;
     padding: 8px 12px;
     display: flex;
     flex-direction: column;
     gap: 4px;
     min-width: 0;
-}
-
-.dark-mode .team-chat__bubble {
-    background: #1f1f1f;
-    border-color: #303030;
+    color: var(--chat-text);
 }
 
 .team-chat__row--mine .team-chat__bubble {
-    background: rgba(198, 161, 91, 0.16);
-    border-color: rgba(198, 161, 91, 0.4);
+    background: var(--chat-surface-mine);
+    /* A gold hairline is what marks a message as yours; the fill only has to be distinguishable. */
+    border-color: var(--chat-border-gold);
+}
+
+/* The sender name above someone else's message. */
+.team-chat__bubble .ant-typography {
+    color: var(--chat-gold-soft);
 }
 
 .team-chat__body {
     /* Keeps typed line breaks, and stops one long unbroken string widening the whole column. */
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-    font-size: 14px;
-    line-height: 1.45;
+    font-size: 14.5px;
+    /* Roomier than the 1.45 this started at. In a column this narrow almost every message wraps, so
+       the gap between lines is doing more work here than the font size is. */
+    line-height: 1.55;
+    color: var(--chat-text);
 }
 
+/* Links a player typed. Gold rather than the browser blue, and underlined as well, so they are
+   still identifiable inside a bubble that is already blue. */
+.team-chat__body a {
+    color: var(--chat-gold-soft);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* Inline code inside a message. Sized down a touch so a marked-up word does not push the line
+   taller than its neighbours. */
+.team-chat__code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12.5px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.13);
+}
+
+/* A button rather than a link, because the file has to be fetched with an auth header. The reset
+   below is what keeps it looking like the link it replaced. */
 .team-chat__file {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 6px 8px;
+    border: 1px solid var(--chat-border);
     border-radius: 8px;
-    background: rgba(20, 33, 61, 0.06);
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--chat-text);
+    font: inherit;
     font-size: 12px;
+    text-align: left;
     min-width: 0;
+    width: 100%;
+    cursor: pointer;
 }
 
-.dark-mode .team-chat__file {
-    background: rgba(255, 255, 255, 0.08);
+.team-chat__file:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--chat-border-gold);
 }
 
 .team-chat__file-name {
@@ -103,16 +195,48 @@
 }
 
 .team-chat__file-size {
-    opacity: 0.6;
+    opacity: 0.7;
     flex-shrink: 0;
 }
 
+/* Bounded so a portrait phone photo cannot stretch the bubble down the whole column; the lightbox
+   is there for anyone who wants to see it properly. */
+.team-chat__image {
+    max-width: 220px;
+    max-height: 260px;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: zoom-in;
+}
+
+/* Sized to match, so the bubble does not jump when the image lands. */
+.team-chat__image-loading .ant-skeleton-image {
+    width: 220px;
+    height: 160px;
+    border-radius: 8px;
+}
+
+/* Was 10px at 0.55 opacity, which against a bubble this dark was effectively invisible. Still
+   secondary to the message, but now actually legible. */
 .team-chat__time {
-    font-size: 10px;
-    opacity: 0.55;
+    font-size: 11px;
+    color: var(--chat-text-muted);
     align-self: flex-end;
 }
 
+/* Sits above the oldest message, so scrolling back is an explicit request rather than something
+   that fires whenever the reader nudges the top of the list. */
+.team-chat__load-older {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 4px;
+}
+
+.team-chat__load-older .ant-btn {
+    color: var(--chat-gold-soft);
+}
+
+/* The staged-files strip between the conversation and the composer. */
 .team-chat__pending {
     display: flex;
     flex-wrap: wrap;
@@ -125,8 +249,60 @@
     gap: 8px;
 }
 
+/* The toolbar and the textarea travel together, so the composer row stays a two-part layout:
+   field, then send. */
+.team-chat__composer-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* Full strength, unlike when this row held formatting alone: it now carries the attach button, and
+   dimming a primary action to keep a toolbar quiet trades away the wrong thing. */
+.team-chat__format-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.team-chat__format-bar .ant-btn-text {
+    color: var(--chat-text-muted);
+}
+
+.team-chat__format-bar .ant-btn-text:hover:not(:disabled) {
+    color: var(--chat-gold-soft);
+    background: rgba(255, 255, 255, 0.09);
+}
+
+/* Separates attaching from formatting without spelling out a heading for two groups of icons. */
+.team-chat__format-divider {
+    width: 1px;
+    height: 16px;
+    margin: 0 4px;
+    background: currentColor;
+    opacity: 0.28;
+    flex-shrink: 0;
+}
+
+/* The composer is part of the chat surface, so it is painted here rather than left to whichever
+   antd theme the surrounding page happens to be using. */
 .team-chat__composer .ant-input {
     flex: 1;
+    background: var(--chat-surface-raised);
+    border-color: var(--chat-border);
+    color: var(--chat-text);
+}
+
+.team-chat__composer .ant-input::placeholder {
+    color: var(--chat-text-muted);
+}
+
+.team-chat__composer .ant-input:hover,
+.team-chat__composer .ant-input:focus {
+    border-color: var(--chat-gold);
+    background: var(--chat-surface-raised);
 }
 
 @media (max-width: 576px) {
@@ -134,23 +310,34 @@
         max-width: 92%;
     }
 
+    /* The cap is a desktop concern; on a phone the column is already the window. */
+    .team-chat {
+        max-width: none;
+    }
+
     .team-chat__messages {
         max-height: 55vh;
     }
 }
 
-/* Connection state and the room's remaining file budget, kept together on the right of the header. */
-.team-chat__header-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+/* antd paints its empty state in a grey chosen for a white page. On navy it disappears entirely,
+   which would make a quiet room look like a broken one. */
+.team-chat .ant-empty-description {
+    color: var(--chat-text-muted);
 }
 
-/* Sits above the oldest message, so scrolling back is an explicit request rather than something
-   that fires whenever the reader nudges the top of the list. */
-.team-chat__load-older {
+/* The card the full page puts around the room. Painted to match so the chat reads as one surface
+   from its outer edge inward, instead of navy in a grey picture frame. */
+.team-chat-page.ant-card {
+    background: var(--chat-surface);
+    border-color: var(--chat-border-gold);
+}
+
+/* The full page toolbar - just the way back to the dock, kept above the room and out of its way.
+   Right-aligned so it sits where the dock's own expand button was, rather than moving across the
+   screen between the two views. */
+.team-chat-page__toolbar {
     display: flex;
-    justify-content: center;
-    padding-bottom: 4px;
+    justify-content: flex-end;
+    margin-bottom: 10px;
 }

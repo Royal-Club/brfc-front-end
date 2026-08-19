@@ -13,21 +13,25 @@ import {
     Upload,
 } from "antd";
 import {
-    FileOutlined,
+    BoldOutlined,
+    CodeOutlined,
+    ItalicOutlined,
     LoadingOutlined,
     PaperClipOutlined,
     SendOutlined,
+    StrikethroughOutlined,
     TeamOutlined,
 } from "@ant-design/icons";
+import type { TextAreaRef } from "antd/es/input/TextArea";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
-import { API_URL } from "../../settings";
 import { club } from "../../theme/clubTheme";
 import { showBdLocalTime } from "../../utils/utils";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import { useTeamChatWebSocket } from "../../hooks/useTeamChatWebSocket";
 import {
+    ITeamChatAttachment,
     ITeamChatMessage,
     ITeamChatRoom,
     useGetTeamChatMessagesQuery,
@@ -37,9 +41,12 @@ import {
 } from "../../state/features/teamChat/teamChatSlice";
 import {
     UploadedTeamChatFile,
+    downloadTeamChatAttachment,
     formatBytes,
     uploadTeamChatFile,
 } from "../../utils/teamChatUpload";
+import TeamChatAttachment from "./TeamChatAttachment";
+import { renderMessageBody } from "./messageFormatting";
 import "./teamChat.css";
 
 const { Text, Title } = Typography;
@@ -48,9 +55,48 @@ interface TeamChatRoomProps {
     room: ITeamChatRoom;
     /** Called when the server says the room has been purged mid-session. */
     onRoomClosed?: () => void;
+    /**
+     * Trims the room for the dock's narrow column.
+     *
+     * <p>A prop rather than more CSS overrides because the savings that matter are structural - an
+     * avatar that is not rendered gives its 40px back to the text, where one hidden with
+     * `display: none` still costs the layout its gap.
+     */
+    compact?: boolean;
 }
 
 const PAGE_SIZE = 50;
+
+/** The markers the composer can insert, in the order they appear on the toolbar. */
+const FORMAT_BUTTONS = [
+    { marker: "*", label: "Bold", icon: <BoldOutlined />, shortcut: "Ctrl+B" },
+    { marker: "_", label: "Italic", icon: <ItalicOutlined />, shortcut: "Ctrl+I" },
+    { marker: "~", label: "Strikethrough", icon: <StrikethroughOutlined />, shortcut: null },
+    { marker: "`", label: "Code", icon: <CodeOutlined />, shortcut: null },
+];
+
+/**
+ * Gives a pasted screenshot a name of its own.
+ *
+ * <p>Browsers hand every clipboard image over as "image.png", so a room where three people paste a
+ * screenshot ends up with three attachments of the same name - in the composer, in the file list and
+ * in whatever folder they are later downloaded to. A file pasted from a folder keeps its real name;
+ * only the placeholder is replaced.
+ */
+function withPastedName(file: File): File {
+    if (file.name && file.name !== "image.png") {
+        return file;
+    }
+    const extension = file.type.split("/")[1] || "png";
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    return new File([file], `pasted-${stamp}.${extension}`, { type: file.type });
+}
+
+/** Keyed by the letter pressed with Ctrl/Cmd; only the two that are universal. */
+const SHORTCUT_MARKERS: Record<string, string> = {
+    b: "*",
+    i: "_",
+};
 
 /**
  * One team's private room.
@@ -60,7 +106,11 @@ const PAGE_SIZE = 50;
  * message safe: they receive it back over their own subscription as well as in the POST response,
  * and without the key it would appear twice.
  */
-export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) {
+export default function TeamChatRoom({
+    room,
+    onRoomClosed,
+    compact = false,
+}: TeamChatRoomProps) {
     const loginInfo = useSelector(selectLoginInfo);
     // The store keeps the signed-in player's id as a string, the same way every other screen reads it.
     const myPlayerId = Number(loginInfo.userId);
@@ -73,6 +123,7 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
     const [hasOlder, setHasOlder] = useState(true);
 
     const listRef = useRef<HTMLDivElement | null>(null);
+    const inputRef = useRef<TextAreaRef | null>(null);
     /**
      * Whether the reader was at the bottom before this render's messages arrived.
      *
@@ -81,9 +132,15 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
      */
     const wasAtBottomRef = useRef(true);
 
+    // Refetched on every mount, not served from cache alone. Nothing invalidates this query while
+    // the room is open - sent messages come back in the POST response and everyone else's arrive
+    // over the socket, both of which are merged into local state rather than into the cache. That
+    // local state dies with the component, so leaving the room and returning inside RTK Query's
+    // 60s cache window would otherwise restore the page exactly as the server first sent it, with
+    // every message since missing. A room that was empty on first open comes back empty.
     const { data: history, isLoading } = useGetTeamChatMessagesQuery(
         { teamId: room.teamId, limit: PAGE_SIZE },
-        { skip: !room.open }
+        { skip: !room.open, refetchOnMountOrArgChange: true }
     );
 
     const [fetchOlder, { isFetching: loadingOlder }] = useLazyGetTeamChatMessagesQuery();
@@ -110,9 +167,9 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
     useEffect(() => {
         if (history) {
             mergeMessages(history);
-            if (history.length < PAGE_SIZE) {
-                setHasOlder(false);
-            }
+            // Assigned rather than only ever cleared: with the refetch above, a stale empty page can
+            // arrive before the real one, and a one-way latch would hide "load older" for good.
+            setHasOlder(history.length >= PAGE_SIZE);
         }
     }, [history, mergeMessages]);
 
@@ -216,6 +273,73 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
         }
     };
 
+    /**
+     * Files pasted into the composer, which for most people means a screenshot.
+     *
+     * <p>The attach button reaches the same upload path, but nobody saves a screenshot to disk first
+     * just to attach it - Ctrl+V is how a screenshot gets shared, so it has to work here.
+     *
+     * <p>Uploaded one at a time rather than in parallel: each upload is budgeted against the space
+     * left in the room, and firing them together would have every one of them measured against the
+     * same starting figure.
+     */
+    const handlePaste = async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const files = Array.from(event.clipboardData?.items ?? [])
+            .filter((item) => item.kind === "file")
+            .map((item) => item.getAsFile())
+            .filter((file): file is File => file !== null);
+
+        if (!files.length) {
+            return;
+        }
+
+        // Only once there is actually a file to take. Copying an image from a web page puts markup
+        // and a caption on the clipboard alongside it, and letting that through would drop a stray
+        // line of text into the message next to the picture.
+        event.preventDefault();
+
+        for (const file of files) {
+            await handleUpload(withPastedName(file));
+        }
+    };
+
+    // Attachments cannot be plain links: the route needs the bearer token, which only a fetch can
+    // carry. Errors are surfaced here because this path has no RTK Query wrapper to do it.
+    const handleDownload = async (attachment: ITeamChatAttachment) => {
+        try {
+            await downloadTeamChatAttachment(attachment.downloadUrl, attachment.fileName);
+        } catch (error) {
+            toast.error(
+                error instanceof Error ? error.message : "Could not download that file"
+            );
+        }
+    };
+
+    /**
+     * Wraps the selected text in a marker, or opens an empty pair for the writer to type into.
+     *
+     * <p>Editing the draft through the textarea's own selection rather than appending to the end is
+     * what makes the toolbar worth having: someone who has already typed a sentence can select one
+     * word of it and embolden that, which is the only reason anyone reaches for the button.
+     */
+    const wrapSelection = (marker: string) => {
+        const node = inputRef.current?.resizableTextArea?.textArea;
+        if (!node) {
+            return;
+        }
+
+        const { selectionStart: start, selectionEnd: end } = node;
+        const selected = draft.slice(start, end);
+        setDraft(draft.slice(0, start) + marker + selected + marker + draft.slice(end));
+
+        // After the state lands, so the caret is placed in the textarea React has re-rendered:
+        // setting it now would put it back where it was before the markers were inserted.
+        requestAnimationFrame(() => {
+            node.focus();
+            node.setSelectionRange(start + marker.length, end + marker.length);
+        });
+    };
+
     const handleSend = async () => {
         const body = draft.trim();
         if (!body && pending.length === 0) {
@@ -317,9 +441,13 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
                                 key={message.id}
                                 className={`team-chat__row ${mine ? "team-chat__row--mine" : ""}`}
                             >
+                                {/* Only for other people. Your own messages are already marked as
+                                    yours by the side they sit on and their colour, and a column of
+                                    your own face down the right is what every chat app leaves out.
+                                    Falls back to the initial when a player has uploaded no photo. */}
                                 {!mine && (
                                     <Avatar
-                                        size={32}
+                                        size={compact ? 24 : 32}
                                         src={toAbsolutePlayerPhotoUrl(message.senderPhotoUrl)}
                                     >
                                         {message.senderName?.charAt(0)}
@@ -332,24 +460,16 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
                                         </Text>
                                     )}
                                     {message.body && (
-                                        <div className="team-chat__body">{message.body}</div>
+                                        <div className="team-chat__body">
+                                            {renderMessageBody(message.body)}
+                                        </div>
                                     )}
                                     {message.attachments?.map((attachment) => (
-                                        <a
+                                        <TeamChatAttachment
                                             key={attachment.id}
-                                            className="team-chat__file"
-                                            href={`${API_URL}${attachment.downloadUrl}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            <FileOutlined />
-                                            <span className="team-chat__file-name">
-                                                {attachment.fileName}
-                                            </span>
-                                            <span className="team-chat__file-size">
-                                                {formatBytes(attachment.sizeBytes)}
-                                            </span>
-                                        </a>
+                                            attachment={attachment}
+                                            onDownload={handleDownload}
+                                        />
                                     ))}
                                     <div className="team-chat__time">
                                         {showBdLocalTime(message.sentAt)}
@@ -381,43 +501,85 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
             )}
 
             <div className="team-chat__composer">
-                <Upload
-                    showUploadList={false}
-                    beforeUpload={(file) => {
-                        handleUpload(file as File);
-                        // Handled by hand above, so antd must not also try to upload it.
-                        return false;
-                    }}
-                >
-                    <Tooltip
-                        title={
-                            remainingBytes === 0
-                                ? "No file space left in this chat"
-                                : `Attach a file — ${formatBytes(remainingBytes)} left, ${formatBytes(
-                                      room.maxFileBytes
-                                  )} max per file`
-                        }
-                    >
-                        <Button
-                            icon={uploading ? <LoadingOutlined /> : <PaperClipOutlined />}
-                            disabled={uploading || remainingBytes === 0}
-                        />
-                    </Tooltip>
-                </Upload>
-                <Input.TextArea
-                    value={draft}
-                    onChange={(event) => setDraft(event.target.value)}
-                    placeholder="Message your team…"
-                    autoSize={{ minRows: 1, maxRows: 4 }}
-                    maxLength={4000}
-                    onPressEnter={(event) => {
-                        // Enter sends, Shift+Enter starts a new line - what people expect of a chat.
-                        if (!event.shiftKey) {
-                            event.preventDefault();
-                            handleSend();
-                        }
-                    }}
-                />
+                <div className="team-chat__composer-field">
+                    <div className="team-chat__format-bar">
+                        <Upload
+                            showUploadList={false}
+                            beforeUpload={(file) => {
+                                handleUpload(file as File);
+                                // Handled by hand above, so antd must not also try to upload it.
+                                return false;
+                            }}
+                        >
+                            <Tooltip
+                                title={
+                                    remainingBytes === 0
+                                        ? "No file space left in this chat"
+                                        : `Attach a file — ${formatBytes(
+                                              remainingBytes
+                                          )} left, ${formatBytes(room.maxFileBytes)} max per file`
+                                }
+                            >
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    icon={
+                                        uploading ? <LoadingOutlined /> : <PaperClipOutlined />
+                                    }
+                                    disabled={uploading || remainingBytes === 0}
+                                />
+                            </Tooltip>
+                        </Upload>
+                        {/* Attaching and formatting are the same kind of act - things you add to a
+                            message before sending it - so they belong on one row rather than on
+                            opposite sides of the composer. */}
+                        <span className="team-chat__format-divider" />
+                        {FORMAT_BUTTONS.map(({ marker, label, icon, shortcut }) => (
+                            <Tooltip
+                                key={marker}
+                                title={`${label} — ${
+                                    shortcut ? `${shortcut}, or ` : ""
+                                }type ${marker}text${marker}`}
+                            >
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    icon={icon}
+                                    onClick={() => wrapSelection(marker)}
+                                />
+                            </Tooltip>
+                        ))}
+                    </div>
+                    <Input.TextArea
+                        ref={inputRef}
+                        value={draft}
+                        onChange={(event) => setDraft(event.target.value)}
+                        placeholder="Message your team…"
+                        autoSize={{ minRows: 1, maxRows: compact ? 4 : 6 }}
+                        maxLength={4000}
+                        onPaste={handlePaste}
+                        onKeyDown={(event) => {
+                            // Only the two every editor has. Ctrl+S and Ctrl+E are left alone
+                            // deliberately - taking "save page" off someone is not worth a marker
+                            // the toolbar button already inserts.
+                            if (!event.ctrlKey && !event.metaKey) {
+                                return;
+                            }
+                            const marker = SHORTCUT_MARKERS[event.key.toLowerCase()];
+                            if (marker) {
+                                event.preventDefault();
+                                wrapSelection(marker);
+                            }
+                        }}
+                        onPressEnter={(event) => {
+                            // Enter sends, Shift+Enter starts a new line - what people expect of a chat.
+                            if (!event.shiftKey) {
+                                event.preventDefault();
+                                handleSend();
+                            }
+                        }}
+                    />
+                </div>
                 <Button
                     type="primary"
                     icon={<SendOutlined />}
@@ -425,7 +587,9 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
                     onClick={handleSend}
                     disabled={!draft.trim() && pending.length === 0}
                 >
-                    Send
+                    {/* The word costs about a fifth of the dock's width, and the paper plane is
+                        unambiguous next to a message box. */}
+                    {compact ? null : "Send"}
                 </Button>
             </div>
         </div>

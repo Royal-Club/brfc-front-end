@@ -5,7 +5,7 @@ import {
   Droppable,
   DropResult,
 } from "react-beautiful-dnd";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button, Card, Col, Grid, Row, Space, theme, Typography, Tabs, Tooltip, Input } from "antd";
 import useTournamentTeams from "../../hooks/useTournamentTeams";
 import "./tournament.css";
@@ -20,17 +20,19 @@ import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { RootState } from "../../state/store";
 import { setActiveMainTab } from "../../state/features/tournaments/tournamentUISlice";
 import PickerWheelModal from "./Atoms/pickerWheel/PickerWheelModal";
-import { BarChartOutlined, FileExcelOutlined, RightSquareOutlined, TrophyOutlined, SearchOutlined } from "@ant-design/icons";
+import { BarChartOutlined, FileExcelOutlined, RightSquareOutlined, TrophyOutlined, SearchOutlined, MessageOutlined } from "@ant-design/icons";
 import { exportToExcel, showBdLocalTime } from "../../utils/utils";
 import FixturesPanel from "./Fixtures/FixturesPanel";
 import PrizesPanel from "./Prizes/PrizesPanel";
 import StatsLeaderboardPanel from "./Statistics/StatsLeaderboardPanel";
+import { useGetMyTeamChatRoomQuery } from "../../state/features/teamChat/teamChatSlice";
 
 const { Text } = Typography;
 const { useBreakpoint } = Grid;
 
 function SingleTournament() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
   const tournamentId = Number(id);
   const dispatch = useDispatch();
   const loginInfo = useSelector(selectLoginInfo);
@@ -51,6 +53,13 @@ function SingleTournament() {
     refetchTournament,
     refetchPlayer,
   } = useTournamentTeams(tournamentId);
+
+  // The caller's own room for this tournament. The server resolves the team from the token, so an
+  // admin who is also in a squad reaches their own room and nobody else's -- the admin role grants
+  // no extra reach here. 204 when they are on no team, which RTK Query surfaces as null.
+  const { data: teamChatRoom } = useGetMyTeamChatRoomQuery(tournamentId, {
+    skip: !tournamentId,
+  });
 
   // Player search state
   const [playerSearch, setPlayerSearch] = useState("");
@@ -239,6 +248,17 @@ function SingleTournament() {
               {isAdmin && <PickerWheelModal teams={teams} />}
               <GoalKeeperDrawer tournamentId={tournamentId} />
               <GoalKeeperPriorityDrawer tournamentId={tournamentId} />
+              {/* Not admin-gated: everyone in an open room gets in, and admins reach this page as
+                  players too rather than detouring via the join page. Hidden until the line-up is
+                  published, so it never advertises a room that does not exist yet. */}
+              {teamChatRoom?.open && (
+                <Button
+                  icon={<MessageOutlined />}
+                  onClick={() => navigate(`/tournaments/team-chat/${tournamentId}`)}
+                >
+                  Team Chat
+                </Button>
+              )}
               <Button onClick={handleExportTeams}>
                 <FileExcelOutlined />
                 Export
