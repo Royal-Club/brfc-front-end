@@ -69,6 +69,7 @@ const ClubRules = lazy(() => import("../ClubRules/ClubRules"));
 const ResourcesPage = lazy(() => import("../Resources/ResourcesPage"));
 const ResourceDetailPage = lazy(() => import("../Resources/ResourceDetailPage"));
 const MatchDetailsPage = lazy(() => import("../Tournaments/Fixtures/MatchDetailsPage"));
+const TeamChatPage = lazy(() => import("../TeamChat/TeamChatPage"));
 
 // Imported from their own files rather than the ../Auction barrel, so one auction screen does not
 // drag the other seven into the same chunk.
@@ -490,6 +491,10 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             <Route
                                 path="/fixtures/:matchId"
                                 element={<MatchDetailsPage />}
+                            />
+                            <Route
+                                path="/tournaments/team-chat/:tournamentId"
+                                element={<TeamChatPage />}
                             />
                             <Route path="venues" element={<Venue />} />
                             <Route

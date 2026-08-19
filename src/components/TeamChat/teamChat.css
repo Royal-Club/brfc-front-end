@@ -1,0 +1,148 @@
+/* Team chat room.
+   Sized to fill whatever it is dropped into rather than the viewport, so the same component works
+   as a full page and inside a tournament card. */
+
+.team-chat {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 420px;
+    gap: 10px;
+}
+
+.team-chat__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.team-chat__notice {
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.team-chat__messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(20, 33, 61, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* Without a bounded height the list grows forever and the composer walks off the screen. */
+    max-height: 60vh;
+}
+
+.dark-mode .team-chat__messages {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.team-chat__row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: 82%;
+}
+
+.team-chat__row--mine {
+    margin-left: auto;
+    flex-direction: row-reverse;
+}
+
+.team-chat__bubble {
+    background: #ffffff;
+    border: 1px solid rgba(20, 33, 61, 0.1);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.dark-mode .team-chat__bubble {
+    background: #1f1f1f;
+    border-color: #303030;
+}
+
+.team-chat__row--mine .team-chat__bubble {
+    background: rgba(198, 161, 91, 0.16);
+    border-color: rgba(198, 161, 91, 0.4);
+}
+
+.team-chat__body {
+    /* Keeps typed line breaks, and stops one long unbroken string widening the whole column. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.team-chat__file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(20, 33, 61, 0.06);
+    font-size: 12px;
+    min-width: 0;
+}
+
+.dark-mode .team-chat__file {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.team-chat__file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.team-chat__file-size {
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.team-chat__time {
+    font-size: 10px;
+    opacity: 0.55;
+    align-self: flex-end;
+}
+
+.team-chat__pending {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.team-chat__composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.team-chat__composer .ant-input {
+    flex: 1;
+}
+
+@media (max-width: 576px) {
+    .team-chat__row {
+        max-width: 92%;
+    }
+
+    .team-chat__messages {
+        max-height: 55vh;
+    }
+}
+
+/* Connection state and the room's remaining file budget, kept together on the right of the header. */
+.team-chat__header-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}

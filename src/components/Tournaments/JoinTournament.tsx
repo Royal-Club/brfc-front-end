@@ -12,7 +12,7 @@ import "./tournament.css";
 import {
   CheckCircleOutlined, CloseCircleOutlined, UserOutlined, SearchOutlined,
   ClockCircleOutlined, TeamOutlined, StarFilled, CalendarOutlined,
-  CheckCircleFilled, TrophyOutlined,
+  CheckCircleFilled, TrophyOutlined, MessageOutlined,
 } from "@ant-design/icons";
 import { showBdLocalTime } from "./../../utils/utils";
 import { useSelector } from "react-redux";
@@ -21,6 +21,7 @@ import GoalKeeperPriorityDrawer from "./Atoms/GoalKeeperPriorityDrawer";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import { club, kicker, scoreNum } from "../../theme/clubTheme";
 import useIsMobile from "../../hooks/useIsMobile";
+import { useGetMyTeamChatRoomQuery } from "../../state/features/teamChat/teamChatSlice";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -52,6 +53,9 @@ export default function JoinTournament() {
   const isMobileTable = useIsMobile(768);
 
   const loggedInPlayer = players.find(p => p.playerId === Number(loginInfo.userId));
+
+  // 204 when the caller is not on a team here, so `room` is simply null and the button stays hidden.
+  const { data: teamChatRoom } = useGetMyTeamChatRoomQuery(tournamentId, { skip: !tournamentId });
 
   const { participatingPlayers, notParticipatingPlayers, pendingPlayers, filteredTableData } =
     useMemo(() => {
@@ -360,6 +364,16 @@ export default function JoinTournament() {
               onClick={() => navigate(`/tournaments/team-building/${tournamentId}`)}>
               View Team
             </Button>
+
+            {/* Only once the line-up is out and the tournament is still running. Showing a disabled
+                button the rest of the time would advertise a room that does not exist yet. */}
+            {teamChatRoom?.open && (
+              <Button icon={<MessageOutlined />} block
+                style={{ marginTop: 8, height: 38, fontWeight: 600 }}
+                onClick={() => navigate(`/tournaments/team-chat/${tournamentId}`)}>
+                Team Chat
+              </Button>
+            )}
 
           </Card>
         </Col>
