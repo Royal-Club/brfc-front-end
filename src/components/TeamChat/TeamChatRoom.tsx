@@ -31,6 +31,7 @@ import {
     ITeamChatMessage,
     ITeamChatRoom,
     useGetTeamChatMessagesQuery,
+    useLazyGetTeamChatMessagesQuery,
     usePresignTeamChatAttachmentMutation,
     useSendTeamChatMessageMutation,
 } from "../../state/features/teamChat/teamChatSlice";
@@ -68,31 +69,86 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
     const [draft, setDraft] = useState("");
     const [pending, setPending] = useState<UploadedTeamChatFile[]>([]);
     const [uploading, setUploading] = useState(false);
+    /** False once a page comes back short, meaning there is nothing older to fetch. */
+    const [hasOlder, setHasOlder] = useState(true);
 
     const listRef = useRef<HTMLDivElement | null>(null);
+    /**
+     * Whether the reader was at the bottom before this render's messages arrived.
+     *
+     * <p>Kept in a ref rather than state: it is read during the post-render scroll effect and must
+     * not itself cause a render, or every scroll event would re-render the whole conversation.
+     */
+    const wasAtBottomRef = useRef(true);
 
     const { data: history, isLoading } = useGetTeamChatMessagesQuery(
         { teamId: room.teamId, limit: PAGE_SIZE },
         { skip: !room.open }
     );
 
+    const [fetchOlder, { isFetching: loadingOlder }] = useLazyGetTeamChatMessagesQuery();
     const [sendMessage, { isLoading: sending }] = useSendTeamChatMessageMutation();
     const [presign] = usePresignTeamChatAttachmentMutation();
 
     /** Adds or replaces by id, keeping the list in chronological order. */
-    const mergeMessage = useCallback((incoming: ITeamChatMessage) => {
+    const mergeMessages = useCallback((incoming: ITeamChatMessage[]) => {
         setMessages((current) => {
-            const next = current.filter((message) => message.id !== incoming.id);
-            next.push(incoming);
-            return next.sort((a, b) => a.id - b.id);
+            const byId = new Map(current.map((message) => [message.id, message]));
+            incoming.forEach((message) => byId.set(message.id, message));
+            return Array.from(byId.values()).sort((a, b) => a.id - b.id);
         });
     }, []);
 
+    const mergeMessage = useCallback(
+        (incoming: ITeamChatMessage) => mergeMessages([incoming]),
+        [mergeMessages]
+    );
+
+    // Merged rather than assigned. Replacing the list would discard every message the socket
+    // delivered since this page was fetched, and would wipe older pages the reader had scrolled
+    // back through, on any refetch of the latest page.
     useEffect(() => {
         if (history) {
-            setMessages(history);
+            mergeMessages(history);
+            if (history.length < PAGE_SIZE) {
+                setHasOlder(false);
+            }
         }
-    }, [history]);
+    }, [history, mergeMessages]);
+
+    /** Fetches the page before the oldest message currently held, and prepends it. */
+    const handleLoadOlder = async () => {
+        if (!messages.length) {
+            return;
+        }
+        const node = listRef.current;
+        const heightBefore = node?.scrollHeight ?? 0;
+
+        try {
+            const older = await fetchOlder({
+                teamId: room.teamId,
+                before: messages[0].id,
+                limit: PAGE_SIZE,
+            }).unwrap();
+
+            if (older.length < PAGE_SIZE) {
+                setHasOlder(false);
+            }
+            if (older.length) {
+                mergeMessages(older);
+                // Hold the reader's place. Prepending grows the list upward, so without this the
+                // content they were reading jumps down by the height of everything just added.
+                requestAnimationFrame(() => {
+                    if (listRef.current) {
+                        listRef.current.scrollTop =
+                            listRef.current.scrollHeight - heightBefore;
+                    }
+                });
+            }
+        } catch {
+            // The shared API error handler already surfaces the message.
+        }
+    };
 
     const { connected } = useTeamChatWebSocket({
         teamId: room.open ? room.teamId : undefined,
@@ -101,13 +157,28 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
         enabled: room.open,
     });
 
-    // Pinned to the newest message. A chat that opens halfway up its own history reads as broken.
+    /**
+     * Follows the conversation only for a reader who is already at the bottom of it.
+     *
+     * <p>Unconditionally scrolling down is what makes a chat impossible to read back through:
+     * someone catching up on this morning's messages gets yanked to the newest one every time
+     * anybody types. The room still opens pinned to the bottom, because the ref starts true.
+     */
     useEffect(() => {
         const node = listRef.current;
-        if (node) {
+        if (node && wasAtBottomRef.current) {
             node.scrollTop = node.scrollHeight;
         }
     }, [messages.length]);
+
+    /** Within this many pixels of the bottom still counts as "following along". */
+    const handleScroll = () => {
+        const node = listRef.current;
+        if (node) {
+            wasAtBottomRef.current =
+                node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+        }
+    };
 
     const memberNames = useMemo(
         () => room.members.map((member) => member.playerName).join(", "),
@@ -220,13 +291,26 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
                 message="This chat and every file shared in it are deleted when the tournament concludes."
             />
 
-            <div className="team-chat__messages" ref={listRef}>
+            <div className="team-chat__messages" ref={listRef} onScroll={handleScroll}>
                 {isLoading ? (
                     <Skeleton active paragraph={{ rows: 6 }} />
                 ) : messages.length === 0 ? (
                     <Empty description="No messages yet. Say hello to your team." />
                 ) : (
-                    messages.map((message) => {
+                    <>
+                    {hasOlder && (
+                        <div className="team-chat__load-older">
+                            <Button
+                                size="small"
+                                type="text"
+                                loading={loadingOlder}
+                                onClick={handleLoadOlder}
+                            >
+                                Load earlier messages
+                            </Button>
+                        </div>
+                    )}
+                    {messages.map((message) => {
                         const mine = message.senderId === myPlayerId;
                         return (
                             <div
@@ -273,7 +357,8 @@ export default function TeamChatRoom({ room, onRoomClosed }: TeamChatRoomProps) 
                                 </div>
                             </div>
                         );
-                    })
+                    })}
+                    </>
                 )}
             </div>
 

@@ -152,6 +152,9 @@ export const {
     useGetMyTeamChatRoomQuery,
     useGetTeamChatRoomQuery,
     useGetTeamChatMessagesQuery,
+    // Lazy variant for scrolling back: paging older messages is an explicit action, not something
+    // that should re-run whenever the component re-renders.
+    useLazyGetTeamChatMessagesQuery,
     useSendTeamChatMessageMutation,
     usePresignTeamChatAttachmentMutation,
 } = teamChatApi;

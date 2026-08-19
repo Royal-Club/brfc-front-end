@@ -146,3 +146,11 @@
     gap: 12px;
     flex-wrap: wrap;
 }
+
+/* Sits above the oldest message, so scrolling back is an explicit request rather than something
+   that fires whenever the reader nudges the top of the list. */
+.team-chat__load-older {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 4px;
+}
