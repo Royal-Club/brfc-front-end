@@ -6,6 +6,7 @@ import {
 } from "../state/features/tournaments/tournamentsSlice";
 import { TournamentPlayerInfoType } from "../state/features/tournaments/tournamentTypes";
 import { normalizeErrorMessage } from "../utils/normalizeErrorMessage";
+import { isRsvpUnchanged } from "../utils/rsvpAnswer";
 
 const getErrorMessage = (error: any) => {
     return normalizeErrorMessage(error, "Failed to update player information");
@@ -39,10 +40,7 @@ export default function useJoinTournament(tournamentId: number) {
 
                 // Nothing actually changed (e.g. tapping "Yes" while already
                 // in) — skip the request instead of re-sending the same state.
-                const isUnchanged =
-                    player.participationStatus === participationStatus &&
-                    (player.comments ?? "") === (comments ?? "");
-                if (isUnchanged) {
+                if (isRsvpUnchanged(player, { participationStatus, comments })) {
                     return;
                 }
 

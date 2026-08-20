@@ -23,6 +23,7 @@ import { selectLoginInfo } from '../../state/slices/loginInfoSlice';
 import { Link } from 'react-router-dom';
 import { TournamentPlayerInfoType } from '../../state/features/tournaments/tournamentTypes';
 import { normalizeErrorMessage } from '../../utils/normalizeErrorMessage';
+import { isRsvpUnchanged } from '../../utils/rsvpAnswer';
 import { club, kicker, scoreNum } from '../../theme/clubTheme';
 import useIsMobile from '../../hooks/useIsMobile';
 
@@ -65,14 +66,30 @@ const LatestTournamentCard: React.FC = () => {
         if (value === 'true') participationStatus = true;
         else if (value === 'false') participationStatus = false;
 
+        // This card has no comment box, but the server rewrites the comment on every save, so it
+        // has to send back whatever is already stored - posting "" here erased a note the member
+        // had left on the tournament page.
+        const myComment = tournamentParticipantsData?.content?.players
+            ?.find((p) => p.playerId === Number(loginInfo.userId))?.comments ?? "";
+
+        // Tapping the pill that is already active changes nothing, so skip the request rather than
+        // re-sending the same answer.
+        const unchanged = isRsvpUnchanged(
+            { participationStatus: latestTournamentData.content.isUserParticipated, comments: myComment },
+            { participationStatus, comments: myComment }
+        );
+        if (unchanged) {
+            return;
+        }
+
         setIsUpdating(true);
-        
+
         try {
             const payload: any = {
                 tournamentId: latestTournamentData.content.tournament.id,
                 playerId: Number(loginInfo.userId),
                 participationStatus,
-                comments: "",
+                comments: myComment,
             };
 
             // Include tournamentParticipantId if it exists in the response
