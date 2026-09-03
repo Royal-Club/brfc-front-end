@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Row, Col, Select, Spin } from "antd";
 import { Line } from "react-chartjs-2";
 import dayjs from "dayjs";
@@ -29,6 +29,25 @@ ChartJS.register(
 
 const { Option } = Select;
 
+// Module scope so the identity is stable across renders and generateGraphData
+// does not have to list it as a dependency.
+const getColor = (costType: string): string => {
+    const colors: Record<string, string> = {
+        FIELD_RENT: "rgba(255, 99, 132, 0.7)",
+        FOOD: "rgba(54, 162, 235, 0.7)",
+        EQUIPMENT: "rgba(75, 192, 192, 0.7)",
+        Insurance: "rgba(153, 102, 255, 0.7)",
+        Supplies: "rgba(255, 159, 64, 0.7)",
+        Other: "rgba(255, 205, 86, 0.7)",
+    };
+    return (
+        colors[costType] ||
+        `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(
+            Math.random() * 256
+        )}, ${Math.floor(Math.random() * 256)}, 0.7)`
+    );
+};
+
 interface AcBillPaymentGraphProps {
     acBillPayments: IAcBillPayment[];
 }
@@ -47,7 +66,13 @@ interface GraphData {
 const AcBillPaymentGraph: React.FC<AcBillPaymentGraphProps> = ({
     acBillPayments,
 }) => {
-    const years = acBillPayments.map((item) => dayjs(item.paymentDate).year());
+    // Memoised because these feed effect dependency arrays. Rebuilt inline they
+    // would be a new array on every render, so the effects below would re-run
+    // after every render regardless of whether the payments actually changed.
+    const years = useMemo(
+        () => acBillPayments.map((item) => dayjs(item.paymentDate).year()),
+        [acBillPayments]
+    );
     const latestYear = years.length > 0 ? Math.max(...years) : dayjs().year();
 
     const [filteredYear, setFilteredYear] = useState<number>(latestYear);
@@ -58,31 +83,27 @@ const AcBillPaymentGraph: React.FC<AcBillPaymentGraphProps> = ({
     });
     const [loading, setLoading] = useState<boolean>(true);
 
-    const uniqueYears = Array.from(new Set(years));
-    const uniqueCostTypes = [
-        ...new Set(
-            acBillPayments.map((item) => item.costType?.name).filter(Boolean)
-        ),
-    ] as string[];
+    const uniqueYears = useMemo(() => Array.from(new Set(years)), [years]);
+    const uniqueCostTypes = useMemo(
+        () =>
+            [
+                ...new Set(
+                    acBillPayments
+                        .map((item) => item.costType?.name)
+                        .filter(Boolean)
+                ),
+            ] as string[],
+        [acBillPayments]
+    );
 
     // Initialize filteredCostType with all cost types when component mounts
     useEffect(() => {
         if (uniqueCostTypes.length > 0 && filteredCostType.length === 0) {
             setFilteredCostType(uniqueCostTypes);
         }
-    }, [uniqueCostTypes]);
+    }, [uniqueCostTypes, filteredCostType.length]);
 
-    useEffect(() => {
-        if (filteredYear && filteredCostType.length > 0) {
-            generateGraphData();
-        }
-    }, [filteredYear, filteredCostType, acBillPayments]);
-
-    const handleYearChange = (value: number) => {
-        setFilteredYear(value);
-    };
-
-    const generateGraphData = () => {
+    const generateGraphData = useCallback(() => {
         setLoading(true);
 
         const filteredData = acBillPayments.filter(
@@ -117,24 +138,16 @@ const AcBillPaymentGraph: React.FC<AcBillPaymentGraphProps> = ({
         };
         setLoading(false);
         setGraphData(data);
-       
-    };
+    }, [acBillPayments, filteredYear, filteredCostType]);
 
-    const getColor = (costType: string): string => {
-        const colors: Record<string, string> = {
-            FIELD_RENT: "rgba(255, 99, 132, 0.7)",
-            FOOD: "rgba(54, 162, 235, 0.7)",
-            EQUIPMENT: "rgba(75, 192, 192, 0.7)",
-            Insurance: "rgba(153, 102, 255, 0.7)",
-            Supplies: "rgba(255, 159, 64, 0.7)",
-            Other: "rgba(255, 205, 86, 0.7)",
-        };
-        return (
-            colors[costType] ||
-            `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(
-                Math.random() * 256
-            )}, ${Math.floor(Math.random() * 256)}, 0.7)`
-        );
+    useEffect(() => {
+        if (filteredYear && filteredCostType.length > 0) {
+            generateGraphData();
+        }
+    }, [filteredYear, filteredCostType, generateGraphData]);
+
+    const handleYearChange = (value: number) => {
+        setFilteredYear(value);
     };
 
     return (

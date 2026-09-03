@@ -12,7 +12,7 @@ import "./tournament.css";
 import {
   CheckCircleOutlined, CloseCircleOutlined, UserOutlined, SearchOutlined,
   ClockCircleOutlined, TeamOutlined, StarFilled, CalendarOutlined,
-  CheckCircleFilled, TrophyOutlined, MessageOutlined,
+  CheckCircleFilled, TrophyOutlined, MessageOutlined, LockOutlined,
 } from "@ant-design/icons";
 import { showBdLocalTime } from "./../../utils/utils";
 import { useSelector } from "react-redux";
@@ -53,6 +53,26 @@ export default function JoinTournament() {
   const isMobileTable = useIsMobile(768);
 
   const loggedInPlayer = players.find(p => p.playerId === Number(loginInfo.userId));
+
+  // Two ways the RSVP shuts: a coordinator closes it to pick teams, or kick-off arrives. The
+  // backend rejects a locked answer, so the controls have to say so rather than letting someone
+  // click into an error toast - which is all this page did before.
+  //
+  // Managers keep the escape hatch the backend grants them (requireVotingOpen lets them through):
+  // editing one answer on request is exactly why members are told to contact someone rather than
+  // just being refused.
+  const isTournamentManager =
+    loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN") ||
+    loginInfo.roles.includes("COORDINATOR");
+  const votingLocked  = Boolean(nextTournament?.votingLocked);
+  const kickoffPassed = nextTournament?.tournamentDate
+    ? new Date(nextTournament.tournamentDate).getTime() <= Date.now()
+    : false;
+  const votingClosed  = (votingLocked || kickoffPassed) && !isTournamentManager;
+  const lockContact   = nextTournament?.votingLockedByName || "a coordinator";
+  const votingClosedReason = votingLocked
+    ? `Team list locked. Contact ${lockContact} to change your answer.`
+    : "Kick-off has passed - answers are closed.";
 
   // 204 when the caller is not on a team here, so `room` is simply null and the button stays hidden.
   const { data: teamChatRoom } = useGetMyTeamChatRoomQuery(tournamentId, { skip: !tournamentId });
@@ -263,7 +283,7 @@ export default function JoinTournament() {
                   <Button block size="large"
                     icon={<CheckCircleOutlined />}
                     onClick={() => handleUpdate(loggedInPlayer.playerId, editedComments[loggedInPlayer.playerId] ?? loggedInPlayer.comments ?? "", true)}
-                    disabled={isUpdating}
+                    disabled={isUpdating || votingClosed}
                     style={loggedInPlayer.participationStatus === true
                       ? { background: club.pitch, borderColor: club.pitch, color: "#fff", fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }
                       : { background: "rgba(255,255,255,0.03)", borderColor: `${club.pitch}55`, color: club.pitch, fontWeight: 500 }
@@ -276,7 +296,7 @@ export default function JoinTournament() {
                   <Button block size="large"
                     icon={<CloseCircleOutlined />}
                     onClick={() => handleUpdate(loggedInPlayer.playerId, editedComments[loggedInPlayer.playerId] ?? loggedInPlayer.comments ?? "", false)}
-                    disabled={isUpdating}
+                    disabled={isUpdating || votingClosed}
                     style={loggedInPlayer.participationStatus === false
                       ? { background: "#ff4d4f", borderColor: "#ff4d4f", color: "#fff", fontWeight: 600, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }
                       : { background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.18)", color: club.textMuted, fontWeight: 500 }
@@ -289,7 +309,7 @@ export default function JoinTournament() {
 
               {/* Comment full-width below */}
               <DebouncedInput
-                isDisabled={false}
+                isDisabled={votingClosed}
                 placeholder="Leave a comment (optional)..."
                 debounceDuration={1000}
                 onChange={value => {
@@ -298,6 +318,13 @@ export default function JoinTournament() {
                 }}
                 value={editedComments[loggedInPlayer.playerId] ?? loggedInPlayer.comments ?? ""}
               />
+
+              {votingClosed && (
+                <Text style={{ fontSize: 11, color: club.textMuted, display: "flex", alignItems: "center", gap: 5, marginTop: 8 }}>
+                  <LockOutlined style={{ color: club.gold }} />
+                  {votingClosedReason}
+                </Text>
+              )}
 
             </Card>
           </Col>
@@ -487,7 +514,7 @@ export default function JoinTournament() {
                         popupClassName="jt-part-dropdown"
                         value={r.participationStatus === true ? "true" : r.participationStatus === false ? "false" : "Select"}
                         onChange={v => handleUpdate(r.playerId, editedComments[r.playerId] ?? r.comments ?? "", v === "true")}
-                        disabled={isUpdating || !canEdit}
+                        disabled={isUpdating || !canEdit || votingClosed}
                         style={{ width: 92, flexShrink: 0 }}
                         size="small"
                       >
@@ -554,7 +581,7 @@ export default function JoinTournament() {
                     popupClassName="jt-part-dropdown"
                     value={r.participationStatus === true ? "true" : r.participationStatus === false ? "false" : "Select"}
                     onChange={v => handleUpdate(r.playerId, editedComments[r.playerId] ?? r.comments ?? "", v === "true")}
-                    disabled={isUpdating || !canEdit}
+                    disabled={isUpdating || !canEdit || votingClosed}
                     style={{ width: "100%", marginBottom: 8 }}
                     size="small"
                   >
@@ -565,7 +592,7 @@ export default function JoinTournament() {
                   {/* Comments */}
                   <DebouncedInput
                     className="jt-part-comment"
-                    isDisabled={!canEdit}
+                    isDisabled={!canEdit || votingClosed}
                     placeholder="Comment..."
                     debounceDuration={1000}
                     autoSize

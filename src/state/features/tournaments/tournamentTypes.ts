@@ -58,6 +58,10 @@ export interface NextTournamentResType {
         tournamentDate: string;
         totalParticipants: number;
         players: TournamentPlayerInfoType[];
+        /** RSVP closed by a coordinator so teams can be picked from a settled list. */
+        votingLocked?: boolean;
+        /** Who to contact about a late change. Only sent once locked. */
+        votingLockedByName?: string | null;
     };
 }
 
