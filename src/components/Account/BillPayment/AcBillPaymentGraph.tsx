@@ -3,6 +3,29 @@ import { Row, Col, Select, Spin } from "antd";
 import { Line } from "react-chartjs-2";
 import dayjs from "dayjs";
 import IAcBillPayment from "../../../interfaces/IAcBillPayment";
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+} from "chart.js";
+
+// Chart.js v3+ ships nothing registered by default. Without this the chart throws
+// "linear is not a registered scale" whenever this page is the first chart loaded -
+// it only appeared to work when another chart component happened to register first.
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 const { Option } = Select;
 
