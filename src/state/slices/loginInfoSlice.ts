@@ -3,6 +3,11 @@ import { RootState } from "../store";
 
 interface LoginInfoState {
     token: string;
+    /**
+     * The long-lived half of the login, exchanged for a new access token when that one expires. Held
+     * here as well as in `localStorage` so a renewal reaches the outgoing request that triggered it.
+     */
+    refreshToken: string;
     username: string;
     email: string;
     userId: string;
@@ -13,6 +18,7 @@ interface LoginInfoState {
 
 const initialState: LoginInfoState = {
     token: "",
+    refreshToken: "",
     username: "",
     email: "",
     userId: "",
@@ -26,6 +32,8 @@ export const loginInfoSlice = createSlice({
     reducers: {
         setAllData(state, action: PayloadAction<LoginInfoState>) {
             state.token = action.payload.token;
+            // Sessions stored before the app understood refresh tokens have no such field.
+            state.refreshToken = action.payload.refreshToken ?? "";
             state.username = action.payload.username;
             state.email = action.payload.email;
             state.userId = action.payload.userId;
@@ -35,6 +43,11 @@ export const loginInfoSlice = createSlice({
         },
         setToken: (state, action: PayloadAction<string>) => {
             state.token = action.payload;
+        },
+        /** Applies a renewed pair, leaving the rest of the session untouched. */
+        setTokens: (state, action: PayloadAction<{ token: string; refreshToken: string }>) => {
+            state.token = action.payload.token;
+            state.refreshToken = action.payload.refreshToken;
         },
         setUsername: (state, action: PayloadAction<string>) => {
             state.username = action.payload;
@@ -58,6 +71,7 @@ export const loginInfoSlice = createSlice({
             return {
                 ...state,
                 token: "",
+                refreshToken: "",
                 username: "",
                 email: "",
                 userId: "",
@@ -72,6 +86,7 @@ export const loginInfoSlice = createSlice({
 export const {
     setAllData,
     setToken,
+    setTokens,
     setUsername,
     setEmail,
     setUserId,
@@ -84,6 +99,7 @@ export default loginInfoSlice.reducer;
 
 export const selectLoginInfo = (state: RootState) => state.loginInfo;
 export const selectToken = (state: RootState) => state.loginInfo.token;
+export const selectRefreshToken = (state: RootState) => state.loginInfo.refreshToken;
 export const selectUserName = (state: RootState) => state.loginInfo.username;
 export const selectUserEmail = (state: RootState) => state.loginInfo.email;
 export const selectUserId = (state: RootState) => state.loginInfo.userId;

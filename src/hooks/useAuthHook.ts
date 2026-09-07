@@ -7,6 +7,7 @@ import {
     setImage,
 } from "../state/slices/loginInfoSlice";
 import { clearStoredCredentials } from "../utils/utils";
+import { revokeRefreshToken } from "../state/api/sessionManager";
 
 export const useAuthHook = () => {
     const dispatch = useDispatch();
@@ -24,7 +25,12 @@ export const useAuthHook = () => {
         );
     };
 
-    const logout = () => {
+    const logout = async () => {
+        // Revoke the refresh token server-side first, while it is still readable. Clearing only this
+        // browser would leave a credential live on the server for the rest of its window, spendable
+        // by any copy of it that got out.
+        await revokeRefreshToken();
+
         // Clear both localStorage token and remembered credentials
         localStorage.removeItem("tokenContent");
         clearStoredCredentials(); // Clear cookies with remembered credentials

@@ -9,6 +9,10 @@ const apiWithTags = apiSlice.enhanceEndpoints({
 export interface LoginResType extends BasicResType {
     content: {
         token: string;
+        /** Exchanged at `auth/refresh` once `token` expires; see `sessionManager`. */
+        refreshToken: string;
+        /** Access-token lifetime in seconds, as reported by the server. */
+        expiresIn: number;
         username: string;
         email: string;
         userId: string;

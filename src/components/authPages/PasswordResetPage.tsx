@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setResetPassword, removeUser, selectUserEmail, selectUserName } from "../../state/slices/loginInfoSlice";
 import { useChangePasswordMutation } from "../../state/features/auth/authSlice";
+import { revokeRefreshToken } from "../../state/api/sessionManager";
+import { clearStoredCredentials } from "../../utils/utils";
 import colors from "../../utils/colors";
 import logo from "../../assets/logo.png";
 
@@ -39,6 +41,17 @@ const PasswordResetPage: React.FC = () => {
         return passwordRegex.test(password);
     };
 
+    /**
+     * Clears the session everywhere it is held, not just in the store. Dropping the store alone
+     * leaves the persisted copy behind, and the next page load reads it and signs the member
+     * straight back in - for as long as the refresh token remains spendable.
+     */
+    const signOut = async () => {
+        await revokeRefreshToken();
+        localStorage.removeItem("tokenContent");
+        dispatch(removeUser());
+    };
+
     const handleSubmit = async (values: { oldPassword: string; newPassword: string }) => {
         if (!userEmail) {
             message.error("User email not found. Please login again.");
@@ -62,7 +75,10 @@ const PasswordResetPage: React.FC = () => {
             }).unwrap();
 
             message.success("Password changed successfully! Logging you out...");
-            dispatch(removeUser());
+            // The remembered credentials hold the old password, so an auto-login on the way back
+            // would fail with it.
+            clearStoredCredentials();
+            await signOut();
             dispatch(setResetPassword(false));
             navigate("/login", { replace: true });
         } catch (error: any) {
@@ -75,8 +91,8 @@ const PasswordResetPage: React.FC = () => {
         }
     };
 
-    const handleLogout = () => {
-        dispatch(removeUser());
+    const handleLogout = async () => {
+        await signOut();
         navigate("/login", { replace: true });
     };
 

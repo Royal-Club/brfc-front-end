@@ -1,21 +1,15 @@
-import axios from "axios";
-import { removeUser, selectLoginInfo } from "../slices/loginInfoSlice";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { selectLoginInfo } from "../slices/loginInfoSlice";
 import store from "../store";
-
-/**
- * Pages reachable without signing in. A 401 raised while the user is on one of these must not drag
- * them to the login screen - the emailed RSVP and password-reset links are followed precisely by
- * people who cannot sign in, and bouncing them would break the only route they have.
- */
-const PUBLIC_PATHS = ["/login", "/rsvp", "/forgot-password", "/password-reset", "/auction/register/"];
-
-const isOnPublicPage = () =>
-    PUBLIC_PATHS.some((path) => window.location.pathname.startsWith(path));
+import { endSession, isAuthFree, refreshSession } from "./sessionManager";
 
 // Create an axios instance
 const axiosApi = axios.create({
     baseURL: process.env.REACT_APP_API_URL, // Your API URL
 });
+
+/** Marks a request already retried once, so a second 401 is treated as final. */
+type RetriableConfig = InternalAxiosRequestConfig & { _retried?: boolean };
 
 // Add a request interceptor
 axiosApi.interceptors.request.use(
@@ -27,7 +21,7 @@ axiosApi.interceptors.request.use(
         const token = loginInfo.token; // Assuming you store the token in loginInfo.token
 
         // If token exists, add it to headers
-        if (token) {
+        if (token && !isAuthFree(config.url)) {
             config.headers.Authorization = `Bearer ${token}`;
         }
 
@@ -39,21 +33,33 @@ axiosApi.interceptors.request.use(
     }
 );
 
-// Optionally, add a response interceptor to handle any response errors globally
+/**
+ * Turns an expired access token into a renewal the caller never sees: the request that hit the 401
+ * is replayed with a fresh token, and only a renewal that genuinely fails ends the session.
+ */
 axiosApi.interceptors.response.use(
     (response) => response, // Return the response if successful
-    (error) => {
-        // Handle unauthorized errors globally (e.g., token expiration)
-        if (error.response && error.response.status === 401 && !isOnPublicPage()) {
-            // Clear the session *before* redirecting. The token is persisted by redux-persist and
-            // survives the page load, so a bare redirect would land on an app that still believes
-            // it is signed in, fire the same request, 401 again and reload forever.
-            store.dispatch(removeUser());
-            localStorage.removeItem("tokenContent");
-            window.location.href = "/login";
+    async (error: AxiosError) => {
+        const original = error.config as RetriableConfig | undefined;
+
+        const renewable =
+            error.response?.status === 401 &&
+            original &&
+            !original._retried &&
+            !isAuthFree(original.url);
+        if (!renewable) {
+            return Promise.reject(error);
         }
 
-        return Promise.reject(error);
+        original._retried = true;
+        const token = await refreshSession();
+        if (!token) {
+            // Nothing left to renew with: the refresh token is gone, expired or revoked.
+            endSession();
+            return Promise.reject(error);
+        }
+
+        return axiosApi(original);
     }
 );
 

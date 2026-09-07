@@ -10,6 +10,7 @@ import LeftSidebarComponent from "./components/Sidebar/LeftSidebarComponent";
 import TournamentViewerPage from "./components/TournamentViewer/TournamentViewerPage";
 import { useAuthHook } from "./hooks/useAuthHook";
 import { checkTockenValidity } from "./utils/utils";
+import { hasRecoverableSession, refreshSession } from "./state/api/sessionManager";
 import LoginPage from "./components/authPages/LoginPage";
 import PasswordResetPage from "./components/authPages/PasswordResetPage";
 import ForgotPasswordPage from "./components/authPages/ForgotPasswordPage";
@@ -37,6 +38,17 @@ function App() {
         const tokenContent = localStorage.getItem("tokenContent");
         if (tokenContent && checkTockenValidity(tokenContent)) {
             login(tokenContent);
+        } else if (tokenContent && hasRecoverableSession()) {
+            // The access token lapsed while the tab was closed - the common case now that it is
+            // short-lived. Load the session and renew in the background rather than sending a member
+            // holding a good refresh token back to the login form. Any request that races the
+            // renewal 401s once and joins the same in-flight exchange.
+            login(tokenContent);
+            refreshSession().then((token) => {
+                if (!token) {
+                    clearSession();
+                }
+            });
         } else {
             // An expired token has to be cleared, not just left unloaded. redux-persist has already
             // rehydrated loginInfo from a previous visit, and every auth branch below keys off

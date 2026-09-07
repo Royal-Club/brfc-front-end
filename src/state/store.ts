@@ -3,7 +3,8 @@ import { useDispatch } from "react-redux";
 import { persistReducer } from "redux-persist";
 import localStorage from "redux-persist/es/storage";
 import apiSlice from "./api/apiSlice";
-import loginInfoSlice from "./slices/loginInfoSlice";
+import loginInfoSlice, { removeUser, setTokens } from "./slices/loginInfoSlice";
+import { configureSession } from "./api/sessionManager";
 import manualFixturesUISlice from "./features/manualFixtures/manualFixturesUISlice";
 import tournamentUISlice from "./features/tournaments/tournamentUISlice";
 import teamChatUISlice from "./features/teamChat/teamChatUISlice";
@@ -33,6 +34,13 @@ const store = configureStore({
         getDefaultMiddleware({
             serializableCheck: false,
         }).concat(apiSlice.middleware),
+});
+
+// Hand the session manager its way back into the store. It is injected rather than imported so the
+// manager stays free of a cycle back through this module, which the API layers import.
+configureSession({
+    onTokensRenewed: (tokens) => store.dispatch(setTokens(tokens)),
+    onSessionEnded: () => store.dispatch(removeUser()),
 });
 
 export type AppDispatch = typeof store.dispatch;

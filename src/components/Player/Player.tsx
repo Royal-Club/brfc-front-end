@@ -38,6 +38,7 @@ import {
 } from "@ant-design/icons";
 import IFootballPosition from "../../interfaces/IFootballPosition";
 import { API_URL, COMMON_PLAYER_PASSWORD } from "../../settings";
+import { hasRecoverableSession } from "../../state/api/sessionManager";
 import { checkTockenValidity } from "../../utils/utils";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
@@ -73,17 +74,10 @@ function Player() {
 
     const tokenContent = localStorage.getItem("tokenContent");
 
-    if (!tokenContent || !checkTockenValidity(tokenContent)) {
+    // A lapsed access token is renewed by the interceptor, so it is no longer grounds for bouncing
+    // anyone; only a session with nothing left to renew from is.
+    if (!tokenContent || (!checkTockenValidity(tokenContent) && !hasRecoverableSession())) {
         navigate("/login");
-    }
-
-    function getTokenFromLocalStorage(tokenContent: string | null) {
-        if (tokenContent) {
-            const contentData = JSON.parse(tokenContent);
-            return contentData.token;
-        }
-
-        return null;
     }
 
     const onResetPlayerForm = () => {
@@ -189,13 +183,9 @@ function Player() {
     const getPlayer = () => {
         setPlayerLoading(true);
         axiosApi
-            .get(`${API_URL}/players/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${getTokenFromLocalStorage(
-                        tokenContent
-                    )}`,
-                },
-            })
+            // No Authorization header: the request interceptor attaches the store's token, which is
+            // the one a renewal updates. A header built from this render's snapshot would be stale.
+            .get(`${API_URL}/players/${id}`)
             .then((response) => {
                 playerForm.setFieldsValue({
                     name: response.data.content.name,

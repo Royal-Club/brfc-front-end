@@ -3,6 +3,7 @@ import { RootState } from "../store";
 import { API_URL } from "../../settings";
 import { showErrorNotification } from "../../utils/errorNotification";
 import { normalizeErrorMessage } from "../../utils/normalizeErrorMessage";
+import { endSession, isAuthFree, refreshSession } from "./sessionManager";
 
 // Define types for the error response
 interface FieldError {
@@ -34,12 +35,10 @@ const baseQuery = fetchBaseQuery({
 const recentErrors = new Map<string, number>();
 const ERROR_DEDUP_TIME = 3000; // 3 seconds
 
-// Custom baseQuery with improved error handling and types
-const customBaseQuery: typeof baseQuery = async (args, api, extraOptions) => {
-  let result;
-
+/** One attempt at the request, with a transport failure turned into a result rather than a throw. */
+const runQuery: typeof baseQuery = async (args, api, extraOptions) => {
   try {
-    result = await baseQuery(args, api, extraOptions);
+    return await baseQuery(args, api, extraOptions);
   } catch (error) {
     // Catch any errors during the base query itself
     console.error("Error during API call:", error);
@@ -49,6 +48,30 @@ const customBaseQuery: typeof baseQuery = async (args, api, extraOptions) => {
         error: String(error),
       },
     } as any;
+  }
+};
+
+const urlOf = (args: unknown): string | undefined =>
+  typeof args === "string" ? args : (args as { url?: string })?.url;
+
+// Custom baseQuery with improved error handling and types
+const customBaseQuery: typeof baseQuery = async (args, api, extraOptions) => {
+  let result = await runQuery(args, api, extraOptions);
+
+  // An expired access token is an ordinary event rather than something to report: renew it and
+  // replay the request. `prepareHeaders` re-reads the store, which the renewal has already written
+  // to, so the replay carries the new token. Only a renewal that fails ends the session - and it
+  // returns before the notification below, because being sent back to the login page is the
+  // message, not a toast about a 401.
+  if ((result?.error as any)?.status === 401 && !isAuthFree(urlOf(args))) {
+    const token = await refreshSession();
+    if (token) {
+      result = await runQuery(args, api, extraOptions);
+    }
+    if (!token || (result?.error as any)?.status === 401) {
+      endSession();
+      return result;
+    }
   }
 
   // Check if result.error exists
