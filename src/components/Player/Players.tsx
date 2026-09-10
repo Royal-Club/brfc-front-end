@@ -8,7 +8,8 @@ import {
   SkypeOutlined,
   PhoneOutlined,
   SafetyCertificateOutlined,
-  SafetyCertificateTwoTone
+  SafetyCertificateTwoTone,
+  PauseCircleOutlined
 } from "@ant-design/icons";
 import {
   Button,
@@ -25,12 +26,13 @@ import {
   Segmented,
   Pagination,
   Spin,
-  Empty
+  Empty,
+  Tooltip
 } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import IPlayer from "../../interfaces/IPlayer";
 import { useGetPlayersQuery } from "../../state/features/player/playerSlice";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { ColumnsType } from "antd/es/table";
@@ -38,6 +40,10 @@ import { useResetPlayerPasswordMutation } from "../../state/features/auth/authSl
 import { useGetRolesQuery, useAssignRolesMutation } from "../../state/features/roles/rolesSlice";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import { club, scoreNum } from "../../theme/clubTheme";
+import dayjs from "dayjs";
+import PlayerPauseModal from "./PlayerPauseModal";
+import { PAUSE_REASON_LABEL } from "../../interfaces/IPlayerPause";
+import { useGetOpenPausesQuery } from "../../state/features/player/playerPauseSlice";
 import useIsMobile from "../../hooks/useIsMobile";
 import "./Players.css";
 
@@ -54,6 +60,8 @@ function Players() {
   // State for handling the password change modal
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<IPlayer | null>(null);
+  // The player whose contribution hold is being edited, if any.
+  const [pauseTarget, setPauseTarget] = useState<IPlayer | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -364,12 +372,28 @@ function Players() {
       title: "Status",
       dataIndex: "active",
       key: "active",
-      render: (active: boolean) => (
-        <span className={`brfc-status brfc-status--${active ? "active" : "inactive"}`}>
-          <span className="brfc-status__dot" />
-          {active ? "Active" : "Inactive"}
-        </span>
-      ),
+      render: (active: boolean, record: IPlayer) => {
+        const hold = openPauseByPlayer.get(record.id);
+        return (
+          <Space size={4} wrap>
+            <span className={`brfc-status brfc-status--${active ? "active" : "inactive"}`}>
+              <span className="brfc-status__dot" />
+              {active ? "Active" : "Inactive"}
+            </span>
+            {/* A hold sits alongside Active: the player still logs in, they just owe nothing. */}
+            {hold && (
+              <Tooltip
+                title={`${PAUSE_REASON_LABEL[hold.reason] ?? hold.reason}${hold.note ? ` — ${hold.note}` : ""}, since ${dayjs(hold.fromMonth).format("MMM YYYY")}`}
+              >
+                <span className="brfc-status brfc-status--neutral">
+                  <span className="brfc-status__dot" />
+                  On hold
+                </span>
+              </Tooltip>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: "Roles",
@@ -390,6 +414,13 @@ function Players() {
   ];
 
   const canManagePlayers = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
+
+  // Every running hold in one call, so the list can badge players without a request per row.
+  const { data: openPauses } = useGetOpenPausesQuery(undefined, { skip: !canManagePlayers });
+  const openPauseByPlayer = useMemo(
+    () => new Map((openPauses?.content ?? []).map((pause) => [pause.playerId, pause])),
+    [openPauses]
+  );
 
   const playersColumn: ColumnsType<IPlayer> = [
     ...CommonColumns,
@@ -424,6 +455,14 @@ function Players() {
                 onClick={() => showPasswordModal(record)}
               >
                 Reset
+              </Button>
+              <Button
+                size="small"
+                icon={<PauseCircleOutlined />}
+                className="brfc-act-btn"
+                onClick={() => setPauseTarget(record)}
+              >
+                {openPauseByPlayer.has(record.id) ? "Resume" : "Hold"}
               </Button>
             </>
           )}
@@ -834,6 +873,13 @@ function Players() {
           </div>
         )}
       </Modal>
+
+      <PlayerPauseModal
+        open={pauseTarget !== null}
+        playerId={pauseTarget?.id ?? null}
+        playerName={pauseTarget?.name ?? ""}
+        onClose={() => setPauseTarget(null)}
+      />
     </div>
   );
 }

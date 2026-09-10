@@ -24,6 +24,11 @@ const PAID_FG = "#166534";
 const PAID_BG = "#DCFCE7";
 const DUE_FG = "#B02B2B";
 const DUE_BG = "#FDE7E7";
+const HOLD_FG = "#6E7480";
+const HOLD_BG = "#F0F1F4";
+
+/** Paid, excused, or owing — the three things a month can be for a player. */
+type MonthState = "paid" | "onHold" | "due";
 
 export interface ContributionSheetProps {
     /** Club crest; omitted, the masthead simply runs without it. */
@@ -74,15 +79,21 @@ const metaLabel: React.CSSProperties = {
     color: MUTED,
 };
 
-const pill = (paid: boolean): React.CSSProperties => ({
+const PILL_TONE: Record<MonthState, { fg: string; bg: string; label: string }> = {
+    paid: { fg: PAID_FG, bg: PAID_BG, label: "PAID" },
+    onHold: { fg: HOLD_FG, bg: HOLD_BG, label: "ON HOLD" },
+    due: { fg: DUE_FG, bg: DUE_BG, label: "DUE" },
+};
+
+const pill = (state: MonthState): React.CSSProperties => ({
     display: "inline-block",
     padding: "2px 10px",
     borderRadius: 999,
     fontSize: 10.5,
     fontWeight: 700,
     letterSpacing: 0.4,
-    color: paid ? PAID_FG : DUE_FG,
-    background: paid ? PAID_BG : DUE_BG,
+    color: PILL_TONE[state].fg,
+    background: PILL_TONE[state].bg,
 });
 
 function ContributionReportSheet({
@@ -99,28 +110,40 @@ function ContributionReportSheet({
     // column in it. This is the case the club looks at most, so it gets the clearer layout.
     const isSingleMonth = months.length === 1;
 
+    // Excused for the whole range, so they owed nothing — counted apart from both paid and due,
+    // or they would drag one of those figures somewhere misleading.
+    const onHoldPlayers = rows.filter((row) => months.length > 0 && row.onHoldMonthCount === months.length).length;
     const paidCount = rows.filter((row) => row.paidMonthCount > 0).length;
-    const fullyPaid = rows.filter((row) => row.unpaidMonthCount === 0).length;
-    const neverPaid = rows.filter((row) => row.paidMonthCount === 0).length;
+    const fullyPaid = rows.filter(
+        (row) => row.unpaidMonthCount === 0 && row.onHoldMonthCount !== months.length
+    ).length;
+    const neverPaid = rows.filter(
+        (row) => row.paidMonthCount === 0 && row.onHoldMonthCount !== months.length
+    ).length;
     const collected = rows.reduce((sum, row) => sum + row.totalPaid, 0);
     const monthlyTotals = months.map((month) =>
         rows.reduce((sum, row) => sum + (row.monthlyAmounts[month] ?? 0), 0)
     );
+    const dueCount = rows.length - paidCount - onHoldPlayers;
 
-    const stats = isSingleMonth
-        ? [
-              { label: "Players", value: String(rows.length) },
-              { label: "Paid", value: String(paidCount) },
-              { label: "Due", value: String(rows.length - paidCount) },
-              { label: "Collected", value: fmtMoney(collected) },
-          ]
-        : [
-              { label: "Players", value: String(rows.length) },
-              { label: "Fully paid", value: String(fullyPaid) },
-              { label: "Partial", value: String(rows.length - fullyPaid - neverPaid) },
-              { label: "Never paid", value: String(neverPaid) },
-              { label: "Collected", value: fmtMoney(collected) },
-          ];
+    const stats = (
+        isSingleMonth
+            ? [
+                  { label: "Players", value: String(rows.length) },
+                  { label: "Paid", value: String(paidCount) },
+                  { label: "Due", value: String(dueCount) },
+                  onHoldPlayers ? { label: "On hold", value: String(onHoldPlayers) } : null,
+                  { label: "Collected", value: fmtMoney(collected) },
+              ]
+            : [
+                  { label: "Players", value: String(rows.length) },
+                  { label: "Fully paid", value: String(fullyPaid) },
+                  { label: "Partial", value: String(rows.length - fullyPaid - neverPaid - onHoldPlayers) },
+                  { label: "Never paid", value: String(neverPaid) },
+                  onHoldPlayers ? { label: "On hold", value: String(onHoldPlayers) } : null,
+                  { label: "Collected", value: fmtMoney(collected) },
+              ]
+    ).filter((stat): stat is { label: string; value: string } => stat !== null);
 
     return (
         <div
@@ -210,6 +233,12 @@ function ContributionReportSheet({
                         const zebra = index % 2 === 1 ? ZEBRA : "#FFFFFF";
                         const amount = isSingleMonth ? row.monthlyAmounts[months[0]] : undefined;
                         const hasPaid = amount !== undefined;
+                        const onHoldMonths = new Set(row.onHoldMonths);
+                        const singleState: MonthState = hasPaid
+                            ? "paid"
+                            : row.onHoldMonthCount > 0
+                            ? "onHold"
+                            : "due";
 
                         return (
                             <tr key={row.playerId} style={{ background: zebra }}>
@@ -227,31 +256,43 @@ function ContributionReportSheet({
                                             {hasPaid ? fmtMoney(amount as number) : "—"}
                                         </td>
                                         <td style={{ ...td, textAlign: "center" }}>
-                                            <span style={pill(hasPaid)}>{hasPaid ? "PAID" : "DUE"}</span>
+                                            <span style={pill(singleState)}>{PILL_TONE[singleState].label}</span>
                                         </td>
                                     </>
                                 ) : (
                                     <>
                                         {months.map((month) => {
                                             const cell = row.monthlyAmounts[month];
+                                            const state: MonthState =
+                                                cell !== undefined
+                                                    ? "paid"
+                                                    : onHoldMonths.has(month)
+                                                    ? "onHold"
+                                                    : "due";
                                             return (
                                                 <td
                                                     key={month}
                                                     style={{
                                                         ...td,
                                                         ...numeric,
-                                                        textAlign: cell === undefined ? "center" : "right",
-                                                        color: cell === undefined ? DUE_FG : INK,
-                                                        fontWeight: cell === undefined ? 700 : 400,
-                                                        background: cell === undefined ? DUE_BG : undefined,
+                                                        textAlign: state === "paid" ? "right" : "center",
+                                                        color: state === "paid" ? INK : PILL_TONE[state].fg,
+                                                        fontWeight: state === "due" ? 700 : 400,
+                                                        fontSize: state === "onHold" ? 10 : undefined,
+                                                        background: state === "paid" ? undefined : PILL_TONE[state].bg,
                                                     }}
                                                 >
-                                                    {cell === undefined ? "Due" : fmtMoney(cell)}
+                                                    {state === "paid"
+                                                        ? fmtMoney(cell as number)
+                                                        : state === "onHold"
+                                                        ? "On hold"
+                                                        : "Due"}
                                                 </td>
                                             );
                                         })}
                                         <td style={{ ...td, ...numeric, textAlign: "center", fontWeight: 700 }}>
-                                            {row.paidMonthCount}/{months.length}
+                                            {/* Out of the months they owed — excused months are not dues. */}
+                                            {row.paidMonthCount}/{months.length - row.onHoldMonthCount}
                                         </td>
                                         <td style={{ ...td, ...numeric, textAlign: "right", fontWeight: 700 }}>
                                             {fmtMoney(row.totalPaid)}
@@ -286,7 +327,8 @@ function ContributionReportSheet({
                                         {fmtMoney(collected)}
                                     </td>
                                     <td style={{ ...td, textAlign: "center", fontWeight: 700, color: NAVY }}>
-                                        {paidCount} paid / {rows.length - paidCount} due
+                                        {paidCount} paid / {dueCount} due
+                                        {onHoldPlayers > 0 && ` / ${onHoldPlayers} on hold`}
                                     </td>
                                 </>
                             ) : (
@@ -316,6 +358,9 @@ function ContributionReportSheet({
             <div style={{ borderTop: `1px solid ${RULE}`, marginTop: 16, paddingTop: 8, fontSize: 9.5, color: MUTED }}>
                 "Due" means no contribution was recorded against that player for that month. Any recorded
                 contribution counts as paid.
+                {onHoldPlayers > 0 || rows.some((row) => row.onHoldMonthCount > 0)
+                    ? ' "On hold" means the player was excused for that month and owes nothing for it.'
+                    : ""}
             </div>
         </div>
     );

@@ -112,6 +112,7 @@ export default function RsvpPage() {
         "TOURNAMENT_CANCELLED",
         "TOURNAMENT_STARTED",
         "VOTING_LOCKED",
+        "PLAYER_ON_HOLD",
     ];
     const outcome = result ?? (blocking.includes(preview.status) ? preview : null);
 
@@ -196,6 +197,8 @@ function titleFor(status: RsvpVoteStatus): string {
             return "Tournament already started";
         case "VOTING_LOCKED":
             return "Team list is locked";
+        case "PLAYER_ON_HOLD":
+            return "You are on hold";
         default:
             return "This link is not valid";
     }

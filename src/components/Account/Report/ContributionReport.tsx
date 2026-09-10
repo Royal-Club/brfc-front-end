@@ -42,19 +42,21 @@ const { RangePicker } = DatePicker;
 
 const CLUB_NAME = "BJIT Royal Football Club";
 
-type PaymentStatus = "paid" | "partial" | "unpaid";
+type PaymentStatus = "paid" | "partial" | "unpaid" | "onHold";
 type StatusFilter = "all" | PaymentStatus;
 
 const STATUS_LABEL: Record<PaymentStatus, string> = {
     paid: "Fully paid",
     partial: "Partial",
     unpaid: "Unpaid",
+    onHold: "On hold",
 };
 
 const STATUS_TONE: Record<PaymentStatus, string> = {
     paid: "active",
     partial: "gold",
     unpaid: "inactive",
+    onHold: "neutral",
 };
 
 /**
@@ -67,10 +69,15 @@ const isFutureMonth = (month: Dayjs): boolean => month.isAfter(dayjs(), "month")
  * A player is "unpaid" for a month when no collection covers them for it — the same rule the dues
  * reminder scheduler uses. The club records no expected per-player amount, so a part payment still
  * counts as paid.
+ *
+ * <p>Months a pause excused are not dues, so they never make a player look like a defaulter: a
+ * player excused for the whole range is "on hold", and one who paid every month they actually owed
+ * is fully paid even with excused months in between.
  */
-const rowStatus = (row: ContributionReportRow): PaymentStatus => {
-    if (row.paidMonthCount === 0) return "unpaid";
-    return row.unpaidMonthCount === 0 ? "paid" : "partial";
+const rowStatus = (row: ContributionReportRow, monthCount: number): PaymentStatus => {
+    if (monthCount > 0 && row.onHoldMonthCount === monthCount) return "onHold";
+    if (row.unpaidMonthCount === 0) return "paid";
+    return row.paidMonthCount === 0 ? "unpaid" : "partial";
 };
 
 interface TableRow extends ContributionReportRow {
@@ -129,10 +136,10 @@ function ContributionReport() {
     const rows: TableRow[] = useMemo(() => {
         const term = search.trim().toLowerCase();
         return (report?.rows ?? [])
-            .map((row) => ({ ...row, key: row.playerId, status: rowStatus(row) }))
+            .map((row) => ({ ...row, key: row.playerId, status: rowStatus(row, months.length) }))
             .filter((row) => statusFilter === "all" || row.status === statusFilter)
             .filter((row) => !term || row.playerName.toLowerCase().includes(term));
-    }, [report, statusFilter, search]);
+    }, [report, months, statusFilter, search]);
 
     const monthlyTotals = useMemo(
         () => months.map((month) => rows.reduce((sum, row) => sum + (row.monthlyAmounts[month] ?? 0), 0)),
@@ -174,17 +181,47 @@ function ContributionReport() {
     const paidPlayerCount = rows.filter((row) => row.paidMonthCount > 0).length;
     const fullyPaidCount = rows.filter((row) => row.status === "paid").length;
     const neverPaidCount = rows.filter((row) => row.status === "unpaid").length;
+    const onHoldPlayerCount = rows.filter((row) => row.status === "onHold").length;
+    const partialCount = rows.filter((row) => row.status === "partial").length;
+    // Excused players owe nothing, so they belong in neither the paid nor the due column.
+    const duePlayerCount = rows.length - paidPlayerCount - onHoldPlayerCount;
+
+    const singleMonthTally = onHoldPlayerCount
+        ? `${paidPlayerCount} paid / ${duePlayerCount} due / ${onHoldPlayerCount} on hold`
+        : `${paidPlayerCount} paid / ${duePlayerCount} due`;
 
     /** The stat strip, worded for the layout in play — the PDF and the sheet must agree. */
     const summaryLine = isSingleMonth
-        ? `${rows.length} players  ·  ${paidPlayerCount} paid  ·  ${rows.length - paidPlayerCount} due  ·  ${fmtMoney(grandTotal)} collected`
-        : `${rows.length} players  ·  ${fullyPaidCount} fully paid  ·  ${rows.length - fullyPaidCount - neverPaidCount} partial  ·  ${neverPaidCount} never paid  ·  ${fmtMoney(grandTotal)} collected`;
+        ? [
+              `${rows.length} players`,
+              `${paidPlayerCount} paid`,
+              `${duePlayerCount} due`,
+              onHoldPlayerCount ? `${onHoldPlayerCount} on hold` : null,
+              `${fmtMoney(grandTotal)} collected`,
+          ]
+              .filter(Boolean)
+              .join("  ·  ")
+        : [
+              `${rows.length} players`,
+              `${fullyPaidCount} fully paid`,
+              `${partialCount} partial`,
+              `${neverPaidCount} never paid`,
+              onHoldPlayerCount ? `${onHoldPlayerCount} on hold` : null,
+              `${fmtMoney(grandTotal)} collected`,
+          ]
+              .filter(Boolean)
+              .join("  ·  ");
 
     const handlePdf = async () => {
         setIsExporting(true);
         try {
             const stamped = stampGeneratedAt();
             const DUE_RED = [176, 43, 43];
+            const DUE_BG = [253, 231, 231];
+            const PAID_GREEN = [22, 101, 52];
+            const PAID_BG = [220, 252, 231];
+            const HOLD_GREY = [110, 116, 128];
+            const HOLD_BG = [240, 241, 244];
             const right = { halign: "right" };
             const centre = { halign: "center" };
 
@@ -204,35 +241,47 @@ function ContributionReport() {
                 if (isSingleMonth) {
                     const amount = row.monthlyAmounts[months[0]];
                     const hasPaid = amount !== undefined;
+                    const onHold = row.onHoldMonthCount > 0;
                     return [
                         serial,
                         name,
                         { content: hasPaid ? fmtMoney(amount) : "—", styles: right },
                         {
-                            content: hasPaid ? "PAID" : "DUE",
+                            content: hasPaid ? "PAID" : onHold ? "ON HOLD" : "DUE",
                             styles: {
                                 ...centre,
                                 fontStyle: "bold",
-                                textColor: hasPaid ? [22, 101, 52] : DUE_RED,
-                                fillColor: hasPaid ? [220, 252, 231] : [253, 231, 231],
+                                textColor: hasPaid ? PAID_GREEN : onHold ? HOLD_GREY : DUE_RED,
+                                fillColor: hasPaid ? PAID_BG : onHold ? HOLD_BG : DUE_BG,
                             },
                         },
                     ];
                 }
 
+                const onHoldMonths = new Set(row.onHoldMonths);
                 return [
                     serial,
                     name,
                     ...months.map((month) => {
                         const amount = row.monthlyAmounts[month];
-                        return amount === undefined
+                        if (amount !== undefined) {
+                            return { content: fmtMoney(amount), styles: right };
+                        }
+                        return onHoldMonths.has(month)
                             ? {
-                                  content: "Due",
-                                  styles: { ...centre, fontStyle: "bold", textColor: DUE_RED, fillColor: [253, 231, 231] },
+                                  content: "On hold",
+                                  styles: { ...centre, textColor: HOLD_GREY, fillColor: HOLD_BG },
                               }
-                            : { content: fmtMoney(amount), styles: right };
+                            : {
+                                  content: "Due",
+                                  styles: { ...centre, fontStyle: "bold", textColor: DUE_RED, fillColor: DUE_BG },
+                              };
                     }),
-                    { content: `${row.paidMonthCount}/${months.length}`, styles: { ...centre, fontStyle: "bold" } },
+                    {
+                        // Out of the months they actually owed, not the whole range.
+                        content: `${row.paidMonthCount}/${months.length - row.onHoldMonthCount}`,
+                        styles: { ...centre, fontStyle: "bold" },
+                    },
                     { content: fmtMoney(row.totalPaid), styles: { ...right, fontStyle: "bold" } },
                 ];
             });
@@ -240,14 +289,14 @@ function ContributionReport() {
             const foot: PdfCell[][] = isSingleMonth
                 ? [
                       [
-                          { content: `Total ( players)`, colSpan: 2 },
+                          { content: `Total (${rows.length} players)`, colSpan: 2 },
                           { content: fmtMoney(grandTotal), styles: right },
-                          { content: `${paidPlayerCount} paid / ${rows.length - paidPlayerCount} due`, styles: centre },
+                          { content: singleMonthTally, styles: centre },
                       ],
                   ]
                 : [
                       [
-                          { content: `Total ( players)`, colSpan: 2 },
+                          { content: `Total (${rows.length} players)`, colSpan: 2 },
                           ...monthlyTotals.map((total) => ({
                               content: total > 0 ? fmtMoney(total) : "—",
                               styles: right,
@@ -276,7 +325,9 @@ function ContributionReport() {
                     0: { cellWidth: 28, halign: "center" },
                     1: { cellWidth: isSingleMonth ? 220 : 130, halign: "left" },
                 },
-                note: '"Due" means no contribution was recorded against that player for that month.',
+                note: rows.some((row) => row.onHoldMonthCount > 0)
+                    ? '"Due" means no contribution was recorded for that month. "On hold" means the player was excused and owes nothing for it.'
+                    : '"Due" means no contribution was recorded against that player for that month.',
             });
             messageApi.success("PDF downloaded.");
         } catch (error) {
@@ -337,14 +388,21 @@ function ContributionReport() {
                 (a.monthlyAmounts[month] ?? 0) - (b.monthlyAmounts[month] ?? 0),
             render: (_: unknown, row: TableRow) => {
                 const amount = row.monthlyAmounts[month];
-                if (amount === undefined) {
+                if (amount !== undefined) {
+                    return <span className="brfc-amount" style={scoreNum}>{fmtMoney(amount)}</span>;
+                }
+                if (row.onHoldMonths.includes(month)) {
                     return (
-                        <span className="brfc-amount brfc-amount--neg" style={{ fontWeight: 700 }}>
-                            Due
+                        <span className="brfc-amount brfc-amount--muted" style={{ fontSize: 11 }}>
+                            On hold
                         </span>
                     );
                 }
-                return <span className="brfc-amount" style={scoreNum}>{fmtMoney(amount)}</span>;
+                return (
+                    <span className="brfc-amount brfc-amount--neg" style={{ fontWeight: 700 }}>
+                        Due
+                    </span>
+                );
             },
         })),
         {
@@ -355,20 +413,25 @@ function ContributionReport() {
             width: 88,
             fixed: "right",
             sorter: (a, b) => a.paidMonthCount - b.paidMonthCount,
-            render: (paid: number, row) => (
-                <Tooltip
-                    title={
-                        row.unpaidMonths.length
-                            ? `Due: ${row.unpaidMonths.map(monthLabel).join(", ")}`
-                            : "Paid every month in range"
-                    }
-                >
-                    <span className={`brfc-status brfc-status--${STATUS_TONE[row.status]}`}>
-                        <span className="brfc-status__dot" />
-                        {paid}/{months.length}
-                    </span>
-                </Tooltip>
-            ),
+            render: (paid: number, row) => {
+                const owed = months.length - row.onHoldMonthCount;
+                const tooltip = [
+                    row.unpaidMonths.length ? `Due: ${row.unpaidMonths.map(monthLabel).join(", ")}` : null,
+                    row.onHoldMonths.length ? `On hold: ${row.onHoldMonths.map(monthLabel).join(", ")}` : null,
+                ].filter(Boolean);
+
+                return (
+                    <Tooltip
+                        title={tooltip.length ? tooltip.join(" — ") : "Paid every month in range"}
+                    >
+                        <span className={`brfc-status brfc-status--${STATUS_TONE[row.status]}`}>
+                            <span className="brfc-status__dot" />
+                            {/* Out of the months they actually owed — excused months are not dues. */}
+                            {paid}/{owed}
+                        </span>
+                    </Tooltip>
+                );
+            },
         },
         {
             title: "Total",
@@ -398,8 +461,13 @@ function ContributionReport() {
         },
         {
             label: "Never paid",
-            value: rows.filter((row) => row.status === "unpaid").length,
+            value: neverPaidCount,
             tone: token.colorError,
+        },
+        {
+            label: "On hold",
+            value: onHoldPlayerCount,
+            tone: token.colorTextTertiary,
         },
         {
             label: "Unpaid months",
@@ -511,6 +579,7 @@ function ContributionReport() {
                                 { label: "Paid", value: "paid" },
                                 { label: "Partial", value: "partial" },
                                 { label: "Unpaid", value: "unpaid" },
+                                { label: "On hold", value: "onHold" },
                             ]}
                         />
                     </Col>

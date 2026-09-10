@@ -70,6 +70,15 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
   // Use prop selectedYear or internal state
   const selectedYear = propSelectedYear || internalSelectedYear;
 
+  /**
+   * Whether a pause excused this player from the given month of the selected year.
+   *
+   * An excused month is not a due: the player keeps their login and plays no part in the collection
+   * for that month, so flagging it would chase someone who owes nothing.
+   */
+  const isOnHold = (player: PlayerMetric | undefined, monthNumber: number): boolean =>
+    (player?.onHoldYearMonths?.[String(selectedYear ?? "")] ?? []).includes(monthNumber);
+
   const { data, isLoading } = useGetPlayerCollectionMetricsQuery(
     selectedYear ? { year: selectedYear } : undefined
   );
@@ -126,6 +135,10 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       const playerData = metrics.find((p: PlayerMetric) => p.playerId === record.key);
       const isActive = playerData?.active ?? false;
 
+      // A month a pause excused owes nothing, so it is never "Due".
+      if (amount <= 0 && isOnHold(playerData, monthNumber)) {
+        return <span style={{ opacity: 0.55, fontSize: 11 }}>On hold</span>;
+      }
       if (isCurrentCell && amount <= 0 && isActive) {
         return <span style={{ fontWeight: "bold" }}>Due</span>;
       }
@@ -136,7 +149,8 @@ const PlayerCollectionMetrics: React.FC<PlayerCollectionMetricsProps> = ({
       const amount = record[`month_${monthNumber}`] || 0;
       const playerData = metrics.find((p: PlayerMetric) => p.playerId === record.key);
       const isActive = playerData?.active ?? false;
-      const showWarning = isCurrentCell && amount <= 0 && isActive;
+      const showWarning =
+        isCurrentCell && amount <= 0 && isActive && !isOnHold(playerData, monthNumber);
 
       return {
         style: {

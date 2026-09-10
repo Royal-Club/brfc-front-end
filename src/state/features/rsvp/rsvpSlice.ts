@@ -9,7 +9,9 @@ export type RsvpVoteStatus =
     | "TOURNAMENT_CANCELLED"
     | "TOURNAMENT_STARTED"
     /** A coordinator closed the RSVP to pick teams from it; late changes go through them. */
-    | "VOTING_LOCKED";
+    | "VOTING_LOCKED"
+    /** The player is on hold (injury, travel); the club is not counting on them for matches. */
+    | "PLAYER_ON_HOLD";
 
 export interface RsvpVoteContent {
     status: RsvpVoteStatus;

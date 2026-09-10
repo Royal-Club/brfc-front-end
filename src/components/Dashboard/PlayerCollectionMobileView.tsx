@@ -98,11 +98,15 @@ const PlayerCollectionMobileView: React.FC<PlayerCollectionMobileViewProps> = ({
                 const monthNumber = idx + 1;
                 const amount = player[`month_${monthNumber}`] || 0;
                 const isCurrentCell = selectedYear === currentYear && monthNumber === currentMonth;
-                const showDue = isCurrentCell && amount <= 0 && isActive;
+                // A month a pause excused owes nothing, so it is never shown as Due.
+                const onHold =
+                  amount <= 0 &&
+                  (playerData?.onHoldYearMonths?.[String(selectedYear ?? "")] ?? []).includes(monthNumber);
+                const showDue = isCurrentCell && amount <= 0 && isActive && !onHold;
                 const hasData = amount > 0 || showDue;
-                
+
                 let monthClass = styles.compactMonthItem;
-                
+
                 if (showDue) {
                   monthClass += ` ${styles.monthDue}`;
                 } else if (isCurrentCell && amount > 0) {
@@ -118,7 +122,7 @@ const PlayerCollectionMobileView: React.FC<PlayerCollectionMobileViewProps> = ({
                     {hasData && <div className={styles.compactMonthIndicator}></div>}
                     <div className={styles.compactMonthName}>{month}</div>
                     <div className={styles.compactMonthAmount}>
-                      {showDue ? 'Due' : (amount > 0 ? amount.toFixed(0) : '-')}
+                      {showDue ? 'Due' : amount > 0 ? amount.toFixed(0) : onHold ? 'Hold' : '-'}
                     </div>
                   </div>
                 );
