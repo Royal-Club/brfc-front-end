@@ -62,6 +62,7 @@ const ROUTE_ANCESTORS: Record<string, string[]> = {
   "/ac/reports/balance-summary": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/balance-sheet": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/contributions": ["financeSubMenu", "acReportsSubMenu"],
+  "/ac/reports/bill-payments": ["financeSubMenu", "acReportsSubMenu"],
   "/venues": ["venueSubMenu"],
   "/tournaments": ["tournamentSubMenu"],
 };
@@ -138,6 +139,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         getItem("Balances Sheet", "/ac/reports/balance-sheet"),
         // Admin-only: the report names every player who is behind on their dues.
         getItem("Contribution Report", "/ac/reports/contributions", null, undefined, undefined, !isUserAdmin),
+        getItem("Bill Payment Report", "/ac/reports/bill-payments", null, undefined, undefined, !isUserAdmin),
       ]),
     ]),
     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
