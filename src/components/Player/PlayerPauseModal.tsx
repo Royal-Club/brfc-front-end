@@ -17,7 +17,11 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { PauseCircleOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
-import IPlayerPause, { PAUSE_REASON_LABEL, PauseReason } from "../../interfaces/IPlayerPause";
+import IPlayerPause, {
+    PAUSE_REASON_LABEL,
+    PauseReason,
+    SELECTABLE_PAUSE_REASONS,
+} from "../../interfaces/IPlayerPause";
 import {
     useDeletePauseMutation,
     useGetPlayerPausesQuery,
@@ -191,9 +195,9 @@ function PlayerPauseModal({ open, playerId, playerName, onClose }: PlayerPauseMo
                                 picker="month"
                                 value={resumeMonth}
                                 onChange={setResumeMonth}
-                                // The hold is closed off at the month before this one, so it must start
-                                // after the month the hold began.
-                                disabledDate={(month) => !month.isAfter(dayjs(runningPause.fromMonth), "month")}
+                                // The hold is closed off at the month before this one. Picking the
+                                // month it began excuses nothing, and cancels the hold outright.
+                                disabledDate={(month) => month.isBefore(dayjs(runningPause.fromMonth), "month")}
                                 placeholder="Resume month"
                             />
                         </div>
@@ -209,6 +213,15 @@ function PlayerPauseModal({ open, playerId, playerName, onClose }: PlayerPauseMo
                     </Space>
                     <Paragraph type="secondary" style={{ fontSize: 12 }}>
                         The months already excused stay excused — resuming never makes them due again.
+                        {resumeMonth?.isSame(dayjs(runningPause.fromMonth), "month") && (
+                            <>
+                                {" "}
+                                <b>
+                                    {runningPause.fromMonth &&
+                                        `Resuming from ${monthLabel(runningPause.fromMonth)} excuses nothing, so this hold will be removed entirely.`}
+                                </b>
+                            </>
+                        )}
                     </Paragraph>
                 </>
             ) : (
@@ -230,7 +243,7 @@ function PlayerPauseModal({ open, playerId, playerName, onClose }: PlayerPauseMo
                         >
                             <Select
                                 placeholder="Reason"
-                                options={(Object.keys(PAUSE_REASON_LABEL) as PauseReason[]).map((reason) => ({
+                                options={SELECTABLE_PAUSE_REASONS.map((reason) => ({
                                     value: reason,
                                     label: PAUSE_REASON_LABEL[reason],
                                 }))}
