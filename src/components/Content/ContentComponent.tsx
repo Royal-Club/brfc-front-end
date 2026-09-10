@@ -56,6 +56,7 @@ const AcVoucherType = lazy(() => import("../Account/Configuration/AcVoucherType"
 const AccountBalanceSheet = lazy(() => import("../Account/Report/AccountBalanceSheet"));
 const AccountBalanceSummary = lazy(() => import("../Account/Report/AccountBalanceSummary"));
 const AccountsReport = lazy(() => import("../Account/Report/AccountReport"));
+const ContributionReport = lazy(() => import("../Account/Report/ContributionReport"));
 const AcVouchers = lazy(() => import("../Account/Voucher/AcVouchers"));
 const UserProfile = lazy(() => import("../authPages/UserProfile"));
 const Dashboard = lazy(() => import("../Dashboard/DashboardComponent"));
@@ -526,6 +527,10 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             <Route
                                 path="/ac/reports/balance-sheet"
                                 element={<AccountBalanceSheet />}
+                            />
+                            <Route
+                                path="ac/reports/contributions"
+                                element={<ContributionReport />}
                             />
                             {/* <Route path="ac/voucher" element={<AcVoucher />} /> */}
                             <Route
