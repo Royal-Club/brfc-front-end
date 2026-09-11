@@ -16,7 +16,20 @@ export interface BasicResType<T> {
   content: T;
 }
 
-const acCollectionApi = apiSlice.injectEndpoints({
+/** Chart rows are edited from the Chart of Accounts screen, so the list has to refetch itself
+ *  after a create or an edit rather than showing the account the user just added as missing. */
+const apiWithTags = apiSlice.enhanceEndpoints({ addTagTypes: ["acChart"] });
+
+/** Body accepted by both the create and the update chart endpoints. */
+export interface AcChartRequest {
+  name: string;
+  code: string;
+  description?: string;
+  natureId: number;
+  parentId?: number | null;
+}
+
+const acCollectionApi = apiWithTags.injectEndpoints({
   endpoints: (builder) => ({
     // Fetch AC Collection list
     getAcCollections: builder.query<BasicResType<IAcCollection[]>, void>({
@@ -71,6 +84,28 @@ const acCollectionApi = apiSlice.injectEndpoints({
         url: `/ac/charts`,
         method: "GET",
       }),
+      providesTags: ["acChart"],
+    }),
+
+    createAcChart: builder.mutation<BasicResType<number>, AcChartRequest>({
+      query: (data) => ({
+        url: `/ac/charts`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["acChart"],
+    }),
+
+    updateAcChart: builder.mutation<
+      BasicResType<number>,
+      { id: number; data: AcChartRequest }
+    >({
+      query: ({ id, data }) => ({
+        url: `/ac/charts/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["acChart"],
     }),
 
     getAcReportList: builder.query<BasicResType<IAccountsReport[]>, void>({
@@ -120,5 +155,7 @@ export const {
   useGetAcReportListQuery,
   useGetAcBalanceSummaryListQuery,
   useGetAcBalanceSheetListQuery,
+  useCreateAcChartMutation,
+  useUpdateAcChartMutation,
 } = acCollectionApi;
 

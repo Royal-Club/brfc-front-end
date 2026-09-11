@@ -118,3 +118,18 @@ export const showErrorNotification = (errorConfig: ErrorConfig) => {
     console.error("Failed to show error notification:", error);
   }
 };
+
+/**
+ * Surfaces a failed axios request to the user.
+ *
+ * <p>Forms that post money can now be refused for a reason the member needs to read - they are not
+ * an accountant, or their cash account is missing - and a rejection that only reaches the console
+ * looks to them like the Save button is broken.
+ */
+export const notifyRequestError = (err: unknown, fallback: string) => {
+  const response = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
+  showErrorNotification({
+    statusCode: response?.status,
+    message: response?.data?.message || fallback,
+  });
+};

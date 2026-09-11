@@ -59,6 +59,7 @@ const AccountsReport = lazy(() => import("../Account/Report/AccountReport"));
 const ContributionReport = lazy(() => import("../Account/Report/ContributionReport"));
 const BillPaymentReport = lazy(() => import("../Account/Report/BillPaymentReport"));
 const ClubFinancialHealth = lazy(() => import("../Account/Report/ClubFinancialHealth"));
+const MyCashInHand = lazy(() => import("../Account/Report/MyCashInHand"));
 const AcVouchers = lazy(() => import("../Account/Voucher/AcVouchers"));
 const UserProfile = lazy(() => import("../authPages/UserProfile"));
 const Dashboard = lazy(() => import("../Dashboard/DashboardComponent"));
@@ -521,6 +522,10 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             <Route
                                 path="ac/reports/financial-health"
                                 element={<ClubFinancialHealth />}
+                            />
+                            <Route
+                                path="ac/reports/my-cash-in-hand"
+                                element={<MyCashInHand />}
                             />
                             <Route
                                 path="ac/reports/accounts-summary"

@@ -59,6 +59,7 @@ const ROUTE_ANCESTORS: Record<string, string[]> = {
   "/ac/bill-payments": ["financeSubMenu"],
   "/ac/vouchers": ["financeSubMenu", "VoucherSubMenu"],
   "/ac/reports/financial-health": ["financeSubMenu", "acReportsSubMenu"],
+  "/ac/reports/my-cash-in-hand": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/accounts-summary": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/balance-summary": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/balance-sheet": ["financeSubMenu", "acReportsSubMenu"],
@@ -105,6 +106,9 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   const isUserAdmin =
     loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
 
+  // The people who might hold club cash, and so have a balance of their own to look at.
+  const holdsClubCash = isUserAdmin || loginInfo.roles.includes("ACCOUNTANT");
+
   const items: MenuProps["items"] = [
     getItem("Dashboard", "/dashboard", <PieChartOutlined />),
     getItem("Match Center", "/tournament-viewer", <EyeOutlined />),
@@ -138,6 +142,9 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         // Open to every member: the club publishes its position, spending and who is behind on
         // dues to the whole squad rather than to admins alone.
         getItem("Financial Health", "/ac/reports/financial-health"),
+        // Only for members who might be holding money. Everyone else has no balance of their own,
+        // and sees the club-wide split on Financial Health instead.
+        getItem("My Cash in Hand", "/ac/reports/my-cash-in-hand", null, undefined, undefined, !holdsClubCash),
         getItem("Accounts Report", "/ac/reports/accounts-summary"),
         getItem("Balances Summary", "/ac/reports/balance-summary"),
         getItem("Balances Sheet", "/ac/reports/balance-sheet"),

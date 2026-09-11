@@ -37,7 +37,7 @@ import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { ColumnsType } from "antd/es/table";
 import { useResetPlayerPasswordMutation } from "../../state/features/auth/authSlice";
-import { useGetRolesQuery, useAssignRolesMutation } from "../../state/features/roles/rolesSlice";
+import { useGetRolesQuery, useAssignRolesMutation, useGetAssignableCashAccountsQuery } from "../../state/features/roles/rolesSlice";
 import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
 import { club, scoreNum } from "../../theme/clubTheme";
 import dayjs from "dayjs";
@@ -55,6 +55,7 @@ function Players() {
   const [resetPlayerPassword] = useResetPlayerPasswordMutation();
   const { data: rolesData } = useGetRolesQuery();
   const [assignRoles] = useAssignRolesMutation();
+  const { data: cashAccountsData } = useGetAssignableCashAccountsQuery();
   const loginInfo = useSelector(selectLoginInfo);
 
   // State for handling the password change modal
@@ -78,6 +79,8 @@ function Players() {
   // State for handling the roles modal
   const [isRolesModalVisible, setIsRolesModalVisible] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
+  // undefined means "open a new account", matching what the server does with an absent selection.
+  const [selectedCashAccount, setSelectedCashAccount] = useState<number | undefined>(undefined);
   
   useEffect(() => {
     if (playersData?.content) {
@@ -157,14 +160,23 @@ function Players() {
     // Pre-select current player roles
     const currentRoleIds = player.roles?.map(role => role.id) || [];
     setSelectedRoles(currentRoleIds);
+    // Show the account they already hold, so re-saving does not look like a change.
+    const held = cashAccountsData?.content?.find((account) => account.holderId === player.id);
+    setSelectedCashAccount(held?.id);
   };
 
   // Function to close the roles modal
   const handleRolesCancel = () => {
     setIsRolesModalVisible(false);
     setSelectedRoles([]);
+    setSelectedCashAccount(undefined);
     setSelectedPlayer(null);
   };
+
+  // The picker only matters for a custodian, so it appears with the role and not before.
+  const isAccountantSelected = selectedRoles.some(
+    (roleId) => rolesData?.content?.find((role) => role.id === roleId)?.name === "ACCOUNTANT"
+  );
 
   // Function to handle roles assignment
   const handleRolesUpdate = () => {
@@ -178,6 +190,9 @@ function Players() {
           playerRoleMappings: {
             [selectedPlayer.id.toString()]: selectedRoles,
           },
+          ...(isAccountantSelected && selectedCashAccount !== undefined
+            ? { cashAccountSelections: { [selectedPlayer.id.toString()]: selectedCashAccount } }
+            : {}),
         })
           .unwrap()
           .then(() => {
@@ -855,6 +870,57 @@ function Players() {
               ))}
             </Select>
           </Form.Item>
+
+          {isAccountantSelected && (
+            <Form.Item
+              label="Cash account they hold"
+              style={{ marginBottom: 16 }}
+              extra="Club money this member collects or pays out moves through this account. Leave it on 'Create a new account' unless they already have one."
+            >
+              <Select
+                allowClear
+                placeholder="Create a new account"
+                value={selectedCashAccount}
+                onChange={(value) => setSelectedCashAccount(value)}
+                style={{ width: "100%" }}
+                optionLabelProp="label"
+              >
+                {cashAccountsData?.content?.map((account) => {
+                  const heldByAnother =
+                    account.holderId !== null && account.holderId !== selectedPlayer?.id;
+                  return (
+                    <Select.Option
+                      key={account.id}
+                      value={account.id}
+                      label={account.name}
+                      disabled={heldByAnother}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                        <span>
+                          {account.name}
+                          {" "}
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            {account.code}
+                          </Text>
+                        </span>
+                        <span>
+                          {heldByAnother ? (
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                              held by {account.holderName}
+                            </Text>
+                          ) : (
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                              balance {account.balance?.toFixed(2)}
+                            </Text>
+                          )}
+                        </span>
+                      </div>
+                    </Select.Option>
+                  );
+                })}
+              </Select>
+            </Form.Item>
+          )}
         </Form>
 
         {selectedRoles.length > 0 && (

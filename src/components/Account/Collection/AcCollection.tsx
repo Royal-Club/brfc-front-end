@@ -1,4 +1,5 @@
 import { EditOutlined, SearchOutlined, PlusOutlined, CalendarOutlined } from "@ant-design/icons";
+import { notifyRequestError } from "../../../utils/errorNotification";
 import {
     Button,
     DatePicker,
@@ -367,7 +368,7 @@ function AcCollection() {
                         getAcCollectionList();
                     })
                     .catch((err) => {
-                        console.log("server error", err);
+                        notifyRequestError(err, "Could not save the collection");
                         setModalConfirmLoading(false);
                     });
             } else {
@@ -384,7 +385,7 @@ function AcCollection() {
                         setModalState("CREATE");
                     })
                     .catch((err) => {
-                        console.log("server error", err);
+                        notifyRequestError(err, "Could not save the collection");
                         setModalConfirmLoading(false);
                     });
             }
@@ -661,6 +662,7 @@ function AcCollection() {
                                                 }}
                                             />
                                         </Form.Item>
+
 
                                         <Form.Item
                                             name="description"

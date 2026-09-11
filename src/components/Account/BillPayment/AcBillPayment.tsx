@@ -1,3 +1,4 @@
+import { notifyRequestError } from "../../../utils/errorNotification";
 import {
     EditOutlined,
     SearchOutlined,
@@ -336,7 +337,7 @@ function AcBillPayment() {
                         console.log(response);
                     })
                     .catch((err) => {
-                        console.log("server error");
+                        notifyRequestError(err, "Could not save the bill payment");
                         setModalConfirmLoading(false);
                     });
             } else {
@@ -353,7 +354,7 @@ function AcBillPayment() {
                         setModalState("CREATE");
                     })
                     .catch((err) => {
-                        console.log("server error");
+                        notifyRequestError(err, "Could not save the bill payment");
                         setModalConfirmLoading(false);
                     });
             }
@@ -545,6 +546,7 @@ function AcBillPayment() {
             style={{ width: "100%", borderRadius: "4px" }}
           />
         </Form.Item>
+
 
         <Form.Item
           name="description"

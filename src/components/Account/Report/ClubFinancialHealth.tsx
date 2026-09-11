@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Row, Col, Typography, Table, Tag, Empty, Spin, theme } from "antd";
+import { Row, Col, Typography, Table, Tag, Tooltip, Empty, Spin, theme } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
     DollarOutlined,
@@ -23,10 +23,12 @@ import AntTitle from "antd/es/typography/Title";
 import { useGetAccountSummaryQuery } from "../../../state/features/account/accountSummarySlice";
 import { useGetContributionReportQuery } from "../../../state/features/account/contributionReportSlice";
 import { useGetBillPaymentReportQuery } from "../../../state/features/account/billPaymentReportSlice";
+import { useGetCashPositionQuery } from "../../../state/features/account/cashPositionSlice";
+import { CashHolderRow } from "../../../interfaces/ICashPosition";
 import { ContributionReportRow } from "../../../interfaces/IContributionReport";
-import { BillPaymentReportRow } from "../../../interfaces/IBillPaymentReport";
 import AnalyticsCard from "../../Dashboard/AnalyticsCard";
 import { fmtMoney } from "../../../utils/acFormat";
+import { defaultersFor, totalsByMonth } from "../../../utils/financialHealth";
 import useIsMobile from "../../../hooks/useIsMobile";
 import { club, kicker } from "../../../theme/clubTheme";
 import "../../../theme/clubTable.css";
@@ -41,11 +43,6 @@ const { Text } = Typography;
  *  without a picker, and is enough to show a season's worth of shape. */
 const TREND_MONTHS = 6;
 
-/** Sums one month's column across every row of a report — the report itself only totals a
- *  row (a player or a cost type) across the whole range, not the whole club for one month. */
-const sumMonth = (rows: { monthlyAmounts: Record<string, number> }[], month: string): number =>
-    rows.reduce((sum, row) => sum + (row.monthlyAmounts[month] ?? 0), 0);
-
 function ClubFinancialHealth() {
     const { token } = theme.useToken();
     const isMobile = useIsMobile(768);
@@ -56,12 +53,17 @@ function ClubFinancialHealth() {
         []
     );
     const currentMonthKey = useMemo(() => dayjs().format("YYYY-MM"), []);
+    const currentMonthLabel = useMemo(() => dayjs().format("MMM YYYY"), []);
 
     const { data: summaryData, isLoading: isSummaryLoading } = useGetAccountSummaryQuery();
     const { data: contributionData, isFetching: isContributionLoading } =
         useGetContributionReportQuery({ from, to, activeOnly: true });
     const { data: billPaymentData, isFetching: isBillPaymentLoading } =
         useGetBillPaymentReportQuery({ from, to });
+    const { data: cashPositionData, isFetching: isCashPositionLoading } = useGetCashPositionQuery();
+
+    const cashRows = cashPositionData?.content?.holders ?? [];
+    const cashTotal = cashPositionData?.content?.total ?? 0;
 
     const summary = summaryData?.content;
     const contribution = contributionData?.content;
@@ -81,19 +83,15 @@ function ClubFinancialHealth() {
     );
     const monthLabel = (month: string) => dayjs(`${month}-01`).format(spansYears ? "MMM 'YY" : "MMM");
 
-    const collectedByMonth = useMemo(() => {
-        if (!contribution) return {} as Record<string, number>;
-        const totals: Record<string, number> = {};
-        for (const month of contribution.months) totals[month] = sumMonth(contribution.rows, month);
-        return totals;
-    }, [contribution]);
+    const collectedByMonth = useMemo(
+        () => totalsByMonth(contribution?.rows, contribution?.months),
+        [contribution]
+    );
 
-    const spentByMonth = useMemo(() => {
-        if (!billPayment) return {} as Record<string, number>;
-        const totals: Record<string, number> = {};
-        for (const month of billPayment.months) totals[month] = sumMonth(billPayment.rows, month);
-        return totals;
-    }, [billPayment]);
+    const spentByMonth = useMemo(
+        () => totalsByMonth(billPayment?.rows, billPayment?.months),
+        [billPayment]
+    );
 
     // Note on wording: this figure is the sum of *player contributions*, which is not necessarily
     // every taka the club took in that month. The labels below say "Contributions" rather than
@@ -105,17 +103,9 @@ function ClubFinancialHealth() {
     // A player counts as a defaulter for the month only when nothing covers it and no pause
     // excuses it — exactly the rule the contribution report itself uses for `unpaidMonths`.
     const defaulters = useMemo(
-        () => (contribution?.rows ?? []).filter((row) => row.unpaidMonths.includes(currentMonthKey)),
+        () => defaultersFor(contribution?.rows, currentMonthKey),
         [contribution, currentMonthKey]
     );
-
-    const topExpenseCategories = useMemo(() => {
-        const rows = (billPayment?.rows ?? [])
-            .map((row) => ({ ...row, thisMonth: row.monthlyAmounts[currentMonthKey] ?? 0 }))
-            .filter((row) => row.thisMonth > 0)
-            .sort((a, b) => b.thisMonth - a.thisMonth);
-        return rows.slice(0, 5);
-    }, [billPayment, currentMonthKey]);
 
     const period = useMemo(() => {
         if (!months.length) return "";
@@ -152,45 +142,59 @@ function ClubFinancialHealth() {
             render: (name: string) => <Text strong>{name}</Text>,
         },
         {
-            title: `Unpaid (last ${months.length || TREND_MONTHS} mo)`,
-            dataIndex: "unpaidMonthCount",
-            key: "unpaidMonthCount",
+            // Every row here is already unpaid for the month running now, so the tag names which
+            // month rather than counting how many they have missed across the range.
+            title: "Status",
+            key: "status",
             align: "right",
-            render: (count: number) => (
-                <Tag color={count > 1 ? "error" : "warning"}>{count} of {months.length}</Tag>
-            ),
-            sorter: (a, b) => a.unpaidMonthCount - b.unpaidMonthCount,
-            defaultSortOrder: "descend",
-        },
-        {
-            title: `Contributions (last ${months.length || TREND_MONTHS} mo)`,
-            dataIndex: "totalPaid",
-            key: "totalPaid",
-            align: "right",
-            render: (value: number) => fmtMoney(value),
+            render: () => <Tag color="error">Unpaid {currentMonthLabel}</Tag>,
         },
     ];
 
-    const expenseColumns: ColumnsType<BillPaymentReportRow & { thisMonth: number }> = [
+    const cashColumns: ColumnsType<CashHolderRow> = [
         {
-            title: "Cost type",
-            dataIndex: "costTypeName",
-            key: "costTypeName",
-            render: (name: string) => <Text strong>{name}</Text>,
+            title: "Held by",
+            dataIndex: "holderName",
+            key: "holderName",
+            render: (name: string | null) =>
+                name ? (
+                    <Text strong>{name}</Text>
+                ) : (
+                    // An account with money and nobody answerable for it is the thing worth seeing.
+                    <Tag color="warning">Unassigned</Tag>
+                ),
         },
         {
-            title: "This month",
-            dataIndex: "thisMonth",
-            key: "thisMonth",
-            align: "right",
-            render: (value: number) => fmtMoney(value),
+            title: "Account",
+            dataIndex: "accountName",
+            key: "accountName",
+            responsive: ["sm"],
+            render: (accountName: string, row) => (
+                <span>
+                    {accountName}{" "}
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                        {row.accountCode}
+                    </Text>
+                </span>
+            ),
         },
         {
-            title: "Share",
-            key: "share",
+            title: "Balance",
+            dataIndex: "balance",
+            key: "balance",
             align: "right",
-            render: (_: unknown, row) =>
-                thisMonthSpent > 0 ? `${((row.thisMonth / thisMonthSpent) * 100).toFixed(1)}%` : "—",
+            render: (balance: number, row) =>
+                row.negative ? (
+                    <Tooltip title="More was paid out of this account than was recorded into it. Cash in hand cannot really be negative.">
+                        <span className="brfc-amount brfc-amount--neg">
+                            <WarningOutlined /> {fmtMoney(balance)}
+                        </span>
+                    </Tooltip>
+                ) : (
+                    fmtMoney(balance)
+                ),
+            sorter: (a, b) => a.balance - b.balance,
+            defaultSortOrder: "descend",
         },
     ];
 
@@ -272,34 +276,62 @@ function ClubFinancialHealth() {
                 </Row>
             )}
 
-            {/* Trend */}
+            {/* Who is holding the club's cash */}
             <div style={{ ...kicker, color: club.gold, margin: "26px 0 10px" }}>
-                Contributions vs spending — last {months.length || TREND_MONTHS} months
+                Cash in hand — who is holding it
             </div>
-            <div
+            <Table
+                loading={isCashPositionLoading}
+                size="small"
+                rowKey="accountId"
                 className="brfc-club-table"
-                style={{ borderRadius: 10, padding: 16, height: isMobile ? 240 : 300 }}
-            >
-                {isTrendLoading ? (
-                    <Spin />
-                ) : months.length ? (
-                    <Bar
-                        data={chartData}
-                        options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { position: "top" } },
-                            scales: { y: { beginAtZero: true } },
-                        }}
-                    />
-                ) : (
-                    <Empty description="No data for this period" />
+                style={{ borderRadius: 10, overflow: "hidden" }}
+                columns={cashColumns}
+                dataSource={cashRows}
+                pagination={false}
+                scroll={{ x: "max-content" }}
+                locale={{ emptyText: <Empty description="No cash accounts yet" /> }}
+                summary={() => (
+                    <Table.Summary.Row>
+                        <Table.Summary.Cell index={0}>
+                            <Text strong>Total cash</Text>
+                        </Table.Summary.Cell>
+                        <Table.Summary.Cell index={1} />
+                        <Table.Summary.Cell index={2} align="right">
+                            <Text strong>{fmtMoney(cashTotal)}</Text>
+                        </Table.Summary.Cell>
+                    </Table.Summary.Row>
                 )}
-            </div>
+            />
 
-            {/* Defaulters + top expenses */}
+            {/* The six-month shape, beside who still owes for the month running now */}
             <Row gutter={[16, 16]} style={{ marginTop: 26 }}>
-                <Col xs={24} lg={12}>
+                <Col xs={24} lg={14}>
+                    <div style={{ ...kicker, color: club.gold, marginBottom: 10 }}>
+                        Contributions vs spending — last {months.length || TREND_MONTHS} months
+                    </div>
+                    <div
+                        className="brfc-club-table"
+                        style={{ borderRadius: 10, padding: 16, height: isMobile ? 240 : 300 }}
+                    >
+                        {isTrendLoading ? (
+                            <Spin />
+                        ) : months.length ? (
+                            <Bar
+                                data={chartData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: { legend: { position: "top" } },
+                                    scales: { y: { beginAtZero: true } },
+                                }}
+                            />
+                        ) : (
+                            <Empty description="No data for this period" />
+                        )}
+                    </div>
+                </Col>
+                <Col xs={24} lg={10}>
                     <div style={{ ...kicker, color: club.gold, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
                         <WarningOutlined /> Unpaid this month{defaulters.length ? ` (${defaulters.length})` : ""}
                     </div>
@@ -314,23 +346,6 @@ function ClubFinancialHealth() {
                         scroll={{ x: "max-content" }}
                         pagination={defaulters.length > 8 ? { pageSize: 8, size: "small" } : false}
                         locale={{ emptyText: <Empty description="Every active player is paid up this month" /> }}
-                    />
-                </Col>
-                <Col xs={24} lg={12}>
-                    <div style={{ ...kicker, color: club.gold, marginBottom: 10 }}>
-                        Top expense categories this month
-                    </div>
-                    <Table
-                        loading={isBillPaymentLoading}
-                        size="small"
-                        rowKey="costTypeId"
-                        className="brfc-club-table"
-                        style={{ borderRadius: 10, overflow: "hidden" }}
-                        dataSource={topExpenseCategories}
-                        columns={expenseColumns}
-                        scroll={{ x: "max-content" }}
-                        pagination={false}
-                        locale={{ emptyText: <Empty description="No spending recorded this month" /> }}
                     />
                 </Col>
             </Row>
