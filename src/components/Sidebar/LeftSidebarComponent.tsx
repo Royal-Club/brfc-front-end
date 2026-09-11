@@ -135,14 +135,14 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         getItem("Voucher Register", "/ac/vouchers"),
       ]),
       getItem("Accounts Reports", "acReportsSubMenu", null, [
-        // Admin-only: it surfaces the same per-player unpaid status as the Contribution Report.
-        getItem("Financial Health", "/ac/reports/financial-health", null, undefined, undefined, !isUserAdmin),
+        // Open to every member: the club publishes its position, spending and who is behind on
+        // dues to the whole squad rather than to admins alone.
+        getItem("Financial Health", "/ac/reports/financial-health"),
         getItem("Accounts Report", "/ac/reports/accounts-summary"),
         getItem("Balances Summary", "/ac/reports/balance-summary"),
         getItem("Balances Sheet", "/ac/reports/balance-sheet"),
-        // Admin-only: the report names every player who is behind on their dues.
-        getItem("Contribution Report", "/ac/reports/contributions", null, undefined, undefined, !isUserAdmin),
-        getItem("Bill Payment Report", "/ac/reports/bill-payments", null, undefined, undefined, !isUserAdmin),
+        getItem("Contribution Report", "/ac/reports/contributions"),
+        getItem("Bill Payment Report", "/ac/reports/bill-payments"),
       ]),
     ]),
     getItem("Venue", "venueSubMenu", <ProjectOutlined />, [
