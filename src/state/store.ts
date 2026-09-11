@@ -4,7 +4,7 @@ import { persistReducer } from "redux-persist";
 import localStorage from "redux-persist/es/storage";
 import apiSlice from "./api/apiSlice";
 import loginInfoSlice, { removeUser, setTokens } from "./slices/loginInfoSlice";
-import { configureSession } from "./api/sessionManager";
+import { configureSession, startSessionRenewal } from "./api/sessionManager";
 import manualFixturesUISlice from "./features/manualFixtures/manualFixturesUISlice";
 import tournamentUISlice from "./features/tournaments/tournamentUISlice";
 import teamChatUISlice from "./features/teamChat/teamChatUISlice";
@@ -42,6 +42,10 @@ configureSession({
     onTokensRenewed: (tokens) => store.dispatch(setTokens(tokens)),
     onSessionEnded: () => store.dispatch(removeUser()),
 });
+
+// Keep the access token renewed ahead of expiry, rather than rediscovering each one through a
+// request that fails first.
+startSessionRenewal();
 
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof store.getState>;

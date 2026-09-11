@@ -13,6 +13,35 @@ import { API_URL } from "../../settings";
 
 const TOKEN_CONTENT_KEY = "tokenContent";
 
+/**
+ * How long the renewal call waits for an answer before treating the attempt as unreachable.
+ *
+ * Long enough for an API that has been asleep to wake and respond, short enough that a member is
+ * not left staring at a stalled screen.
+ */
+const RENEWAL_TIMEOUT_MS = 15000;
+
+/**
+ * Backoff between renewal attempts when the call never reached the server.
+ *
+ * Every other request in the app is already retried on a transport failure; the renewal was the one
+ * call without that protection, and the one whose failure strands the whole session rather than a
+ * single screen. Three attempts covers an API waking from idle without making a genuinely offline
+ * member wait long for the answer they are going to get anyway.
+ */
+const RENEWAL_BACKOFF_MS = [500, 1500];
+
+/**
+ * How far before expiry the token is renewed on a schedule.
+ *
+ * Without this the app only learns a token has expired by sending a request that fails, so every
+ * hour of an open tab began with a guaranteed 401. Two minutes absorbs clock drift between the
+ * browser and the server without renewing so early that the window is wasted.
+ */
+const RENEWAL_LEAD_MS = 2 * 60 * 1000;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export interface SessionTokens {
     token: string;
     refreshToken: string;
@@ -87,10 +116,106 @@ function persist(tokens: SessionTokens) {
         localStorage.setItem(TOKEN_CONTENT_KEY, JSON.stringify({ ...content, ...tokens }));
     }
     onTokensRenewed(tokens);
+
+    // Book the next one. This is what keeps an open tab renewing on a schedule rather than
+    // rediscovering each expiry through a failed request.
+    scheduleRenewal(tokens.token);
 }
 
 /** In-flight renewal, shared by every request that 401s while it runs. */
 let renewalInFlight: Promise<string | null> | null = null;
+
+/** The pending scheduled renewal, if the session has one. */
+let renewalTimer: ReturnType<typeof setTimeout> | null = null;
+
+function getStoredAccessToken(): string | null {
+    const token = readStoredContent()?.token;
+    return typeof token === "string" && token ? token : null;
+}
+
+/**
+ * When the access token stops being accepted, in epoch milliseconds.
+ *
+ * Reads the `exp` claim without verifying the signature, which is all a client can do and all it
+ * needs: the server is the one that decides, and this only chooses when to ask.
+ */
+function expiryOf(token: string): number | null {
+    try {
+        // JWT payloads are base64url; atob only speaks standard base64, so the two URL-safe
+        // characters have to be translated or a perfectly good token reads as corrupt.
+        const payload = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const exp = JSON.parse(atob(payload))?.exp;
+        return typeof exp === "number" ? exp * 1000 : null;
+    } catch {
+        // Truncated, forged, or from an older token format. Unreadable means nothing to schedule.
+        return null;
+    }
+}
+
+export function clearScheduledRenewal() {
+    if (renewalTimer) {
+        clearTimeout(renewalTimer);
+        renewalTimer = null;
+    }
+}
+
+/**
+ * Books the next renewal for shortly before the token expires.
+ *
+ * Re-armed by every successful renewal, so one call keeps the session alive for as long as the tab
+ * is open. A token already inside the lead window renews now.
+ */
+function scheduleRenewal(token: string) {
+    clearScheduledRenewal();
+
+    const expiresAt = expiryOf(token);
+    if (expiresAt === null) {
+        return;
+    }
+
+    const delay = Math.max(expiresAt - Date.now() - RENEWAL_LEAD_MS, 0);
+    renewalTimer = setTimeout(() => {
+        renewalTimer = null;
+        void refreshSession();
+    }, delay);
+}
+
+/**
+ * Starts keeping the session renewed, and catches up whenever the tab comes back to the foreground.
+ *
+ * The timer alone is not enough. Browsers throttle or suspend timers in background tabs, and a
+ * laptop that slept through the expiry never fires one at all, so a tab returning after hours would
+ * still make its first request with a dead token.
+ */
+export function startSessionRenewal() {
+    const token = getStoredAccessToken();
+    if (token) {
+        scheduleRenewal(token);
+    }
+
+    if (typeof document === "undefined") {
+        return;
+    }
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState !== "visible") {
+            return;
+        }
+
+        const current = getStoredAccessToken();
+        if (!current || !getStoredRefreshToken()) {
+            return;
+        }
+
+        const expiresAt = expiryOf(current);
+        if (expiresAt !== null && expiresAt - Date.now() <= RENEWAL_LEAD_MS) {
+            void refreshSession();
+        } else if (expiresAt !== null && !renewalTimer) {
+            // The timer was dropped while the tab slept; book the next one from where we are now.
+            scheduleRenewal(current);
+        }
+    });
+}
 
 /** Renews the session, returning the new access token, or null when it can no longer be renewed. */
 export function refreshSession(): Promise<string | null> {
@@ -102,6 +227,32 @@ export function refreshSession(): Promise<string | null> {
     return renewalInFlight;
 }
 
+/**
+ * Posts the renewal, retrying only while the call never reached the server.
+ *
+ * A response of any status means the server looked at the refresh token and made a decision, so it
+ * is returned or thrown immediately; repeating it would just ask the same question again. Bare axios
+ * rather than the app's instance, because this call must not pass back through the interceptor that
+ * is waiting on it.
+ */
+async function postRenewal(refreshToken: string) {
+    for (let attempt = 0; ; attempt++) {
+        try {
+            return await axios.post(
+                `${API_URL}/auth/refresh`,
+                { refreshToken },
+                { timeout: RENEWAL_TIMEOUT_MS }
+            );
+        } catch (err) {
+            const answered = axios.isAxiosError(err) && err.response;
+            if (answered || attempt >= RENEWAL_BACKOFF_MS.length) {
+                throw err;
+            }
+            await sleep(RENEWAL_BACKOFF_MS[attempt]);
+        }
+    }
+}
+
 async function requestRenewal(): Promise<string | null> {
     const refreshToken = getStoredRefreshToken();
     if (!refreshToken) {
@@ -109,9 +260,7 @@ async function requestRenewal(): Promise<string | null> {
     }
 
     try {
-        // Bare axios rather than the app's instance: this call must not pass back through the
-        // interceptor that is waiting on it.
-        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        const response = await postRenewal(refreshToken);
         const content = response.data?.content;
         if (!content?.token || !content?.refreshToken) {
             // The server answered but didn't hand back a usable pair - it looked at the token and
@@ -168,6 +317,9 @@ export async function revokeRefreshToken(): Promise<void> {
  * flag, so signing in again during the same page load re-arms it.
  */
 export function endSession() {
+    // Nothing left to renew, and a timer that fired afterwards would start a pointless call.
+    clearScheduledRenewal();
+
     if (localStorage.getItem(TOKEN_CONTENT_KEY) !== null) {
         // Clear before redirecting. The session is persisted and survives the page load, so a bare
         // redirect would land on an app that still believes it is signed in, fire the same request,

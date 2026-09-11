@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { CSSProperties } from "react";
 import { Row, Col, Typography, Table, Tag, Tooltip, Empty, Spin, theme } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
@@ -8,6 +9,7 @@ import {
     RiseOutlined,
     FallOutlined,
     WarningOutlined,
+    CheckCircleOutlined,
 } from "@ant-design/icons";
 import { Bar } from "react-chartjs-2";
 import {
@@ -18,6 +20,7 @@ import {
     Tooltip as ChartTooltip,
     Legend as ChartLegend,
 } from "chart.js";
+import type { TooltipItem } from "chart.js";
 import dayjs from "dayjs";
 import AntTitle from "antd/es/typography/Title";
 import { useGetAccountSummaryQuery } from "../../../state/features/account/accountSummarySlice";
@@ -25,12 +28,11 @@ import { useGetContributionReportQuery } from "../../../state/features/account/c
 import { useGetBillPaymentReportQuery } from "../../../state/features/account/billPaymentReportSlice";
 import { useGetCashPositionQuery } from "../../../state/features/account/cashPositionSlice";
 import { CashHolderRow } from "../../../interfaces/ICashPosition";
-import { ContributionReportRow } from "../../../interfaces/IContributionReport";
 import AnalyticsCard from "../../Dashboard/AnalyticsCard";
 import { fmtMoney } from "../../../utils/acFormat";
 import { defaultersFor, totalsByMonth } from "../../../utils/financialHealth";
 import useIsMobile from "../../../hooks/useIsMobile";
-import { club, kicker } from "../../../theme/clubTheme";
+import { club, kicker, scoreNum } from "../../../theme/clubTheme";
 import "../../../theme/clubTable.css";
 
 // Chart.js v3+ ships nothing registered by default — without this the trend chart throws
@@ -39,9 +41,85 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTooltip, ChartLege
 
 const { Text } = Typography;
 
-/** How far back the trend chart and this-month figures look. Six months fits on one screen
- *  without a picker, and is enough to show a season's worth of shape. */
-const TREND_MONTHS = 6;
+/** How far back the trend chart and this-month figures look. A full year, so the shape covers a
+ *  whole season rather than part of one, and every month can be compared against the same month
+ *  last time round. */
+const TREND_MONTHS = 12;
+
+/** The club's own green and red, the same pair the amount styles use, so money reads alike. */
+const POSITIVE = club.pitch;
+const NEGATIVE = "#E0736B";
+
+/** The seam between panel halves and between list rows. */
+const HAIRLINE = "rgba(255, 255, 255, 0.09)";
+
+const CENTRED: CSSProperties = {
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+};
+
+const COUNT_CHIP: CSSProperties = {
+    ...scoreNum,
+    minWidth: 26,
+    textAlign: "center",
+    padding: "2px 8px",
+    borderRadius: 999,
+    fontSize: 12.5,
+    fontWeight: 700,
+    color: club.gold,
+    background: "rgba(198, 161, 91, 0.12)",
+    border: `1px solid ${club.panelBorder}`,
+};
+
+const AVATAR: CSSProperties = {
+    width: 28,
+    height: 28,
+    flexShrink: 0,
+    borderRadius: "50%",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: 0.3,
+    color: club.goldSoft,
+    background: club.tileBg,
+    border: club.tileBorder,
+};
+
+/** Up to two initials, so a long name still fits the circle. */
+const initialsOf = (name: string): string =>
+    (name || "")
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join("");
+
+/** Axis figures in thousands, so the scale stays readable at a glance. */
+const compactAmount = (value: number): string => {
+    const amount = Number(value) || 0;
+    return Math.abs(amount) >= 1000 ? `${Math.round(amount / 1000)}k` : `${amount}`;
+};
+
+function LegendKey({ color, label }: { color: string; label: string }) {
+    return (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <i
+                style={{
+                    width: 9,
+                    height: 9,
+                    borderRadius: 3,
+                    background: color,
+                    display: "inline-block",
+                }}
+            />
+            <span style={{ color: club.textMuted, fontSize: 12, fontWeight: 600 }}>{label}</span>
+        </span>
+    );
+}
 
 function ClubFinancialHealth() {
     const { token } = theme.useToken();
@@ -77,11 +155,9 @@ function ClubFinancialHealth() {
         () => contribution?.months ?? billPayment?.months ?? [],
         [contribution, billPayment]
     );
-    const spansYears = useMemo(
-        () => new Set(months.map((m) => m.slice(0, 4))).size > 1,
-        [months]
-    );
-    const monthLabel = (month: string) => dayjs(`${month}-01`).format(spansYears ? "MMM 'YY" : "MMM");
+    // A rolling year holds each month exactly once, so the name alone is unambiguous and a year
+    // suffix would only crowd twelve labels. The range itself is named in the page header.
+    const monthLabel = (month: string) => dayjs(`${month}-01`).format("MMM");
 
     const collectedByMonth = useMemo(
         () => totalsByMonth(contribution?.rows, contribution?.months),
@@ -120,36 +196,78 @@ function ClubFinancialHealth() {
             {
                 label: "Contributions",
                 data: months.map((m) => collectedByMonth[m] ?? 0),
-                backgroundColor: token.colorSuccess,
-                borderRadius: 4,
-                maxBarThickness: 34,
+                backgroundColor: POSITIVE,
+                borderRadius: 5,
+                maxBarThickness: 26,
             },
             {
                 label: "Spent",
                 data: months.map((m) => spentByMonth[m] ?? 0),
-                backgroundColor: token.colorError,
-                borderRadius: 4,
-                maxBarThickness: 34,
+                backgroundColor: NEGATIVE,
+                borderRadius: 5,
+                maxBarThickness: 26,
             },
         ],
     };
 
-    const defaulterColumns: ColumnsType<ContributionReportRow> = [
-        {
-            title: "Player",
-            dataIndex: "playerName",
-            key: "playerName",
-            render: (name: string) => <Text strong>{name}</Text>,
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 2 } },
+        // Pairs sit close together and months apart, so each month reads as one unit.
+        categoryPercentage: 0.68,
+        barPercentage: 0.9,
+        plugins: {
+            // Drawn in the section header instead, which gives the bars the height back.
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: "rgba(14, 24, 48, 0.96)",
+                borderColor: club.panelBorder,
+                borderWidth: 1,
+                cornerRadius: 8,
+                padding: 10,
+                titleColor: club.textPrimary,
+                bodyColor: club.textMuted,
+                titleFont: { size: 12, weight: 700 as const },
+                bodyFont: { size: 12 },
+                boxWidth: 8,
+                boxHeight: 8,
+                boxPadding: 4,
+                callbacks: {
+                    label: (item: TooltipItem<"bar">) =>
+                        ` ${item.dataset.label}: ${fmtMoney(item.parsed.y)}`,
+                },
+            },
         },
-        {
-            // Every row here is already unpaid for the month running now, so the tag names which
-            // month rather than counting how many they have missed across the range.
-            title: "Status",
-            key: "status",
-            align: "right",
-            render: () => <Tag color="error">Unpaid {currentMonthLabel}</Tag>,
+        scales: {
+            x: {
+                grid: { display: false },
+                border: { display: false },
+                ticks: {
+                    color: "rgba(245, 247, 250, 0.58)",
+                    font: { size: 11, weight: 600 as const },
+                    // Never drop a month to make the axis fit: a year with gaps in it misreads as a
+                    // year with no activity in those months. Tilt them instead when space is tight.
+                    autoSkip: false,
+                    maxRotation: 45,
+                    minRotation: 0,
+                },
+            },
+            y: {
+                beginAtZero: true,
+                // Horizontal rules only. Vertical ones add clutter without helping comparison.
+                grid: { color: "rgba(255, 255, 255, 0.06)" },
+                border: { display: false },
+                ticks: {
+                    color: "rgba(245, 247, 250, 0.45)",
+                    font: { size: 11 },
+                    maxTicksLimit: 5,
+                    padding: 6,
+                    callback: (value: string | number) => compactAmount(Number(value)),
+                },
+            },
         },
-    ];
+    };
 
     const cashColumns: ColumnsType<CashHolderRow> = [
         {
@@ -305,50 +423,178 @@ function ClubFinancialHealth() {
             />
 
             {/* The six-month shape, beside who still owes for the month running now */}
-            <Row gutter={[16, 16]} style={{ marginTop: 26 }}>
-                <Col xs={24} lg={14}>
-                    <div style={{ ...kicker, color: club.gold, marginBottom: 10 }}>
-                        Contributions vs spending — last {months.length || TREND_MONTHS} months
-                    </div>
+            {/* One panel, split. The trend and the people behind on it are read together, and two
+                separate cards of different heights made them look like unrelated widgets. */}
+            <div
+                style={{
+                    marginTop: 26,
+                    background: club.panel,
+                    border: `1px solid ${club.panelBorder}`,
+                    borderRadius: 14,
+                    boxShadow: "0 2px 6px rgba(0, 0, 0, 0.35)",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: isMobile ? "column" : "row",
+                }}
+            >
+                {/* Trend */}
+                <section
+                    style={{
+                        flex: "1 1 62%",
+                        minWidth: 0,
+                        padding: isMobile ? 16 : 20,
+                        // The seam between the two halves, horizontal once they stack.
+                        borderRight: isMobile ? "none" : `1px solid ${HAIRLINE}`,
+                        borderBottom: isMobile ? `1px solid ${HAIRLINE}` : "none",
+                    }}
+                >
                     <div
-                        className="brfc-club-table"
-                        style={{ borderRadius: 10, padding: 16, height: isMobile ? 240 : 300 }}
+                        style={{
+                            display: "flex",
+                            alignItems: "baseline",
+                            justifyContent: "space-between",
+                            gap: 12,
+                            flexWrap: "wrap",
+                            marginBottom: 14,
+                        }}
                     >
+                        <div>
+                            <div style={{ ...kicker, color: club.goldSoft }}>
+                                Contributions vs spending
+                            </div>
+                            <div style={{ color: club.textMuted, fontSize: 12, marginTop: 3 }}>
+                                Last {months.length || TREND_MONTHS} months
+                            </div>
+                        </div>
+                        {/* Legend lives here rather than inside the canvas, which frees the height
+                            for the bars themselves. */}
+                        <div style={{ display: "flex", gap: 14 }}>
+                            <LegendKey color={POSITIVE} label="Contributions" />
+                            <LegendKey color={NEGATIVE} label="Spent" />
+                        </div>
+                    </div>
+
+                    <div style={{ height: isMobile ? 240 : 288 }}>
                         {isTrendLoading ? (
-                            <Spin />
+                            <div style={CENTRED}>
+                                <Spin />
+                            </div>
                         ) : months.length ? (
-                            <Bar
-                                data={chartData}
-                                options={{
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: { legend: { position: "top" } },
-                                    scales: { y: { beginAtZero: true } },
-                                }}
-                            />
+                            <Bar data={chartData} options={chartOptions} />
                         ) : (
-                            <Empty description="No data for this period" />
+                            <div style={CENTRED}>
+                                <Empty
+                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                    description={
+                                        <span style={{ color: club.textMuted }}>
+                                            No data for this period
+                                        </span>
+                                    }
+                                />
+                            </div>
                         )}
                     </div>
-                </Col>
-                <Col xs={24} lg={10}>
-                    <div style={{ ...kicker, color: club.gold, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                        <WarningOutlined /> Unpaid this month{defaulters.length ? ` (${defaulters.length})` : ""}
+                </section>
+
+                {/* Who still owes for the month running now */}
+                <section
+                    style={{
+                        flex: "1 1 38%",
+                        minWidth: 0,
+                        padding: isMobile ? 16 : 20,
+                        display: "flex",
+                        flexDirection: "column",
+                    }}
+                >
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: 12,
+                            marginBottom: 14,
+                        }}
+                    >
+                        <div>
+                            <div
+                                style={{
+                                    ...kicker,
+                                    color: club.goldSoft,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                }}
+                            >
+                                <WarningOutlined /> Unpaid
+                            </div>
+                            <div style={{ color: club.textMuted, fontSize: 12, marginTop: 3 }}>
+                                {currentMonthLabel}
+                            </div>
+                        </div>
+                        {defaulters.length > 0 && (
+                            <span style={COUNT_CHIP}>{defaulters.length}</span>
+                        )}
                     </div>
-                    <Table
-                        loading={isContributionLoading}
-                        size="small"
-                        rowKey="playerId"
-                        className="brfc-club-table"
-                        style={{ borderRadius: 10, overflow: "hidden" }}
-                        dataSource={defaulters}
-                        columns={defaulterColumns}
-                        scroll={{ x: "max-content" }}
-                        pagination={defaulters.length > 8 ? { pageSize: 8, size: "small" } : false}
-                        locale={{ emptyText: <Empty description="Every active player is paid up this month" /> }}
-                    />
-                </Col>
-            </Row>
+
+                    <div
+                        style={{
+                            flex: 1,
+                            // Stacked on a phone the panel has no fixed height to divide up, so the
+                            // list needs a floor of its own or it can collapse to nothing.
+                            minHeight: isMobile ? 150 : 0,
+                            overflowY: "auto",
+                            marginRight: -4,
+                            paddingRight: 4,
+                        }}
+                    >
+                        {isContributionLoading ? (
+                            <div style={CENTRED}>
+                                <Spin />
+                            </div>
+                        ) : defaulters.length ? (
+                            defaulters.map((player, index) => (
+                                <div
+                                    key={player.playerId}
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 10,
+                                        padding: "9px 0",
+                                        borderTop: index === 0 ? "none" : `1px solid ${HAIRLINE}`,
+                                    }}
+                                >
+                                    <span style={AVATAR}>{initialsOf(player.playerName)}</span>
+                                    <span
+                                        style={{
+                                            flex: 1,
+                                            minWidth: 0,
+                                            color: club.textPrimary,
+                                            fontWeight: 600,
+                                            fontSize: 13.5,
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap",
+                                        }}
+                                    >
+                                        {player.playerName}
+                                    </span>
+                                    <span className="brfc-status brfc-status--gold">
+                                        <i className="brfc-status__dot" />
+                                        Due
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{ ...CENTRED, flexDirection: "column", gap: 6 }}>
+                                <CheckCircleOutlined style={{ fontSize: 22, color: POSITIVE }} />
+                                <span style={{ color: club.textMuted, fontSize: 13, textAlign: "center" }}>
+                                    Everyone has paid for {currentMonthLabel}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </section>
+            </div>
         </div>
     );
 }

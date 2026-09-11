@@ -7,7 +7,7 @@ import {
     setImage,
 } from "../state/slices/loginInfoSlice";
 import { clearStoredCredentials } from "../utils/utils";
-import { revokeRefreshToken } from "../state/api/sessionManager";
+import { clearScheduledRenewal, revokeRefreshToken } from "../state/api/sessionManager";
 
 export const useAuthHook = () => {
     const dispatch = useDispatch();
@@ -26,6 +26,10 @@ export const useAuthHook = () => {
     };
 
     const logout = async () => {
+        // Stop the scheduled renewal before the token goes, so nothing tries to renew a session the
+        // member has just ended.
+        clearScheduledRenewal();
+
         // Revoke the refresh token server-side first, while it is still readable. Clearing only this
         // browser would leave a credential live on the server for the rest of its window, spendable
         // by any copy of it that got out.
@@ -47,6 +51,7 @@ export const useAuthHook = () => {
      * wrong moment.
      */
     const clearSession = () => {
+        clearScheduledRenewal();
         localStorage.removeItem("tokenContent");
         dispatch(removeUser());
     };
