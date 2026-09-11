@@ -58,6 +58,7 @@ const ROUTE_ANCESTORS: Record<string, string[]> = {
   "/ac/collections": ["financeSubMenu"],
   "/ac/bill-payments": ["financeSubMenu"],
   "/ac/vouchers": ["financeSubMenu", "VoucherSubMenu"],
+  "/ac/reports/financial-health": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/accounts-summary": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/balance-summary": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/balance-sheet": ["financeSubMenu", "acReportsSubMenu"],
@@ -134,6 +135,8 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         getItem("Voucher Register", "/ac/vouchers"),
       ]),
       getItem("Accounts Reports", "acReportsSubMenu", null, [
+        // Admin-only: it surfaces the same per-player unpaid status as the Contribution Report.
+        getItem("Financial Health", "/ac/reports/financial-health", null, undefined, undefined, !isUserAdmin),
         getItem("Accounts Report", "/ac/reports/accounts-summary"),
         getItem("Balances Summary", "/ac/reports/balance-summary"),
         getItem("Balances Sheet", "/ac/reports/balance-sheet"),
