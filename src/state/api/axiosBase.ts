@@ -1,7 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { selectLoginInfo } from "../slices/loginInfoSlice";
 import store from "../store";
-import { endSession, isAuthFree, refreshSession } from "./sessionManager";
+import { isAuthFree, refreshSession } from "./sessionManager";
 
 // Create an axios instance
 const axiosApi = axios.create({
@@ -54,8 +54,10 @@ axiosApi.interceptors.response.use(
         original._retried = true;
         const token = await refreshSession();
         if (!token) {
-            // Nothing left to renew with: the refresh token is gone, expired or revoked.
-            endSession();
+            // Nothing to retry with. `refreshSession` has already ended the session itself if the
+            // refresh token was genuinely gone, expired or revoked; a null with the session still
+            // intact means the renewal call simply couldn't be reached (e.g. the API waking up
+            // after sitting idle for hours) - fail this one request rather than the whole session.
             return Promise.reject(error);
         }
 

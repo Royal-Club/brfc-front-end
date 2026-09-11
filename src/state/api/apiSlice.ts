@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery, retry } from "@reduxjs/toolkit/query/react";
 import { RootState } from "../store";
 import { API_URL } from "../../settings";
 import { showErrorNotification } from "../../utils/errorNotification";
@@ -31,6 +31,20 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
+/**
+ * A cold or momentarily unreachable API - most often the backend waking back up after sitting idle
+ * for hours - fails before any HTTP response exists, which fetchBaseQuery reports as FETCH_ERROR.
+ * That's the one case worth a couple of silent retries: a real response (400/401/500/...) means the
+ * server was reached and answered, so retrying it would just repeat the same failure with extra
+ * delay instead of fixing anything.
+ */
+const baseQueryWithRetry = retry(baseQuery, {
+  retryCondition: (error, _args, { attempt }) => {
+    const status = (error as { status?: unknown })?.status;
+    return attempt <= 2 && (status === "FETCH_ERROR" || status === "TIMEOUT_ERROR");
+  },
+});
+
 // Track recent error messages to prevent duplicates
 const recentErrors = new Map<string, number>();
 const ERROR_DEDUP_TIME = 3000; // 3 seconds
@@ -38,7 +52,7 @@ const ERROR_DEDUP_TIME = 3000; // 3 seconds
 /** One attempt at the request, with a transport failure turned into a result rather than a throw. */
 const runQuery: typeof baseQuery = async (args, api, extraOptions) => {
   try {
-    return await baseQuery(args, api, extraOptions);
+    return await baseQueryWithRetry(args, api, extraOptions);
   } catch (error) {
     // Catch any errors during the base query itself
     console.error("Error during API call:", error);
@@ -67,11 +81,19 @@ const customBaseQuery: typeof baseQuery = async (args, api, extraOptions) => {
     const token = await refreshSession();
     if (token) {
       result = await runQuery(args, api, extraOptions);
-    }
-    if (!token || (result?.error as any)?.status === 401) {
-      endSession();
+      if ((result?.error as any)?.status === 401) {
+        // The fresh token was rejected too - not a timing issue, something is genuinely wrong with
+        // the session, so end it.
+        endSession();
+      }
       return result;
     }
+
+    // No token came back. `refreshSession` has already ended the session itself if the refresh
+    // token was genuinely gone, expired or revoked - a null with the session still intact means the
+    // renewal call simply couldn't be reached (e.g. the API waking up after sitting idle for
+    // hours). Fail this one request rather than the whole session.
+    return result;
   }
 
   // Check if result.error exists

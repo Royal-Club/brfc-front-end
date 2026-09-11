@@ -114,6 +114,9 @@ async function requestRenewal(): Promise<string | null> {
         const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
         const content = response.data?.content;
         if (!content?.token || !content?.refreshToken) {
+            // The server answered but didn't hand back a usable pair - it looked at the token and
+            // had nothing to renew it with, which is as final as an explicit rejection.
+            endSession();
             return null;
         }
 
@@ -121,8 +124,18 @@ async function requestRenewal(): Promise<string | null> {
         // its replacement before returning is what keeps the session alive past this renewal.
         persist({ token: content.token, refreshToken: content.refreshToken });
         return content.token;
-    } catch {
-        // Gone, expired or revoked - all of them mean the same thing to the caller.
+    } catch (err) {
+        // A response means the server actually looked at the refresh token and turned it down -
+        // gone, expired or revoked - so the session really is over.
+        if (axios.isAxiosError(err) && err.response) {
+            endSession();
+            return null;
+        }
+
+        // No response at all (network failure, DNS blip, the API waking back up after sitting idle
+        // for hours) means the refresh token was never evaluated. Failing soft here - returning null
+        // without touching the stored session - leaves it intact for the next attempt instead of
+        // forcing a needless re-login over what might be a few seconds of bad timing.
         return null;
     }
 }
