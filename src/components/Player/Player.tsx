@@ -1,3 +1,4 @@
+import { authorizedFetch } from "../../state/api/authorizedFetch";
 import {
     Button,
     Card,
@@ -342,7 +343,7 @@ function Player() {
                                                             const fileName = file.name.replace(/\.[^.]+$/, ext);
                                                             const res = await presignPlayerPhoto({ fileName, contentType }).unwrap();
                                                             const { key, uploadUrl } = res.content;
-                                                            const uploadResp = await fetch(uploadUrl, {
+                                                            const uploadResp = await authorizedFetch(uploadUrl, {
                                                                 method: "PUT",
                                                                 headers: { "Content-Type": contentType },
                                                                 body: compressed,

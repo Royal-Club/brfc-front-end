@@ -1,3 +1,4 @@
+import { authorizedFetch } from "../state/api/authorizedFetch";
 import { API_URL } from "../settings";
 import axiosApi from "../state/api/axiosBase";
 
@@ -36,7 +37,7 @@ export async function uploadImageToStorage(file: File, folder: string): Promise<
 
   const presign = extractContent<PresignResponse>(presignRes.data);
 
-  const uploadRes = await fetch(presign.uploadUrl, {
+  const uploadRes = await authorizedFetch(presign.uploadUrl, {
     method: "PUT",
     headers: {
       "Content-Type": file.type || "application/octet-stream",

@@ -1,3 +1,4 @@
+import { authorizedFetch } from "../../state/api/authorizedFetch";
 import { message } from "antd";
 import { API_URL as SETTINGS_API_URL } from "../../settings";
 import type {
@@ -105,7 +106,7 @@ export async function uploadResourceFile(
 
         if (!uploadUrl || !key) throw new Error("No presigned URL returned");
 
-        const uploadResponse = await fetch(uploadUrl, {
+        const uploadResponse = await authorizedFetch(uploadUrl, {
             method: "PUT",
             headers: { "Content-Type": file.type },
             body: file,

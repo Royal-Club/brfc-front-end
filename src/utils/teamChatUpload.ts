@@ -1,8 +1,6 @@
-import store from "../state/store";
-import { selectLoginInfo } from "../state/slices/loginInfoSlice";
+import { authorizedFetch } from "../state/api/authorizedFetch";
 import { ITeamChatPresign } from "../state/features/teamChat/teamChatSlice";
 import { compressImage } from "./imageUploadUtils";
-import { API_URL } from "../settings";
 
 /** Mirrors the server's per-file cap, so an oversized file is refused before it is uploaded. */
 export const MAX_TEAM_CHAT_FILE_BYTES = 3 * 1024 * 1024;
@@ -95,20 +93,12 @@ export async function uploadTeamChatFile(
         sizeBytes: payload.size,
     });
 
-    const headers: Record<string, string> = { "Content-Type": contentType };
-
-    // Only when the upload is going back to our own API. Against R2 the URL is already signed, and
-    // an extra Authorization header would invalidate that signature rather than add to it.
-    if (slot.uploadUrl.includes("/files/team-chat/local/")) {
-        const token = selectLoginInfo(store.getState()).token;
-        if (token) {
-            headers.Authorization = `Bearer ${token}`;
-        }
-    }
-
-    const response = await fetch(slot.uploadUrl, {
+    // authorizedFetch decides whether the token belongs on this request: our own API gets it and
+    // renews it on a 401, while a presigned R2 URL is left alone, because an extra Authorization
+    // header invalidates that signature rather than adding to it.
+    const response = await authorizedFetch(slot.uploadUrl, {
         method: "PUT",
-        headers,
+        headers: { "Content-Type": contentType },
         body: payload,
     });
 
@@ -205,11 +195,11 @@ export function loadTeamChatImageUrl(
  * @throws Error carrying the server's own message, so a closed or purged room still explains itself
  */
 async function fetchTeamChatAttachment(downloadUrl: string): Promise<Blob> {
-    const token = selectLoginInfo(store.getState()).token;
-
-    const response = await fetch(`${API_URL}${downloadUrl}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
+    // Needs a header that neither a link nor an <img> can carry, so it cannot be a plain URL — but
+    // hand-rolling the request also left out the renewal every other transport gets for free. An
+    // expired token turned an ordinary refresh into "Could not open that file", permanently, for a
+    // reader whose session was one round trip from being fine.
+    const response = await authorizedFetch(downloadUrl);
 
     if (!response.ok) {
         // The error body is the usual envelope; fall back to a generic line when it is not JSON,

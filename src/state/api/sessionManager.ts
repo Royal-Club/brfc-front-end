@@ -217,6 +217,37 @@ export function startSessionRenewal() {
     });
 }
 
+/**
+ * An access token good for the next few minutes, renewing it first if it is not.
+ *
+ * <p>For transports that cannot retry. An HTTP request can afford to discover expiry by being
+ * refused — it just replays itself afterwards. A WebSocket cannot: its credential is read once, at
+ * CONNECT, so presenting a stale one costs a whole failed connection and, with automatic
+ * reconnects, repeats that failure on a timer. Asking here first turns the usual case, a tab left
+ * open past the hour, into a renewal instead of a rejection.
+ *
+ * <p>Shares the single-flight guard, so a socket reconnecting at the same moment a request 401s
+ * produces one renewal between them, not two — the second of which would spend an already-spent
+ * refresh token and trip the server's reuse detection.
+ *
+ * @returns a usable access token, or null when the session can no longer be renewed
+ */
+export async function getFreshAccessToken(): Promise<string | null> {
+    const current = getStoredAccessToken();
+    if (!current) {
+        return null;
+    }
+
+    const expiresAt = expiryOf(current);
+    if (expiresAt !== null && expiresAt - Date.now() <= RENEWAL_LEAD_MS) {
+        return refreshSession();
+    }
+
+    // Unreadable expiry is treated as still good: the server is the one that decides, and a token
+    // we cannot parse may well be one it accepts.
+    return current;
+}
+
 /** Renews the session, returning the new access token, or null when it can no longer be renewed. */
 export function refreshSession(): Promise<string | null> {
     if (!renewalInFlight) {

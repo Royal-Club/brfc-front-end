@@ -1,3 +1,4 @@
+import { authorizedFetch } from "../state/api/authorizedFetch";
 import { useState, useEffect } from "react";
 import { message } from "antd";
 import { useGetTournamentSummaryQuery } from "../state/features/tournaments/tournamentsSlice";
@@ -351,7 +352,7 @@ const useTournamentTeams = (tournamentId: number) => {
                 throw new Error("Logo upload failed");
             }
 
-            const putResponse = await fetch(uploadUrl, {
+            const putResponse = await authorizedFetch(uploadUrl, {
                 method: "PUT",
                 body: optimizedFile,
                 headers: {

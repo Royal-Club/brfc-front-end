@@ -1,3 +1,4 @@
+import { authorizedFetch } from "../../../state/api/authorizedFetch";
 import React, { useEffect, useState } from "react";
 import {
     Modal,
@@ -162,7 +163,7 @@ export default function CreateTournament({
                 throw new Error("Roadmap image upload failed");
             }
 
-            const putResponse = await fetch(uploadUrl, {
+            const putResponse = await authorizedFetch(uploadUrl, {
                 method: "PUT",
                 body: optimizedFile,
                 headers: {

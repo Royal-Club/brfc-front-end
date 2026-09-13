@@ -274,4 +274,85 @@ describe("session renewal", () => {
             expect(mockedAxios.post).not.toHaveBeenCalled();
         });
     });
+
+    /**
+     * For the transports that cannot discover expiry by being refused and replaying — a WebSocket
+     * reads its credential once, at CONNECT, so a stale one costs a whole failed connection and,
+     * with automatic reconnects, repeats that failure on a timer.
+     */
+    describe("getting a token good enough to connect with", () => {
+        it("hands back the stored token when it has plenty of life left", async () => {
+            const manager = configured();
+
+            await expect(manager.getFreshAccessToken()).resolves.toBe(
+                JSON.parse(localStorage.getItem("tokenContent")!).token
+            );
+            expect(mockedAxios.post).not.toHaveBeenCalled();
+        });
+
+        it("renews first when the stored token is inside the lead window", async () => {
+            localStorage.setItem(
+                "tokenContent",
+                JSON.stringify({ token: tokenExpiringIn(30 * 1000), refreshToken: "refresh-1" })
+            );
+            mockedAxios.post.mockResolvedValue(renewedPair());
+
+            const stale = JSON.parse(localStorage.getItem("tokenContent")!).token;
+
+            const manager = configured();
+            const token = await settle(manager.getFreshAccessToken());
+
+            expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+            expect(token).not.toBe(stale);
+            // The renewed pair is persisted before it is handed back, so the socket and the next
+            // reload agree about which token is current.
+            expect(token).toBe(JSON.parse(localStorage.getItem("tokenContent")!).token);
+        });
+
+        it("returns null rather than a dead token once the session cannot be renewed", async () => {
+            localStorage.setItem(
+                "tokenContent",
+                JSON.stringify({ token: tokenExpiringIn(-60 * 1000), refreshToken: "refresh-1" })
+            );
+            mockedAxios.post.mockRejectedValue(rejected());
+
+            const manager = configured();
+
+            await expect(settle(manager.getFreshAccessToken())).resolves.toBeNull();
+            expect(sessionEnded).toHaveBeenCalled();
+        });
+
+        it("has nothing to offer when there is no session at all", async () => {
+            localStorage.clear();
+            const manager = configured();
+
+            await expect(manager.getFreshAccessToken()).resolves.toBeNull();
+            expect(mockedAxios.post).not.toHaveBeenCalled();
+        });
+
+        /**
+         * The reason this shares `refreshSession`'s guard rather than renewing on its own. Refresh
+         * tokens are single-use, so a socket reconnecting at the same moment a request 401s must not
+         * produce two exchanges — the second would spend an already-spent token and trip the
+         * server's reuse detection, revoking every session the member has.
+         */
+        it("shares one renewal with a request that 401s at the same moment", async () => {
+            localStorage.setItem(
+                "tokenContent",
+                JSON.stringify({ token: tokenExpiringIn(30 * 1000), refreshToken: "refresh-1" })
+            );
+            mockedAxios.post.mockResolvedValue(renewedPair());
+
+            const manager = configured();
+            const both = Promise.all([
+                manager.getFreshAccessToken(),
+                manager.refreshSession(),
+            ]);
+
+            const [forSocket, forRequest] = await settle(both);
+
+            expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+            expect(forSocket).toBe(forRequest);
+        });
+    });
 });

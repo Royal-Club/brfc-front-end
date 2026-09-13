@@ -207,12 +207,27 @@ export default function TeamChatRoom({
         }
     };
 
-    const { connected } = useTeamChatWebSocket({
+    const { connected, error: connectionError } = useTeamChatWebSocket({
         teamId: room.open ? room.teamId : undefined,
         onMessage: mergeMessage,
         onRoomClosed,
         enabled: room.open,
     });
+
+    /**
+     * What the badge says when the room is not live.
+     *
+     * <p>"Reconnecting…" was shown for every failure, including the two that are not reconnecting
+     * at all — a reader who is not in this squad, and one whose session is gone. Both sat there
+     * indefinitely watching a reassuring message about a retry that was never going to come.
+     */
+    const liveStatus = connected
+        ? { status: "success" as const, text: "Live" }
+        : connectionError === "denied"
+            ? { status: "error" as const, text: "Not in this team" }
+            : connectionError === "expired"
+                ? { status: "warning" as const, text: "Signing back in…" }
+                : { status: "default" as const, text: "Reconnecting…" };
 
     /**
      * Follows the conversation only for a reader who is already at the bottom of it.
@@ -400,10 +415,7 @@ export default function TeamChatRoom({
                             {formatBytes(remainingBytes)} free
                         </Text>
                     </Tooltip>
-                    <Badge
-                        status={connected ? "success" : "default"}
-                        text={connected ? "Live" : "Reconnecting…"}
-                    />
+                    <Badge status={liveStatus.status} text={liveStatus.text} />
                 </div>
             </div>
 

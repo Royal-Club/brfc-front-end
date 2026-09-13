@@ -1,5 +1,6 @@
 import { message } from "antd";
 import { API_URL as SETTINGS_API_URL } from "../settings";
+import { authorizedFetch } from "../state/api/authorizedFetch";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE_MB = 5;
@@ -77,7 +78,11 @@ export async function uploadPlayerPhoto(
 
         if (!uploadUrl || !key) throw new Error("No presigned URL returned");
 
-        const uploadResponse = await fetch(uploadUrl, {
+        // Local storage — the default — serves this PUT from our own API behind isAuthenticated(),
+        // so it needs the member's token; a presigned R2 URL must not be given one, because the
+        // extra header invalidates the signature already in the query string. authorizedFetch tells
+        // the two apart, and renews the token if it has lapsed rather than failing the upload.
+        const uploadResponse = await authorizedFetch(uploadUrl, {
             method: "PUT",
             headers: { "Content-Type": contentType },
             body: compressed,
