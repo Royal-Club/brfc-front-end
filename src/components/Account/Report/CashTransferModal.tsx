@@ -63,7 +63,7 @@ function CashTransferModal({ open, onClose, onDone }: CashTransferModalProps) {
             onDone();
             onClose();
         } catch (err) {
-            notifyRequestError(err, "Could not record the handover");
+            notifyRequestError(err, "Could not send the handover");
         }
     };
 
@@ -76,7 +76,7 @@ function CashTransferModal({ open, onClose, onDone }: CashTransferModalProps) {
                 onClose();
             }}
             onOk={handleSubmit}
-            okText="Record handover"
+            okText="Send request"
             confirmLoading={isSaving}
             destroyOnClose
             maskClosable={false}
@@ -85,7 +85,7 @@ function CashTransferModal({ open, onClose, onDone }: CashTransferModalProps) {
                 type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
-                message="Record this when the money physically changes hands, so both balances move together."
+                message="Nothing moves yet. The money leaves your balance only once the person you name accepts it."
             />
 
             <Form form={form} layout="vertical" initialValues={{ date: dayjs() }} preserve={false}>

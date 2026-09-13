@@ -26,4 +26,30 @@ export interface CashTransferPayload {
     note?: string;
 }
 
+export type CashTransferStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED";
+
+/** A handover still waiting on the receiver, as either side sees it. */
+export interface PendingCashTransfer {
+    id: number;
+    fromAccountId: number;
+    fromAccountName: string;
+    fromHolderName: string | null;
+    toAccountId: number;
+    toAccountName: string;
+    toHolderName: string | null;
+    amount: number;
+    date: string;
+    note: string | null;
+    status: CashTransferStatus;
+    initiatedByName: string | null;
+    createdDate: string;
+}
+
+export interface IPendingCashTransfers {
+    /** Coming into me, waiting on me to accept or reject. */
+    incoming: PendingCashTransfer[];
+    /** Offered by me, waiting on the other side. I may cancel these. */
+    outgoing: PendingCashTransfer[];
+}
+
 export default ICashTransferOptions;

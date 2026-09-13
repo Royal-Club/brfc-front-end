@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import AntTitle from "antd/es/typography/Title";
 import { useGetMyCashInHandQuery } from "../../../state/features/account/myCashInHandSlice";
 import CashTransferModal from "./CashTransferModal";
+import PendingHandovers from "./PendingHandovers";
 import { CashMovement } from "../../../interfaces/IMyCashInHand";
 import AnalyticsCard from "../../Dashboard/AnalyticsCard";
 import { fmtMoney } from "../../../utils/acFormat";
@@ -161,6 +162,8 @@ function MyCashInHand() {
                     />
                 </Col>
             </Row>
+
+            <PendingHandovers />
 
             <div style={{ ...kicker, color: club.gold, margin: "26px 0 10px" }}>
                 Recent movements
