@@ -18,11 +18,12 @@ import {
     Space,
     message,
     theme,
+    Upload,
 } from "antd";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
+import { selectLoginInfo, setImage } from "../../state/slices/loginInfoSlice";
 import {
     UserOutlined,
     PhoneOutlined,
@@ -34,6 +35,8 @@ import {
     TrophyOutlined,
     HistoryOutlined,
     WalletOutlined,
+    CameraOutlined,
+    LoadingOutlined,
 } from "@ant-design/icons";
 import "./authStyles.css";
 import companyLogo from "../../assets/logo.png";
@@ -41,15 +44,19 @@ import {
     useGetUserProfileQuery,
     useChangePasswordMutation,
     useUpdatePlayerDataMutation,
+    useUpdatePlayerPhotoMutation,
 } from "../../state/features/auth/authSlice";
 import {
     useGetPlayerPositionsQuery,
     useGetMyGoalkeepingHistoryQuery,
+    usePresignPlayerPhotoUploadMutation,
 } from "../../state/features/player/playerSlice";
 import { useGetPlayerStatisticsQuery, useGetPlayerMatchHistoryQuery } from "../../state/features/statistics/statisticsSlice";
 import { useGetPlayerPaymentsQuery } from "../../state/features/account/playerPaymentsSlice";
 import { showBdLocalTime } from "../../utils/utils";
-import { toAbsolutePlayerPhotoUrl } from "../../utils/playerPhotoUtils";
+import { toAbsolutePlayerPhotoUrl, validatePlayerPhoto, compressPlayerPhoto, photoChangeHint } from "../../utils/playerPhotoUtils";
+import { authorizedFetch } from "../../state/api/authorizedFetch";
+import { normalizeErrorMessage } from "../../utils/normalizeErrorMessage";
 import FormatCurrencyWithSymbol from "../Util/FormatCurrencyWithSymbol";
 import useIsMobile from "../../hooks/useIsMobile";
 import { club } from "../../theme/clubTheme";
@@ -59,6 +66,7 @@ const { Option } = Select;
 
 export default function UserProfile() {
     const loginInfo = useSelector(selectLoginInfo);
+    const dispatch = useDispatch();
     const isMobile = useIsMobile(576);
 
     // When rendered at /players/:id we view that player read-only; at /profile
@@ -101,6 +109,9 @@ export default function UserProfile() {
     const { data: playerPositions } = useGetPlayerPositionsQuery();
     const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
     const [updatePlayerData, { isLoading: isUpdating }] = useUpdatePlayerDataMutation();
+    const [presignPlayerPhoto] = usePresignPlayerPhotoUploadMutation();
+    const [updatePlayerPhoto] = useUpdatePlayerPhotoMutation();
+    const [photoUploading, setPhotoUploading] = useState(false);
 
     const {
         data: goalkeepingHistoryData,
@@ -153,6 +164,47 @@ export default function UserProfile() {
             });
         }
     }, [profile, profileForm]);
+
+    // Enforced by the backend at presign time; mirrored here to disable the control and explain why.
+    const photoChangeAvailableAt =
+        profile?.photoChangeAvailableAt &&
+        new Date(profile.photoChangeAvailableAt).getTime() > Date.now()
+            ? profile.photoChangeAvailableAt
+            : null;
+
+    const handleUploadPhoto = async (file: File): Promise<false> => {
+        if (photoChangeAvailableAt) {
+            message.error(photoChangeHint(photoChangeAvailableAt));
+            return false;
+        }
+        const error = validatePlayerPhoto(file);
+        if (error) { message.error(error); return false; }
+        setPhotoUploading(true);
+        try {
+            const compressed = await compressPlayerPhoto(file);
+            const contentType = file.type === "image/png" ? "image/png" : "image/jpeg";
+            const ext = contentType === "image/png" ? ".png" : ".jpg";
+            const fileName = file.name.replace(/\.[^.]+$/, ext);
+            const res = await presignPlayerPhoto({ fileName, contentType }).unwrap();
+            const { key, uploadUrl } = res.content;
+            const uploadResp = await authorizedFetch(uploadUrl, {
+                method: "PUT",
+                headers: { "Content-Type": contentType },
+                body: compressed,
+            });
+            if (!uploadResp.ok) throw new Error("Upload failed");
+            const updated = await updatePlayerPhoto({ id: ownId, photoKey: key }).unwrap();
+            const newUrl = toAbsolutePlayerPhotoUrl(updated.content?.photoUrl);
+            if (newUrl) dispatch(setImage(newUrl));
+            message.success("Photo updated");
+            refetch();
+        } catch (err: any) {
+            message.error(normalizeErrorMessage(err, "Photo upload failed"));
+        } finally {
+            setPhotoUploading(false);
+        }
+        return false;
+    };
 
     const handleUpdateProfile = (values: any) => {
         updatePlayerData({ id: Number(loginInfo.userId), data: values })
@@ -883,6 +935,45 @@ export default function UserProfile() {
                                 icon={<UserOutlined />}
                                 style={{ border: "3px solid #0b1f2a" }}
                             />
+                            {isOwn && (
+                                <Upload
+                                    accept="image/jpeg,image/png,image/webp"
+                                    showUploadList={false}
+                                    beforeUpload={handleUploadPhoto}
+                                    disabled={photoUploading || !!photoChangeAvailableAt}
+                                >
+                                    <button
+                                        type="button"
+                                        title={
+                                            photoChangeAvailableAt
+                                                ? photoChangeHint(photoChangeAvailableAt)
+                                                : "Change photo"
+                                        }
+                                        disabled={photoUploading || !!photoChangeAvailableAt}
+                                        style={{
+                                            position: "absolute",
+                                            bottom: 2,
+                                            right: 2,
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: "50%",
+                                            border: `2px solid ${club.navyDeep}`,
+                                            background: club.gold,
+                                            color: club.navyDeep,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            cursor:
+                                                photoUploading || !!photoChangeAvailableAt
+                                                    ? "not-allowed"
+                                                    : "pointer",
+                                            padding: 0,
+                                        }}
+                                    >
+                                        {photoUploading ? <LoadingOutlined /> : <CameraOutlined />}
+                                    </button>
+                                </Upload>
+                            )}
                             {profile?.active && (
                                 <span
                                     title="Active player"

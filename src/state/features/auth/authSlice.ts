@@ -79,6 +79,17 @@ export const tournamentsApi = apiWithTags.injectEndpoints({
             }),
             invalidatesTags: ["auth"],
         }),
+        updatePlayerPhoto: build.mutation<
+            PlayerProfileResType,
+            { id: number; photoKey: string }
+        >({
+            query: ({ id, photoKey }) => ({
+                url: `players/${id}/photo`,
+                method: "PATCH",
+                body: { photoKey },
+            }),
+            invalidatesTags: ["auth"],
+        }),
         resetPlayerPassword: build.mutation<BasicResType, {
             email: string,
             newPassword: string
@@ -99,5 +110,6 @@ export const {
     useChangePasswordMutation,
     useGetUserProfileQuery,
     useUpdatePlayerDataMutation,
+    useUpdatePlayerPhotoMutation,
     useResetPlayerPasswordMutation
 } = tournamentsApi;
