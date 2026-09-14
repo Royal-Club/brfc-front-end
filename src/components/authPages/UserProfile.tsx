@@ -979,7 +979,7 @@ export default function UserProfile() {
                                     title="Active player"
                                     style={{
                                         position: "absolute",
-                                        bottom: 6,
+                                        top: 6,
                                         right: 6,
                                         width: 18,
                                         height: 18,
