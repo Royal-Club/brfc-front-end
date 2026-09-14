@@ -416,7 +416,7 @@ export default function JoinTournament() {
             <Space align="center" size={8}>
               <TeamOutlined style={{ fontSize: 15 }} />
               <Title level={4} style={{ margin: 0 }}>Tournament Participants</Title>
-              <Tag>{players.length}</Tag>
+              <Tag>{filteredTableData.length}</Tag>
             </Space>
           </Col>
           <Col xs={24} sm={12} style={{ display: "flex", justifyContent: screens.sm ? "flex-end" : "flex-start" }}>
