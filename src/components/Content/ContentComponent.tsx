@@ -436,6 +436,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                     </Header>
                 )}
                 <Content
+                    className="slimScroll"
                     style={{
                         height: 'calc(100vh - 64px)',
                         overflow: 'auto',

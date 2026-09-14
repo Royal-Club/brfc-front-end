@@ -1,28 +1,10 @@
 import { Outlet } from "react-router-dom";
-import { useState, useEffect } from "react";
 
 export default function ContentOutlet() {
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-
-        checkMobile();
-        window.addEventListener("resize", checkMobile);
-        return () => window.removeEventListener("resize", checkMobile);
-    }, []);
-    
+    // Scrolling is owned by the parent <Content> so the page and footer scroll as one region.
+    // A second scroll container here produced a redundant scrollbar on taller (finance) pages.
     return (
-        <div
-            style={{
-                padding: "8px 8px 8px",
-                maxHeight: isMobile ? "calc(100vh - 64px)" : "calc(100vh - 64px)",
-                overflow: "auto",
-            }}
-            className="slimScroll"
-        >
+        <div style={{ padding: "8px 8px 8px" }}>
             <Outlet />
         </div>
     );
