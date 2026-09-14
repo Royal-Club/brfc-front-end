@@ -295,6 +295,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
             onOpenChange={onOpenChange}
             items={items}
             mode="inline"
+            className="sidebarScroll"
             style={{
               borderRight: 0,
               flex: 1,

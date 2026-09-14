@@ -44,6 +44,26 @@ code {
   background: #555;
 }
 
+/* Scrollbar tuned for the dark navy sidebar: transparent track, subtle thumb. */
+.sidebarScroll::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.sidebarScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebarScroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+}
+.sidebarScroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+.sidebarScroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
 .tournament-table .ant-table-row:hover {
   cursor: pointer;
 }
