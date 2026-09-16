@@ -58,6 +58,7 @@ const ROUTE_ANCESTORS: Record<string, string[]> = {
   "/ac/collections": ["financeSubMenu"],
   "/ac/bill-payments": ["financeSubMenu"],
   "/ac/vouchers": ["financeSubMenu", "VoucherSubMenu"],
+  "/ac/transaction-logs": ["financeSubMenu"],
   "/ac/reports/financial-health": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/my-cash-in-hand": ["financeSubMenu", "acReportsSubMenu"],
   "/ac/reports/accounts-summary": ["financeSubMenu", "acReportsSubMenu"],
@@ -138,6 +139,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
       getItem("Voucher", "VoucherSubMenu", null, [
         getItem("Voucher Register", "/ac/vouchers"),
       ]),
+      getItem("Transaction Log", "/ac/transaction-logs"),
       getItem("Accounts Reports", "acReportsSubMenu", null, [
         // Open to every member: the club publishes its position, spending and who is behind on
         // dues to the whole squad rather than to admins alone.

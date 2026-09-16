@@ -61,6 +61,7 @@ const BillPaymentReport = lazy(() => import("../Account/Report/BillPaymentReport
 const ClubFinancialHealth = lazy(() => import("../Account/Report/ClubFinancialHealth"));
 const MyCashInHand = lazy(() => import("../Account/Report/MyCashInHand"));
 const AcVouchers = lazy(() => import("../Account/Voucher/AcVouchers"));
+const TransactionLog = lazy(() => import("../Account/Report/TransactionLog"));
 const UserProfile = lazy(() => import("../authPages/UserProfile"));
 const Dashboard = lazy(() => import("../Dashboard/DashboardComponent"));
 const Player = lazy(() => import("../Player/Player"));
@@ -552,6 +553,10 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                             <Route
                                 path="ac/vouchers"
                                 element={<AcVouchers />}
+                            />
+                            <Route
+                                path="ac/transaction-logs"
+                                element={<TransactionLog />}
                             />
                             {/* <Route path="ac/vouchers/:id" element={<AcVoucher />} /> */}
 
