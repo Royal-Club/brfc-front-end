@@ -171,3 +171,99 @@
   background: rgba(198, 161, 91, 0.06);
   border: 1px solid rgba(198, 161, 91, 0.28);
 }
+
+/* ── Pagination — footer rail, gold active page ─────────────────── */
+/* AntD's default sits flush against the last row as a plain inline strip. Pulling it onto its own
+   rail, with the count anchored left and the controls right, gives the table a bottom edge instead
+   of letting it just stop. */
+.brfc-club-table .ant-pagination {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 !important;
+  padding: 14px 4px 4px;
+  border-top: 1px solid rgba(198, 161, 91, 0.18);
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-total-text {
+  /* Pushes every control to the opposite end of the rail. */
+  margin-inline-end: auto;
+  height: auto;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  opacity: 0.7;
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-item,
+.brfc-club-table .ant-pagination .ant-pagination-prev .ant-pagination-item-link,
+.brfc-club-table .ant-pagination .ant-pagination-next .ant-pagination-item-link {
+  border-radius: 8px;
+  border: 1px solid rgba(135, 146, 168, 0.26);
+  background: transparent;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-item a {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-item:hover,
+.brfc-club-table .ant-pagination .ant-pagination-prev:not(.ant-pagination-disabled) .ant-pagination-item-link:hover,
+.brfc-club-table .ant-pagination .ant-pagination-next:not(.ant-pagination-disabled) .ant-pagination-item-link:hover {
+  border-color: rgba(198, 161, 91, 0.6);
+  background: rgba(198, 161, 91, 0.08);
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-item:hover a {
+  color: #c6a15b;
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-item-active {
+  border-color: #c6a15b;
+  background: rgba(198, 161, 91, 0.14);
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-item-active a {
+  color: #c6a15b !important;
+}
+
+/* A page you cannot go to should read as unavailable, not as another choice. */
+.brfc-club-table .ant-pagination .ant-pagination-disabled .ant-pagination-item-link {
+  border-color: rgba(135, 146, 168, 0.14);
+  opacity: 0.45;
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-options .ant-select-selector,
+.brfc-club-table .ant-pagination .ant-pagination-options-quick-jumper input {
+  border-radius: 8px !important;
+  border-color: rgba(135, 146, 168, 0.26) !important;
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-options .ant-select:hover .ant-select-selector,
+.brfc-club-table .ant-pagination .ant-pagination-options-quick-jumper input:hover {
+  border-color: rgba(198, 161, 91, 0.6) !important;
+}
+
+.brfc-club-table .ant-pagination .ant-pagination-options .ant-select-focused .ant-select-selector,
+.brfc-club-table .ant-pagination .ant-pagination-options-quick-jumper input:focus {
+  border-color: #c6a15b !important;
+  box-shadow: 0 0 0 2px rgba(198, 161, 91, 0.14) !important;
+}
+
+/* On a phone the count takes its own line rather than squeezing the controls. */
+@media (max-width: 575px) {
+  .brfc-club-table .ant-pagination {
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .brfc-club-table .ant-pagination .ant-pagination-total-text {
+    flex: 0 0 100%;
+    margin-inline-end: 0;
+    text-align: center;
+  }
+}

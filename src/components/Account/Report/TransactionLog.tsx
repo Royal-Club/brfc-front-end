@@ -640,7 +640,10 @@ function TransactionLog() {
                     total: log?.totalEntries ?? 0,
                     showSizeChanger: true,
                     pageSizeOptions: ["25", "50", "100", "200"],
-                    showTotal: (total) => `Total ${total} transactions`,
+                    // The range, not just the count: on a paged log "where am I" is the question a
+                    // bare total leaves unanswered.
+                    showTotal: (total, [first, last]) =>
+                        total ? `Showing ${first}–${last} of ${total} transactions` : "No transactions",
                     onChange: (nextPage, nextSize) => {
                         setPage(nextPage - 1);
                         setPageSize(nextSize);
