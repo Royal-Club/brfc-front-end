@@ -55,8 +55,11 @@ function Players() {
   const [resetPlayerPassword] = useResetPlayerPasswordMutation();
   const { data: rolesData } = useGetRolesQuery();
   const [assignRoles] = useAssignRolesMutation();
-  const { data: cashAccountsData } = useGetAssignableCashAccountsQuery();
   const loginInfo = useSelector(selectLoginInfo);
+  // Only SUPERADMIN can read cash accounts, so skip the call for everyone else to avoid a 401.
+  const { data: cashAccountsData } = useGetAssignableCashAccountsQuery(undefined, {
+    skip: !loginInfo.roles.includes("SUPERADMIN"),
+  });
 
   // State for handling the password change modal
   const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
