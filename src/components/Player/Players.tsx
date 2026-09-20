@@ -84,12 +84,37 @@ function Players() {
   const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
   // undefined means "open a new account", matching what the server does with an absent selection.
   const [selectedCashAccount, setSelectedCashAccount] = useState<number | undefined>(undefined);
+
+  const canManagePlayers = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
+
+  // Every running hold in one call, so the list can badge players without a request per row.
+  // Declared before the filters because the Hold tab reads it.
+  const { data: openPauses } = useGetOpenPausesQuery(undefined, { skip: !canManagePlayers });
+  const openPauseByPlayer = useMemo(
+    () => new Map((openPauses?.content ?? []).map((pause) => [pause.playerId, pause])),
+    [openPauses]
+  );
+
+  // One definition of what each tab means, shared by the tab switch and the search box so
+  // the two cannot drift apart.
+  const matchesTab = (player: IPlayer, tabKey: string) => {
+    switch (tabKey) {
+      case "active":
+        return Boolean(player.active);
+      case "inactive":
+        return !player.active;
+      case "hold":
+        return openPauseByPlayer.has(player.id);
+      default:
+        return true;
+    }
+  };
   
   useEffect(() => {
     if (playersData?.content) {
       filterPlayersByTab(activeTabKey, playersData.content);
     }
-  }, [playersData, activeTabKey]);
+  }, [playersData, activeTabKey, openPauses]);
 
   useEffect(() => {
     refetch();
@@ -105,9 +130,7 @@ function Players() {
           (player.name?.toLowerCase().includes(value.toLowerCase()) ||
           player.email?.toLowerCase().includes(value.toLowerCase()) ||
           player.mobileNo?.includes(value)) &&
-          (activeTabKey === "all" || 
-          (activeTabKey === "active" && player.active) || 
-          (activeTabKey === "inactive" && !player.active))
+          matchesTab(player, activeTabKey)
       );
       setFilteredPlayers(filtered);
     } else {
@@ -119,17 +142,7 @@ function Players() {
   const filterPlayersByTab = (tabKey: string, players: IPlayer[] = playersData?.content || []) => {
     if (!players) return;
     
-    let filtered;
-    switch (tabKey) {
-      case "active":
-        filtered = players.filter(player => player.active);
-        break;
-      case "inactive":
-        filtered = players.filter(player => !player.active);
-        break;
-      default:
-        filtered = players;
-    }
+    let filtered = players.filter(player => matchesTab(player, tabKey));
 
     // Apply any existing search filter
     if (searchTerm) {
@@ -148,6 +161,8 @@ function Players() {
   const handleTabChange = (key: string) => {
     setActiveTabKey(key);
     filterPlayersByTab(key);
+    // On hold is a much shorter list than All, so a stale page number would land on nothing.
+    setMobilePage(1);
   };
 
   // Function to handle opening the password modal
@@ -432,15 +447,6 @@ function Players() {
     },
   ];
 
-  const canManagePlayers = loginInfo.roles.includes("ADMIN") || loginInfo.roles.includes("SUPERADMIN");
-
-  // Every running hold in one call, so the list can badge players without a request per row.
-  const { data: openPauses } = useGetOpenPausesQuery(undefined, { skip: !canManagePlayers });
-  const openPauseByPlayer = useMemo(
-    () => new Map((openPauses?.content ?? []).map((pause) => [pause.playerId, pause])),
-    [openPauses]
-  );
-
   const playersColumn: ColumnsType<IPlayer> = [
     ...CommonColumns,
     {
@@ -504,6 +510,8 @@ function Players() {
   const allCount = playersData?.content?.length || 0;
   const activeCount = playersData?.content?.filter(player => player.active).length || 0;
   const inactiveCount = playersData?.content?.filter(player => !player.active).length || 0;
+  // Counted off the same map the list badges from, so the tab and the rows always agree.
+  const holdCount = playersData?.content?.filter(player => openPauseByPlayer.has(player.id)).length || 0;
 
   const renderTabLabel = (label: string, count: number, tone: string) => (
     <span className="brfc-seg-label">
@@ -695,6 +703,10 @@ function Players() {
             { label: renderTabLabel("All", allCount, club.gold), value: "all" },
             { label: renderTabLabel("Active", activeCount, club.pitch), value: "active" },
             { label: renderTabLabel("Inactive", inactiveCount, "#E0736B"), value: "inactive" },
+            // Only admins get the holds data, so only they get a tab that could filter by it.
+            ...(canManagePlayers
+              ? [{ label: renderTabLabel("On hold", holdCount, "#E0A23C"), value: "hold" }]
+              : []),
           ]}
         />
       </div>

@@ -9,6 +9,7 @@ import {
     ProjectOutlined,
     RadarChartOutlined,
     ReadOutlined,
+    SafetyCertificateOutlined,
     TrophyOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
@@ -163,6 +164,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
     getItem("Club Rules", "/club-rules", <BookOutlined />),
     getItem("Resources", "/resources", <ReadOutlined />),
     getItem("Auction", "/auction", <FireOutlined />),
+    getItem("Role Management", "/role-management", <SafetyCertificateOutlined />),
   ];
 
   useEffect(() => {

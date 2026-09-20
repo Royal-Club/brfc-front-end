@@ -66,6 +66,7 @@ const UserProfile = lazy(() => import("../authPages/UserProfile"));
 const Dashboard = lazy(() => import("../Dashboard/DashboardComponent"));
 const Player = lazy(() => import("../Player/Player"));
 const Players = lazy(() => import("../Player/Players"));
+const RoleManagement = lazy(() => import("../Admin/RoleManagement"));
 const PlayerStatistics = lazy(() => import("../Player/PlayerStatistics"));
 const PlayerComparison = lazy(() => import("../Player/PlayerComparison"));
 const PlayerAttendance = lazy(() => import("../Player/PlayerAttendance"));
@@ -482,6 +483,12 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                                 />
                             )}
                             <Route path="/players" element={<Players />} />
+                            {/* Readable by any signed-in member; the page itself only offers the
+                                editing controls to a superadmin. */}
+                            <Route
+                                path="/role-management"
+                                element={<RoleManagement />}
+                            />
                             <Route path="/player-statistics" element={<PlayerStatistics />} />
                             <Route path="/player-comparison" element={<PlayerComparison />} />
                             <Route path="/player-attendance" element={<PlayerAttendance />} />
