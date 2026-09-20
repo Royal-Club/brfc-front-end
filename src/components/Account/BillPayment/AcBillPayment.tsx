@@ -444,10 +444,10 @@ function AcBillPayment() {
     // ones -- that is what deactivating a cost type is for. The one an existing payment already
     // uses is kept in the list so editing that payment does not silently clear the field.
     const costTypeOptions = costTypes
-        .filter((costType) => costType.isActive || costType.id === editingCostTypeId)
+        .filter((costType) => costType.active || costType.id === editingCostTypeId)
         .map((costType) => ({
             value: costType.id,
-            label: costType.isActive ? costType.name : `${costType.name} (inactive)`,
+            label: costType.active ? costType.name : `${costType.name} (inactive)`,
         }));
 
     return (

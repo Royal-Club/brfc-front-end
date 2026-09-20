@@ -136,19 +136,19 @@ function CostType() {
         },
         {
             title: "Status",
-            dataIndex: "isActive",
-            key: "isActive",
+            dataIndex: "active",
+            key: "active",
             render: (_: any, record: ICostType) => (
                 <Switch
                     size="small"
-                    checked={record.isActive}
+                    checked={record.active}
                     loading={togglingId === record.id}
                     onChange={(checked) => handleToggleStatus(record, checked)}
                     checkedChildren="Active"
                     unCheckedChildren="Inactive"
                 />
             ),
-            sorter: (a, b) => Number(a.isActive) - Number(b.isActive),
+            sorter: (a, b) => Number(a.active) - Number(b.active),
         },
         {
             title: "",
