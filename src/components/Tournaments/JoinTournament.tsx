@@ -2,15 +2,16 @@ import React, { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Select, Typography, Space, Skeleton, Input, Grid, theme, Card,
-  Row, Col, Button, Segmented, Avatar, Tag, Divider, Progress,
+  Row, Col, Button, Segmented, Tag, Divider, Progress,
   Modal, List,
 } from "antd";
 import useJoinTournament from "../../hooks/useJoinTournament";
+import PlayerAvatar from "../Util/PlayerAvatar";
 import { TournamentPlayerInfoType } from "../../state/features/tournaments/tournamentTypes";
 import DebouncedInput from "./Atoms/DebouncedInput";
 import "./tournament.css";
 import {
-  CheckCircleOutlined, CloseCircleOutlined, UserOutlined, SearchOutlined,
+  CheckCircleOutlined, CloseCircleOutlined, SearchOutlined,
   ClockCircleOutlined, TeamOutlined, StarFilled, CalendarOutlined,
   CheckCircleFilled, TrophyOutlined, MessageOutlined, LockOutlined,
 } from "@ant-design/icons";
@@ -251,10 +252,10 @@ export default function JoinTournament() {
 
               {/* Identity row */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-                <Avatar
+                <PlayerAvatar
                   size={46}
                   src={toAbsolutePlayerPhotoUrl(loggedInPlayer.photoUrl)}
-                  icon={!loggedInPlayer.photoUrl ? <UserOutlined /> : undefined}
+                  name={loggedInPlayer.playerName}
                   style={{ backgroundColor: loggedInPlayer.photoUrl ? undefined : token.colorPrimary, flexShrink: 0, border: `2px solid ${club.gold}` }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -497,7 +498,7 @@ export default function JoinTournament() {
                   >
                     {/* Compact single row: identity + participation select */}
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <Avatar size={40} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
+                      <PlayerAvatar size={40} src={photoUrl} name={r.playerName}
                         style={{
                           flexShrink: 0,
                           backgroundColor: photoUrl ? undefined : club.navySoft,
@@ -571,7 +572,7 @@ export default function JoinTournament() {
                 >
                   {/* Identity */}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <Avatar size={34} src={photoUrl} icon={!photoUrl ? <UserOutlined /> : undefined}
+                    <PlayerAvatar size={34} src={photoUrl} name={r.playerName}
                       style={{
                         flexShrink: 0,
                         backgroundColor: photoUrl ? undefined : club.navySoft,
@@ -695,10 +696,10 @@ export default function JoinTournament() {
                     >
                       <List.Item.Meta
                         avatar={
-                          <Avatar
+                          <PlayerAvatar
                             size="small"
                             src={toAbsolutePlayerPhotoUrl(player.photoUrl)}
-                            icon={!player.photoUrl ? <UserOutlined /> : undefined}
+                            name={player.playerName}
                             style={{
                               background: player.photoUrl ? undefined : token.colorPrimaryBg,
                               color: token.colorPrimary,

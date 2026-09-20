@@ -20,7 +20,6 @@ import {
   message,
   Typography,
   Tag,
-  Avatar,
   Form,
   Select,
   Segmented,
@@ -31,6 +30,7 @@ import {
 } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import IPlayer from "../../interfaces/IPlayer";
+import PlayerAvatar from "../Util/PlayerAvatar";
 import { useGetPlayersQuery } from "../../state/features/player/playerSlice";
 import React, { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
@@ -337,8 +337,9 @@ function Players() {
       key: "name",
       render: (_, record: IPlayer) => (
         <Space>
-          <Avatar
+          <PlayerAvatar
             src={toAbsolutePlayerPhotoUrl(record.photoUrl) || undefined}
+            name={record.name}
             style={{
               backgroundColor: record.active ? club.navySoft : "rgba(128,128,128,0.15)",
               color: club.goldSoft,
@@ -347,7 +348,7 @@ function Players() {
             }}
           >
             {getInitials(record.name || "")}
-          </Avatar>
+          </PlayerAvatar>
           <div>
             <Text strong style={{ display: "block", lineHeight: 1.3 }}>{record.name}</Text>
             <Text type="secondary" style={{ fontSize: "12px" }}>
@@ -537,8 +538,9 @@ function Players() {
           {paged.map((record) => (
             <div key={record.id} className="brfc-player-mcard">
               <div className="brfc-player-mcard__top">
-                <Avatar
+                <PlayerAvatar
                   src={toAbsolutePlayerPhotoUrl(record.photoUrl) || undefined}
+                  name={record.name}
                   size={44}
                   style={{
                     flexShrink: 0,
@@ -549,7 +551,7 @@ function Players() {
                   }}
                 >
                   {getInitials(record.name || "")}
-                </Avatar>
+                </PlayerAvatar>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <Text strong style={{ display: "block", lineHeight: 1.3 }} ellipsis>
                     {record.name}

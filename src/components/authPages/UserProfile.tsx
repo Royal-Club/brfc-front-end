@@ -3,7 +3,6 @@ import {
     Card,
     Col,
     Row,
-    Avatar,
     Typography,
     Skeleton,
     Tabs,
@@ -25,7 +24,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { selectLoginInfo, setImage } from "../../state/slices/loginInfoSlice";
 import {
-    UserOutlined,
     PhoneOutlined,
     IdcardOutlined,
     MailOutlined,
@@ -58,6 +56,7 @@ import { toAbsolutePlayerPhotoUrl, validatePlayerPhoto, compressPlayerPhoto, pho
 import { authorizedFetch } from "../../state/api/authorizedFetch";
 import { normalizeErrorMessage } from "../../utils/normalizeErrorMessage";
 import FormatCurrencyWithSymbol from "../Util/FormatCurrencyWithSymbol";
+import PlayerAvatar from "../Util/PlayerAvatar";
 import useIsMobile from "../../hooks/useIsMobile";
 import { club } from "../../theme/clubTheme";
 
@@ -929,10 +928,10 @@ export default function UserProfile() {
                                 flexShrink: 0,
                             }}
                         >
-                            <Avatar
+                            <PlayerAvatar
                                 size={isMobile ? 92 : 112}
                                 src={avatarSrc}
-                                icon={<UserOutlined />}
+                                name={profile?.name || loginInfo.username}
                                 style={{ border: "3px solid #0b1f2a" }}
                             />
                             {isOwn && (
