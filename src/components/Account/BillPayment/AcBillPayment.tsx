@@ -8,6 +8,7 @@ import {
 import {
     Button,
     DatePicker,
+    Divider,
     Form,
     Input,
     InputNumber,
@@ -30,6 +31,7 @@ import IAcBillPayment from "../../../interfaces/IAcBillPayment";
 import ICostType from "../../../interfaces/ICostType";
 import axiosApi from "../../../state/api/axiosBase";
 import AcBillPaymentGraph from "./AcBillPaymentGraph";
+import CostTypeFormModal from "../Configuration/CostTypeFormModal";
 import "../../../theme/clubTable.css";
 const { Text } = Typography;
 
@@ -49,6 +51,8 @@ function AcBillPayment() {
     const [costTypes, setCostTypes] = useState<ICostType[]>([]);
     /** The type the payment being edited was filed under, even if it has since been retired. */
     const [editingCostTypeId, setEditingCostTypeId] = useState<number | null>(null);
+    /** Open when the type this payment needs does not exist yet and is being added inline. */
+    const [costTypeModalOpen, setCostTypeModalOpen] = useState(false);
     const [filteredYear, setFilteredYear] = useState(null);
     const [filteredMonth, setFilteredMonth] = useState(null);
 
@@ -389,6 +393,22 @@ function AcBillPayment() {
             });
     };
 
+    /**
+     * Picks up a type created from inside this form. Added to the local list straight away so the
+     * select can offer it without waiting, then resynced from the server so the row matches what
+     * the list endpoint returns.
+     */
+    const handleCostTypeCreated = (costType: ICostType) => {
+        setCostTypes((previous) =>
+            previous.some((existing) => existing.id === costType.id)
+                ? previous
+                : [...previous, costType]
+        );
+        getCostTypes();
+        acBillPaymentForm.setFieldsValue({ costTypeId: costType.id });
+        setCostTypeModalOpen(false);
+    };
+
     const onChangeCostTypeList = (selectedValues: any) => {
         setCostTypeListSize(selectedValues.length);
     };
@@ -520,6 +540,24 @@ function AcBillPayment() {
             loading={costTypeApiLoading}
             onChange={(value) => onChangeCostTypeList(value)}
             style={{ borderRadius: "4px" }}
+            // The category a payment needs may not exist yet, and leaving the form to go and add
+            // it loses whatever has been typed so far. onMouseDown is suppressed so the click
+            // does not blur the select and close the dropdown before it registers.
+            dropdownRender={(menu) => (
+              <>
+                {menu}
+                <Divider style={{ margin: "8px 0" }} />
+                <Button
+                  type="text"
+                  icon={<PlusOutlined />}
+                  block
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setCostTypeModalOpen(true)}
+                >
+                  Add a new cost type
+                </Button>
+              </>
+            )}
           />
         </Form.Item>
 
@@ -583,6 +621,15 @@ function AcBillPayment() {
     </div>
   </Spin>
 </Modal>
+
+{/* Sits outside the payment modal so creating a type never unmounts the half-filled payment
+    form behind it. The same component the Cost Types screen uses, so the rules match. */}
+<CostTypeFormModal
+  open={costTypeModalOpen}
+  editing={null}
+  onClose={() => setCostTypeModalOpen(false)}
+  onSaved={handleCostTypeCreated}
+/>
         </div>
     );
 }

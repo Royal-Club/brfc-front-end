@@ -1,46 +1,22 @@
-import {
-    Alert,
-    Button,
-    Form,
-    Input,
-    Modal,
-    Popconfirm,
-    Select,
-    Switch,
-    Tooltip,
-    Typography,
-    message,
-} from "antd";
+import { Button, Popconfirm, Switch, Tooltip, Typography, message } from "antd";
 import Table, { ColumnsType } from "antd/es/table";
 import Title from "antd/es/typography/Title";
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import ICostType from "../../../interfaces/ICostType";
 import {
-    useCreateCostTypeMutation,
     useDeleteCostTypeMutation,
-    useGetAcChartListQuery,
     useGetCostTypeListQuery,
-    useUpdateCostTypeMutation,
     useUpdateCostTypeStatusMutation,
 } from "../../../state/features/account/accountSlice";
 import { normalizeErrorMessage } from "../../../utils/normalizeErrorMessage";
+import CostTypeFormModal from "./CostTypeFormModal";
 import "../../../theme/clubTable.css";
 
 const { Text } = Typography;
 
-/** Form shape. `chartId` only holds a number once an account has actually been picked. */
-interface CostTypeFormValues {
-    name: string;
-    description: string;
-    chartId: number;
-}
-
 function CostType() {
     const { data, isLoading } = useGetCostTypeListQuery();
-    const { data: chartData } = useGetAcChartListQuery();
-    const [createCostType, { isLoading: isCreating }] = useCreateCostTypeMutation();
-    const [updateCostType, { isLoading: isUpdating }] = useUpdateCostTypeMutation();
     const [updateCostTypeStatus] = useUpdateCostTypeStatusMutation();
     const [deleteCostType] = useDeleteCostTypeMutation();
 
@@ -50,10 +26,7 @@ function CostType() {
     const [editing, setEditing] = useState<ICostType | null>(null);
     /** Id of the row whose status switch is mid-flight, so only that switch shows a spinner. */
     const [togglingId, setTogglingId] = useState<number | null>(null);
-    const [form] = Form.useForm<CostTypeFormValues>();
     const [messageApi, messageContext] = message.useMessage();
-    /** Watched so the rename warning appears as soon as the name actually differs. */
-    const typedName = Form.useWatch("name", form);
 
     useEffect(() => {
         if (data?.content) {
@@ -67,56 +40,17 @@ function CostType() {
 
     const openCreate = () => {
         setEditing(null);
-        form.resetFields();
         setModalOpen(true);
     };
 
     const openEdit = (record: ICostType) => {
         setEditing(record);
-        form.setFieldsValue({
-            name: record.name,
-            description: record.description,
-            chartId: record.chartId,
-        });
         setModalOpen(true);
     };
 
     const closeModal = () => {
         setModalOpen(false);
         setEditing(null);
-        form.resetFields();
-    };
-
-    const handleSubmit = async () => {
-        let values: CostTypeFormValues;
-        try {
-            values = await form.validateFields();
-        } catch {
-            return; // Field-level errors are already shown against the inputs.
-        }
-
-        // The server uppercases the name anyway; doing it here too means the success message and
-        // the row that appears afterwards agree with each other.
-        const body = {
-            name: values.name.trim().toUpperCase(),
-            description: values.description.trim(),
-            chartId: values.chartId,
-        };
-
-        try {
-            if (editing) {
-                await updateCostType({ id: editing.id, data: body }).unwrap();
-                messageApi.success(`Updated ${body.name}`);
-            } else {
-                await createCostType(body).unwrap();
-                messageApi.success(`Created ${body.name}`);
-            }
-            closeModal();
-        } catch (error) {
-            // Keeps the modal open with the user's input intact so they can correct it rather
-            // than retyping — a duplicate name comes back here as a conflict.
-            messageApi.error(normalizeErrorMessage(error, "Could not save the cost type"));
-        }
     };
 
     const handleToggleStatus = async (record: ICostType, isActive: boolean) => {
@@ -157,27 +91,6 @@ function CostType() {
         }
         return parts.join(" and ");
     };
-
-    // Compared against the normalised name the server would store, so merely retyping the same
-    // name in a different case does not raise a warning about rewriting history.
-    const isRenaming =
-        editing !== null &&
-        typeof typedName === "string" &&
-        typedName.trim().length > 0 &&
-        typedName.trim().toUpperCase() !== editing.name;
-
-    // Spending is filed against expense accounts, so those are the only sensible options. Any
-    // other nature is left out rather than offered and then rejected by the ledger later.
-    //
-    // Compared as an upper-cased string rather than against AcNatureType: the server sends the
-    // enum's key ("EXPENSE") while the enum's value is the display label ("Expense"), so matching
-    // the enum member directly never holds. This accepts either spelling.
-    const chartOptions = (chartData?.content ?? [])
-        .filter((chart) => String(chart.nature?.type).toUpperCase() === "EXPENSE")
-        .map((chart) => ({
-            value: chart.id,
-            label: `${chart.code} — ${chart.name}`,
-        }));
 
     const costTypeColumns: ColumnsType<ICostType> = [
         {
@@ -264,25 +177,25 @@ function CostType() {
                         {/* The span is what the tooltip hangs off: a disabled antd button swallows
                             mouse events, so hovering the button itself shows nothing. */}
                         <span style={{ display: "inline-block" }}>
-                        <Popconfirm
-                            title={`Delete ${record.name}?`}
-                            description="This cannot be undone."
-                            okText="Delete"
-                            okButtonProps={{ danger: true }}
-                            cancelText="Cancel"
-                            disabled={record.inUse}
-                            onConfirm={() => handleDelete(record)}
-                        >
-                            <Button
-                                type="text"
-                                size="small"
-                                danger
+                            <Popconfirm
+                                title={`Delete ${record.name}?`}
+                                description="This cannot be undone."
+                                okText="Delete"
+                                okButtonProps={{ danger: true }}
+                                cancelText="Cancel"
                                 disabled={record.inUse}
-                                icon={<DeleteOutlined />}
+                                onConfirm={() => handleDelete(record)}
                             >
-                                Delete
-                            </Button>
-                        </Popconfirm>
+                                <Button
+                                    type="text"
+                                    size="small"
+                                    danger
+                                    disabled={record.inUse}
+                                    icon={<DeleteOutlined />}
+                                >
+                                    Delete
+                                </Button>
+                            </Popconfirm>
                         </span>
                     </Tooltip>
                 </>
@@ -330,74 +243,12 @@ function CostType() {
                 scroll={{ x: "max-content" }}
             />
 
-            <Modal
-                title={editing ? `Edit ${editing.name}` : "Add Cost Type"}
+            {/* The table refreshes itself: saving invalidates the `costType` tag. */}
+            <CostTypeFormModal
                 open={modalOpen}
-                onOk={handleSubmit}
-                onCancel={closeModal}
-                okText={editing ? "Save" : "Create"}
-                confirmLoading={isCreating || isUpdating}
-                destroyOnClose
-            >
-                <Form form={form} layout="vertical" preserve={false}>
-                    {/* Renaming is allowed for a type in use -- payments reference it by id, so
-                        nothing orphans -- but it re-labels every record already filed under it.
-                        That is right for fixing a wrong name and wrong for repurposing the
-                        category, so the difference is spelled out before the save rather than
-                        discovered in a report afterwards. */}
-                    {editing?.inUse && (
-                        <Alert
-                            type={isRenaming ? "warning" : "info"}
-                            showIcon
-                            style={{ marginBottom: 16 }}
-                            message={
-                                isRenaming
-                                    ? `Renaming will re-label ${usageSummary(editing)}`
-                                    : `${usageSummary(editing)} are filed under this type`
-                            }
-                            description={
-                                isRenaming
-                                    ? "They reference this type by id, so they will all read as the new name, including in past reports. That is what you want for correcting a wrong name. If instead you want this category to mean something different from now on, cancel — deactivate this type and create a new one, so the old entries keep their original label."
-                                    : undefined
-                            }
-                        />
-                    )}
-
-                    <Form.Item
-                        label="Name"
-                        name="name"
-                        rules={[{ required: true, message: "Name is required" }]}
-                        extra="Stored in upper case, matching FIELD_RENT and FOOD. Must be unique."
-                    >
-                        <Input placeholder="e.g. TOURNAMENT_FEE" />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Expense account"
-                        name="chartId"
-                        rules={[{ required: true, message: "Expense account is required" }]}
-                        extra="The account spending under this type posts to."
-                    >
-                        <Select
-                            placeholder="Select an expense account"
-                            options={chartOptions}
-                            showSearch
-                            optionFilterProp="label"
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Description"
-                        name="description"
-                        rules={[{ required: true, message: "Description is required" }]}
-                    >
-                        <Input.TextArea
-                            rows={2}
-                            placeholder="e.g. Entry fees paid to enter the club into a tournament."
-                        />
-                    </Form.Item>
-                </Form>
-            </Modal>
+                editing={editing}
+                onClose={closeModal}
+            />
         </div>
     );
 }

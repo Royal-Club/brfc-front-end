@@ -159,7 +159,8 @@ const acCollectionApi = apiWithTags.injectEndpoints({
       providesTags: ["costType"],
     }),
 
-    createCostType: builder.mutation<BasicResType<null>, CostTypeRequest>({
+    /** Returns the created type, id included, so a form creating one inline can select it. */
+    createCostType: builder.mutation<BasicResType<ICostType>, CostTypeRequest>({
       query: (data) => ({
         url: `/cost-types`,
         method: "POST",
