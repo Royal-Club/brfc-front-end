@@ -258,10 +258,16 @@ export default function JoinTournament() {
                   style={{ backgroundColor: loggedInPlayer.photoUrl ? undefined : token.colorPrimary, flexShrink: 0, border: `2px solid ${club.gold}` }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <Space size={5} align="center">
-                    <Text strong style={{ fontSize: 15, color: club.textPrimary }}>{loggedInPlayer.playerName}</Text>
-                    <StarFilled style={{ color: club.gold, fontSize: 12 }} />
-                  </Space>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                    <Text
+                      strong
+                      style={{ fontSize: 15, color: club.textPrimary, flex: 1, minWidth: 0 }}
+                      ellipsis={{ tooltip: loggedInPlayer.playerName }}
+                    >
+                      {loggedInPlayer.playerName}
+                    </Text>
+                    <StarFilled style={{ color: club.gold, fontSize: 12, flexShrink: 0 }} />
+                  </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
                     <Text style={{ fontSize: 12, color: club.textMuted, ...scoreNum }}>ID: {loggedInPlayer.employeeId}</Text>
                     {loggedInPlayer.participationStatus === true  && <Tag color="success"  style={{ margin: 0, fontSize: 11 }}>Confirmed</Tag>}
@@ -500,12 +506,20 @@ export default function JoinTournament() {
                           fontWeight: 700,
                         }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <Space size={5} align="center" wrap>
-                          <Text strong style={{ fontSize: 14 }} ellipsis>{r.playerName}</Text>
-                          {isMe && <StarFilled style={{ color: "#faad14", fontSize: 11 }} />}
-                          {r.isCaptain && <Tag color="gold" style={{ margin: 0, fontSize: 10, padding: "0 4px", lineHeight: "18px" }}>C</Tag>}
-                        </Space>
-                        <Text type="secondary" style={{ fontSize: 12, display: "block" }}>ID: {r.employeeId}</Text>
+                        {/* Plain flex instead of <Space>: ant-space-item has no min-width:0,
+                            so a long name would overflow the card instead of ellipsising. */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+                          <Text
+                            strong
+                            style={{ fontSize: 14, flex: 1, minWidth: 0 }}
+                            ellipsis={{ tooltip: r.playerName }}
+                          >
+                            {r.playerName}
+                          </Text>
+                          {isMe && <StarFilled style={{ color: "#faad14", fontSize: 11, flexShrink: 0 }} />}
+                          {r.isCaptain && <Tag color="gold" style={{ margin: 0, fontSize: 10, padding: "0 4px", lineHeight: "18px", flexShrink: 0 }}>C</Tag>}
+                        </div>
+                        <Text type="secondary" style={{ fontSize: 12, display: "block" }} ellipsis>ID: {r.employeeId}</Text>
                       </div>
 
                       {/* Action — participation only (comments hidden on mobile) */}
@@ -566,12 +580,18 @@ export default function JoinTournament() {
                         fontWeight: 700,
                       }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <Space size={4} align="center">
-                        <Text strong style={{ fontSize: 13 }} ellipsis>{r.playerName}</Text>
-                        {isMe && <StarFilled style={{ color: "#faad14", fontSize: 10 }} />}
-                        {r.isCaptain && <Tag color="gold" style={{ margin: 0, fontSize: 9, padding: "0 3px", lineHeight: "16px" }}>C</Tag>}
-                      </Space>
-                      <Text type="secondary" style={{ fontSize: 11, display: "block" }}>ID: {r.employeeId}</Text>
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 0 }}>
+                        <Text
+                          strong
+                          style={{ fontSize: 13, flex: 1, minWidth: 0 }}
+                          ellipsis={{ tooltip: r.playerName }}
+                        >
+                          {r.playerName}
+                        </Text>
+                        {isMe && <StarFilled style={{ color: "#faad14", fontSize: 10, flexShrink: 0 }} />}
+                        {r.isCaptain && <Tag color="gold" style={{ margin: 0, fontSize: 9, padding: "0 3px", lineHeight: "16px", flexShrink: 0 }}>C</Tag>}
+                      </div>
+                      <Text type="secondary" style={{ fontSize: 11, display: "block" }} ellipsis>ID: {r.employeeId}</Text>
                     </div>
                   </div>
 
@@ -686,7 +706,14 @@ export default function JoinTournament() {
                           />
                         }
                         title={
-                          <span style={{ fontSize: 13, color: token.colorText, fontWeight: 600 }}>
+                          <span
+                            title={player.playerName}
+                            style={{
+                              fontSize: 13, color: token.colorText, fontWeight: 600,
+                              display: "block", overflow: "hidden",
+                              textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            }}
+                          >
                             {player.playerName}
                           </span>
                         }
