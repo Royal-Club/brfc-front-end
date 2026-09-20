@@ -29,23 +29,32 @@ ChartJS.register(
 
 const { Option } = Select;
 
+// The palette lines are drawn from, in the order a cost type first claims one.
+const PALETTE = [
+    "rgba(255, 99, 132, 0.7)",
+    "rgba(54, 162, 235, 0.7)",
+    "rgba(75, 192, 192, 0.7)",
+    "rgba(153, 102, 255, 0.7)",
+    "rgba(255, 159, 64, 0.7)",
+    "rgba(255, 205, 86, 0.7)",
+    "rgba(46, 204, 113, 0.7)",
+    "rgba(231, 76, 60, 0.7)",
+];
+
 // Module scope so the identity is stable across renders and generateGraphData
 // does not have to list it as a dependency.
+//
+// Cost types are maintained from the Cost Types screen, so a fixed name-to-color map goes stale as
+// soon as someone adds one. The previous map still listed Insurance and Supplies, which no longer
+// exist, and had nothing for VEHICLE or OTHER, which do - those fell through to a random color and
+// so changed shade on every redraw. Hashing the name instead gives every type, old or new, the
+// same color each time without anyone having to keep a list up to date.
 const getColor = (costType: string): string => {
-    const colors: Record<string, string> = {
-        FIELD_RENT: "rgba(255, 99, 132, 0.7)",
-        FOOD: "rgba(54, 162, 235, 0.7)",
-        EQUIPMENT: "rgba(75, 192, 192, 0.7)",
-        Insurance: "rgba(153, 102, 255, 0.7)",
-        Supplies: "rgba(255, 159, 64, 0.7)",
-        Other: "rgba(255, 205, 86, 0.7)",
-    };
-    return (
-        colors[costType] ||
-        `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(
-            Math.random() * 256
-        )}, ${Math.floor(Math.random() * 256)}, 0.7)`
-    );
+    let hash = 0;
+    for (let i = 0; i < costType.length; i++) {
+        hash = (hash * 31 + costType.charCodeAt(i)) | 0;
+    }
+    return PALETTE[Math.abs(hash) % PALETTE.length];
 };
 
 interface AcBillPaymentGraphProps {

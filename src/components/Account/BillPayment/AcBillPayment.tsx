@@ -47,6 +47,8 @@ function AcBillPayment() {
     const [costTypeListSize, setCostTypeListSize] = useState(0);
     const [paymentAmount, setPaymentAmount] = useState(0);
     const [costTypes, setCostTypes] = useState<ICostType[]>([]);
+    /** The type the payment being edited was filed under, even if it has since been retired. */
+    const [editingCostTypeId, setEditingCostTypeId] = useState<number | null>(null);
     const [filteredYear, setFilteredYear] = useState(null);
     const [filteredMonth, setFilteredMonth] = useState(null);
 
@@ -102,6 +104,9 @@ function AcBillPayment() {
     const clearModalField = () => {
         acBillPaymentForm.resetFields();
         setPaymentAmount(0);
+        // Otherwise a retired type stays on offer for the next new payment, carried over from
+        // whichever payment was edited last.
+        setEditingCostTypeId(null);
     };
 
     const getUniqueYears = () => {
@@ -396,6 +401,7 @@ function AcBillPayment() {
         axiosApi
             .get(`${API_URL}/ac/bill-payments/${id}`)
             .then((response) => {
+                setEditingCostTypeId(response.data.content.costType?.id ?? null);
                 acBillPaymentForm.setFieldsValue({
                     code: response.data.content.code,
                     costTypeId: response.data.content.costType?.id,
@@ -413,6 +419,16 @@ function AcBillPayment() {
                 setModalSpinLoading(false);
             });
     };
+
+    // Retired types stay on the payments already filed under them but must not be offered for new
+    // ones -- that is what deactivating a cost type is for. The one an existing payment already
+    // uses is kept in the list so editing that payment does not silently clear the field.
+    const costTypeOptions = costTypes
+        .filter((costType) => costType.isActive || costType.id === editingCostTypeId)
+        .map((costType) => ({
+            value: costType.id,
+            label: costType.isActive ? costType.name : `${costType.name} (inactive)`,
+        }));
 
     return (
         <div className="brfc-page">
@@ -500,10 +516,7 @@ function AcBillPayment() {
             filterOption={(input, option) =>
               (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
             }
-            options={costTypes.map((costType) => ({
-              value: costType.id,
-              label: `${costType.name}`,
-            }))}
+            options={costTypeOptions}
             loading={costTypeApiLoading}
             onChange={(value) => onChangeCostTypeList(value)}
             style={{ borderRadius: "4px" }}

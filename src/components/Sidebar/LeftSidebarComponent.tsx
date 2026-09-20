@@ -56,6 +56,7 @@ const ROUTE_ANCESTORS: Record<string, string[]> = {
   "/ac/voucher-types": ["financeSubMenu", "ConfigurationSubMenu"],
   "/ac/natures": ["financeSubMenu", "ConfigurationSubMenu"],
   "/ac/charts": ["financeSubMenu", "ConfigurationSubMenu"],
+  "/ac/cost-types": ["financeSubMenu", "ConfigurationSubMenu"],
   "/ac/collections": ["financeSubMenu"],
   "/ac/bill-payments": ["financeSubMenu"],
   "/ac/vouchers": ["financeSubMenu", "VoucherSubMenu"],
@@ -111,6 +112,10 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
   // The people who might hold club cash, and so have a balance of their own to look at.
   const holdsClubCash = isUserAdmin || loginInfo.roles.includes("ACCOUNTANT");
 
+  // Cost types are the categories spending is filed under, so the accountant keeps them alongside
+  // the admins. Mirrored by @PreAuthorize on CostTypeController.
+  const canManageCostTypes = isUserAdmin || loginInfo.roles.includes("ACCOUNTANT");
+
   const items: MenuProps["items"] = [
     getItem("Dashboard", "/dashboard", <PieChartOutlined />),
     getItem("Match Center", "/tournament-viewer", <EyeOutlined />),
@@ -134,6 +139,7 @@ const LeftSidebarComponent: React.FC<LeftSidebarComponentProps> = ({
         getItem("Voucher Types", "/ac/voucher-types", null, undefined, undefined, !isUserAdmin),
         getItem("AC Natures", "/ac/natures", null, undefined, undefined, !isUserAdmin),
         getItem("Chart of Account", "/ac/charts", null, undefined, undefined, !isUserAdmin),
+        getItem("Cost Types", "/ac/cost-types", null, undefined, undefined, !canManageCostTypes),
       ]),
       getItem("Collections (+)", "/ac/collections"),
       getItem("Bill Payment (-)", "/ac/bill-payments"),

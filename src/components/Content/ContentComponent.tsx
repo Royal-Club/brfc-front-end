@@ -53,6 +53,7 @@ const AcCollection = lazy(() => import("../Account/Collection/AcCollection"));
 const AcChart = lazy(() => import("../Account/Configuration/AcChart"));
 const AcNature = lazy(() => import("../Account/Configuration/AcNature"));
 const AcVoucherType = lazy(() => import("../Account/Configuration/AcVoucherType"));
+const CostType = lazy(() => import("../Account/Configuration/CostType"));
 const AccountBalanceSheet = lazy(() => import("../Account/Report/AccountBalanceSheet"));
 const AccountBalanceSummary = lazy(() => import("../Account/Report/AccountBalanceSummary"));
 const AccountsReport = lazy(() => import("../Account/Report/AccountReport"));
@@ -519,6 +520,7 @@ const ContentComponent: React.FC<ContentComponentProps> = ({
                                 element={<AcVoucherType />}
                             />
                             <Route path="/ac/natures" element={<AcNature />} />
+                            <Route path="/ac/cost-types" element={<CostType />} />
                             <Route
                                 path="ac/collections"
                                 element={<AcCollection />}

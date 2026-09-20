@@ -38,6 +38,10 @@ export const isPlayer = (userRoles: string[]): boolean => {
   return userRoles.includes("PLAYER");
 };
 
+export const isAccountant = (userRoles: string[]): boolean => {
+  return userRoles.includes("ACCOUNTANT");
+};
+
 // Permission-based checks (combining multiple roles)
 export const canConductMatches = (userRoles: string[]): boolean => {
   return hasAnyRole(userRoles, ["ADMIN", "SUPERADMIN", "COORDINATOR"]);
@@ -66,6 +70,13 @@ export const canManageAccounting = (userRoles: string[]): boolean => {
 export const canViewAccounting = (userRoles: string[]): boolean => {
   // All authenticated users can view accounting
   return true;
+};
+
+// Cost types are the categories club spending is filed under. The accountant owns that list
+// alongside the admins, matching the reports they already run. Mirrored by @PreAuthorize on
+// CostTypeController.
+export const canManageCostTypes = (userRoles: string[]): boolean => {
+  return hasAnyRole(userRoles, ["ADMIN", "SUPERADMIN", "ACCOUNTANT"]);
 };
 
 export const canManageClubRules = (userRoles: string[]): boolean => {
