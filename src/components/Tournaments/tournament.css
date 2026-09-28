@@ -9,6 +9,34 @@
     gap: 10px;
 }
 
+/* Team card header: name truncates, action buttons always stay inside the card */
+.team-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+}
+
+.team-card-head-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.team-card-head-name > div {
+    min-width: 0;
+}
+
+.team-card-head-name .ant-typography {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Webkit-based browsers (Chrome, Safari) */
 .team-card-container::-webkit-scrollbar {
     width: 4px;

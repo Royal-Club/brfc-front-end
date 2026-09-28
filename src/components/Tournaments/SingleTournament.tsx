@@ -199,11 +199,14 @@ function SingleTournament() {
           align="middle"
           gutter={[16, 16]} 
         >
-          {/* Left Side (Tournament Info) */}
-          <Col xs={24} sm={18}>
+          {/* Left Side (Tournament Info) — flex columns rather than a fixed span split, so the
+              toolbar drops to its own line whenever it cannot fit beside the title instead of
+              being squeezed into a quarter-width column and spilling over it. */}
+          <Col flex="1 1 280px">
             <Space
-              direction={screens.xs ? "vertical" : "horizontal"} 
+              direction={screens.xs ? "vertical" : "horizontal"}
               size={screens.xs ? 0 : 30}
+              wrap
               style={{ lineHeight: 1.2 }}
             >
               <Typography.Title level={5} style={{ margin: 0 }}>
@@ -224,14 +227,8 @@ function SingleTournament() {
           </Col>
 
           {/* Right Side (Admin Controls) */}
-          <Col xs={24} sm={6}>
-            <Space
-              style={{
-                display:  "flex",
-                justifyContent: screens.xs ? "start" : "flex-end",
-                flexWrap: screens.xs ? "wrap" : "nowrap",
-              }}
-            >
+          <Col flex="0 1 auto" style={{ maxWidth: "100%" }}>
+            <Space wrap size={[8, 8]}>
               {isAdmin && (
                 <VotingLockControl
                   tournamentId={tournamentId}
@@ -305,14 +302,14 @@ function SingleTournament() {
                   <Card
                     title={
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
-                        <span>Players ({filteredPlayers.length})</span>
+                        <span style={{ flexShrink: 0 }}>Players ({filteredPlayers.length})</span>
                         <Input
                           placeholder="Search players..."
                           prefix={<SearchOutlined />}
                           value={playerSearch}
                           onChange={(e) => setPlayerSearch(e.target.value)}
                           allowClear
-                          style={{ width: 250 }}
+                          style={{ width: "100%", maxWidth: 250 }}
                         />
                       </div>
                     }
@@ -329,10 +326,12 @@ function SingleTournament() {
                           {...provided.droppableProps}
                           style={{
                             display: "grid",
+                            // min() keeps a single column inside the card on phones narrower than 250px of content.
                             gridTemplateColumns:
-                              "repeat(auto-fill, minmax(250px, 1fr))",
+                              "repeat(auto-fill, minmax(min(250px, 100%), 1fr))",
                             gap: "8px",
-                            maxHeight: "180px",
+                            // One column on phones, so give the pool more height or only a handful of players show.
+                            maxHeight: screens.md ? "180px" : "320px",
                             overflowY: "auto",
                             padding: "0 8px 0 0",
                             minHeight: 0,

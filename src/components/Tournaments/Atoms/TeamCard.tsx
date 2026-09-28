@@ -106,16 +106,11 @@ const TeamCard: React.FC<TeamCardProps> = ({
                             : []
                     }
                 >
-                    <Space
-                        style={{
-                            width: "100%",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                        }}
-                    >
-                        <Space align="center" size={8}>
-                            <Avatar src={logoSrc} style={{ backgroundColor: "#1f1f1f" }}>
+                    {/* Plain flex rather than Space: the name side must be allowed to shrink so a
+                        long team name truncates instead of pushing the action buttons out of the card. */}
+                    <div className="team-card-head">
+                        <div className="team-card-head-name" title={team.teamName}>
+                            <Avatar src={logoSrc} style={{ backgroundColor: "#1f1f1f", flexShrink: 0 }}>
                                 {team.teamName?.charAt(0)?.toUpperCase()}
                             </Avatar>
                             <DoubleClickTextInputField
@@ -125,8 +120,8 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                     !canManage
                                 }
                             />
-                        </Space>
-                        <Space>
+                        </div>
+                        <Space style={{ flexShrink: 0 }}>
                             {/* Open to everyone — captains edit, the rest read. */}
                             <Button
                                 title="Line-up"
@@ -169,7 +164,7 @@ const TeamCard: React.FC<TeamCardProps> = ({
                                 </>
                             )}
                         </Space>
-                    </Space>
+                    </div>
                 </Dropdown>
             }
             bordered={true}
