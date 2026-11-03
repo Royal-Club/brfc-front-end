@@ -24,6 +24,11 @@ interface IPlayer {
      * one per rolling 30 days to protect a free-tier R2 bucket.
      */
     photoChangeAvailableAt?: string;
+    /**
+     * Whether the player takes part in the goalkeeper rotation. Admins switch it off from the
+     * player's edit form; such players show as "Not in rotation" in the GK priority queue.
+     */
+    gkEligible?: boolean;
 }
 
 export default IPlayer;

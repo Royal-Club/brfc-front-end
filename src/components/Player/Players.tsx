@@ -49,6 +49,17 @@ import "./Players.css";
 
 const { Title, Text } = Typography;
 
+type PlayerTab = "all" | "active" | "inactive" | "hold" | "noGk";
+
+// Same grey as the brfc-status--neutral tag, so the tab and the row tag read as one thing.
+const NO_GK_TONE = "#8792A8";
+
+// An admin has switched "Goalkeeper Rotation" off for this player. Only active players count,
+// since an inactive player is out of every rotation anyway. Compared with false on purpose,
+// so a response without the field lists nobody instead of everybody.
+const isOutOfGkRotation = (player: IPlayer) =>
+  Boolean(player.active) && player.gkEligible === false;
+
 function Players() {
   const navigate = useNavigate();
   const { data: playersData, isLoading, refetch } = useGetPlayersQuery();
@@ -70,7 +81,7 @@ function Players() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredPlayers, setFilteredPlayers] = useState<IPlayer[]>([]);
-  const [activeTabKey, setActiveTabKey] = useState("all");
+  const [activeTabKey, setActiveTabKey] = useState<PlayerTab>("all");
   const isMobile = useIsMobile(576);
   const [mobilePage, setMobilePage] = useState(1);
   const mobilePageSize = 8;
@@ -97,7 +108,7 @@ function Players() {
 
   // One definition of what each tab means, shared by the tab switch and the search box so
   // the two cannot drift apart.
-  const matchesTab = (player: IPlayer, tabKey: string) => {
+  const matchesTab = (player: IPlayer, tabKey: PlayerTab) => {
     switch (tabKey) {
       case "active":
         return Boolean(player.active);
@@ -105,6 +116,8 @@ function Players() {
         return !player.active;
       case "hold":
         return openPauseByPlayer.has(player.id);
+      case "noGk":
+        return isOutOfGkRotation(player);
       default:
         return true;
     }
@@ -139,7 +152,7 @@ function Players() {
   };
 
   // Function to filter players based on tab selection
-  const filterPlayersByTab = (tabKey: string, players: IPlayer[] = playersData?.content || []) => {
+  const filterPlayersByTab = (tabKey: PlayerTab, players: IPlayer[] = playersData?.content || []) => {
     if (!players) return;
     
     let filtered = players.filter(player => matchesTab(player, tabKey));
@@ -158,10 +171,10 @@ function Players() {
   };
 
   // Tab change handler
-  const handleTabChange = (key: string) => {
+  const handleTabChange = (key: PlayerTab) => {
     setActiveTabKey(key);
     filterPlayersByTab(key);
-    // On hold is a much shorter list than All, so a stale page number would land on nothing.
+    // The shorter tabs (On hold, Not in GK rotation) would land a stale page number on nothing.
     setMobilePage(1);
   };
 
@@ -425,6 +438,15 @@ function Players() {
                 </span>
               </Tooltip>
             )}
+            {/* Admin-only, like the tab that filters by it. */}
+            {canManagePlayers && isOutOfGkRotation(record) && (
+              <Tooltip title="Goalkeeper Rotation is off, so they are never ranked for a turn in goal. Change it from Edit.">
+                <span className="brfc-status brfc-status--neutral">
+                  <span className="brfc-status__dot" />
+                  No GK
+                </span>
+              </Tooltip>
+            )}
           </Space>
         );
       },
@@ -512,6 +534,8 @@ function Players() {
   const inactiveCount = playersData?.content?.filter(player => !player.active).length || 0;
   // Counted off the same map the list badges from, so the tab and the rows always agree.
   const holdCount = playersData?.content?.filter(player => openPauseByPlayer.has(player.id)).length || 0;
+  // Same predicate as the tab filter and the row tag, so all three always agree.
+  const noGkCount = playersData?.content?.filter(isOutOfGkRotation).length || 0;
 
   const renderTabLabel = (label: string, count: number, tone: string) => (
     <span className="brfc-seg-label">
@@ -698,14 +722,17 @@ function Players() {
       <div style={{ marginBottom: 14, overflowX: "auto" }}>
         <Segmented
           value={activeTabKey}
-          onChange={(v) => handleTabChange(v as string)}
+          onChange={(v) => handleTabChange(v as PlayerTab)}
           options={[
             { label: renderTabLabel("All", allCount, club.gold), value: "all" },
             { label: renderTabLabel("Active", activeCount, club.pitch), value: "active" },
             { label: renderTabLabel("Inactive", inactiveCount, "#E0736B"), value: "inactive" },
-            // Only admins get the holds data, so only they get a tab that could filter by it.
+            // Admin-only: only admins get the holds data, and only admins can change GK rotation.
             ...(canManagePlayers
-              ? [{ label: renderTabLabel("On hold", holdCount, "#E0A23C"), value: "hold" }]
+              ? [
+                  { label: renderTabLabel("On hold", holdCount, "#E0A23C"), value: "hold" },
+                  { label: renderTabLabel("Not in GK rotation", noGkCount, NO_GK_TONE), value: "noGk" },
+                ]
               : []),
           ]}
         />
