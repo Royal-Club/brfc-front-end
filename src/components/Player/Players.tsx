@@ -32,7 +32,7 @@ import { Link, useNavigate } from "react-router-dom";
 import IPlayer from "../../interfaces/IPlayer";
 import PlayerAvatar from "../Util/PlayerAvatar";
 import { useGetPlayersQuery } from "../../state/features/player/playerSlice";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectLoginInfo } from "../../state/slices/loginInfoSlice";
 import { ColumnsType } from "antd/es/table";
@@ -62,7 +62,11 @@ const isOutOfGkRotation = (player: IPlayer) =>
 
 function Players() {
   const navigate = useNavigate();
-  const { data: playersData, isLoading, refetch } = useGetPlayersQuery();
+  // Always refetch on arrival: player edits go through plain axios calls that don't
+  // invalidate this cache, so a cached list could be stale.
+  const { data: playersData, isLoading, refetch } = useGetPlayersQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
   const [resetPlayerPassword] = useResetPlayerPasswordMutation();
   const { data: rolesData } = useGetRolesQuery();
   const [assignRoles] = useAssignRolesMutation();
@@ -80,7 +84,6 @@ function Players() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredPlayers, setFilteredPlayers] = useState<IPlayer[]>([]);
   const [activeTabKey, setActiveTabKey] = useState<PlayerTab>("all");
   const isMobile = useIsMobile(576);
   const [mobilePage, setMobilePage] = useState(1);
@@ -106,75 +109,47 @@ function Players() {
     [openPauses]
   );
 
-  // One definition of what each tab means, shared by the tab switch and the search box so
-  // the two cannot drift apart.
-  const matchesTab = (player: IPlayer, tabKey: PlayerTab) => {
-    switch (tabKey) {
-      case "active":
-        return Boolean(player.active);
-      case "inactive":
-        return !player.active;
-      case "hold":
-        return openPauseByPlayer.has(player.id);
-      case "noGk":
-        return isOutOfGkRotation(player);
-      default:
-        return true;
-    }
-  };
-  
-  useEffect(() => {
-    if (playersData?.content) {
-      filterPlayersByTab(activeTabKey, playersData.content);
-    }
-  }, [playersData, activeTabKey, openPauses]);
+  // One definition of what each tab means, used by the list filter below.
+  const matchesTab = useCallback(
+    (player: IPlayer, tabKey: PlayerTab) => {
+      switch (tabKey) {
+        case "active":
+          return Boolean(player.active);
+        case "inactive":
+          return !player.active;
+        case "hold":
+          return openPauseByPlayer.has(player.id);
+        case "noGk":
+          return isOutOfGkRotation(player);
+        default:
+          return true;
+      }
+    },
+    [openPauseByPlayer]
+  );
 
-  useEffect(() => {
-    refetch();
-  }, []);
+  // Worked out from the data, tab and search on each change instead of copied into state,
+  // so the list can never fall out of step with any of them.
+  const filteredPlayers = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return (playersData?.content ?? []).filter(
+      (player) =>
+        matchesTab(player, activeTabKey) &&
+        (!term ||
+          player.name?.toLowerCase().includes(term) ||
+          player.email?.toLowerCase().includes(term) ||
+          player.mobileNo?.includes(term))
+    );
+  }, [playersData, activeTabKey, searchTerm, matchesTab]);
 
-  // Handle search input change
+  // Both handlers go back to page 1: a narrower list would leave a stale page number past its end.
   const handleSearch = (value: string) => {
-    setSearchTerm(value.toLowerCase());
-
-    if (playersData && playersData.content) {
-      const filtered = playersData.content.filter(
-        (player: IPlayer) =>
-          (player.name?.toLowerCase().includes(value.toLowerCase()) ||
-          player.email?.toLowerCase().includes(value.toLowerCase()) ||
-          player.mobileNo?.includes(value)) &&
-          matchesTab(player, activeTabKey)
-      );
-      setFilteredPlayers(filtered);
-    } else {
-      setFilteredPlayers([]);
-    }
+    setSearchTerm(value);
+    setMobilePage(1);
   };
 
-  // Function to filter players based on tab selection
-  const filterPlayersByTab = (tabKey: PlayerTab, players: IPlayer[] = playersData?.content || []) => {
-    if (!players) return;
-    
-    let filtered = players.filter(player => matchesTab(player, tabKey));
-
-    // Apply any existing search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (player: IPlayer) =>
-          player.name?.toLowerCase().includes(searchTerm) ||
-          player.email?.toLowerCase().includes(searchTerm) ||
-          player.mobileNo?.includes(searchTerm)
-      );
-    }
-
-    setFilteredPlayers(filtered);
-  };
-
-  // Tab change handler
   const handleTabChange = (key: PlayerTab) => {
     setActiveTabKey(key);
-    filterPlayersByTab(key);
-    // The shorter tabs (On hold, Not in GK rotation) would land a stale page number on nothing.
     setMobilePage(1);
   };
 
@@ -773,7 +748,7 @@ function Players() {
             <span style={{ fontSize: 16 }}>Reset Password for <strong>{selectedPlayer?.name}</strong></span>
           </Space>
         }
-        visible={isPasswordModalVisible}
+        open={isPasswordModalVisible}
         onCancel={handleCancel}
         footer={[
           <Button key="cancel" onClick={handleCancel}>
@@ -791,7 +766,7 @@ function Players() {
         ]}
         width={500}
         maskClosable={false}
-        destroyOnClose={true}
+        destroyOnHidden
         className="reset-password-modal"
       >
         <div style={{ marginBottom: 24 }}>
@@ -860,7 +835,7 @@ function Players() {
             <span style={{ fontSize: 16 }}>Set Roles for <strong>{selectedPlayer?.name}</strong></span>
           </Space>
         }
-        visible={isRolesModalVisible}
+        open={isRolesModalVisible}
         onCancel={handleRolesCancel}
         footer={[
           <Button key="cancel" onClick={handleRolesCancel}>
@@ -877,7 +852,7 @@ function Players() {
         ]}
         width={500}
         maskClosable={false}
-        destroyOnClose={true}
+        destroyOnHidden
         className="roles-modal"
       >
         {selectedPlayer?.roles && selectedPlayer.roles.length > 0 && (
